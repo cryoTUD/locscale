@@ -59,6 +59,12 @@ def setup_test_data_to_files(emmap_name='emmap.mrc', modmap_name='modmap.mrc', m
     
     return emmap_name, modmap_name, mask_name
 
+def map_kurtosis(map):
+# requires map as NumPy array
+    num = np.sum((map - mean(map)) ** 4)/ len(map)
+    denom = variance(map) ** 2  
+    return num / denom
+
 def compute_radial_amplitude_distribution(map, apix):
     data = map.do_fft()
     radial_average = data.calc_radial_dist(map.get_xsize() / 2, 0, 1.0, 0)
@@ -218,7 +224,7 @@ def prepare_mask_and_maps_for_scaling(args):
         mask = binarize(get_image(args.mask), 0.5)
         
     if args.window_size is None:
-        wn = int(math.ceil(round((7 * 3 * args.apix)) /2.) * 2) # set default window size to 7 times average resolution
+        wn = int(math.ceil(round((7 * 3 * args.apix)) /2.) * 2) 
     elif args.window_size is not None:
         wn = int(math.ceil(args.window_size / 2.) * 2)
 
