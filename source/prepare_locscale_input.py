@@ -133,9 +133,13 @@ def apply_shift_transformation_to_model(input_model, target_map, symm, pixel_siz
     f.close()
 
 def set_isotropic_b_factor(xrs,b_factor):
-    xrs.convert_to_isotropic
+    xrs.convert_to_isotropic()
     xrs = xrs.set_b_iso(value=b_factor)
     return xrs 
+
+def convert_to_isotropic_b(xrs):
+    xrs.convert_to_isotropic()
+    return xrs
 
 def compute_model_map(xrs, target_map, symm, d_min, table, model_map_out):
     xrs.scattering_type_registry(
@@ -182,6 +186,8 @@ def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
     xrs = shifted_model.xray_structure_simple(crystal_symmetry=symm)
     if args.b_factor is not None:
        xrs = set_isotropic_b_factor(xrs,args.b_factor)
+    else:
+       xrs = convert_to_isotropic_b(xrs) 
     check_for_zero_B_factor(xrs) 
     cg, fc_map = compute_model_map(xrs, target_map, symm, d_min, sc_table, model_map_out)
     
