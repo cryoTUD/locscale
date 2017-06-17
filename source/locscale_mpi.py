@@ -59,11 +59,9 @@ def setup_test_data_to_files(emmap_name='emmap.mrc', modmap_name='modmap.mrc', m
     
     return emmap_name, modmap_name, mask_name
 
-def map_kurtosis(map):
-# requires map as NumPy array
-    num = np.sum((map - mean(map)) ** 4)/ len(map)
-    denom = variance(map) ** 2  
-    return num / denom
+def map_kurtosis(map_array):
+    kurt = np.sum((map_array - mean(map_array)) ** 4)/ len(map_array) / (variance(map_array) ** 2)  
+    return kurt
 
 def compute_radial_amplitude_distribution(map, apix):
     data = map.do_fft()
