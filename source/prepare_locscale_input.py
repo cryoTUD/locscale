@@ -43,6 +43,7 @@ cmdl_parser.add_argument('-em', '--em_map', required=True, type=argparse.FileTyp
 cmdl_parser.add_argument('-ma', '--mask', type=argparse.FileType('r'), help='Input filename mask')
 cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 cmdl_parser.add_argument('-dmin', '--resolution', type=float, help='map resolution in Angstrom')
+cmdl_parser.add_argument('-b', '--b_factor', type=float, default=None, help='set bfactor in [A^2]')
 cmdl_parser.add_argument('-t', '--table', type=str, default="electron", help='Scattering table [electron, itcc]')
 cmdl_parser.add_argument('-o', '--outfile', type=str, default="rscc.dat", help='Output filename for RSCC data')
 
@@ -204,3 +205,4 @@ def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
 if (__name__ == "__main__") :
     args = cmdl_parser.parse_args()
     prepare_reference_and_experimental_map_for_locscale(args)
+
