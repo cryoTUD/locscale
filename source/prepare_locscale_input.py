@@ -44,6 +44,7 @@ cmdl_parser.add_argument('-ma', '--mask', type=argparse.FileType('r'), help='Inp
 cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 cmdl_parser.add_argument('-dmin', '--resolution', type=float, help='map resolution in Angstrom')
 cmdl_parser.add_argument('-b', '--b_factor', type=float, default=None, help='set bfactor in [A^2]')
+cmdl_parser.add_argument('-a', '--b_add', type=float, default=None, help='add bfactor in [A^2]')
 cmdl_parser.add_argument('-t', '--table', type=str, default="electron", help='Scattering table [electron, itcc]')
 cmdl_parser.add_argument('-o', '--outfile', type=str, default="rscc.dat", help='Output filename for RSCC data')
 
@@ -138,6 +139,10 @@ def set_isotropic_b_factor(xrs,b_factor):
     xrs = xrs.set_b_iso(value=b_factor)
     return xrs 
 
+def add_isotropic_b_factor(xrs, b_add):
+    xrs.shift_us(b_shift=b_add)
+    return xrs
+
 def convert_to_isotropic_b(xrs):
     xrs.convert_to_isotropic()
     return xrs
@@ -187,6 +192,8 @@ def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
     xrs = shifted_model.xray_structure_simple(crystal_symmetry=symm)
     if args.b_factor is not None:
        xrs = set_isotropic_b_factor(xrs,args.b_factor)
+    elif args.b_add is not None:
+       xrs = add_isotropic_b_factor(xrs,args.b_add)
     else:
        xrs = convert_to_isotropic_b(xrs) 
     check_for_zero_B_factor(xrs) 
