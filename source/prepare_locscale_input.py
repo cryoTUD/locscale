@@ -20,13 +20,10 @@ from mmtbx import real_space_correlation
 import mmtbx.maps.utils
 from scitbx.array_family import flex
 
-
-warnings.simplefilter('ignore', DeprecationWarning)
-
 progname = os.path.basename(sys.argv[0])
 revision = filter(str.isdigit, "$Revision: 1 $")  # to be updated by gitlab after every commit
 datmod = "$Date: 2017-03-06 22:14:31 +0200 (Mo, 06 Mar 2017) $"  # to be updated by gitlab fter every commit
-author = 'authors: Arjen J. Jakobi and Carsten Sachse, EMBL' + '; ' + datmod [8:18]
+author = 'authors: Arjen J. Jakobi, EMBL' + '; ' + datmod [8:18]
 version = progname + '  0.1' + '  (r' + revision + ';' + datmod [6:18] + ')'
 
 simple_cmd = 'phenix.python prepare_locscale_input.py -mc model_coordinates.pdb -em em_map.mrc'
