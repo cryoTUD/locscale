@@ -12,7 +12,7 @@ import os
 import sys
 import warnings
 
-from cctbx import crystal, maptbx
+from cctbx import crystal, maptbx, xray
 from iotbx import ccp4_map, file_reader
 import iotbx.pdb
 from libtbx import group_args
@@ -28,6 +28,8 @@ version = progname + '  0.1' + '  (r' + revision + ';' + datmod [6:18] + ')'
 
 simple_cmd = 'phenix.python prepare_locscale_input.py -mc model_coordinates.pdb -em em_map.mrc'
 
+warnings.simplefilter('ignore', DeprecationWarning)
+
 cmdl_parser = argparse.ArgumentParser(
 description='*** Computes reference map from PDB model and generates files for LocScale ***\n\n' + \
 'Example usage: \"{0}\". '.format(simple_cmd) + \
@@ -42,15 +44,17 @@ cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstro
 cmdl_parser.add_argument('-dmin', '--resolution', type=float, help='map resolution in Angstrom')
 cmdl_parser.add_argument('-b', '--b_factor', type=float, default=None, help='set bfactor in [A^2]')
 cmdl_parser.add_argument('-a', '--b_add', type=float, default=None, help='add bfactor in [A^2]')
+cmdl_parser.add_argument('-r', '--rms', type=float, default=None, help='perturb model by rms')
 cmdl_parser.add_argument('-t', '--table', type=str, default="electron", help='Scattering table [electron, itcc]')
 cmdl_parser.add_argument('-o', '--outfile', type=str, default="rscc.dat", help='Output filename for RSCC data')
 
 def generate_output_file_names(map, model, mask):
     map_out = os.path.splitext(map.name)[0] + "_4locscale.mrc"
     model_out = os.path.splitext(model.name)[0] + "_4locscale.pdb"
+    perturbed_model_out = os.path.splitext(model.name)[0] + "_pertubed.pdb"
     model_map_out = os.path.splitext(model.name)[0] + "_4locscale.mrc"
     mask_out = os.path.splitext(mask.name)[0] + "_4locscale.mrc"
-    return map_out, model_out, model_map_out, mask_out
+    return map_out, model_out, model_map_out, mask_out, perturbed_model_out
 
 def get_dmin(dmin, target_map):
     if dmin is not None:
@@ -98,7 +102,6 @@ def estimate_pixel_size_from_unit_cell(target_map):
 def determine_shift_from_map_header(target_map):
     origin = target_map.data.origin()
     translation_vector = [0 - target_map.data.origin()[0], 0 - target_map.data.origin()[1], 0 - target_map.data.origin()[2]]
-    print translation_vector
     return translation_vector 
 
 def shift_map_to_zero_origin(target_map, cg, map_out, return_map=False):
@@ -144,6 +147,15 @@ def convert_to_isotropic_b(xrs):
     xrs.convert_to_isotropic()
     return xrs
 
+def apply_random_shift_to_coordinates(xrs, rms, shifted_model, symm, model_out):
+    xrs = xrs.random_shift_sites(max_shift_cart=rms)
+    pdb_hierarchy = shifted_model.construct_hierarchy()
+    pdb_hierarchy.adopt_xray_structure(xrs)
+    f = open(model_out, "w")
+    f.write(pdb_hierarchy.as_pdb_string(crystal_symmetry=symm))
+    f.close()
+    return xrs
+
 def compute_model_map(xrs, target_map, symm, d_min, table, model_map_out):
     xrs.scattering_type_registry(
     d_min=d_min,
@@ -175,7 +187,7 @@ def compute_real_space_correlation_simple(fc_map, em_data):
 def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
     """
     """  
-    map_out, model_out, model_map_out, mask_out = generate_output_file_names(args.em_map, args.model_coordinates, args.mask)
+    map_out, model_out, model_map_out, mask_out, perturbed_model_out = generate_output_file_names(args.em_map, args.model_coordinates, args.mask)
     target_map = file_reader.any_file(args.em_map.name).file_object
     input_model = file_reader.any_file(args.model_coordinates.name).file_object
     mask = file_reader.any_file(args.mask.name).file_object
@@ -193,6 +205,10 @@ def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
        xrs = add_isotropic_b_factor(xrs,args.b_add)
     else:
        xrs = convert_to_isotropic_b(xrs) 
+    if args.rms is not None:
+       print "Perturbing atoms by rms = ", args.rms, "Angstrom\n"
+       xrs = apply_random_shift_to_coordinates(xrs, args.rms, shifted_model, symm, perturbed_model_out)
+           
     check_for_zero_B_factor(xrs) 
     cg, fc_map = compute_model_map(xrs, target_map, symm, d_min, sc_table, model_map_out)
     
