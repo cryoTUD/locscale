@@ -1,4 +1,4 @@
-## LocScale – reference-based density scaling for improved local contrast in cryo-EM maps
+## LocScale – reference-based density scaling for local sharpening of cryo-EM maps
 ---
 
 Locscale is a density scaling (sharpening) procedure that aims to enhance interpretability of cryo-EM density maps  
