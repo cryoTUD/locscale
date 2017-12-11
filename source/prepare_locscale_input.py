@@ -44,6 +44,7 @@ cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstro
 cmdl_parser.add_argument('-dmin', '--resolution', type=float, help='map resolution in Angstrom')
 cmdl_parser.add_argument('-b', '--b_factor', type=float, default=None, help='set bfactor in [A^2]')
 cmdl_parser.add_argument('-a', '--b_add', type=float, default=None, help='add bfactor in [A^2]')
+cmdl_parser.add_argument('-s', '--strip_charge', action="store_true", help='strip atomic charges]')
 cmdl_parser.add_argument('-r', '--rms', type=float, default=None, help='perturb model by rms')
 cmdl_parser.add_argument('-t', '--table', type=str, default="electron", help='Scattering table [electron, itcc]')
 cmdl_parser.add_argument('-o', '--outfile', type=str, default="rscc.dat", help='Output filename for RSCC data')
@@ -53,8 +54,9 @@ def generate_output_file_names(map, model, mask):
     model_out = os.path.splitext(model.name)[0] + "_4locscale.pdb"
     perturbed_model_out = os.path.splitext(model.name)[0] + "_pertubed.pdb"
     model_map_out = os.path.splitext(model.name)[0] + "_4locscale.mrc"
+    perturbed_model_map_out = os.path.splitext(model.name)[0] + "_perturbed.mrc"
     mask_out = os.path.splitext(mask.name)[0] + "_4locscale.mrc"
-    return map_out, model_out, model_map_out, mask_out, perturbed_model_out
+    return map_out, model_out, model_map_out, mask_out, perturbed_model_out, perturbed_model_map_out
 
 def get_dmin(dmin, target_map):
     if dmin is not None:
@@ -147,6 +149,21 @@ def convert_to_isotropic_b(xrs):
     xrs.convert_to_isotropic()
     return xrs
 
+def strip_atom_charges(shifted_model, symm):
+    charge = ""
+    sign = ""
+    pdb_hierarchy = shifted_model.construct_hierarchy()
+    pdb_hierarchy.atoms().reset_i_seq()
+    for chain in pdb_hierarchy.chains():
+        for residue_group in chain.residue_groups():
+            for conformer in residue_group.conformers():
+                for residue in conformer.residues():
+                    for atom in residue.atoms():
+                        atom.set_charge("%s%s" %(charge, sign))
+    
+    xrs = shifted_model.xray_structure_simple(crystal_symmetry=symm)
+    return xrs                         
+
 def apply_random_shift_to_coordinates(xrs, rms, shifted_model, symm, model_out):
     xrs = xrs.random_shift_sites(max_shift_cart=rms)
     pdb_hierarchy = shifted_model.construct_hierarchy()
@@ -187,7 +204,7 @@ def compute_real_space_correlation_simple(fc_map, em_data):
 def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
     """
     """  
-    map_out, model_out, model_map_out, mask_out, perturbed_model_out = generate_output_file_names(args.em_map, args.model_coordinates, args.mask)
+    map_out, model_out, model_map_out, mask_out, perturbed_model_out, perturbed_model_map_out = generate_output_file_names(args.em_map, args.model_coordinates, args.mask)
     target_map = file_reader.any_file(args.em_map.name).file_object
     input_model = file_reader.any_file(args.model_coordinates.name).file_object
     mask = file_reader.any_file(args.mask.name).file_object
@@ -205,10 +222,14 @@ def prepare_reference_and_experimental_map_for_locscale (args, out=sys.stdout):
        xrs = add_isotropic_b_factor(xrs,args.b_add)
     else:
        xrs = convert_to_isotropic_b(xrs) 
+    if args.strip_charge:
+       print "Stripping atom charges\n"
+       xrs = strip_atom_charges(shifted_model, symm)
     if args.rms is not None:
        print "Perturbing atoms by rms = ", args.rms, "Angstrom\n"
-       xrs = apply_random_shift_to_coordinates(xrs, args.rms, shifted_model, symm, perturbed_model_out)
-           
+       xrs_perturbed = apply_random_shift_to_coordinates(xrs, args.rms, shifted_model, symm, perturbed_model_out)
+       compute_model_map(xrs_perturbed, target_map, symm, d_min, sc_table, perturbed_model_map_out)    
+    
     check_for_zero_B_factor(xrs) 
     cg, fc_map = compute_model_map(xrs, target_map, symm, d_min, sc_table, model_map_out)
     
