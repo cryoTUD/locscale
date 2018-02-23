@@ -9,13 +9,13 @@ datmod = "$Date: 2017-05-30 11:03:31 +0200 (Tu, 30 May 2017) $"  # to be updated
 author = 'authors: Arjen J. Jakobi and Carsten Sachse, EMBL' + '; ' + datmod [8:18]        
 version = progname + '  0.1' + '  (r' + revision + ';' + datmod [7:18] + ')'
      
-simple_cmd = 'python locscale.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -p 1.0 -w 10 -o scaled.mrc'
+simple_cmd = 'python locscale_mpi.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -p 1.0 -w 10 -o scaled.mrc'
 
 cmdl_parser = argparse.ArgumentParser(
 description='*** Computes contrast-enhanced cryo-EM maps by local amplitude scaling using a reference model ***' + \
 'Example usage: \"{0}\". {1} on {2}'.format(simple_cmd, author, datmod))
      
-mpi_cmd = 'mpirun -np 4 python locscale.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -p 1.0 -w 10 -mpi -o scaled.mrc'
+mpi_cmd = 'mpirun -np 4 python locscale_mpi.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -p 1.0 -w 10 -mpi -o scaled.mrc'
 
 cmdl_parser.add_argument('-em', '--em_map', required=True, help='Input filename EM map')
 cmdl_parser.add_argument('-mm', '--model_map', required=True, help='Input filename PDB map')
@@ -60,7 +60,9 @@ def setup_test_data_to_files(emmap_name='emmap.mrc', modmap_name='modmap.mrc', m
     return emmap_name, modmap_name, mask_name
 
 def map_kurtosis(map_array):
-    kurt = np.sum((map_array - mean(map_array)) ** 4)/ len(map_array) / (variance(map_array) ** 2)  
+    map_mean = (1. / len(map_array)) * np.sum(map_array)
+    map_var = (1. / len(map_array)) * np.sum((map_array - mean(map_array)) ** 2)
+    kurt = np.sum((map_array - map_mean(map_array)) ** 4)/ len(map_array) / (map_var(map_array) ** 2)  
     return kurt
 
 def compute_radial_amplitude_distribution(map, apix):
