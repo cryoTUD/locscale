@@ -212,7 +212,7 @@ def set_radial_profile(vol, scale_factor, radii):
     return np.fft.irfftn(ps, s=vol.shape)
 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix,
-                                                verbose=False):
+                                                verbose=False, process_name='LocScale'):
     sharpened_vals = []
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
@@ -228,7 +228,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
         if verbose:
             if cnt%1000 == 0:
-                print ('  LocScale {0:.3} percent complete'.format((cnt/total)*100))
+                print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
             cnt += 1
 
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
@@ -327,8 +327,10 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,
 
     masked_xyz_locs = np.column_stack((zs, ys, xs))
 
+    process_name = 'LocScale process {0} of {1}'.format(rank + 1, size)
+
     sharpened_vals = get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix,
-                                                                 verbose=verbose)
+                                                                 verbose=verbose, process_name=process_name)
     sharpened_vals = comm.gather(sharpened_vals, root=0)
 
     if rank == 0:
@@ -357,7 +359,7 @@ def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pa
     return LocScaleVol
 
 def launch_amplitude_scaling(args):
-    if args.verbose:
+    if args.verbose and not args.mpi:
         print('\n  LocScale Arguments\n')
         for arg in vars(args):
             print('    {} : {}'.format(arg, getattr(args, arg)))
