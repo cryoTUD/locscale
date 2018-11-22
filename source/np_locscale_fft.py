@@ -31,7 +31,7 @@ cmdl_parser.add_argument('-w', '--window_size', type=int, help='window size in p
 cmdl_parser.add_argument('-o', '--outfile', required=True, help='Output filename')
 cmdl_parser.add_argument('-mpi', '--mpi', action='store_true', default=False,
                          help='MPI version call by: \"{0}\"'.format(mpi_cmd))
-cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
+cmdl_parser.add_argument('-v', '--verbose', default=False,
                          help='Verbose output')
 
 # STILL TO BE DONE: replace test data
