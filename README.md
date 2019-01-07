@@ -14,7 +14,7 @@ LocScale has been developed at EMBL by [Arjen Jakobi](@jakobi) and Carsten Sachs
 -->
 
 
-#### Please see the [__Wiki__](https://git.embl.de/jakobi/LocScale/wikis/home) pages for dowload/usage instructions and tutorial.  
+#### Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) pages for dowload/usage instructions and tutorial.  
 
 <br>  
 
