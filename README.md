@@ -3,7 +3,7 @@
 
 Locscale is a density scaling (sharpening) procedure that aims to enhance interpretability of cryo-EM density maps  
   
-LocScale has been developed at EMBL by [Arjen Jakobi](@jakobi) and Carsten Sachse.
+LocScale has been initiated at EMBL and is now developed at the Kavli Institute of Nanoscience Delft.
 <br>   
 <!---
 [//]: # (##### [__LocRes__](https://git.embl.de/jakobi/LocScale/wikis/LocRes)   - local resolution estimation based on windowed FSC calculation)
