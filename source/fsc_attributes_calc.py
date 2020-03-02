@@ -184,7 +184,6 @@ def extend_minfreq_by_deviation(dict_points,minRes,maxRes,apix):
         i += 1
     mean_array = np.array([np.mean(stacked_array[:,i]) \
                     for i in range(len(stacked_array[0]))])
-    print mean_array, 1.05/minfreq
     #indices of local minima
     local_min = argrelextrema(mean_array, np.less)[0]
     minFreqSel = None
@@ -194,7 +193,9 @@ def extend_minfreq_by_deviation(dict_points,minRes,maxRes,apix):
             if mean_array[indi] < 0.8 and listfreq[indi] < minfreq:
                 try: 
                     #save the first local minima
-                    if minFreqSel is None: minFreqSel = listfreq[indi+1]
+                    if minFreqSel is None: 
+                        minFreqSel = listfreq[indi+1]
+                        continue
                 except IndexError: pass
             elif abs(apix/listfreq[indi] - maxRes) < 5.0:
                 #save the last minima close to maxRes
