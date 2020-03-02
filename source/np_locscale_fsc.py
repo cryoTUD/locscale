@@ -195,11 +195,12 @@ def get_central_pixel_vals_fsc(emmap, modmap, masked_xyz_locs, wn, apix,
         minfreq,maxfreq = select_min_and_max_freq(list_sols, list_freq, n=nrand)
         #extend minfreq until background/solvant? artifacts 
         if auc:
-            minfreq_set = min(apix/8.0,apix/(maxRes+5.0))
+            minfreq_set = min(apix/7.5,apix/(maxRes+5.0))
             minfreq,maxfreq = extend_minfreq_by_deviation(dict_random_fscs,
                                                   apix/minfreq_set,
                                                   maxRes,
                                                   apix)
+            if minfreq > minfreq_set: minfreq = 0.
         if maxfreq is not None:
             if apix/maxfreq > maxRes:
                 maxRes = apix/maxfreq
@@ -207,16 +208,16 @@ def get_central_pixel_vals_fsc(emmap, modmap, masked_xyz_locs, wn, apix,
         #get medians and median absolute deviations from fsc values at each shell
         try: list_medians, list_mad = get_medians_fsc(dict_random_fscs)
         except: list_medians = None
-        if minfreq == 0.: 
-            minRes = 20.0
-        elif not minfreq is None: 
-            if apix/minfreq < minRes:
+        #set minRes
+        if not minfreq is None and minfreq != 0.: 
+            if auc: minRes = apix/minfreq
+            elif apix/minfreq < minRes:
                 minRes = apix/minfreq
             
         print "Minimum and Maximum resolution (random sample): ", minRes, maxRes
         plot_fscs(dict_random_fscs,"locfscs.png",xlabel="resolution",ylabel="FSC",
               map_apix=apix,lstyle=False,marker=False,minRes=minRes,maxRes=maxRes)
-        print "Mean and standard deviation of local FSCs (random sample)", np.mean(fsc_vals), np.std(fsc_vals)
+        #sprint "Mean and standard deviation of local FSCs (random sample)", np.mean(fsc_vals), np.std(fsc_vals)
         return fsc_vals, minRes, maxRes, list_medians
     #print "Median and deviation of local FSCs: ", np.median(fsc_vals), mad
     if not auc:
