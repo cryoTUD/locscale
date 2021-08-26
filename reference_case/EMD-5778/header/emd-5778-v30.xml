@@ -1,0 +1,228 @@
+<emd emdb_id="EMD-5778" version="3.0.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://github.com/emdb-empiar/emdb-schemas/blob/master/v3/v3_0_1_1/emdb_relaxed.xsd">
+    <admin>
+        <current_status>
+            <code>REL</code>
+            <processing_site>RCSB</processing_site>
+        </current_status>
+        <sites>
+            <deposition>RCSB</deposition>
+            <last_processing>RCSB</last_processing>
+        </sites>
+        <key_dates>
+            <deposition>2013-10-24</deposition>
+            <header_release>2013-12-04</header_release>
+            <map_release>2013-12-04</map_release>
+            <update>2015-10-14</update>
+        </key_dates>
+        <title>Structure of the capsaicin receptor, TRPV1, determined by single particle electron cryo-microscopy</title>
+        <authors_list>
+            <author>Liao M</author>
+            <author>Cao E</author>
+            <author>Julius D</author>
+            <author>Cheng Y</author>
+        </authors_list>
+        <keywords>TRPV1 channel</keywords>
+    </admin>
+    <crossreferences>
+        <citation_list>
+            <primary_citation>
+                <journal_citation published="true">
+                    <author order="1">Liao M</author>
+                    <author order="2">Cao E</author>
+                    <author order="3">Julius D</author>
+                    <author order="4">Cheng Y</author>
+                    <title>Structure of the TRPV1 ion channel determined by electron cryo-microscopy</title>
+                    <journal>NATURE</journal>
+                    <volume>504</volume>
+                    <first_page>107</first_page>
+                    <last_page>112</last_page>
+                    <year>2013</year>
+                    <external_references type="PUBMED">24305160</external_references>
+                    <external_references type="DOI">doi:10.1038/nature12822</external_references>
+                </journal_citation>
+            </primary_citation>
+        </citation_list>
+        <pdb_list>
+            <pdb_reference>
+                <pdb_id>3j5p</pdb_id>
+                <relationship>
+                    <in_frame>FULLOVERLAP</in_frame>
+                </relationship>
+            </pdb_reference>
+            <pdb_reference>
+                <pdb_id>3j9j</pdb_id>
+                <relationship>
+                    <in_frame>FULLOVERLAP</in_frame>
+                </relationship>
+            </pdb_reference>
+        </pdb_list>
+        <auxiliary_link_list>
+            <auxiliary_link>
+                <link>http://dx.doi.org/10.6019/EMPIAR-10005</link>
+            </auxiliary_link>
+        </auxiliary_link_list>
+    </crossreferences>
+    <sample>
+        <name>Rat TRPV1</name>
+        <supramolecule_list>
+            <sample_supramolecule supramolecule_id="1000">
+                <name>Rat TRPV1</name>
+                <details>The sample was monodisperse.</details>
+                <oligomeric_state>tetramer</oligomeric_state>
+                <number_unique_components>1</number_unique_components>
+                <molecular_weight>
+                    <experimental units="MDa">0.3</experimental>
+                    <theoretical units="MDa">0.3</theoretical>
+                </molecular_weight>
+            </sample_supramolecule>
+        </supramolecule_list>
+        <macromolecule_list>
+            <protein_or_peptide macromolecule_id="1">
+                <name>TRPV1</name>
+                <natural_source database="NCBI">
+                    <organism ncbi="10116">Rattus norvegicus</organism>
+                    <synonym_organism>Rat</synonym_organism>
+                    <cellular_location>Plasma membrane</cellular_location>
+                </natural_source>
+                <molecular_weight>
+                    <experimental units="MDa">0.3</experimental>
+                    <theoretical units="MDa">0.3</theoretical>
+                </molecular_weight>
+                <details>Functional minimal construct containing residues 110-603 and 627-764.</details>
+                <number_of_copies>1</number_of_copies>
+                <oligomeric_state>Tetramer</oligomeric_state>
+                <recombinant_exp_flag>true</recombinant_exp_flag>
+                <recombinant_expression database="NCBI">
+                    <recombinant_organism ncbi="9606">Homo sapiens</recombinant_organism>
+                    <recombinant_cell>HEK293S GnTI</recombinant_cell>
+                    <recombinant_plasmid>pFastBac1</recombinant_plasmid>
+                </recombinant_expression>
+                <sequence>
+                    <external_references type="UNIPROTKB">O35433</external_references>
+                </sequence>
+            </protein_or_peptide>
+        </macromolecule_list>
+    </sample>
+    <structure_determination_list>
+        <structure_determination structure_determination_id="1">
+            <method>singleParticle</method>
+            <aggregation_state>particle</aggregation_state>
+            <specimen_preparation_list>
+                <single_particle_preparation preparation_id="1">
+                    <concentration units="mg/mL">0.3</concentration>
+                    <buffer>
+                        <ph>7.4</ph>
+                        <details>150 mM NaCl, 20 mM HEPES, 2 mM TCEP</details>
+                    </buffer>
+                    <grid>
+                        <details>400 mesh Quantifoil grid</details>
+                    </grid>
+                    <vitrification>
+                        <cryogen_name>ETHANE</cryogen_name>
+                        <chamber_humidity units="percentage">90</chamber_humidity>
+                        <chamber_temperature units="K">120</chamber_temperature>
+                        <instrument>FEI VITROBOT MARK III</instrument>
+                        <method>Blot for 6 sec</method>
+                    </vitrification>
+                </single_particle_preparation>
+            </specimen_preparation_list>
+            <microscopy_list>
+                <single_particle_microscopy microscopy_id="1">
+                    <microscope>FEI POLARA 300</microscope>
+                    <illumination_mode>FLOOD BEAM</illumination_mode>
+                    <imaging_mode>BRIGHT FIELD</imaging_mode>
+                    <electron_source>FIELD EMISSION GUN</electron_source>
+                    <acceleration_voltage units="kV">300</acceleration_voltage>
+                    <nominal_cs units="mm">2.0</nominal_cs>
+                    <nominal_defocus_min units="&#181;m">1.5</nominal_defocus_min>
+                    <nominal_defocus_max units="&#181;m">3.0</nominal_defocus_max>
+                    <nominal_magnification>31000.0</nominal_magnification>
+                    <calibrated_magnification>31000.0</calibrated_magnification>
+                    <specimen_holder_model>OTHER</specimen_holder_model>
+                    <details>Gatan K2 Summit in super-resolution counting mode. Motion correction as described in Li et al. (2013) Nature Methods.</details>
+                    <date>2013-01-01</date>
+                    <image_recording_list>
+                        <image_recording>
+                            <film_or_detector_model category="CCD">GATAN K2 (4k x 4k)</film_or_detector_model>
+                            <number_real_images>946</number_real_images>
+                            <average_electron_dose_per_image units="e/&#8491;^2">21</average_electron_dose_per_image>
+                            <details>Every image is the average of 30 frames recorded using the K2 Summit. The final reconstruction was calculated from images averaged from frames #3-#16.</details>
+                        </image_recording>
+                    </image_recording_list>
+                    <specimen_holder>Cooled to Liquid Nitrogen temperature</specimen_holder>
+                </single_particle_microscopy>
+            </microscopy_list>
+            <singleparticle_processing image_processing_id="1">
+                <details>3D classification, refinement, and reconstruction were performed using RELION.</details>
+                <ctf_correction>
+                    <details>Each particle</details>
+                </ctf_correction>
+                <final_reconstruction>
+                    <algorithm>OTHER</algorithm>
+                    <resolution res_type="BY AUTHOR" units="&#8491;">3.275</resolution>
+                    <resolution_method>OTHER</resolution_method>
+                    <software_list>
+                        <software>
+                            <name>RELION</name>
+                        </software>
+                    </software_list>
+                    <number_images_used>35645</number_images_used>
+                </final_reconstruction>
+            </singleparticle_processing>
+        </structure_determination>
+    </structure_determination_list>
+    <map format="CCP4" size_kbytes="65537">
+        <file>emd_5778.map.gz</file>
+        <symmetry>
+            <space_group>1</space_group>
+        </symmetry>
+        <data_type>IMAGE STORED AS FLOATING POINT NUMBER (4 BYTES)</data_type>
+        <dimensions>
+            <col>256</col>
+            <row>256</row>
+            <sec>256</sec>
+        </dimensions>
+        <origin>
+            <col>-128</col>
+            <row>-128</row>
+            <sec>-128</sec>
+        </origin>
+        <spacing>
+            <x>256</x>
+            <y>256</y>
+            <z>256</z>
+        </spacing>
+        <cell>
+            <a units="&#8491;">311.1936</a>
+            <b units="&#8491;">311.1936</b>
+            <c units="&#8491;">311.1936</c>
+            <alpha units="deg">90.0</alpha>
+            <beta units="deg">90.0</beta>
+            <gamma units="deg">90.0</gamma>
+        </cell>
+        <axis_order>
+            <fast>X</fast>
+            <medium>Y</medium>
+            <slow>Z</slow>
+        </axis_order>
+        <statistics>
+            <minimum>-13.64936447</minimum>
+            <maximum>26.520059589999999</maximum>
+            <average>0.0</average>
+            <std>1.0</std>
+        </statistics>
+        <pixel_spacing>
+            <x units="&#8491;">1.2156</x>
+            <y units="&#8491;">1.2156</y>
+            <z units="&#8491;">1.2156</z>
+        </pixel_spacing>
+        <contour_list>
+            <contour primary="true">
+                <level>7.0</level>
+                <source>AUTHOR</source>
+            </contour>
+        </contour_list>
+        <annotation_details>Structure of the capsaicin receptor, TRPV1. This map is direct output from RELION without sharpening using a negative temperature factor. The map was normalized using the program MAPMAN.</annotation_details>
+        <details>::::EMDATABANK.org::::EMD-5778::::</details>
+    </map>
+</emd>
