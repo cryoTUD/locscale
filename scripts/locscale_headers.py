@@ -25,15 +25,6 @@ for path in allpaths:
 path_to_ccpem = "/home/alok/soft/ccpem-20200424"
 path_to_ccp4="/home/alok/soft/ccp4-7.1/ccp4-7.1"
 
-def average_voxel_size(voxel_size_record):
-    apix_x = voxel_size_record.x
-    apix_y = voxel_size_record.y
-    apix_z = voxel_size_record.z
-    
-    average_apix = (apix_x+apix_y+apix_z)/3
-    
-    return average_apix
-
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
     
@@ -325,7 +316,9 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     refmap_data, grid = pdb_to_map(pdb_structure=pdb_structure, vsize=1,unitcell=unitcell, resolution=resolution, size=emmap_mrc.data.shape, return_grid=True)
     save_as_mrc(refmap_data,output_filename=reference_map, voxel_size_record=emmap_mrc.voxel_size, origin=emmap_mrc.header.origin)   
     
+    ## Might have to orient the output map
     
+    ## Add checkpoint: center of mass of pseudo-model, simulated map and original map, (2) correlation (3) Axis order
     if os.path.exists(reference_map):
         if verbose: 
             correlation = compute_real_space_correlation(emmap_data, refmap_data)
@@ -362,8 +355,7 @@ def run_refmap2(model_path,emmap_path,mask_path,verbose):
         print("Uhhu, something wrong with the Reference Map generation. Please check the log file")
         return None
 
-def run_mapmask(map_path):
-    mapmask_file =path_to_locscale +"/scripts/mapmask.sh"
+    
     
     command_line = "bash "+mapmask_file+" "+map_path
     print(command_line)
