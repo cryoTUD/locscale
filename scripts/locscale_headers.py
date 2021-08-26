@@ -10,7 +10,7 @@ from pam_headers import *
 import ipykernel
 from pseudomodel_analysis import *
 import pandas as pd
-from pdb_tools import *
+from emmer.pdb.pdb_tools import *
 
 paths = os.environ['PATH']
 allpaths = paths.split(':')
@@ -25,8 +25,16 @@ for path in allpaths:
 path_to_ccpem = "/home/alok/soft/ccpem-20200424"
 path_to_ccp4="/home/alok/soft/ccp4-7.1/ccp4-7.1"
 
+def average_voxel_size(voxel_size_record):
+    apix_x = voxel_size_record.x
+    apix_y = voxel_size_record.y
+    apix_z = voxel_size_record.z
+    
+    average_apix = (apix_x+apix_y+apix_z)/3
+    
+    return average_apix
 
-def run_FDR(emmap_path,window_size,verbose=True,filter_cutoff=None):
+def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
     
 
@@ -51,43 +59,58 @@ def run_FDR(emmap_path,window_size,verbose=True,filter_cutoff=None):
     # Preprocessing EM Map Path
     
     # Apply filter if filter_cutoff is not None
-    if filter_cutoff is not None:
-        filtered_emmap = apply_filter_to_map(emmap_path, filter_cutoff)
-        emmap_path = filtered_emmap
-        
-    path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
-    fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
-    
-    statistics = {}
-    statistics['window_size'] = window_size
-    statistics['fdr_script'] = path_to_FDR_script
-    statistics['fdr_command_line'] = fdr_command_line
-    
+
     if verbose:
         print("Now starting FDR procedure using the following parameters: \n"
-              "Window size: "+str(window_size)+"\n"
-              "FDR Script Location: \n"+path_to_FDR_script+
-              "FDR Command Line: \n"+fdr_command_line)
+                 "Window size: "+str(window_size)+"\n"
+                 "Filter cutoff: \n"+str(filter_cutoff))
+    
+                    
+    try:
+        ## First attempt to use Emmer package to compute FDR map
+        from emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+        emmap = mrcfile.open(emmap_path).data
+        voxel_size_record = mrcfile.open(emmap_path).voxel_size
+        apix = average_voxel_size(voxel_size_record)
+        fdr = fdr
+        fdr_mask, fdr_threshold = compute_FDR_confidenceMap_easy(
+            emmap, apix=apix, fdr=fdr, window_size=window_size, 
+            lowPassFilter_resolution=filter_cutoff)
         
+        emmap_path_without_ext = emmap_path[:-4]
+        mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
         
-    fdr_output = run(fdr_command_line.split(),stdout=PIPE)
-    emmap_name = emmap_path[:-4]
-    mask_path = emmap_name+"_confidenceMap.mrc"
-    if os.path.exists(mask_path):
-        mask_mrc = mrcfile.open(mask_path)
+        save_as_mrc(fdr_mask, output_filename=mask_path, 
+                    voxel_size_record=voxel_size_record)
+        
         if verbose:
-            print("FDR Procedure successful! \n"+
-                  "Mask Path: "+mask_path)
-        return mask_path 
-    else:
-        print("FDR procedure unsuccessful. Returning None")
-        return None
+            print("FDR Procedure completed. \n"+
+                  "Mask path: "+mask_path+"\n")
+            
+        return mask_path
         
+    
+    except:    
+        print("Could not use the FDRUtil python package. Reverting to ccpem version of FDRUtil")
+        path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
+        fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
+                   
+        fdr_output = run(fdr_command_line.split(),stdout=PIPE)
+        emmap_name = emmap_path[:-4]
+        mask_path = emmap_name+"_confidenceMap.mrc"
+        if os.path.exists(mask_path):
+            mask_mrc = mrcfile.open(mask_path)
+            if verbose:
+                print("FDR Procedure successful! \n"+
+                      "Mask Path: "+mask_path)
+            return mask_path 
+        else:
+            print("FDR procedure unsuccessful. Returning None")
+            return None
+            
 
 def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
     '''
-    
-
     Parameters
     ----------
     mask_path : string 
@@ -98,7 +121,7 @@ def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,aver
         Average protein density to calculate number of atoms. The default is 1.35.
     average_atomic_weight : float, optional
         Atomic weight of an "average atom present in protein". 
-        Found using 54% carbon, 20% oxygen and 16% nitrogen. The default is 12.066.
+        The default is 13.14. Found using calculating average atomic weight (molecular mass/num atoms) for 500 proteins.
     verbose : bool, optional
         Print statistics if True. The default is True.
 
@@ -106,7 +129,6 @@ def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,aver
     -------
     num_atoms : int
         Estimated number of atoms based on mask volume, protein density and average atomic weight
-    
 
     '''
     mask_mrc = mrcfile.open(mask_path)
@@ -125,8 +147,7 @@ def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,aver
     num_atoms = int((num_moles * Avogadro).round())
     maskshape = mask.shape
     mask_dims = [maskshape[0]*voxelsize,maskshape[1]*voxelsize,maskshape[2]*voxelsize]
-    
-    
+        
     if verbose:
         print("Mask parameters calculated are: \n"+
               "Mask volume: "+str(round(mask_vol_A3,3))+" A$^3$ \n"+
@@ -150,84 +171,6 @@ def create_pseudo_mask(emmap_path,threshold):
         maskmrc.voxel_size = emmap_mrc.voxel_size
         maskmrc.header.origin = emmap_mrc.header.origin
     return mask_path
-
-def run_pam_using_phenix(emmap_path,mask_path,threshold,num_atoms,method,g,bl,friction,scale_map,scale_lj,
-                         total_iterations,use_phenix,resolution,myoutput):
-    print("************************************************")
-    print(datetime.now())
-    if use_phenix is False:
-        mrc = mrcfile.open(emmap_path)
-        emmap = mrc.data
-        emmap = emmap.clip(min=0)
-        voxelsize = mrc.voxel_size.x
-        gz,gy,gx = np.gradient(emmap)
-        
-        mask = mrcfile.open(mask_path).data
-        pseudomodel = extract_model_from_mask(mask,num_atoms,threshold=threshold)
-        
-        print("Next, I'll add "+str(num_atoms)+" empty atoms at random points throughout the mask to generate a pseudo-atomic model. \n")
-        print("************************************************")
-        if method=='gradient':
-            arranged_points = main_solver3D(
-                emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
-                capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, path_for_gemmi_models=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
-                verbose=True,integration='verlet',myoutput=myoutput
-                )
-            mask_name = mask_path[:-4]
-            pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
-            arranged_points.write_pdb(pseudomodel_path)
-            #emmi_model_gradient = convert_to_gemmi_model(arranged_points.list,voxelsize=voxelsize)
-            #rite_pdb(gemmi_model_gradient,pseudomodel_path) 
-        
-        elif method=='kick':
-            arranged_points = main_solver_kick(
-                    pseudomodel,min_dist_in_angst=1.8,voxelsize=voxelsize,total_iterations=99,returnPointsOnly=True,verbose=True)
-            mask_name = mask_path[:-4]
-            pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
-            arranged_points.write_pdb(pseudomodel_path)
-            
-            #gemmi_model_kick = convert_to_gemmi_model(arranged_points.list,voxelsize=voxelsize)
-            #write_pdb(gemmi_model_kick,pseudomodel_path)
-    else:
-        # Generate helix_strands pdb file
-        # Covnert map to MTZ
-        
-        mask = mrcfile.open(mask_path).data
-        voxelsize = mrcfile.open(mask_path).voxel_size.x
-        mask_name = mask_path[:-4]
-        
-        mtz_filename = emmap_path[:-4]+".mtz"
-        command_line_map_to_mtz = "phenix.map_to_structure_factors "+emmap_path+" d_min="+str(resolution)+" output_file_name="+mtz_filename
-        print("Now running: \n")
-        print(command_line_map_to_mtz+'\n')
-        myoutput.write('\nPhenix Command Line: \n')
-        myoutput.write(command_line_map_to_mtz+'\n')
-        mtzoutput = run(command_line_map_to_mtz.split(),stdout=myoutput)
-        
-        # Convert MTZ to PDB
-        hs_pdb_filename = emmap_path[:-4]+"_helix_strand.pdb"
-        command_line_hs = "phenix.find_helices_strands "+mtz_filename+" output_model="+hs_pdb_filename
-        print("Now running: \n")
-        print(command_line_hs+'\n')
-        myoutput.write('\nPhenix Command Line: \n')
-        myoutput.write(command_line_hs+'\n')
-        mtzoutput = run(command_line_hs.split(),stdout=myoutput)
-        
-        print("Helices and Strands found. Now adding remaining atoms at random locations")
-        # Now add rest of atoms
-        helix_strand_model = get_model_from_gemmi_pdb(hs_pdb_filename,emmap_path)
-        num_helix_strand_atoms = len(helix_strand_model.list)
-        num_remaining_atoms = num_atoms - num_helix_strand_atoms
-        
-        remaining_model = extract_model_from_mask(mask,num_remaining_atoms,threshold=1,ignore_these=helix_strand_model.extract_mrc_positions())
-        for atom in remaining_model.list:
-             atom.pdb_position = atom.position.scale(voxelsize)
-        pseudomodel_path = mask_name+"_pseudomodel.pdb"
-        
-        remaining_model.combine(helix_strand_model)
-        remaining_model.write_pdb(pseudomodel_path)
-        #gemmi_model = convert_to_gemmi_model(remaining_model.list,voxelsize=voxelsize)
-        #write_pdb(gemmi_model,pseudomodel_path) 
 
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             g=None,friction=None,scale_map=None,scale_lj=None,total_iterations=100,verbose=True):
@@ -339,22 +282,54 @@ def run_refmac(model_path,model_name,map_path,resolution,maskdims,verbose=True):
     
     
     
-def run_refmap(model_path,emmap_path,mask_path,verbose=True):
+def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
+    '''
+    Function to obtain reference map using structure factors determined by atomic model.
+    This function uses gemmi.DensityCalculatorE() function to calculate a grid of intensities.
+    
+    Required modules: emmer
+
+    Parameters
+    ----------
+    model_path : str
+        path for atomic model 
+    emmap_path : str
+        path to emmap map
+    mask_path : str
+        path to mask 
+    verbose : bool, optional
+        The default is True.
+
+    Returns
+    -------
+    reference_map : str
+        Path to reference map generated.
+
+    '''
+    from emmer.pdb.pdb_to_map import pdb_to_map
+    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     if verbose: 
         print("Now simulating Reference Map using Refined Atomic Model")
     reference_map = model_path[:-4]+"_4locscale.mrc"
     emmap_mrc = mrcfile.open(emmap_path)
-    voxelsize = emmap_mrc.voxel_size.x
-    
-    mask_data = mrcfile.open(mask_path).data
-    refmap_data = pdb_to_map(pdb_path=model_path,vsize=voxelsize,set_zero_origin_and_crop=True,save_mrc_path=reference_map,remove_waters=False)
     emmap_data = emmap_mrc.data
+    voxelsize = average_voxel_size(emmap_mrc.voxel_size)
+    gemmi_map = gemmi.read_ccp4_map(emmap_path)
+    mask = mrcfile.open(mask_path).data
+    
+    pdb_structure = gemmi.read_structure(model_path)
+    
+    ## Generate parameters of the simulated map
+    unitcell = gemmi_map.grid.unit_cell
+    
+    refmap_data, grid = pdb_to_map(pdb_structure=pdb_structure, vsize=1,unitcell=unitcell, resolution=resolution, size=emmap_mrc.data.shape, return_grid=True)
+    save_as_mrc(refmap_data,output_filename=reference_map, voxel_size_record=emmap_mrc.voxel_size, origin=emmap_mrc.header.origin)   
     
     
     if os.path.exists(reference_map):
         if verbose: 
             correlation = compute_real_space_correlation(emmap_data, refmap_data)
-            masked_correlation = compute_real_space_correlation(emmap_data*mask_data, refmap_data*mask_data)
+            masked_correlation = compute_real_space_correlation(emmap_data*mask, refmap_data*mask)
             print("The reference map is at: "+reference_map+"\n\n")
             print("MAP STATISTICS: \n"+
                   "Real Space Correlation with EM Map: "+str(round(correlation,3))+"\n"+
