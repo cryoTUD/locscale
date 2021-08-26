@@ -1,0 +1,1 @@
+2021/08/26 11:59:43	2021/08/26 11:59:43	 28825/    -2	hpc04	/opt/ud/EMAN2.31/bin/e2proc3d.py EMD-5778-half-1.map emd_5778_full.mrc --addfile=EMD-5778-half-2.map --apix=1.2156
