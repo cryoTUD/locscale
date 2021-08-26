@@ -1,0 +1,45 @@
+1. Half maps (emd_half1 and emd_half2)
+2. Sharpened map
+3. Unsharpened map
+4. PDB 3j5p (cropped, centered, and unrefined)
+5. PDB 3j5p (cropped, centered, and refined)
+6. Pseudo-atomic model (kick)
+7. Pseudo-atomic model (gradient)
+8. Theoretical Profiles
+9. Average Profiles
+10. Processed: Confidence Map, Pseudo-atomic models, Reference Maps)
+11. Outputs: Locscale_v1, Locscale_v2, report_locscale_v2
+
+
+What to include in report? 
+> Unsharpened map radial profile
+> FDR output
+> Pseudo-atomic model outputs
+> REFMAC refinement outputs
+> Reference map generation output
+> LocScale outputs 
+
+Checks:
+
+1> Pseudo-atomic generation: 
+a) Num atoms
+b) Minimum bond length > threshold
+
+2> Refmac refinement
+a) B factor refinement *change from unrefined* 
+
+3> Reference Map generation
+a) Cross correlation between Reference Map and Sharpened map
+b) Axis order 
+c) Voxelsize, Unitcell
+
+4> LocScale output
+a) Wilson cutoff:
+b) Exponential fit cutoff
+c) Merge profiles output (sample 1000)
+d) local b factor correlation locscaled map vs reference map 
+e) Radial Profile LocScale versus Unsharpened Map
+
+
+
+
