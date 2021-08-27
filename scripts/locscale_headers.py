@@ -11,6 +11,8 @@ import ipykernel
 from pseudomodel_analysis import *
 import pandas as pd
 from emmer.pdb.pdb_tools import *
+import pprint
+from tabulate import tabulate
 
 paths = os.environ['PATH']
 allpaths = paths.split(':')
@@ -297,152 +299,65 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
         Path to reference map generated.
 
     '''
-    from emmer.pdb.pdb_to_map import pdb_to_map
-    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
+    from emmer.pdb.pdb_to_map import pdb2map
+    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
+    from emmer.ndimage.map_tools import get_center_of_mass
+    import pandas as pd
+    
     if verbose: 
         print("Now simulating Reference Map using Refined Atomic Model")
-    reference_map = model_path[:-4]+"_4locscale.mrc"
-    emmap_mrc = mrcfile.open(emmap_path)
-    emmap_data = emmap_mrc.data
-    voxelsize = average_voxel_size(emmap_mrc.voxel_size)
-    gemmi_map = gemmi.read_ccp4_map(emmap_path)
-    mask = mrcfile.open(mask_path).data
     
+    # Read inputs from filesystem
+    
+    emmap_data, grid_input = read_gemmi_map(emmap_path, return_grid=True)
+    mask = read_gemmi_map(mask_path)
     pdb_structure = gemmi.read_structure(model_path)
     
+    
     ## Generate parameters of the simulated map
-    unitcell = gemmi_map.grid.unit_cell
+    voxelsize = grid_input.spacing   
+    unitcell = grid_input.unit_cell
     
-    refmap_data, grid = pdb_to_map(pdb_structure=pdb_structure, vsize=1,unitcell=unitcell, resolution=resolution, size=emmap_mrc.data.shape, return_grid=True)
-    save_as_mrc(refmap_data,output_filename=reference_map, voxel_size_record=emmap_mrc.voxel_size, origin=emmap_mrc.header.origin)   
+    ## Simulate a reference map from the input atomic model in the pdb_structure variable
     
-    ## Might have to orient the output map
+    refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
+                                          return_grid=True, align_output=True)
+    
+    ## Output filename
+    reference_map_path = model_path[:-4]+"_4locscale.mrc"
+    save_as_mrc(map_data=refmap_data,output_filename=reference_map_path, apix=grid_simulated.spacing, origin=0)   
+    
+    ## Checklist: 
+    
+    correlation = compute_real_space_correlation(mrcfile.open(emmap_path).data, 
+                                                 mrcfile.open(reference_map_path).data)
+    
+    grid_comparison = compare_gemmi_grids(read_gemmi_map(emmap_path, return_grid=True)[1], 
+                                          read_gemmi_map(reference_map_path,return_grid=True)[1])
+    # Since grid comparison and correlation are critical, they are done on the saved filesystem 
+    # and not on the files in memory. This is to avoid any errors that might have happened during 
+    # save_as_mrc operation
+    
+    center_of_mass_experimental = get_center_of_mass(emmap_data,apix=grid_input.spacing)
+    center_of_mass_simulated = get_center_of_mass(refmap_data,apix=grid_simulated.spacing)
+    center_of_mass_atomic_model = pdb_structure[0].calculate_center_of_mass().tolist()
+    
+    reporter = {}
+    reporter['Model-map_Correlation'] = correlation    
+    reporter['COM:_Experimental_map'] = center_of_mass_experimental    
+    reporter['COM:_Simulated_map'] = center_of_mass_simulated    
+    reporter['COM:_Atomic_model'] = center_of_mass_atomic_model
+    reporter['Grid comparison'] = grid_comparison['final'].all()
     
     ## Add checkpoint: center of mass of pseudo-model, simulated map and original map, (2) correlation (3) Axis order
-    if os.path.exists(reference_map):
+    if os.path.exists(reference_map_path):
         if verbose: 
-            correlation = compute_real_space_correlation(emmap_data, refmap_data)
-            masked_correlation = compute_real_space_correlation(emmap_data*mask, refmap_data*mask)
-            print("The reference map is at: "+reference_map+"\n\n")
-            print("MAP STATISTICS: \n"+
-                  "Real Space Correlation with EM Map: "+str(round(correlation,3))+"\n"+
-                  "Real Space Correlation with EM Map (masked): "+str(round(masked_correlation,3))+"\n")
             
-        return reference_map
-    else:
-        print("Uhhu, something wrong with the Reference Map generation. Returning none")
-        return None
-    
-def run_refmap2(model_path,emmap_path,mask_path,verbose):
-    print("************************************************")
-    print(datetime.now())
-    print("Just one more step.. I shall now use the refined b factors from the Refmac step to generate a Reference Map, which can be used for locscale at this point!")
-    print("************************************************")
-    path_to_refmap_script = path_to_locscale+"/source/prepare_locscale_input.py"
-    refmap_command_line = "phenix.python "+path_to_refmap_script+" -mc "+model_path+" -em "+emmap_path+" -ma "+mask_path
-    print("Now running: \n")
-    print(refmap_command_line+'\n')
-
-    refmap_output = run(refmap_command_line.split(),stdout=PIPE)
-    reference_map = model_path[:-4]+"_4locscale.mrc"
-    new_emmap = emmap_path[:-4]+"_4locscale.mrc"
-    new_mask_path = mask_path[:-4]+"_4locscale.mrc"
-    
-    if os.path.exists(reference_map):
-        print("The reference map is at: "+reference_map+"\n\n")
-        return reference_map, new_emmap, new_mask_path
-    else:
-        print("Uhhu, something wrong with the Reference Map generation. Please check the log file")
-        return None
-
-    
-    
-    command_line = "bash "+mapmask_file+" "+map_path
-    print(command_line)
-    output =run(command_line.split(),stdout=PIPE)
-    output_map = "xyz_"+map_path
-    if os.path.exists(output_map):
-        print("MAPMASK succesful")
-        return output_map
-    else:
-        print("MAPMASK unsuccessful")
-        return None
-def run_locscale(emmap_path,refmap_path,apix,wsize,myoutput):
-    print("************************************************")
-    print(datetime.now())
-    print("Now for the final step: Locscale! \n ")
-    print("************************************************")
-    path_to_run_locscale = path_to_locscale+"/scripts/run_locscale.zsh"
-    directory = '/'.join(emmap_path.split(sep='/')[:-1])
-    emmap_name = emmap_path.split(sep='/')[-1]
-    refmap_name = refmap_path.split(sep='/')[-1]
-    xyz_emmap_path = directory+'xyz_'+emmap_name
-    xyz_refmap_path = directory+'xyz_'+refmap_name
-    locscale_command_line = "zsh "+path_to_run_locscale+" "+emmap_path+" "+xyz_emmap_path+" "+refmap_path+" "+xyz_refmap_path+" "+str(apix)+" "+str(wsize)+" "+path_to_ccpem+" "+path_to_ccp4
-    print("Now running: \n")
-    print(locscale_command_line+'\n')    
-    myoutput.write('\nLocscale Command Line: \n')
-    myoutput.write(locscale_command_line+'\n')
-    run(locscale_command_line.split(),stdout=myoutput)
-
-
-def launch_locscalev02(args):
-    print("***** Welkom to Locscale version 0.2! ***** \n Now you can sharpen your boring and blurry EM density maps *WITHOUT* needing a reference map to start with! I hope you selected an unfiltered EM map while runnning me!\n\n")
-    emmap_path = args.em_map
-    method = args.method
-    print("You can find the detailed verbose outout in the file locscale_output.txt stored in this same folder. ")
-    directory = '/'.join(emmap_path.split(sep='/')[:-1])
-    emmap_name = emmap_path[:-4]
-    output_filepath = directory+emmap_name+'_locscale_output.txt'
-    myoutput = open(output_filepath,'w+')
-    #sys.stdout = myoutput
-
-    resolution = round(float(args.resolution),2)
-    wsize_fdr = int(args.wsize_fdr)
-    wsize_locscale = int(args.wsize_locscale)
-    g = int(args.gradient_scale)
-    bl = float(args.bond_length)
-    friction = float(args.friction)
-    scale_map = float(args.scale_map)
-    scale_lj = float(args.scale_lj)
-    only_pseudo = bool(args.only_pseudo)
-    total_iterations = int(args.total_iterations)
-    mask_threshold = float(args.threshold)
-    use_phenix = bool(args.use_phenix)
-    
-    if not only_pseudo:
-        mask_path,mask_mrc = run_FDR(emmap_path,wsize_fdr,myoutput)
-        num_atoms,voxelsize,maskdims = measure_mask_parameters(args,mask_mrc,mask_threshold)
-        pseudomodel_path = run_pam(emmap_path,mask_path,mask_threshold,num_atoms,method,g,bl,friction,scale_map,scale_lj,total_iterations,use_phenix,resolution,myoutput)
-    
-    if only_pseudo:
-        if args.mask_path is not None:
-            mask_path = args.mask_path
-            mask_mrc = mrcfile.open(mask_path)
-            num_atoms,voxelsize,maskdims = measure_mask_parameters(args,mask_mrc,mask_threshold)
-            pseudomodel_path = run_pam(emmap_path,mask_path,mask_threshold,num_atoms,method,g,bl,friction,scale_map,scale_lj,total_iterations,use_phenix,resolution,myoutput)
+            print("The reference map is at: "+reference_map_path+"\n\n")
+            pprint.pprint(reporter)
             
-        elif args.num_atoms is not None:
-            num_atoms = int(args.nrandom_placeum_atoms)
-            mask_path = create_pseudo_mask(emmap_path,float(args.threshold))
-            voxelsize = mrcfile.open(emmap_path).voxel_size.x
-            mask = mrcfile.open(mask_path).data
-            maskshape = mask.shape
-            maskdims = [maskshape[0]*voxelsize,maskshape[1]*voxelsize,maskshape[2]*voxelsize]
-            pseudomodel_path = run_pam(emmap_path,mask_path,0.99,num_atoms,method,g,bl,friction,scale_map,scale_lj,total_iterations,use_phenix,resolution,myoutput)
+        return reference_map_path
+    else:
+        print("Reference map was not generated. Returning none")
+        return None
     
-    
-    
-    if not only_pseudo:
-        refined_model_path = run_refmac(pseudomodel_path,pseudomodel_path[:-4],emmap_path,resolution,maskdims,myoutput)
-        
-        reference_map_path = run_refmap(refined_model_path,emmap_path,mask_path,myoutput)
-        emmap_path_4locscale = emmap_path[:-4]+'_4locscale.mrc'
-        
-        run_locscale(emmap_path_4locscale,reference_map_path,voxelsize,wsize_locscale,myoutput)
-    
-    if os.path.exists('loc_scale.mrc'):
-        print('Locscale procedure completed. You can find your scaled map here >>>> '+os.getcwd()+'/loc_scale.mrc')
-    
-    print("********************* THE END *****************************")
-    myoutput.close()
