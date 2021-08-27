@@ -1,17 +1,8 @@
 import numpy as np
-import string
-import gemmi
-import matplotlib.pyplot as plt 
-import matplotlib.image as image
-from time import time
-import mrcfile
-import random
-import math
-from scipy.constants import Avogadro
-import pandas as pd
+
 from sklearn.neighbors import KDTree
 from scipy import spatial
-import os,sys
+
 from skimage.color import rgb2gray
 from scipy import spatial
 from subprocess import call, Popen, PIPE, run
@@ -22,61 +13,6 @@ from scipy.interpolate import interpn
 from emmer.pdb.pdb_tools import *
 from datetime import datetime
 from pseudomodel_analysis import *
-
-'''
-def add_residue(model, chain_num, res_num):
-    model[chain_num].add_residue(gemmi.Residue(),res_num)
-    model[chain_num][res_num].name = 'HOH'
-    model[chain_num][res_num].seqid.num = res_num
-
-    return model
-
-def add_atom(model, chain_num, res_num, atom_num,position,voxelsize,b_factor=20,occupancy=1):
-    if len(position) == 2:
-        position = np.array([position[0],position[1],0])
-    atom = gemmi.Atom()
-    atom.element = gemmi.Element('O')
-    atom.pos = gemmi.Position(position[0]*voxelsize,position[1]*voxelsize,position[2]*voxelsize)
-    atom.b_iso = b_factor
-    atom.occ = occupancy
-    
-    model[chain_num][res_num].add_atom(atom,atom_num)
-
-ci
-def write_pdb(pseudomodel,output_string):
-    structure = gemmi.Structure()
-    structure.add_model(pseudomodel)
-    structure.write_pdb(output_string)
-
-def convert_to_gemmi_model(points,voxelsize,b_factor_array=None,occupancy_array=None):
-    np_points = np.array([x.position.get() for x in points])
-    model = gemmi.Model('pseudo')
-    chain_letters = list(string.ascii_uppercase)
-    chain_count = 0
-    res_count = 0
-    atom_count = 0
-    model.add_chain(chain_letters[chain_count])
-    model = add_residue(model,chain_count,res_count)
-    if b_factor_array is None:
-        b_factor_array = np.ones(len(points))*20
-    if occupancy_array is None:
-        occupancy_array = np.ones(len(points))
-    for ix,point in enumerate(np_points):
-        model = add_atom(model,chain_count,res_count,atom_count,point,voxelsize,b_factor_array[ix],occupancy_array[ix])
-        atom_count += 1
-        res_count += 1
-        model = add_residue(model,chain_count,res_count)
-            
-        if atom_count % 9999 == 0:
-            chain_count += 1
-            model.add_chain(chain_letters[chain_count])
-            res_count = 0
-            model = add_residue(model,chain_count,res_count)
-    
-    return model
-
-'''
-
 
 class Vector:
     def __init__(self,input_array):
@@ -522,126 +458,5 @@ def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iteratio
     else:
         return pseudomodel, number_of_contacts
 
-def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
-    dim = vol.shape
-    m = np.mod(vol.shape,2)
-    # make compliant with both fftn and rfftn
-    if center is None:
-        ps = np.abs(np.fft.fftshift((np.fft.fftn(vol))))
-        z, y, x = np.indices(ps.shape)
-        center = tuple((a - 1) / 2.0 for a in ps.shape[::-1])
-        radii = np.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
-        radii = radii.astype(np.int)
-    else:
-        ps = np.abs( np.fft.rfftn(vol) )
-        if not return_indices:
-            x, y, z = np.indices(ps.shape)
-            radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(np.int)
-        else:
-            [x, y, z] = np.mgrid[-dim[0]//2+m[0]:(dim[0]-1)//2+1, -dim[1]//2+m[1]:(dim[1]-1)//2+1, 0:dim[2]//2+1]
-            x = np.fft.ifftshift(x)
-            y = np.fft.ifftshift(y)
-            radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(np.int)
-    radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
-    # exclude corner frequencies
-    radial_profile = radial_profile[0:int(ps.shape[0]/2)]
-    if not return_indices:
-        return radial_profile
-    else:
-        return radial_profile, radii
-    
-def compute_and_plot_radial_profiles_from_gemmi_pdb(paths_to_pdb,path_to_refmap_script,emmap_path,mask_path,apix):
-    colors = ['r','g','b','k','w']
-    radial_profiles = []
-    maps = []
-    for i,path in enumerate(paths_to_pdb):
-        command_line = "phenix.python "+path_to_refmap_script+" -mc "+path+" -em "+emmap_path+" -ma "+mask_path
-        os.system(command_line)
-        modelmap_path = path[:-4]+'_4locscale.mrc'
-        model_map = mrcfile.open(modelmap_path).data
-        radial_profile = compute_radial_profile(model_map)
-        freq = np.linspace(1./(float(apix)*radial_profile.shape[0]), 1./(float(apix)*2), radial_profile.shape[0],endpoint=True)
-        #plt.subplot(1,2,1)
-        #plt.plot(freq,radial_profile/radial_profile.max(),colors[i])
-        #plt.subplot(1,2,2)2156
-        plt.plot(freq[30:],radial_profile[30:]/radial_profile.max(),colors[i])
-        radial_profiles.append(radial_profile)
-        maps.append(model_map)
-    return maps,radial_profiles
 
-
-def compute_radial_profile_from_mrcs(mrc_paths,keys=None,slice_index=30):
-    if keys is None:
-        keys = mrc_paths
-    
-    mrcs = []
-    for mrc in mrc_paths:
-        mrcs.append(mrcfile.open(mrc))
-    
-    k = 0
-    emmaps = {}
-    radial_profiles = {}
-    freq={}
-    
-    for mrc in mrcs:
-        emmaps[keys[k]] = mrc.data
-        k += 1
-    for key in keys:
-        radial_profiles[key] = compute_radial_profile(emmaps[key])
-        radial_profiles[key] /= radial_profiles[key].max()
-    k = 0
-    for key in keys:
-        shapes = radial_profiles[key].shape[0]
-        apix = mrcs[k].voxel_size.x
-        freq[key] = np.linspace(1./(float(apix)*shapes), 1./(float(apix)*2), shapes,endpoint=True)
-        k += 1 
-    
-    for key in keys:
-        plt.plot(freq[key][slice_index:],radial_profiles[key][slice_index:])
-    plt.legend(keys)
-    
-    for key in keys:
-        radial_profiles[key] = tuple([freq,radial_profiles[key]])
-    return radial_profiles, emmaps
-    
-        
-
-def add_cryst1_line(pdb_path,unitcell=None,emmap_path=None,new_pdb_path=None):
-    '''
-    pdb_path -> Address of .pdb path
-         
-    Some PDB files developed for cryoEM maps do not have proper cryst1 record. Two options to modify:
-
-    1. From an input tuple, or array. In this case, unitcell is a python tuple, which has unit cell dimensions in angstorm
-    Ex: unitcell = (x,y,z)
-    2. From a mrcfile. In this case, point to an associated EM map and the unit cell dimensions are taken from that
-    emmap_path -> Address of associated .mrc file
-    
-    If you like to save the pdb file with a different name, or address then change the 'new_pdb_path' 
-    
-    '''
-    if emmap_path is not None:
-        mrc = mrcfile.open(emmap_path)
-        cella = mrc.header.cella
-        x = cella.x
-        y = cella.y
-        z = cella.z
-    elif unitcell is not None:
-        x = unitcell[0]
-        y = unitcell[1]
-        z = unitcell[2]
-    else:
-        print("Please give either unit cell dimensions (in Ang) or point to an associated mrc file!")
-        return
-    
-    unitcell = gemmi.UnitCell(x,y,z,90,90,90)
-    
-    gemmi_structure = gemmi.read_pdb(pdb_path)
-    gemmi_structure.cell = unitcell
-    if new_pdb_path is None:
-        gemmi_structure.write_pdb(pdb_path)
-    else:
-        gemmi_structure.write_pdb(new_pdb_path)
     

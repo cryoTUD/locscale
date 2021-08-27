@@ -172,6 +172,7 @@ def get_theoretical_profile(length,apix):
     resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,
                                           xlims=frequency_limits)
     return resampled_helix_profile
+
 def get_modmap_from_pseudomodel(args):
     emmap_mrc = mrcfile.open(args.em_map)
     resolution = float(args.resolution)
@@ -205,18 +206,21 @@ def get_modmap_from_pseudomodel(args):
         return None
     
     #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
-    pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path,
-                                    verbose=verbose)
+    pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap(model_path=refined_model_path, 
+                                                                 emmap_path=args.em_map, 
+                                                                 mask_path=mask_path, verbose=verbose)
     
     if pseudomodel_modmap is None:
         print("Problem simulating map from refined model. Returning None")
         return None
     
     # MAPMASK
-    pseudomodel_modmap_xyz, new_emmap_path_xyz,new_mask_path_xyz = run_mapmask(pseudomodel_modmap),run_mapmask(new_emmap_path),run_mapmask(new_mask_path)
+    pseudomodel_modmap_xyz = run_mapmask(pseudomodel_modmap)
+    new_emmap_path_xyz = run_mapmask(new_emmap_path)
+    new_mask_path_xyz = run_mapmask(new_mask_path)
     
     
-    if pseudomodel_modmap is None:
+    if pseudomodel_modmap_xyz is None:
         print("Could not finish MAPMASK")
         return None
     else:
