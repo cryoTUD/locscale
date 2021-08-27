@@ -1,5 +1,3 @@
-import numpy as np
-
 from sklearn.neighbors import KDTree
 from scipy import spatial
 
@@ -7,105 +5,13 @@ from skimage.color import rgb2gray
 from scipy import spatial
 from subprocess import call, Popen, PIPE, run
 from scipy.signal import correlate
-import pandas as pd
+
 from math import pi as pi
+import math
 from scipy.interpolate import interpn
 from emmer.pdb.pdb_tools import *
 from datetime import datetime
 from pseudomodel_analysis import *
-
-class Vector:
-    def __init__(self,input_array):
-        self.x = input_array[0]
-        self.y = input_array[1]
-        self.z = input_array[2]
-    def get(self):
-        return np.array([self.x,self.y,self.z])
-    def magnitude(self):
-        return math.sqrt(self.x**2+self.y**2+self.z**2)
-    def cap_magnitude(self,cap):
-        mag = self.magnitude()
-        if mag > cap:
-            factor= cap/mag
-            return self.scale(factor)
-        else:
-            return self
-    
-    def scale(self,scale):
-        return Vector(scale*self.get())
-
-def add_Vector(vector_a,vector_b):
-        return Vector(vector_a.get() + vector_b.get())
-
-d_type = [('pos',tuple),('vel',tuple),('acc',tuple)]
-
-class Atom:
-    def __init__(self,init_pos):
-        self.id = 0
-        self.position = Vector(init_pos)
-        self.pdb_position = Vector(np.array([0,0,0]))
-        self.velocity = Vector(np.array([0,0,0]))    
-        self.acceleration = Vector(np.array([0,0,0]))
-        self.mass = 1 # Mass factor - not in real units! 
-        self.nearest_neighbor = math.inf
-        self.gradient_acceleration_magnitude = 0
-        self.lj_acceleration_magnitude = 0
-        self.relative_acceleration = 0
-        self.map_value = 0
-        self.bfactor = 20
-        self.occ = 1
-        self.position_history = [self.position.get()]
-        self.velocity_history = [self.velocity.get()]
-        self.acceleration_history = [self.acceleration.get()]
-        self.map_value_history = [self.map_value]
-        
-    def get_distance_vector(self,target):
-        distance_vector = Vector(np.array(self.position.get() - target.position.get()))
-        return distance_vector
-    
-    def angle_wrt_horizontal(self,target):
-        return math.atan2(target.position.y - self.position.y, target.position.x - self.position.x)
-    
-    def velocity_from_acceleration(self,dt):
-        vx = self.velocity.x + self.acceleration.x*dt
-        vy = self.velocity.y + self.acceleration.y*dt
-        vz = self.velocity.z + self.acceleration.z*dt
-       # print('velocity: '+str(tuple([vx,vy])))
-        self.velocity = Vector(np.array([vx,vy,vz]))
-        
-    def position_from_velocity(self,dt):
-        x = self.position.x + self.velocity.x*dt
-        y = self.position.y + self.velocity.y*dt
-        z = self.position.z + self.velocity.z*dt
-        self.position = Vector(np.array([x,y,z]))
-    def verlet_integration(self,dt):
-        ## Update positions
-        
-        r_now = self.position_history[-1]
-        r_prev = self.position_history[-2]
-        a_now = self.acceleration.get()
-        
-        r_next = 2 * r_now - r_prev + a_now * dt**2
-        
-        self.position = Vector(r_next)
-        
-        # Update velocities 
-        
-        v_next = (r_next - r_prev) / (2*dt)
-        
-        self.velocity = Vector(v_next)
-        
-    def update_history(self):
-        self.position_history.append(self.position.get())
-        self.velocity_history.append(self.velocity.get())
-        self.acceleration_history.append(self.acceleration.get())
-        self.map_value_history.append(self.map_value)
-    
-    def copy(self):
-        position = self.position.get()
-        newPoint = Atom(position)
-        newPoint.pdb_position = self.pdb_position
-        return newPoint
 
 def value_at_point(g,x,y,z):
     return g[z,y,x]
@@ -154,7 +60,6 @@ def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
 
 def get_acceleration_from_lj_potential(targetpoint,lj_neighbors,epsilon,min_dist_in_pixel,lj_factor,capmagnitude_lj):
     #print(lj_factor)
-    tic = time()
 
     lj_neighbors_points = [x.position.get() for x in lj_neighbors]
     distance_vector = targetpoint.position.get() - lj_neighbors_points
@@ -210,7 +115,7 @@ def get_neighborhood(points,min_dist_in_pixel,fromArray=False,only_neighbors=Fal
     rerturn a dictionary of neighborhoods. If only_neighbors is true, then only distance to neighbor is sent. Else, distance to neighbor and the indices of all nearest neighbors (distance of min_dist * 3 ) is sent
     '''
     
-    tic = time()
+
     if fromArray==False:
         np_points = np.array([list(x.position.get()) for x in points])
     else:
@@ -238,6 +143,7 @@ def average_map_value(points):
         sum_map_value += point.map_value
     average_mapvalue = sum_map_value/len(points)
     return average_mapvalue
+
 
 def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxelsize,
                   dt=0.05,capmagnitude_lj=400,epsilon=1,scale_lj=1,lj_factor=1,capmagnitude_map=100,scale_map=1,total_iterations=50, 
@@ -356,7 +262,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
                       "\t | \t "+str(all_bond_lengths.min())+
                       "\t | \t "+str(map_values[iter]))    
             
-    
+    pseudomodel.voxelsize = voxelsize
+    pseudomodel.update_pdb_positions(voxelsize)
     if returnPointsOnly == True:
         return pseudomodel    
     else:
@@ -385,6 +292,8 @@ def find_and_kick(points_array,kicklist,kick):
         A numpy array, where each element in the array has a coordinate information of disturbed point clouds
 
     '''
+    import random
+    
     N = len(kicklist)
     points_array = np.array(points_array,dtype=float)
     for i in range(N):

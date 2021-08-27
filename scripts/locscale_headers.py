@@ -12,7 +12,6 @@ from pseudomodel_analysis import *
 import pandas as pd
 from emmer.pdb.pdb_tools import *
 import pprint
-from tabulate import tabulate
 
 paths = os.environ['PATH']
 allpaths = paths.split(':')
@@ -48,6 +47,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         mrcfile object which contains volume and header information about the mask
 
     '''
+    import os, sys
     
     # Preprocessing EM Map Path
     
@@ -70,20 +70,26 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
             emmap, apix=apix, fdr=fdr, window_size=window_size, 
             lowPassFilter_resolution=filter_cutoff)
         
+        print("FDR threshold found to be: \t", fdr_threshold)
         emmap_path_without_ext = emmap_path[:-4]
         mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
         
         save_as_mrc(fdr_mask, output_filename=mask_path, 
-                    voxel_size_record=voxel_size_record)
+                    apix=voxel_size_record.tolist(), origin=0)
         
-        if verbose:
-            print("FDR Procedure completed. \n"+
-                  "Mask path: "+mask_path+"\n")
+        if os.path.exists(mask_path):
+            if verbose:
+                print("FDR Procedure completed. \n"+
+                      "Mask path: "+mask_path+"\n")
             
-        return mask_path
+            return mask_path
+        else:
+            print("FDR process failed. Returning none")
+            return None
         
     
     except:    
+        print(sys.exc_info())
         print("Could not use the FDRUtil python package. Reverting to ccpem version of FDRUtil")
         path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
         fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
@@ -102,7 +108,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
             return None
             
 
-def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
+def measure_mask_parameters(mask_path,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
     '''
     Parameters
     ----------
@@ -124,17 +130,20 @@ def measure_mask_parameters(mask_path,edge_threshold=1,protein_density=1.35,aver
         Estimated number of atoms based on mask volume, protein density and average atomic weight
 
     '''
+    from scipy.constants import Avogadro
+    from emmer.ndimage.map_utils import average_voxel_size
+    
     mask_mrc = mrcfile.open(mask_path)
-    voxelsize = mask_mrc.voxel_size.x
+    voxelsize = average_voxel_size(mask_mrc.voxel_size)
+    
     ang_to_cm = 1e-8
     mask = mask_mrc.data
     mask.setflags(write=1)
-    mask[mask<edge_threshold] = 0
-    mask[mask>=edge_threshold] = 1
+    mask[mask<0.5] = 0
+    mask[mask>=0.5] = 1
     mask_vol = mask.sum()*(voxelsize*ang_to_cm)**3
     mask_vol_A3 = mask.sum()*voxelsize**3
-    #print("\n Volume of the mask generated is: "+str(mask.sum())+" A$^3$ \n")
-    # Calculate number of atoms
+    
     protein_mass = protein_density * mask_vol
     num_moles = protein_mass / average_atomic_weight
     num_atoms = int((num_moles * Avogadro).round())
@@ -226,7 +235,15 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     if verbose:
         print("Running pseudoatomic model generator to add "+str(num_atoms)+" atoms inside the volume using the method: "+method)
     if method=='gradient':
-        
+        if g is None:
+            g = 10
+        if scale_lj is None:
+            scale_lj = 1
+        if scale_map is None:
+            scale_map = 1
+        if friction is None:
+            friction = 10
+            
         gz,gy,gx = np.gradient(emmap)
         arranged_points = main_solver3D(
             emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
@@ -235,7 +252,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
 
-    elif method=='random_placement_with_kick':
+    elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
                 pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=99,returnPointsOnly=True,verbose=True)
         mask_name = mask_path[:-4]

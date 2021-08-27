@@ -11,6 +11,100 @@ Created on Thu Oct 15 23:54:49 2020
 from pam_headers import *
 from emmer.pdb.pdb_tools import *
 
+
+class Vector:
+    def __init__(self,input_array):
+        self.x = input_array[0]
+        self.y = input_array[1]
+        self.z = input_array[2]
+    def get(self):
+        return np.array([self.x,self.y,self.z])
+    def magnitude(self):
+        return math.sqrt(self.x**2+self.y**2+self.z**2)
+    def cap_magnitude(self,cap):
+        mag = self.magnitude()
+        if mag > cap:
+            factor= cap/mag
+            return self.scale(factor)
+        else:
+            return self
+    
+    def scale(self,scale):
+        return Vector(scale*self.get())
+
+def add_Vector(vector_a,vector_b):
+        return Vector(vector_a.get() + vector_b.get())
+
+d_type = [('pos',tuple),('vel',tuple),('acc',tuple)]
+
+class Atom:
+    def __init__(self,init_pos):
+        self.id = 0
+        self.position = Vector(init_pos)
+        self.pdb_position = Vector(np.array([0,0,0]))
+        self.velocity = Vector(np.array([0,0,0]))    
+        self.acceleration = Vector(np.array([0,0,0]))
+        self.mass = 1 # Mass factor - not in real units! 
+        self.nearest_neighbor = math.inf
+        self.gradient_acceleration_magnitude = 0
+        self.lj_acceleration_magnitude = 0
+        self.relative_acceleration = 0
+        self.map_value = 0
+        self.bfactor = 20
+        self.occ = 1
+        self.position_history = [self.position.get()]
+        self.velocity_history = [self.velocity.get()]
+        self.acceleration_history = [self.acceleration.get()]
+        self.map_value_history = [self.map_value]
+        
+    def get_distance_vector(self,target):
+        distance_vector = Vector(np.array(self.position.get() - target.position.get()))
+        return distance_vector
+    
+    def angle_wrt_horizontal(self,target):
+        return math.atan2(target.position.y - self.position.y, target.position.x - self.position.x)
+    
+    def velocity_from_acceleration(self,dt):
+        vx = self.velocity.x + self.acceleration.x*dt
+        vy = self.velocity.y + self.acceleration.y*dt
+        vz = self.velocity.z + self.acceleration.z*dt
+       # print('velocity: '+str(tuple([vx,vy])))
+        self.velocity = Vector(np.array([vx,vy,vz]))
+        
+    def position_from_velocity(self,dt):
+        x = self.position.x + self.velocity.x*dt
+        y = self.position.y + self.velocity.y*dt
+        z = self.position.z + self.velocity.z*dt
+        self.position = Vector(np.array([x,y,z]))
+    def verlet_integration(self,dt):
+        ## Update positions
+        
+        r_now = self.position_history[-1]
+        r_prev = self.position_history[-2]
+        a_now = self.acceleration.get()
+        
+        r_next = 2 * r_now - r_prev + a_now * dt**2
+        
+        self.position = Vector(r_next)
+        
+        # Update velocities 
+        
+        v_next = (r_next - r_prev) / (2*dt)
+        
+        self.velocity = Vector(v_next)
+        
+    def update_history(self):
+        self.position_history.append(self.position.get())
+        self.velocity_history.append(self.velocity.get())
+        self.acceleration_history.append(self.acceleration.get())
+        self.map_value_history.append(self.map_value)
+    
+    def copy(self):
+        position = self.position.get()
+        newPoint = Atom(position)
+        newPoint.pdb_position = self.pdb_position
+        return newPoint
+
 class Model:
     def __init__(self,points_list):
         self.list = points_list       
@@ -105,31 +199,31 @@ class Model:
         self.list = combined_list
        
     def convert_to_gemmi_model(self):
-         model = gemmi.Model('pseudo')
-         chain_letters = list(string.ascii_uppercase)
-         chain_count = 0
-         res_count = 0
-         atom_count = 0
-         model.add_chain(chain_letters[chain_count])
-         model = self.add_residue(model,chain_count,res_count)
-         for atom in self.list:
-             model = self.add_atom(model,chain_count,res_count,atom_count,atom)
-             atom_count += 1
-             res_count += 1
-             model = self.add_residue(model,chain_count,res_count)
+        import string
+        model = gemmi.Model('pseudo')
+        chain_letters = list(string.ascii_uppercase)
+        chain_count = 0
+        res_count = 0
+        atom_count = 0
+        model.add_chain(chain_letters[chain_count])
+        model = self.add_residue(model,chain_count,res_count)
+        for atom in self.list:
+            model = self.add_atom(model,chain_count,res_count,atom_count,atom)
+            atom_count += 1
+            res_count += 1
+            model = self.add_residue(model,chain_count,res_count)
                  
-             if atom_count % 9999 == 0:
-                 chain_count += 1
-                 model.add_chain(chain_letters[chain_count])
-                 res_count = 0
-                 model = self.add_residue(model,chain_count,res_count)
-         
-         return model
+            if atom_count % 9999 == 0:
+                chain_count += 1
+                model.add_chain(chain_letters[chain_count])
+                res_count = 0
+                model = self.add_residue(model,chain_count,res_count)
+        
+        return model
     
     def add_atom(self,model, chain_num, res_num, atom_num, pseudoAtom):
          
          if pseudoAtom.pdb_position.magnitude() == 0:
-              
               position = pseudoAtom.position.get()
          else:
               position = pseudoAtom.pdb_position.get()
@@ -177,6 +271,7 @@ class Model:
 
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     from pam_headers import Atom
+    import random
     
     all_inside_mask = np.asarray(np.where(mask>=threshold)).T.tolist()
     all_inside_set = set([tuple(x) for x in all_inside_mask])
