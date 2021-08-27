@@ -239,21 +239,6 @@ def average_map_value(points):
     average_mapvalue = sum_map_value/len(points)
     return average_mapvalue
 
-def compute_real_space_correlation(map1,map2):
-    '''
-    map1 and map2 are both numpy arrays with same of shape (H,B,W)
-    output: RSCC which compares the cross correlation (normalised) between the two maps
-    
-    '''
-    (map1_mean,map1_std) = (map1.mean(),map1.std())
-    (map2_mean,map2_std) = (map2.mean(),map2.std())
-    
-    n = map1.size
-    
-    RSCC = (((map1-map1_mean)*(map2-map2_mean))/(map1_std*map2_std)).sum() * (1/n)
-    
-    return RSCC
-
 def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxelsize,
                   dt=0.05,capmagnitude_lj=400,epsilon=1,scale_lj=1,lj_factor=1,capmagnitude_map=100,scale_map=1,total_iterations=50, 
                   path_for_gemmi_models=None,emmap_path=None,mask_path=None,returnPointsOnly=True,verbose=False,
