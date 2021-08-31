@@ -35,7 +35,7 @@ cmdl_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window s
 cmdl_parser.add_argument('-bl', '--bond_length', type=float, help='For pseudo-atomic model: bond length')
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method')
 cmdl_parser.add_argument('-it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations')
-
+cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map')
 cmdl_parser.add_argument('-v', '--verbose', default=False,
                          help='Verbose output')
 
@@ -199,14 +199,16 @@ def get_modmap_from_pseudomodel(args):
         print("Problem running pseudo-atomic model generator. Returning None")
         return None
     
+    globally_sharpened_map = prepare_sharpen_map(args.em_map)
+    
     refined_model_path = run_refmac(model_path=pseudomodel_path, model_name=pseudomodel_path[:-4], 
-                                    map_path=args.em_map, resolution=resolution, maskdims=mask_dims,verbose=verbose)
+                                    map_path=globally_sharpened_map, resolution=resolution, maskdims=mask_dims,verbose=verbose)
     if refined_model_path is None:
         print("Problem running REFMAC. Returning None")
         return None
     
     #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
-    pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap(model_path=refined_model_path, 
+    pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
                                                                  emmap_path=args.em_map, 
                                                                  mask_path=mask_path, verbose=verbose)
     

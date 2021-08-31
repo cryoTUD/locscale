@@ -26,6 +26,27 @@ for path in allpaths:
 path_to_ccpem = "/home/alok/soft/ccpem-20200424"
 path_to_ccp4="/home/alok/soft/ccp4-7.1/ccp4-7.1"
 
+def prepare_sharpen_map(emmap_path):
+    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_b_factor_from_profiles, frequency_array
+    from emmer.ndimage.map_utils import average_voxel_size
+    from emmer.ndimage.map_tools import sharpen_maps
+    
+    emmap_mrc = mrcfile.open(emmap_path)
+    emmap_unsharpened = emmap_mrc.data
+    apix=average_voxel_size(emmap_mrc.voxel_size)
+    
+    rp_unsharp = compute_radial_profile(emmap_unsharpened)
+    freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
+        
+    bfactor,_,_ = estimate_b_factor_from_profiles(freq,rp_unsharp, cutoff_d_spacing=2.6)
+    
+    sharpened_map = sharpen_maps(vol, apix=apix, global_bfactor=bfactor)
+    
+    output_filename = emmap_path[:-4] +"_sharpened_to_zero_bfactor.mrc"
+    save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
+    
+    return output_filename
+
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
     
