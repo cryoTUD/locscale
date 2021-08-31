@@ -40,7 +40,7 @@ def prepare_sharpen_map(emmap_path):
         
     bfactor,_,_ = estimate_b_factor_from_profiles(freq,rp_unsharp, cutoff_d_spacing=2.6)
     
-    sharpened_map = sharpen_maps(vol, apix=apix, global_bfactor=bfactor)
+    sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
     output_filename = emmap_path[:-4] +"_sharpened_to_zero_bfactor.mrc"
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
