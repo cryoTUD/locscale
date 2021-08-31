@@ -39,7 +39,7 @@ else:
     
 
 
-def prepare_sharpen_map(emmap_path):
+def prepare_sharpen_map(emmap_path,return_processed_files=False):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_b_factor_from_profiles, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
@@ -55,10 +55,15 @@ def prepare_sharpen_map(emmap_path):
     
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
+    rp_sharp = compute_radial_profile(sharpened_map)
     output_filename = emmap_path[:-4] +"_sharpened_to_zero_bfactor.mrc"
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
     
-    return output_filename
+    if return_processed_files:
+        print("Returning: sharpend_map_path, [rp_unsharp, rp_sharp, bfactor]")
+        return output_filename, [rp_unsharp, rp_sharp, bfactor]
+    else:
+        return output_filename
 
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
@@ -356,7 +361,7 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     from emmer.pdb.pdb_to_map import pdb2map
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
     from emmer.ndimage.map_tools import get_center_of_mass
-    from emmer.ndimage.map_utils import compute_real_space_correlation
+    from emmer.ndimage.map_tools import compute_real_space_correlation
     import pandas as pd
     
     if verbose: 
