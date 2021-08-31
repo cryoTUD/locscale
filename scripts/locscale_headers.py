@@ -271,7 +271,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     if method=='gradient':
         gz,gy,gx = np.gradient(emmap)
         masked_grad_magnitude = mask * np.sqrt(gx**2 + gy**2 + gz**2)
-        max_gradient = masked_grad_magnitude.mean()
+        max_gradient = masked_grad_magnitude.max()
         if g is None:
             g = round(100 / max_gradient)
         if scale_lj is None:
@@ -356,6 +356,7 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     from emmer.pdb.pdb_to_map import pdb2map
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
     from emmer.ndimage.map_tools import get_center_of_mass
+    from emmer.ndimage.map_utils import compute_real_space_correlation
     import pandas as pd
     
     if verbose: 

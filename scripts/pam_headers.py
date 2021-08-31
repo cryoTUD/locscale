@@ -144,6 +144,16 @@ def average_map_value(points):
     average_mapvalue = sum_map_value/len(points)
     return average_mapvalue
 
+def acceleration_contribution(pseudomodel):
+    gradient_list= []
+    lj_list= []
+    for atom in pseudomodel.list:
+        gradient_list.append(atom.gradient_acceleration_magnitude)
+        lj_list.append(atom.lj_acceleration_magnitude)
+    
+    return gradient_list, lj_list
+    
+
 
 def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxelsize,
                   dt=0.05,capmagnitude_lj=400,epsilon=1,scale_lj=1,lj_factor=1,capmagnitude_map=100,scale_map=1,total_iterations=50, 
@@ -185,7 +195,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         if myoutput is not None:
             myoutput.write(solver_properties)
     if verbose:    
-        print('# \t|\t Peak bond length \t | \t Minimum bond length \t | \t Average map value')        
+        print('# \t|\t Peak bond length \t | \t Minimum bond length \t | \t Average map value \t | \t Average gradient acc \t | \t Average LJ potential')        
     for iter in range(total_iterations):
         
         neighborhood = get_neighborhood(pseudomodel.list,min_dist_in_angst/voxelsize)
@@ -193,7 +203,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         bond_length_histogram = np.histogram(all_bond_lengths,bins=200)
         peak_bond_length = bond_length_histogram[1][bond_length_histogram[0].argmax()]
         peak_bond_length_list.append(peak_bond_length)
-    
+        gradient_list= []
+        lj_list= []
         point_id = 0
         for atom in pseudomodel.list:
             lj_neighbors = [pseudomodel.list[k] for k in neighborhood[point_id][1]]
@@ -210,6 +221,14 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             atom.acceleration = add_Vector(acceleration, atom.velocity.scale(-friction))
             atom.map_value = map_value
             point_id += 1
+            
+            try:
+                gradient_list.append(gradient_acceleration.magnitude())
+                lj_list.append(lj_potential_acceleration.magnitude())
+            except:
+                gradient_list.append(0)
+                lj_list.append(0)
+            lj_list
         
         map_values.append(average_map_value(pseudomodel.list))
         
@@ -258,9 +277,11 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         else:
             if verbose:
                 print(str(iter)+
-                      "\t | \t "+str(peak_bond_length_list[iter])+
-                      "\t | \t "+str(all_bond_lengths.min())+
-                      "\t | \t "+str(map_values[iter]))    
+                      "\t | \t "+str(round(peak_bond_length_list[iter],2))+
+                      "\t | \t "+str(round(all_bond_lengths.min(),2))+
+                      "\t | \t "+str(round(map_values[iter],2))+
+                      "\t | \t "+str(round(sum(gradient_list)/len(gradient_list),2))+
+                      "\t | \t "+str(round(sum(lj_list)/len(lj_list),2)) )    
             
     pseudomodel.voxelsize = voxelsize
     pseudomodel.update_pdb_positions(voxelsize)
