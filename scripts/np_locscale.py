@@ -222,8 +222,8 @@ def get_modmap_from_pseudomodel(args):
     
     # MAPMASK
     pseudomodel_modmap_xyz = run_mapmask(pseudomodel_modmap)
-    new_emmap_path_xyz = run_mapmask(new_emmap_path)
-    new_mask_path_xyz = run_mapmask(new_mask_path)
+    new_emmap_path_xyz = run_mapmask(args.em_map)
+    new_mask_path_xyz = run_mapmask(mask_path)
     
     
     if pseudomodel_modmap_xyz is None:
