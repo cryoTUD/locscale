@@ -271,9 +271,9 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     if method=='gradient':
         gz,gy,gx = np.gradient(emmap)
         masked_grad_magnitude = mask * np.sqrt(gx**2 + gy**2 + gz**2)
-        mean_gradient = masked_grad_magnitude.mean()
+        max_gradient = masked_grad_magnitude.mean()
         if g is None:
-            g = round(100 / mean_gradient)
+            g = round(100 / max_gradient)
         if scale_lj is None:
             scale_lj = 1
         if scale_map is None:
