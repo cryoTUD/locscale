@@ -208,9 +208,13 @@ def get_modmap_from_pseudomodel(args):
         return None
     
     #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
-    pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
-                                                                 emmap_path=args.em_map, 
-                                                                 mask_path=mask_path, verbose=verbose)
+    #pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
+                                                                 #emmap_path=args.em_map, 
+                                                                 #mask_path=mask_path, verbose=verbose)
+    
+    pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path, verbose=verbose)
+    
+    
     
     if pseudomodel_modmap is None:
         print("Problem simulating map from refined model. Returning None")

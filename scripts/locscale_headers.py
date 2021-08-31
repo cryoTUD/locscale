@@ -23,12 +23,25 @@ for path in allpaths:
     if 'locscale' in path and 'scripts' in path:
         path_to_locscale = path[:-8]
 
-path_to_ccpem = "/home/alok/soft/ccpem-20200424"
-path_to_ccp4="/home/alok/soft/ccp4-7.1/ccp4-7.1"
+if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
+    print("Required dependencies not found! ")
+    print("CCPEM Location at: ",path_to_ccpem)
+    print("CCP4 Location at: ",path_to_ccp4)
+    print("LocScale Location at: ",path_to_locscale)
+    
+    exit
+else:
+    print("Required dependencies are found at: \n ")
+    print("CCPEM Location at: ",path_to_ccpem)
+    print("CCP4 Location at: ",path_to_ccp4)
+    print("LocScale Location at: ",path_to_locscale)
+    
+    
+
 
 def prepare_sharpen_map(emmap_path):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_b_factor_from_profiles, frequency_array
-    from emmer.ndimage.map_utils import average_voxel_size
+    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
     
     emmap_mrc = mrcfile.open(emmap_path)
@@ -69,7 +82,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
 
     '''
     import os, sys
-    
+    from subprocess import run
     # Preprocessing EM Map Path
     
     # Apply filter if filter_cutoff is not None
@@ -256,8 +269,11 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     if verbose:
         print("Running pseudoatomic model generator to add "+str(num_atoms)+" atoms inside the volume using the method: "+method)
     if method=='gradient':
+        gz,gy,gx = np.gradient(emmap)
+        masked_grad_magnitude = mask * np.sqrt(gx**2 + gy**2 + gz**2)
+        mean_gradient = masked_grad_magnitude.mean()
         if g is None:
-            g = 10
+            g = round(100 / mean_gradient)
         if scale_lj is None:
             scale_lj = 1
         if scale_map is None:
@@ -265,7 +281,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         if friction is None:
             friction = 10
             
-        gz,gy,gx = np.gradient(emmap)
+        
         arranged_points = main_solver3D(
             emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
             capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, path_for_gemmi_models=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
@@ -398,4 +414,27 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     else:
         print("Reference map was not generated. Returning none")
         return None
+    
+def run_mapmask(emmap_path):
+    '''
+    Function to generate a XYZ corrected output using CCPEM-Mapmask tool
+
+    Parameters
+    ----------
+    emmap_path : str
+        
+
+    Returns
+    -------
+    mapmasked_path : str
+
+    '''
+    import os
+    from subprocess import run
+    
+    mapmask_bash_script = path_to_locscale + "/scripts/mapmask.sh"
+    xyz_output_map = "/".join(emmap_path.split('/')[:-1]+["xyz_"+emmap_path.split(sep='/')[-1]])
+    run([mapmask_bash_script,emmap_path,xyz_output_map])
+    
+    return xyz_output_map
     
