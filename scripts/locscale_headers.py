@@ -39,8 +39,8 @@ else:
     
 
 
-def prepare_sharpen_map(emmap_path,return_processed_files=False):
-    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_b_factor_from_profiles, frequency_array
+def prepare_sharpen_map(emmap_path,wilson_cutoff=10,return_processed_files=False):
+    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
     
@@ -51,7 +51,7 @@ def prepare_sharpen_map(emmap_path,return_processed_files=False):
     rp_unsharp = compute_radial_profile(emmap_unsharpened)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
         
-    bfactor,_,_ = estimate_b_factor_from_profiles(freq,rp_unsharp, cutoff_d_spacing=2.6)
+    bfactor,_,_ = estimate_bfactor_through_pwlf(freq,rp_unsharp, cutoff_d_spacing=wilson_cutoff)
     
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     

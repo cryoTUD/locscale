@@ -199,7 +199,9 @@ def get_modmap_from_pseudomodel(args):
         print("Problem running pseudo-atomic model generator. Returning None")
         return None
     
-    globally_sharpened_map = prepare_sharpen_map(args.em_map)
+    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=True)
+    
+    globally_sharpened_map = prepare_sharpen_map(args.em_map, wilson_cutoff=wilson_cutoff)
     
     refined_model_path = run_refmac(model_path=pseudomodel_path, model_name=pseudomodel_path[:-4], 
                                     map_path=globally_sharpened_map, resolution=resolution, maskdims=mask_dims,verbose=verbose)
@@ -240,6 +242,7 @@ def get_modmap_from_pseudomodel(args):
 def prepare_mask_and_maps_for_scaling(args):
     
     ## Added new part to include pseudo-atomic model
+    from emmer.ndimage.map_utils import average_voxel_size
     mask_path = None
     if args.model_map is not None:
         modmap = mrcfile.open(args.model_map).data
@@ -249,6 +252,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Reference Data not supplied! Using pseudo-model")
         modmap_path,emmap_path,mask_path = get_modmap_from_pseudomodel(args)
         emmap = mrcfile.open(emmap_path).data
+        apix = average_voxel_size(mrcfile.open(emmap_path).voxel_size)
         mask = (mrcfile.open(mask_path).data>0.5).astype(np.int8)
         modmap =mrcfile.open(modmap_path).data
     #print(modmap.shape)
@@ -285,7 +289,7 @@ def prepare_mask_and_maps_for_scaling(args):
         modmap = pad_or_crop_volume(modmap, map_shape, pad_int_modmap)
         mask = pad_or_crop_volume(mask, map_shape, 0)
 
-    return emmap, modmap, mask, wn, window_bleed_and_pad
+    return emmap, modmap, mask, wn, window_bleed_and_pad, apix
 
 def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
     dim = vol.shape
@@ -500,12 +504,13 @@ def launch_amplitude_scaling(args):
         print('\n  LocScale Arguments\n')
         for arg in vars(args):
             print('    {} : {}'.format(arg, getattr(args, arg)))
-    emmap, modmap, mask, wn, window_bleed_and_pad = prepare_mask_and_maps_for_scaling(args)
+    emmap, modmap, mask, wn, window_bleed_and_pad,apix = prepare_mask_and_maps_for_scaling(args)
     if args.model_map is None:
         use_theoretical_profile = True
     else:
         use_theoretical_profile = False
-    wilson_cutoff = find_wilson_cutoff(mask_path=args.mask, return_as_frequency=True)
+    
+    wilson_cutoff = find_wilson_cutoff(mask=mask, apix=apix, return_as_frequency=True)
 
     if not args.mpi:
         LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, f_cutoff=wilson_cutoff, verbose=args.verbose)
