@@ -157,7 +157,7 @@ def acceleration_contribution(pseudomodel):
 
 def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxelsize,
                   dt=0.05,capmagnitude_lj=400,epsilon=1,scale_lj=1,lj_factor=1,capmagnitude_map=100,scale_map=1,total_iterations=50, 
-                  path_for_gemmi_models=None,emmap_path=None,mask_path=None,returnPointsOnly=True,verbose=False,
+                  compute_map=False,emmap_path=None,mask_path=None,returnPointsOnly=True,verbose=False,
                   integration='verlet',myoutput=None):
     '''
     Function to solve pseudoatomic model using gradient descent approach. 
@@ -183,7 +183,10 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     
         
     '''
-    
+    from emmer.ndimage.map_tools import compute_real_space_correlation
+    from emmer.pdb.pdb_to_map import pdb2map
+    from emmer.ndimage.profile_tools import compute_radial_profile
+    from emmer.pdb.pdb_utils import set_atomic_bfactors
     peak_bond_length_list = []
     map_values = []
     pseudomodel = model_initial.copy()
@@ -196,6 +199,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             myoutput.write(solver_properties)
     if verbose:    
         print('# \t|\t Peak bond length \t | \t Minimum bond length \t | \t Average map value \t | \t Average gradient acc \t | \t Average LJ potential')        
+    profiles_iterations = []
+    cross_correlation = []
     for iter in range(total_iterations):
         
         neighborhood = get_neighborhood(pseudomodel.list,min_dist_in_angst/voxelsize)
@@ -205,6 +210,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         peak_bond_length_list.append(peak_bond_length)
         gradient_list= []
         lj_list= []
+        
         point_id = 0
         for atom in pseudomodel.list:
             lj_neighbors = [pseudomodel.list[k] for k in neighborhood[point_id][1]]
@@ -255,21 +261,23 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             
         
         
-        if path_for_gemmi_models is not None:
-            gemmi_model = convert_to_gemmi_model(pseudomodel.list,voxelsize);
+        if compute_map:
+            pseudomodel.voxelsize = voxelsize
+            pseudomodel.update_pdb_positions(voxelsize)
+            gemmi_model=pseudomodel.convert_to_gemmi_model()
             
             emmap_shape = emmap.shape
-            unitcell = gemmi.UnitCell(emmap_shape[0]*voxelsize,emmap_shape[1]*voxelsize,emmap_shape[2]*voxelsize)
+            unitcell = gemmi.UnitCell(emmap_shape[0]*voxelsize,emmap_shape[1]*voxelsize,emmap_shape[2]*voxelsize,90,90,90)
             
             gemmi_structure = gemmi.Structure()
             gemmi_structure.add_model(gemmi_model)
             gemmi_structure.cell = unitcell
-            
-            map_iteration = pdb_to_map(pdb_structure=gemmi_structure,vsize=voxelsize)
+            gemmi_structure_bzero = set_atomic_bfactors(input_gemmi_st=gemmi_structure, b_iso=0)
+            map_iteration = pdb2map(input_pdb=gemmi_structure,apix=voxelsize,size=emmap.shape, align_output=True)
             size = map_iteration.size
-            cc = correlate(normalize(map_iteration), normalize(emmap),mode='same',method='fft') / size
+            cc = compute_real_space_correlation(map_iteration, emmap)
             cross_correlation.append(cc.max())
-    
+            profiles_iterations.append(compute_radial_profile(map_iteration))
     
             if verbose: 
                 print(str(iter)+": #peak_bond_length = "+str(peak_bond_length_list[iter])+": #map_value = "+str(map_values[iter])+": cc_max = "+str(cc.max()))    
@@ -288,8 +296,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     if returnPointsOnly == True:
         return pseudomodel    
     else:
-        if path_for_gemmi_models is not None:
-            return pseudomodel, peak_bond_length_list, map_values, cross_correlation
+        if compute_map:
+            return pseudomodel, peak_bond_length_list, map_values, cross_correlation, profiles_iterations
         else:
             return pseudomodel, peak_bond_length_list, map_values
 
