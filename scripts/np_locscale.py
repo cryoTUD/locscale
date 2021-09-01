@@ -179,12 +179,13 @@ def estimate_high_frequency_cutoff(freq, amplitude):
     from emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf    
     bfactor, ampl, (fit,z) = estimate_bfactor_through_pwlf(freq, amplitude, wilson_cutoff=100000)
     x_breakpoints = np.sqrt(z)
-    high_frequency_cutoff = x_breakpoints[-2]
+    breakpoints_in_d_space = 1/x_breakpoints
+    high_frequency_cutoff = breakpoints_in_d_space[-2]
     print("Estimating high-frequency cutoff: ")
     print("High-frequency cutoff: ",high_frequency_cutoff)
     print("All breakpoints: \n",x_breakpoints)
     print("R_squared",fit.r_squared())
-    return high_frequency_cutoff
+    return breakpoints_in_d_space
 
 def get_theoretical_profile(length,apix):
     

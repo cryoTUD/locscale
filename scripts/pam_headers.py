@@ -187,6 +187,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     from emmer.pdb.pdb_to_map import pdb2map
     from emmer.ndimage.profile_tools import compute_radial_profile
     from emmer.pdb.pdb_utils import set_atomic_bfactors
+    
     peak_bond_length_list = []
     map_values = []
     pseudomodel = model_initial.copy()
