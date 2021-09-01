@@ -289,7 +289,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         
         arranged_points = main_solver3D(
             emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
-            capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, path_for_gemmi_models=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
+            capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, compute_map=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
             integration='verlet',verbose=True)
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
