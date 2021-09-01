@@ -51,7 +51,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff=10,return_processed_files=False
     rp_unsharp = compute_radial_profile(emmap_unsharpened)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
         
-    bfactor,_,_ = estimate_bfactor_through_pwlf(freq,rp_unsharp, cutoff_d_spacing=wilson_cutoff)
+    bfactor,_,_ = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff)
     
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     

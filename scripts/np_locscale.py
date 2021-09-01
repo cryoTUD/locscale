@@ -199,7 +199,7 @@ def get_modmap_from_pseudomodel(args):
         print("Problem running pseudo-atomic model generator. Returning None")
         return None
     
-    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=True)
+    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
     
     globally_sharpened_map = prepare_sharpen_map(args.em_map, wilson_cutoff=wilson_cutoff)
     
