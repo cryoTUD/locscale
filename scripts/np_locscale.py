@@ -160,6 +160,32 @@ def get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn):
 
     return xyz_locs, cropp_n_mask_ind, mask.shape
 
+def estimate_high_frequency_cutoff(freq, amplitude):
+    '''
+    Function to estimate high frequency cutoff for bfactor estimation
+
+    Parameters
+    ----------
+    freq : TYPE
+        DESCRIPTION.
+    amplitude : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    high_frequency_cutoff : float
+
+    '''
+    from emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf    
+    bfactor, ampl, (fit,z) = estimate_bfactor_through_pwlf(freq, amplitude, wilson_cutoff=100000)
+    x_breakpoints = np.sqrt(z)
+    high_frequency_cutoff = x_breakpoints[-2]
+    print("Estimating high-frequency cutoff: ")
+    print("High-frequency cutoff: ",high_frequency_cutoff)
+    print("All breakpoints: \n",x_breakpoints)
+    print("R_squared",fit.r_squared())
+    return high_frequency_cutoff
+
 def get_theoretical_profile(length,apix):
     
     current_directory = os.getcwd()
@@ -289,8 +315,13 @@ def prepare_mask_and_maps_for_scaling(args):
         emmap = pad_or_crop_volume(emmap, map_shape, pad_int_emmap)
         modmap = pad_or_crop_volume(modmap, map_shape, pad_int_modmap)
         mask = pad_or_crop_volume(mask, map_shape, 0)
-
-    return emmap, modmap, mask, wn, window_bleed_and_pad, apix
+    
+    ## Radial profile calculations
+    rp_emmap = compute_radial_profile(emmap)
+    freq = frequency_array(amplitudes=rp_emmap, apix=apix)
+    high_frequency_cutoff = estimate_high_frequency_cutoff(freq, rp_emmap)
+    
+    return emmap, modmap, mask, wn, window_bleed_and_pad, apix, high_frequency_cutoff
 
 def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
     dim = vol.shape
@@ -505,19 +536,18 @@ def launch_amplitude_scaling(args):
         print('\n  LocScale Arguments\n')
         for arg in vars(args):
             print('    {} : {}'.format(arg, getattr(args, arg)))
-    emmap, modmap, mask, wn, window_bleed_and_pad,apix = prepare_mask_and_maps_for_scaling(args)
+    emmap, modmap, mask, wn, window_bleed_and_pad,apix,high_frequency_cutoff = prepare_mask_and_maps_for_scaling(args)
     if args.model_map is None:
         use_theoretical_profile = True
     else:
         use_theoretical_profile = False
-    
-    wilson_cutoff = find_wilson_cutoff(mask=mask, apix=apix, return_as_frequency=False)
+
 
     if not args.mpi:
-        LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, f_cutoff=wilson_cutoff, verbose=args.verbose)
+        LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, f_cutoff=high_frequency_cutoff, verbose=args.verbose)
         LocScaleVol = write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol)
     elif args.mpi:
-        LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, args.apix, verbose=args.verbose, use_theoretical_profile=use_theoretical_profile_global,f_cutoff=wilson_cutoff)
+        LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, args.apix, verbose=args.verbose, use_theoretical_profile=use_theoretical_profile_global,f_cutoff=high_frequency_cutoff)
         if rank == 0:
             LocScaleVol = write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol)
     with open('random_profiles_for_check.pickle','wb') as f:
