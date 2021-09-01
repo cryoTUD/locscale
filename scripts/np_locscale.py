@@ -247,6 +247,7 @@ def prepare_mask_and_maps_for_scaling(args):
     if args.model_map is not None:
         modmap = mrcfile.open(args.model_map).data
         emmap = mrcfile.open(args.em_map).data
+        apix = average_voxel_size(mrcfile.open(args.em_map).voxel_size)
     else:
     
         print("Reference Data not supplied! Using pseudo-model")
@@ -328,10 +329,10 @@ def compute_scale_factors(em_profile, ref_profile, f_cutoff=None, apix=None, use
         temp_dictionary['reference_profile'] = ref_profile
     if use_theoretical_profile:
         theoretical_profile = get_theoretical_profile(length=len(ref_profile),apix=apix)
-        scaled_theoretical = scale_profiles((theoretical_profile[0],ref_profile),theoretical_profile,using_reference_profile=False)[1]
+        scaled_theoretical = scale_profiles((theoretical_profile[0],ref_profile),theoretical_profile,using_reference_profile=False,cutoff_d_spacing=f_cutoff)[1]
         if f_cutoff is None:
                 f_cutoff = 0.15
-        ref_profile = merge_two_profiles(ref_profile,scaled_theoretical,theoretical_profile[0],smooth=0.3,f_cutoff=f_cutoff)
+        ref_profile = merge_two_profiles(ref_profile,scaled_theoretical,theoretical_profile[0],smooth=0.3,d_cutoff=f_cutoff)
     if check_scaling:
         temp_dictionary['scaled_profile'] = ref_profile
         temp_dictionary['scaled_theoretical'] = scaled_theoretical
@@ -510,7 +511,7 @@ def launch_amplitude_scaling(args):
     else:
         use_theoretical_profile = False
     
-    wilson_cutoff = find_wilson_cutoff(mask=mask, apix=apix, return_as_frequency=True)
+    wilson_cutoff = find_wilson_cutoff(mask=mask, apix=apix, return_as_frequency=False)
 
     if not args.mpi:
         LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, f_cutoff=wilson_cutoff, verbose=args.verbose)
