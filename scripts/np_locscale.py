@@ -185,7 +185,7 @@ def estimate_high_frequency_cutoff(freq, amplitude):
     print("High-frequency cutoff: ",high_frequency_cutoff)
     print("All breakpoints: \n",x_breakpoints)
     print("R_squared",fit.r_squared())
-    return breakpoints_in_d_space
+    return high_frequency_cutoff
 
 def get_theoretical_profile(length,apix):
     
