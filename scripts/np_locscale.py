@@ -7,6 +7,7 @@ from argparse import RawTextHelpFormatter
 from locscale_headers import *
 import pickle
 from emmer.ndimage.profile_tools import *
+from emmer.ndimage.map_tools import compute_real_space_correlation
 
 progname = os.path.basename(sys.argv[0])
 datmod = "2018-03-02"  # to be updated by gitlab after every commit
@@ -241,7 +242,7 @@ def get_modmap_from_pseudomodel(args):
                                                                  #emmap_path=args.em_map, 
                                                                  #mask_path=mask_path, verbose=verbose)
     
-    pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path, verbose=verbose)
+    pseudomodel_modmap = run_refmap2(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path, verbose=verbose)
     
     
     
@@ -361,6 +362,8 @@ def compute_scale_factors(em_profile, ref_profile, f_cutoff=None, apix=None, use
         temp_dictionary['reference_profile'] = ref_profile
     if use_theoretical_profile:
         theoretical_profile = get_theoretical_profile(length=len(ref_profile),apix=apix)
+        #print("reference_profile\n",ref_profile)
+        #print("theoretical_profile\n",theoretical_profile[1])
         scaled_theoretical = scale_profiles((theoretical_profile[0],ref_profile),theoretical_profile,using_reference_profile=False,cutoff_d_spacing=f_cutoff)[1]
         if f_cutoff is None:
                 f_cutoff = 0.15
@@ -389,6 +392,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
+    print("RSCC:",compute_real_space_correlation(emmap,modmap))
     for k, j, i in (masked_xyz_locs - wn / 2):
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
@@ -396,6 +400,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
         em_profile = compute_radial_profile(emmap_wn)
         mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
+        print("pos",(k,j,i,wn),"RSCC: \n",compute_real_space_correlation(emmap_wn, modmap_wn))
+        
         
         scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,use_theoretical_profile=use_theoretical_profile_global,f_cutoff=f_cutoff,pos=(k,j,i))
         map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
