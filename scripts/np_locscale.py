@@ -242,7 +242,7 @@ def get_modmap_from_pseudomodel(args):
                                                                  #emmap_path=args.em_map, 
                                                                  #mask_path=mask_path, verbose=verbose)
     
-    pseudomodel_modmap = run_refmap2(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path, verbose=verbose)
+    pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=args.em_map, mask_path=mask_path, verbose=verbose)
     
     
     

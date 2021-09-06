@@ -381,7 +381,7 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     ## Simulate a reference map from the input atomic model in the pdb_structure variable
     
     refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
-                                          return_grid=True, align_output=True)
+                                          return_grid=True, align_output=True, verbose=True, set_refmac_blur=True)
     
     ## Output filename
     reference_map_path = model_path[:-4]+"_4locscale.mrc"
