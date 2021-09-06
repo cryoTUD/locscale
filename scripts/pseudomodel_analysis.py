@@ -359,7 +359,7 @@ def modify_pdb_column(points,outpdb_name,voxelsize=1,b_factor_type=None,occupanc
     b_factor_array.clip(max=999.99)
     occupancy_array.clip(max=999.99)
     
-    gemmi_model = convert_to_gemmi_model(points.list,voxelsize,b_factor_array,occupancy_array)
+    points.convert_to_gemmi_model(points.list,voxelsize,b_factor_array,occupancy_array)
     write_pdb(gemmi_model,outpdb_name)
 
 
