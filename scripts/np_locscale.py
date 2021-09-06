@@ -8,6 +8,7 @@ from locscale_headers import *
 import pickle
 from emmer.ndimage.profile_tools import *
 from emmer.ndimage.map_tools import compute_real_space_correlation
+from tqdm import tqdm
 
 progname = os.path.basename(sys.argv[0])
 datmod = "2018-03-02"  # to be updated by gitlab after every commit
@@ -282,7 +283,7 @@ def prepare_mask_and_maps_for_scaling(args):
         modmap_path,emmap_path,mask_path = get_modmap_from_pseudomodel(args)
         emmap = mrcfile.open(emmap_path).data
         apix = average_voxel_size(mrcfile.open(emmap_path).voxel_size)
-        mask = (mrcfile.open(mask_path).data>0.5).astype(np.int8)
+        mask = (mrcfile.open(mask_path).data==1).astype(np.int8)
         modmap =mrcfile.open(modmap_path).data
     #print(modmap.shape)
     
@@ -294,13 +295,13 @@ def prepare_mask_and_maps_for_scaling(args):
             z,y,x = np.ogrid[-rad: rad+1, -rad: rad+1, -rad: rad+1]
             mask = (x**2+y**2+z**2 <= rad**2).astype(np.int_).astype(np.int8)
             mask = pad_or_crop_volume(mask,emmap.shape)
-            mask = (mask > 0.5).astype(np.int8)
+            mask = (mask==1).astype(np.int8)
         else:
             mask += 1
             mask = mask[0:mask.shape[0]-1, 0:mask.shape[1]-1, 0:mask.shape[2]-1]
             mask = pad_or_crop_volume(emmap, (emmap.shape), pad_value=0)
     elif args.mask is not None:
-        mask = (mrcfile.open(args.mask).data > 0.5).astype(np.int8)
+        mask = (mrcfile.open(args.mask).data == 1).astype(np.int8)
 
     #mask = low_pass_filter(mask, 10, mrcfile.open(args.em_map).voxel_size.x)
     
@@ -393,23 +394,24 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     print("RSCC:",compute_real_space_correlation(emmap,modmap))
-    for k, j, i in (masked_xyz_locs - wn / 2):
+    for k, j, i in tqdm(masked_xyz_locs - wn / 2):
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
 
         em_profile = compute_radial_profile(emmap_wn)
         mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
-        print("pos",(k,j,i,wn),"RSCC: \n",compute_real_space_correlation(emmap_wn, modmap_wn))
+        #print("pos",(k,j,i,wn),"RSCC: \t",compute_real_space_correlation(emmap_wn, modmap_wn))
+        #print(emmap_wn.min(), emmap_wn.max(), modmap_wn.min(), modmap_wn.max())
         
         
         scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,use_theoretical_profile=use_theoretical_profile_global,f_cutoff=f_cutoff,pos=(k,j,i))
         map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
         
-        if verbose:
-            if cnt%1000 == 0:
-                print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
-            cnt += 1
+        #if verbose:
+        #    if cnt%1000 == 0:
+        #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
+        
 
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
 
