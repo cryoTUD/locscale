@@ -103,10 +103,14 @@ def prepare_mask_and_maps_for_scaling(args):
     from pseudomodel_utils import get_modmap_from_pseudomodel
     from emmer.ndimage.map_utils import average_voxel_size, pad_or_crop_image
     from emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale_headers import run_FDR
+    from locscale_headers import run_FDR, run_mapmask
     from utils.general import round_up_to_even, round_up_to_odd
     
-    emmap = mrcfile.open(args.em_map).data
+    emmap_path = args.em_map
+    xyz_emmap_path = run_mapmask(emmap_path)
+    
+    xyz_emmap = mrcfile.open(xyz_emmap_path).data
+    
     verbose = bool(args.verbose)
     
     fsc_resolution = float(args.fsc_resolution)
@@ -122,7 +126,7 @@ def prepare_mask_and_maps_for_scaling(args):
         if args.verbose:
             print("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
         if args.fdr_w is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
-            fdr_window_size = round_up_to_even(emmap.shape[0] * 0.1)
+            fdr_window_size = round_up_to_even(xyz_emmap.shape[0] * 0.1)
             print("FDR window size is not set. Using a default window size of {}".format(fdr_window_size))
         else:
             fdr_window_size = int(args.fdr_w)
@@ -133,14 +137,17 @@ def prepare_mask_and_maps_for_scaling(args):
         else:
             filter_cutoff = None
             
-        mask_path = run_FDR(emmap_path=args.em_map, window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
-        if mask_path is not None:
-            mask = (mrcfile.open(mask_path).data == 1).astype(np.int8)
+        mask_path = run_FDR(emmap_path=xyz_emmap, window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
+        xyz_mask_path = run_mapmask(mask_path)
+        
+        if xyz_mask_path is not None:
+            xyz_mask = (mrcfile.open(xyz_mask_path).data == 1).astype(np.int8)
         else:
-            mask = get_spherical_mask(emmap.shape)
+            xyz_mask = get_spherical_mask(xyz_emmap.shape)
     else:
         mask_path = args.mask
-        mask = (mrcfile.open(mask_path).data == 1).astype(np.int8)
+        xyz_mask_path = run_mapmask(mask_path)
+        xyz_mask = (mrcfile.open(xyz_mask_path).data == 1).astype(np.int8)
     
     
     ## Use the mask and emmap to generate a model map using pseudo-atomic model
@@ -154,13 +161,15 @@ def prepare_mask_and_maps_for_scaling(args):
         elif pseudomodel_method is 'gradient':
             pam_iteration = 50
         
-        modmap_path = get_modmap_from_pseudomodel(emmap_path=args.em_map, mask_path=mask_path, 
+        modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, 
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
                                                   fsc_resolution=fsc_resolution, verbose=verbose)
-        modmap = mrcfile.open(modmap_path).data
+        xyz_modmap_path = run_mapmask(modmap_path)
+        xyz_modmap = mrcfile.open(xyz_modmap_path).data
     else:
         modmap_path = args.model_map
-        modmap = mrcfile.open(args.model_map).data        
+        xyz_modmap_path = run_mapmask(modmap_path)
+        xyz_modmap = mrcfile.open(xyz_modmap_path).data        
         
     
     if args.window_size is None:   ## Use default window size of 25 A
@@ -173,20 +182,20 @@ def prepare_mask_and_maps_for_scaling(args):
         if verbose:
             print("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
 
-    window_bleed_and_pad = check_for_window_bleeding(mask, wn)
+    window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
     if window_bleed_and_pad:
-        pad_int_emmap = compute_padding_average(emmap, mask)
-        pad_int_modmap = compute_padding_average(modmap, mask)
-        map_shape = [(emmap.shape[0] + wn), (emmap.shape[1] + wn), (emmap.shape[2] + wn)]
-        emmap = pad_or_crop_volume(emmap, map_shape, pad_int_emmap)
-        modmap = pad_or_crop_volume(modmap, map_shape, pad_int_modmap)
-        mask = pad_or_crop_volume(mask, map_shape, 0)
+        pad_int_emmap = compute_padding_average(xyz_emmap, xyz_mask)
+        pad_int_modmap = compute_padding_average(xyz_modmap, xyz_mask)
+        map_shape = [(xyz_emmap.shape[0] + wn), (xyz_emmap.shape[1] + wn), (xyz_emmap.shape[2] + wn)]
+        xyz_emmap = pad_or_crop_volume(xyz_emmap, map_shape, pad_int_emmap)
+        xyz_modmap = pad_or_crop_volume(xyz_modmap, map_shape, pad_int_modmap)
+        xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
     
-    ## 
-    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+    
+    wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     fsc_cutoff = fsc_resolution
     if verbose:
         print("Using Wilson Cutoff of: {} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
     frequency_cutoffs = (wilson_cutoff, fsc_cutoff)
     
-    return emmap, modmap, mask, wn, window_bleed_and_pad, apix, frequency_cutoffs
+    return xyz_emmap, xyz_modmap, xyz_mask, wn, window_bleed_and_pad, apix, frequency_cutoffs
