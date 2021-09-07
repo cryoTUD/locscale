@@ -13,33 +13,42 @@ import pandas as pd
 from emmer.pdb.pdb_tools import *
 import pprint
 
-paths = os.environ['PATH']
-allpaths = paths.split(':')
-for path in allpaths:
-    if 'ccpem' in path and 'bin' in path:
-        path_to_ccpem = path[:-4]
-    if 'ccp4' in path and 'bin' in path:
-        path_to_ccp4 = path[:-4]
-    if 'locscale' in path and 'scripts' in path:
-        path_to_locscale = path[:-8]
-
-if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
-    print("Required dependencies not found! ")
-    print("CCPEM Location at: ",path_to_ccpem)
-    print("CCP4 Location at: ",path_to_ccp4)
-    print("LocScale Location at: ",path_to_locscale)
+def check_dependencies():
+    import os
     
-    exit
-else:
-    print("Required dependencies are found at: \n ")
-    print("CCPEM Location at: ",path_to_ccpem)
-    print("CCP4 Location at: ",path_to_ccp4)
-    print("LocScale Location at: ",path_to_locscale)
+    paths = os.environ['PATH']
+    allpaths = paths.split(':')
+    for path in allpaths:
+        if 'ccpem' in path and 'bin' in path:
+            path_to_ccpem = path[:-4]
+        if 'ccp4' in path and 'bin' in path:
+            path_to_ccp4 = path[:-4]
+        if 'locscale' in path and 'scripts' in path:
+            path_to_locscale = path[:-8]
     
+    if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
+        print("Required dependencies not found! ")
+        print("CCPEM Location at: ",path_to_ccpem)
+        print("CCP4 Location at: ",path_to_ccp4)
+        print("LocScale Location at: ",path_to_locscale)
+        
+        exit
+    else:
+        print("Required dependencies are found at: \n ")
+        print("CCPEM Location at: ",path_to_ccpem)
+        print("CCP4 Location at: ",path_to_ccp4)
+        print("LocScale Location at: ",path_to_locscale)
+        
+    dependency = {}
+    dependency['ccp4'] = path_to_ccp4
+    dependency['ccpem'] = path_to_ccpem
+    dependency['locscale'] = path_to_locscale
+    
+    return dependency
     
 
 
-def prepare_sharpen_map(emmap_path,wilson_cutoff=10,return_processed_files=False):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed_files=False):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
