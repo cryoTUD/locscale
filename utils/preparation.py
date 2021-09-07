@@ -156,9 +156,9 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Reference Data not supplied! Using pseudo-model")
         pseudomodel_method=args.pm
         pam_distance = float(args.dst)
-        if pseudomodel_method is 'random':
+        if pseudomodel_method is 'random' and args.total_iterations is None:
             pam_iteration = 100
-        elif pseudomodel_method is 'gradient':
+        elif pseudomodel_method is 'gradient' and args.total_iterations is None:
             pam_iteration = 50
         
         modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, 
