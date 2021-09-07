@@ -51,7 +51,7 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
         return radial_profile, radii
 
 def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cutoff, 
-                          use_theoretical_profile=True,pos=None, check_scaling=False):
+                          use_theoretical_profile=True, check_scaling=False):
     
     from emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
             
@@ -64,16 +64,31 @@ def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cuto
                                                   wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
         
         scaled_theoretical_amplitude = scaled_theoretical_tuple[1]
-        scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=0.3,d_cutoff=wilson_cutoff)
+        smooth = 0.3
+        scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=smooth,d_cutoff=wilson_cutoff)
         
         reference_profile_for_scaling = scaled_reference_profile
+        if check_scaling:
+            temporary_dictionary = {}
+            temporary_dictionary['em_profile'] = em_profile
+            temporary_dictionary['input_ref_profile'] = ref_profile
+            temporary_dictionary['freq'] = freq
+            temporary_dictionary['theoretical_amplitude'] = theoretical_profile_tuple[1]
+            temporary_dictionary['scaled_theoretical_amplitude'] = scaled_theoretical_amplitude
+            temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
+            temporary_dictionary['scaling_condition'] = [wilson_cutoff, fsc_cutoff]
+            temporary_dictionary['merging_condition'] = [smooth, wilson_cutoff]
     else:
         reference_profile_for_scaling = ref_profile
     
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
-    return scale_factor
+    if check_scaling:
+        temporary_dictionary['scale_factor'] = scale_factor
+        return scale_factor, temporary_dictionary
+    else:
+        return scale_factor
 
 def set_radial_profile(vol, scale_factor, radii):
     ps = np.fft.rfftn(vol)
@@ -85,18 +100,19 @@ def set_radial_profile(vol, scale_factor, radii):
 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,
                                                 wilson_cutoff, fsc_cutoff,
-                                                verbose=False,f_cutoff=None, process_name='LocScale'):
+                                                verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
     import tqdm
     from emmer.ndimage.map_tools import compute_real_space_correlation
     from utils.general import true_percent_probability
+    import pickle
     
     sharpened_vals = []
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     print("RSCC:",compute_real_space_correlation(emmap,modmap))
-    if verbose:
-        random_profiles = {}
+    if audit:
+        profiles_audit = {}
     for k, j, i in tqdm(masked_xyz_locs - wn / 2):
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
@@ -107,11 +123,19 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         #print("pos",(k,j,i,wn),"RSCC: \t",compute_real_space_correlation(emmap_wn, modmap_wn))
         #print(emmap_wn.min(), emmap_wn.max(), modmap_wn.min(), modmap_wn.max())
         
+        check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
         
-        scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,
+        if check_scaling:
+            scale_factors,report = compute_scale_factors(em_profile, mod_profile,apix=apix,
                                               wilson_cutoff=wilson_cutoff, fsc_cutoff = fsc_cutoff,
                                               use_theoretical_profile=use_theoretical_profile,
-                                              pos=(k,j,i), check_scaling=true_percent_probability(1))
+                                              check_scaling=check_scaling)
+            profiles_audit[(k,j,i)] = report
+        else:
+            scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,
+                                              wilson_cutoff=wilson_cutoff, fsc_cutoff = fsc_cutoff,
+                                              use_theoretical_profile=use_theoretical_profile,
+                                              check_scaling=check_scaling)
         
         map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
         
@@ -121,6 +145,11 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
 
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+    
+    if audit:
+        with open("profiles_audit.pickle","wb") as audit:
+            pickle.dump(profiles_audit, audit)
+        
 
     return np.array(sharpened_vals, dtype=np.float32)
 
