@@ -11,11 +11,11 @@ from emmer.ndimage.map_tools import compute_real_space_correlation
 from tqdm import tqdm
 
 progname = os.path.basename(sys.argv[0])
-datmod = "2018-03-02"  # to be updated by gitlab after every commit
-author = '\n\nAuthors: Arjen J. Jakobi and Carsten Sachse, EMBL'
+datmod = "2021-09-07"  # to be updated by gitlab after every commit
+author = '\n\nAuthors: Arjen J. Jakobi, Carsten Sachse, EMBL and Alok Bharadwaj'
 version = progname + '  0.2' + '  (;' + datmod+ ')'
 
-simple_cmd = 'python locscale_mpi.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -p 1.0 -w 10 -o scaled.mrc'
+simple_cmd = 'python np_locscale.py -em emmap.mrc -mm modmap.mrc -ma mask.mrc -w 25 -o loc_scaled.mrc'
 
 cmdl_parser = argparse.ArgumentParser(
 description='*** Computes contrast-enhanced cryo-EM maps by local amplitude scaling using a reference model ***\n' + \
@@ -47,79 +47,20 @@ if use_theoretical_profile_global:
 check_scaling = True
 
 count_to_check_profiles = 0
-print(count_to_check_profiles)
+
 if check_scaling:
     random_profiles = {}
     count_to_check_profiles = 1
 
 print(count_to_check_profiles)
 
-# STILL TO BE DONE: replace test data
-#def setup_test_data(voldim=30, size=10):
-#    from sparx import model_gauss
-#    emmap = model_gauss(size, voldim, voldim, voldim)
-#    modmap = EMData()
-#    modmap.set_size(voldim, voldim, voldim)
-#    modmap.process_inplace("testimage.noise.gauss", {"sigma":1, "seed":99})
-#    mask = model_square(size, voldim, voldim, voldim)
-
-#    return emmap, modmap, mask
-
-#def setup_test_data_to_files(emmap_name='emmap.mrc', modmap_name='modmap.mrc', mask_name='mask.mrc'):
-#    """
-#    >>> emmap_name, modmap_name, mask_name = setup_test_data_to_files()
-#    >>> import subprocess
-#    >>> n = subprocess.call(simple_cmd.split())
-#    >>> scaled_vol = get_image('scaled.mrc')
-#    >>> np.copy(EMNumPy.em2numpy(scaled_vol))[scaled_vol.get_xsize() / 2][scaled_vol.get_ysize() / 2]
-#    array([ 0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-#            0.        ,  0.        ,  0.        ,  0.        ,  0.        ,
-#            0.12524424,  0.15562208,  0.18547297,  0.24380369,  0.31203741,
-#            0.46546721,  0.47914436,  0.31334871,  0.28510684,  0.21345402,
-#            0.17892323,  0.        ,  0.        ,  0.        ,  0.        ,
-#            0.        ,  0.        ,  0.        ,  0.        ,  0.        ], dtype=float32)
-#    >>> n = [os.remove(each_file) for each_Average bond length forfile in [emmap_name, modmap_name, mask_name, 'scaled.mrc']]
-#    """
-#    emmap, modmap, mask = setup_test_data()
-
-#    emmap.write_image(emmap_name)
-#    modmap.write_image(modmap_name)
-#    mask.write_image(mask_name)
-
-#    return emmap_name, modmap_name, mask_name
 
 def compute_padding_average(vol, mask):
-    mask = (mask > 0.5).astype(np.int8)
+    mask = (mask == 1).astype(np.int8)
     #inverted_mask = np.logical_not(mask)
     average_padding_intensity = np.mean(np.ma.masked_array(vol, mask))
     return average_padding_intensity
 
-def pad_or_crop_volume(vol, dim_pad=None, pad_value = None, crop_volume=False):
-    if (dim_pad == None):
-        return vol
-    else:
-        dim_pad = np.round(np.array(dim_pad)).astype('int')
-        #print(dim_pad)
-
-        if pad_value == None:
-            pad_value = 0
-
-        if (dim_pad[0] <= vol.shape[0] or dim_pad[1] <= vol.shape[1] or dim_pad[2] <= vol.shape[2]):
-            crop_volume = True
-
-        if crop_volume:
-            crop_vol = vol[int(round(vol.shape[0]/2-dim_pad[0]/2)):int(round(vol.shape[0]/2+dim_pad[0]/2+dim_pad[0]%2)), :, :]
-            crop_vol = crop_vol[:, int(round(vol.shape[1]/2-dim_pad[1]/2)):int(round(vol.shape[1]/2+dim_pad[1]/2+dim_pad[1]%2)), :]
-            crop_vol = crop_vol[:, :, int(round(vol.shape[2]/2-dim_pad[2]/2)):int(round(vol.shape[2]/2+dim_pad[2]/2+dim_pad[2]%2))]
-
-            return crop_vol
-
-        else:
-            pad_vol = np.pad(vol, ((int(round(dim_pad[0]/2-vol.shape[0]/2)), int(round(dim_pad[0]/2-vol.shape[0]/2+dim_pad[0]%2))), (0,0), (0,0) ), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (int(round(dim_pad[1]/2-vol.shape[1]/2)), int(round(dim_pad[1]/2-vol.shape[1]/2+dim_pad[1]%2)) ), (0,0)), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (0,0), (int(round(dim_pad[2]/2-vol.shape[2]/2)), int(round(dim_pad[2]/2-vol.shape[2]/2+dim_pad[2]%2)))), 'constant', constant_values=(pad_value,))
-
-            return pad_vol
 
 def check_for_window_bleeding(mask,wn):
     #print(mask.shape)
@@ -356,22 +297,26 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
     else:
         return radial_profile, radii
 
-def compute_scale_factors(em_profile, ref_profile, f_cutoff=None, apix=None, use_theoretical_profile=False,pos=None):
+def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cutoff, use_theoretical_profile=True,pos=None):
     if check_scaling:
         temp_dictionary = {}
         temp_dictionary['em_profile'] = em_profile
         temp_dictionary['reference_profile'] = ref_profile
     if use_theoretical_profile:
-        theoretical_profile = get_theoretical_profile(length=len(ref_profile),apix=apix)
-        #print("reference_profile\n",ref_profile)
-        #print("theoretical_profile\n",theoretical_profile[1])
-        scaled_theoretical = scale_profiles((theoretical_profile[0],ref_profile),theoretical_profile,using_reference_profile=False,cutoff_d_spacing=f_cutoff)[1]
-        if f_cutoff is None:
-                f_cutoff = 0.15
-        ref_profile = merge_two_profiles(ref_profile,scaled_theoretical,theoretical_profile[0],smooth=0.3,d_cutoff=f_cutoff)
+        theoretical_profile_tuple = get_theoretical_profile(length=len(ref_profile),apix=apix)
+        freq = theoretical_profile_tuple[0]
+        reference_profile_tuple = (freq, ref_profile)
+        
+        scaled_theoretical_tuple = scale_profiles(reference_profile_tuple, theoretical_profile_tuple,
+                                                  wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
+        
+        scaled_theoretical_amplitude = scaled_theoretical_tuple[1]
+        
+
+        ref_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,theoretical_profile[0],smooth=0.3,d_cutoff=f_cutoff)
     if check_scaling:
         temp_dictionary['scaled_profile'] = ref_profile
-        temp_dictionary['scaled_theoretical'] = scaled_theoretical
+        temp_dictionary['scaled_theoretical'] = scaled_theoretical_amplitude
         random_profiles[pos] = temp_dictionary
     
     scale_factor = np.divide(np.abs(ref_profile), np.abs(em_profile))
@@ -387,7 +332,8 @@ def set_radial_profile(vol, scale_factor, radii):
 
     return np.fft.irfftn(ps, s=vol.shape)
 
-def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix,use_theoretical_profile,
+def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,
+                                                wilson_cutoff, fsc_cutoff,
                                                 verbose=False,f_cutoff=None, process_name='LocScale'):
     sharpened_vals = []
     central_pix = int(round(wn / 2.0))
@@ -405,7 +351,10 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         #print(emmap_wn.min(), emmap_wn.max(), modmap_wn.min(), modmap_wn.max())
         
         
-        scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,use_theoretical_profile=use_theoretical_profile_global,f_cutoff=f_cutoff,pos=(k,j,i))
+        scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix,
+                                              wilson_cutoff=wilson_cutoff, fsc_cutoff = fsc_cutoff,
+                                              use_theoretical_profile=use_theoretical_profile_global,pos=(k,j,i))
+        
         map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
         
         #if verbose:
@@ -424,7 +373,7 @@ def put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, 
 
     return map_scaled
 
-def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile,verbose=False,f_cutoff=None):
+def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile, wilson_cutoff, fsc_cutoff, verbose=False,f_cutoff=None):
     """
     >>> emmap, modmap, mask = setup_test_data()
     >>> scaled_vol = run_window_function_including_scaling(emmap,modmap,mask,wn=10,apix=1.0)
@@ -438,7 +387,8 @@ def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_the
     """
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
 
-    sharpened_vals = get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,f_cutoff=f_cutoff,verbose=verbose)
+    sharpened_vals = get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,
+                                                                 wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff,verbose=verbose)
 
     map_scaled = put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape)
 
@@ -469,8 +419,8 @@ def merge_sequence_of_sequences(seq):
     return newseq
 
 
-def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_theoretical_profile,f_cutoff=None,
-                                              verbose=False):
+def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_theoretical_profile,
+                                              wilson_cutoff, fsc_cutoff, verbose=False):
     """
     >>> emmap_name, modmap_name, mask_name = setup_test_data_to_files()
     >>> import subprocess
@@ -511,8 +461,9 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
 
     process_name = 'LocScale process {0} of {1}'.format(rank + 1, size)
 
-    sharpened_vals = get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix,
-                                                                 verbose=verbose,use_theoretical_profile=use_theoretical_profile_global,f_cutoff=f_cutoff, process_name=process_name)
+    sharpened_vals = get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix,use_theoretical_profile=use_theoretical_profile,
+                                                                 wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff,
+                                                                 verbose=verbose,process_name=process_name)
     sharpened_vals = comm.gather(sharpened_vals, root=0)
 
     if rank == 0:
@@ -545,7 +496,11 @@ def launch_amplitude_scaling(args):
         print('\n  LocScale Arguments\n')
         for arg in vars(args):
             print('    {} : {}'.format(arg, getattr(args, arg)))
-    emmap, modmap, mask, wn, window_bleed_and_pad,apix,high_frequency_cutoff = prepare_mask_and_maps_for_scaling(args)
+    emmap, modmap, mask, wn, window_bleed_and_pad,apix, frequency_cutoffs = prepare_mask_and_maps_for_scaling(args)
+    
+    wilson_cutoff = frequency_cutoffs[0]
+    fsc_cutoff = frequency_cutoffs[1]
+    
     if args.model_map is None:
         use_theoretical_profile = True
     else:
@@ -553,10 +508,14 @@ def launch_amplitude_scaling(args):
 
 
     if not args.mpi:
-        LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, f_cutoff=high_frequency_cutoff, verbose=args.verbose)
+        LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, args.apix, use_theoretical_profile=use_theoretical_profile, 
+                                                            wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
         LocScaleVol = write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol)
     elif args.mpi:
-        LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, args.apix, verbose=args.verbose, use_theoretical_profile=use_theoretical_profile_global,f_cutoff=high_frequency_cutoff)
+        LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, args.apix, 
+                                                                      wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff,
+                                                                      verbose=args.verbose, use_theoretical_profile=use_theoretical_profile_global)
+                                                                      
         if rank == 0:
             LocScaleVol = write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol)
     with open('random_profiles_for_check.pickle','wb') as f:
