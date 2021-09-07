@@ -139,6 +139,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     except:    
         print(sys.exc_info())
         print("Could not use the FDRUtil python package. Reverting to ccpem version of FDRUtil")
+        path_to_ccpem = check_dependencies()['ccpem']
         path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
         fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
                    
@@ -322,6 +323,9 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         
 
 def run_refmac(model_path,model_name,map_path,resolution,maskdims,verbose=True):
+    path_to_locscale = check_dependencies()['locscale']
+    path_to_ccpem = check_dependencies()['ccpem']
+    path_to_ccp4 = check_dependencies()['ccp4']
     
     path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.zsh"
     refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])
@@ -446,6 +450,7 @@ def run_mapmask(emmap_path):
     '''
     import os
     from subprocess import run
+    path_to_locscale = check_dependencies()['locscale']
     
     mapmask_bash_script = path_to_locscale + "/scripts/mapmask.sh"
     xyz_output_map = "/".join(emmap_path.split('/')[:-1]+["xyz_"+emmap_path.split(sep='/')[-1]])
