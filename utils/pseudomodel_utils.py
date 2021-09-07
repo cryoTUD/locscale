@@ -1,29 +1,33 @@
 
-def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, verbose):
+def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 
     Parameters
     ----------
-    emmap_path : TYPE
-        DESCRIPTION.
-    mask_path : TYPE
-        DESCRIPTION.
-    pseudomodel_method : TYPE
-        DESCRIPTION.
-    pam_distance : TYPE
-        DESCRIPTION.
-    pam_iteration : TYPE
-        DESCRIPTION.
-    fsc_resolution : TYPE
-        DESCRIPTION.
-    verbose : TYPE
-        DESCRIPTION.
+    emmap_path : str
+        path/to/emmap.mrc
+    mask_path : str
+        path/to/mask.mrc
+    pseudomodel_method : str
+        Method to create pseudo-atomic model. 
+        Accepted values:
+            Random placement method: "kick" or "random"
+            Gradient descent method: "gradient"
+            
+    pam_distance : float
+        Typical inter-atomic distance for pseudo-atomic model
+    pam_iteration : int
+        Number of iterations involved to create pseudo-atomic model
+    fsc_resolution : float
+        average FSC resolution (at FSC=0.143 from halfmaps) for Refmac refinement
+    verbose : bool
+        Verbose output
 
     Returns
     -------
-    pseudomodel_modmap : TYPE
-        DESCRIPTION.
+    pseudomodel_modmap : str
+        path/to/modmap.mrc
 
     '''
     from locscale_headers import run_FDR, measure_mask_parameters, run_pam, run_refmac, run_refmap, prepare_sharpen_map
@@ -50,10 +54,9 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_d
     
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
     
-    globally_sharpened_map = prepare_sharpen_map(emmap_path, wilson_cutoff=wilson_cutoff)
+    globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution, wilson_cutoff=wilson_cutoff)
     
-    refined_model_path = run_refmac(model_path=pseudomodel_path, model_name=pseudomodel_path[:-4], 
-                                    map_path=globally_sharpened_map, resolution=resolution, maskdims=mask_dims,verbose=verbose)
+    refined_model_path = run_refmac(model_path=pseudomodel_path, model_name=pseudomodel_path[:-4], map_path=globally_sharpened_map, resolution=resolution, maskdims=mask_dims,num_iter=refmac_iter,verbose=verbose)
     if refined_model_path is None:
         print("Problem running REFMAC. Returning None")
         return None

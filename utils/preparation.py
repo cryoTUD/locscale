@@ -101,10 +101,12 @@ def prepare_mask_and_maps_for_scaling(args):
     
     ## Added new part to include pseudo-atomic model
     from pseudomodel_utils import get_modmap_from_pseudomodel
-    from emmer.ndimage.map_utils import average_voxel_size, pad_or_crop_image
+    from emmer.ndimage.map_utils import average_voxel_size
     from emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale_headers import run_FDR, run_mapmask
+    from locscale_headers import run_FDR, run_mapmask, check_dependencies
     from utils.general import round_up_to_even, round_up_to_odd
+    
+    print(check_dependencies())
     
     emmap_path = args.em_map
     xyz_emmap_path = run_mapmask(emmap_path)
@@ -122,10 +124,11 @@ def prepare_mask_and_maps_for_scaling(args):
     
     
     ## Get the mask path if provided. Calculate if not provided.
+    
     if args.mask is None:
         if args.verbose:
             print("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
-        if args.fdr_w is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
+        if args.fdr_window_size is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(xyz_emmap.shape[0] * 0.1)
             print("FDR window size is not set. Using a default window size of {}".format(fdr_window_size))
         else:
@@ -137,7 +140,7 @@ def prepare_mask_and_maps_for_scaling(args):
         else:
             filter_cutoff = None
             
-        mask_path = run_FDR(emmap_path=xyz_emmap, window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
+        mask_path = run_FDR(emmap_path=emmap_path, window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
         xyz_mask_path = run_mapmask(mask_path)
         
         if xyz_mask_path is not None:
@@ -154,17 +157,20 @@ def prepare_mask_and_maps_for_scaling(args):
         
     if args.model_map is None:
         print("Reference Data not supplied! Using pseudo-model")
-        pseudomodel_method=args.pm
-        pam_distance = float(args.dst)
-        if pseudomodel_method is 'random' and args.total_iterations is None:
+        pseudomodel_method=args.pseudomodel_method
+        pam_distance = float(args.distance)
+        refmac_iter = int(args.refmac_iterations)
+        if pseudomodel_method == 'random' and args.total_iterations is None:
             pam_iteration = 100
-        elif pseudomodel_method is 'gradient' and args.total_iterations is None:
+        elif pseudomodel_method == 'gradient' and args.total_iterations is None:
             pam_iteration = 50
+        elif args.total_iterations is not None:
+            pam_iteration = int(args.total_iterations)
         
         modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, 
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
-                                                  fsc_resolution=fsc_resolution, verbose=verbose)
-        xyz_modmap_path = run_mapmask(modmap_path)
+                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, verbose=verbose)
+        xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
     else:
         modmap_path = args.model_map
@@ -195,7 +201,7 @@ def prepare_mask_and_maps_for_scaling(args):
     wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     fsc_cutoff = fsc_resolution
     if verbose:
-        print("Using Wilson Cutoff of: {} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
+        print("Using Wilson Cutoff of: {:.2f} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
     frequency_cutoffs = (wilson_cutoff, fsc_cutoff)
     
     return xyz_emmap, xyz_modmap, xyz_mask, wn, window_bleed_and_pad, apix, frequency_cutoffs

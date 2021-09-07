@@ -26,6 +26,7 @@ def check_dependencies():
         if 'locscale' in path and 'scripts' in path:
             path_to_locscale = path[:-8]
     
+    '''
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
         print("Required dependencies not found! ")
         print("CCPEM Location at: ",path_to_ccpem)
@@ -38,7 +39,7 @@ def check_dependencies():
         print("CCPEM Location at: ",path_to_ccpem)
         print("CCP4 Location at: ",path_to_ccp4)
         print("LocScale Location at: ",path_to_locscale)
-        
+    '''  
     dependency = {}
     dependency['ccp4'] = path_to_ccp4
     dependency['ccpem'] = path_to_ccpem
@@ -60,8 +61,8 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
     rp_unsharp = compute_radial_profile(emmap_unsharpened)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
         
-    bfactor,_,_ = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff)
-    
+    bfactor,_,(fit,z) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff)
+    print("bfactor: {:.3f} and z: {}".format(bfactor, z))
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
     rp_sharp = compute_radial_profile(sharpened_map)
@@ -104,7 +105,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     if verbose:
         print("Now starting FDR procedure using the following parameters: \n"
                  "Window size: "+str(window_size)+"\n"
-                 "Filter cutoff: \n"+str(filter_cutoff))
+                 "Filter cutoff: "+str(filter_cutoff))
     
                     
     try:
@@ -180,16 +181,14 @@ def measure_mask_parameters(mask_path,protein_density=1.35,average_atomic_weight
 
     '''
     from scipy.constants import Avogadro
-    from emmer.ndimage.map_utils import average_voxel_size
+    from emmer.ndimage.map_utils import average_voxel_size, binarizeMap
     
     mask_mrc = mrcfile.open(mask_path)
     voxelsize = average_voxel_size(mask_mrc.voxel_size)
     
     ang_to_cm = 1e-8
-    mask = mask_mrc.data
-    mask.setflags(write=1)
-    mask[mask<0.5] = 0
-    mask[mask>=0.5] = 1
+    mask = binarizeMap(mask_mrc.data, threshold=1)
+    
     mask_vol = mask.sum()*(voxelsize*ang_to_cm)**3
     mask_vol_A3 = mask.sum()*voxelsize**3
     
@@ -322,13 +321,13 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     
         
 
-def run_refmac(model_path,model_name,map_path,resolution,maskdims,verbose=True):
+def run_refmac(model_path,model_name,map_path,resolution,maskdims,  num_iter,verbose=True):
     path_to_locscale = check_dependencies()['locscale']
     path_to_ccpem = check_dependencies()['ccpem']
     path_to_ccp4 = check_dependencies()['ccp4']
     
     path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.zsh"
-    refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])
+    refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])+" "+str(num_iter)
     if verbose:
         print("Running REFMAC to refine the pseudo-atomic model using \n"+
               "Path to run_refmac: "+path_to_run_refmac+
@@ -434,7 +433,7 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
         print("Reference map was not generated. Returning none")
         return None
     
-def run_mapmask(emmap_path):
+def run_mapmask(emmap_path, return_same_path=False):
     '''
     Function to generate a XYZ corrected output using CCPEM-Mapmask tool
 
@@ -453,7 +452,11 @@ def run_mapmask(emmap_path):
     path_to_locscale = check_dependencies()['locscale']
     
     mapmask_bash_script = path_to_locscale + "/scripts/mapmask.sh"
-    xyz_output_map = "/".join(emmap_path.split('/')[:-1]+["xyz_"+emmap_path.split(sep='/')[-1]])
+    
+    if return_same_path:
+        xyz_output_map = emmap_path
+    else:
+        xyz_output_map = "/".join(emmap_path.split('/')[:-1]+   ["xyz_"+emmap_path.split(sep='/')[-1]])
     run([mapmask_bash_script,emmap_path,xyz_output_map])
     
     return xyz_output_map
