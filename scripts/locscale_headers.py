@@ -60,9 +60,15 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
     
     rp_unsharp = compute_radial_profile(emmap_unsharpened)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
+    if fsc_resolution < 3:
+        print("FSC resolution is less than 3 A. Using 4 segments for bfactor estimation")
+        num_segments = 4
+    else:
+        print("FSC resolution is more than 3 A. Using 3 segments for bfactor estimation")
+        num_segments = 3
         
-    bfactor,_,(fit,z) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff)
-    print("bfactor: {:.3f} and z: {}".format(bfactor, z))
+    bfactor,_,(fit,z) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution, num_segments=num_segments)
+    print("bfactor: {:.3f} and breakpoints: {}".format(bfactor, (1/np.sqrt(z)).round(2)))
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
     rp_sharp = compute_radial_profile(sharpened_map)
