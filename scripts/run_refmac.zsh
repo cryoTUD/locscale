@@ -8,7 +8,8 @@ CCP4_PATH=$6
 H=$7
 W=$8
 L=$9
-echo $1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9 
+NUM_ITER=$10
+echo $1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10
 #Step 1: 
 REFMAC_SCRIPT=${CCP4_PATH}"/bin/refmac5"
 echo ${CCP4_PATH}
@@ -32,7 +33,7 @@ labin FP=Fout0 PHIB=Pout0
 make hydr no
 solvent no
 source EM MB
-ncycle 20
+ncycle ${NUM_ITER}
 weight auto
 ncsr local
 reso ${RES}

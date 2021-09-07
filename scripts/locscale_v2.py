@@ -30,11 +30,13 @@ cmdl_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window s
 cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
 cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='FDR filter for low pass filtering', default=None)
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
+cmdl_parser.add_argument('-it_ref', '--refmac_iterations', help='For pseudo-atomic model: number of refmac iterations', default=5)
 cmdl_parser.add_argument('-it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
 cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map', default=None)
-cmdl_parser.add_argument('-v', '--verbose', default=False,
+cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')
-
+cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', default=True,
+                         help='Use pseudo-atomic model')
 def launch_amplitude_scaling(args):
     
     from utils.preparation import prepare_mask_and_maps_for_scaling
@@ -52,12 +54,8 @@ def launch_amplitude_scaling(args):
     wilson_cutoff = frequency_cutoffs[0]
     fsc_cutoff = frequency_cutoffs[1]
     
-    if args.model_map is None:
-        use_pseudomaps = True
-    else:
-        use_pseudomaps = False
-
-
+    use_pseudomaps = bool(args.use_pseudomaps)
+    
     if not args.mpi:
         LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile=use_pseudomaps, 
                                                             wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
@@ -68,7 +66,9 @@ def launch_amplitude_scaling(args):
                                                                       wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
                                                                       
         
-    write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol)
+    write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
+    
+    print("You can find the scaled map here: {}".format(args.outfile))
 
 
 def main():

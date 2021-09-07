@@ -54,6 +54,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cuto
                           use_theoretical_profile=True, check_scaling=False):
     
     from emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
+    #print("checkScaling", check_scaling)
+    #print("useTheoretical", use_theoretical_profile)
             
     if use_theoretical_profile:
         theoretical_profile_tuple = get_theoretical_profile(length=len(ref_profile),apix=apix)
@@ -69,6 +71,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cuto
         
         reference_profile_for_scaling = scaled_reference_profile
         if check_scaling:
+            #print(check_scaling)
             temporary_dictionary = {}
             temporary_dictionary['em_profile'] = em_profile
             temporary_dictionary['input_ref_profile'] = ref_profile
@@ -85,6 +88,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, wilson_cutoff, fsc_cuto
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
     if check_scaling:
+        #print("checkScalingReport", check_scaling)
         temporary_dictionary['scale_factor'] = scale_factor
         return scale_factor, temporary_dictionary
     else:
@@ -101,7 +105,7 @@ def set_radial_profile(vol, scale_factor, radii):
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,
                                                 wilson_cutoff, fsc_cutoff,
                                                 verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
-    import tqdm
+    from tqdm import tqdm
     from emmer.ndimage.map_tools import compute_real_space_correlation
     from utils.general import true_percent_probability
     import pickle

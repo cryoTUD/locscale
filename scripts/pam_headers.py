@@ -199,7 +199,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         if myoutput is not None:
             myoutput.write(solver_properties)
     if verbose:    
-        print('# \t|\t Peak bond length \t | \t Minimum bond length \t | \t Average map value \t | \t Average gradient acc \t | \t Average LJ potential')        
+        print('# | Peak bond length  |  Minimum bond length  |  Average map value  |  Average gradient acc  |  Average LJ potential')        
     profiles_iterations = []
     cross_correlation = []
     for iter in range(total_iterations):
