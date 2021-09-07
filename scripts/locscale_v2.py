@@ -19,19 +19,19 @@ mpi_cmd = 'mpirun -np 4 python locscale_mpi.py -em emmap.mrc -mm modmap.mrc -ma 
 
 cmdl_parser.add_argument('-em', '--em_map', required=True, help='Input filename EM map')
 cmdl_parser.add_argument('-mm', '--model_map', help='Input filename PDB map')
-cmdl_parser.add_argument('-p', '--apix', type=float, required=True, help='pixel size in Angstrom')
+cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 cmdl_parser.add_argument('-ma', '--mask', help='Input filename mask')
 cmdl_parser.add_argument('-w', '--window_size', type=int, help='window size in pixel', default=None)
-cmdl_parser.add_argument('-res', '--fsc_resolution', type=float, help='deposited resolution of EM map')
+cmdl_parser.add_argument('-res', '--fsc_resolution', required=True, type=float, help='deposited resolution of EM map')
 cmdl_parser.add_argument('-o', '--outfile', required=True, help='Output filename')
 cmdl_parser.add_argument('-mpi', '--mpi', action='store_true', default=False,
                          help='MPI version call by: \"{0}\"'.format(mpi_cmd))
 cmdl_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixel for FDR thresholding', default=None)
-cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms')
-cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='FDR filter for low pass filtering')
-cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method')
-cmdl_parser.add_argument('-it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations')
-cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map')
+cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
+cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='FDR filter for low pass filtering', default=None)
+cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
+cmdl_parser.add_argument('-it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
+cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map', default=None)
 cmdl_parser.add_argument('-v', '--verbose', default=False,
                          help='Verbose output')
 
