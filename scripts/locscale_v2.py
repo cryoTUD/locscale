@@ -51,18 +51,24 @@ def launch_amplitude_scaling(args):
             
     
     if not args.mpi:
-        emmap, modmap, mask, wn, window_bleed_and_pad, apix, wilson_cutoff, fsc_cutoff = prepare_mask_and_maps_for_scaling(args)
+        parsed_arguments = prepare_mask_and_maps_for_scaling(args)
+        #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
+        ## ^ Above order is changed
     elif args.mpi:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()
         
         if rank==0:
-            emmap, modmap, mask, wn, window_bleed_and_pad, apix, wilson_cutoff, fsc_cutoff = prepare_mask_and_maps_for_scaling(args)
+            parsed_arguments = prepare_mask_and_maps_for_scaling(args)
+            #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
+            ## ^ Above order is changed
         else:
             pass
         
-        comm.barrier()
+        #parsed_arguments = comm.scatter(parsed_arguments, root=0)
+        
+        parsed_arguments = comm.gather(parsed_arguments, root=0)
             
         
     
@@ -71,15 +77,23 @@ def launch_amplitude_scaling(args):
     use_pseudomaps = bool(args.use_pseudomaps)
     
     if not args.mpi:
-        LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile=use_pseudomaps, 
-                                                            wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
+        input_to_scaling = parsed_arguments[:-1]
+        LocScaleVol = run_window_function_including_scaling(*input_to_scaling)
+        #LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile=use_pseudomaps, 
+                                                #            wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
         
     elif args.mpi:
-        LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix, 
-                                                                      use_theoretical_profile=use_pseudomaps,
-                                                                      wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
+        input_to_scaling = parsed_arguments[:-1]
+        LocScaleVol, rank = run_window_function_including_scaling_mpi(*input_to_scaling)
+        #LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix, 
+        #                                                              use_theoretical_profile=use_pseudomaps,
+        #                                                              wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
                                                                       
         
+    
+    window_bleed_and_pad = parsed_arguments[-1]
+    wn = parsed_arguments[3]
+    apix = parsed_arguments[4]
     write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
     
     print("You can find the scaled map here: {}".format(args.outfile))
