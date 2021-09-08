@@ -67,7 +67,7 @@ def launch_amplitude_scaling(args):
             pass
         
         #parsed_arguments = comm.scatter(parsed_arguments, root=0)
-        
+        comm.barrier()
         parsed_arguments = comm.gather(parsed_arguments, root=0)
             
         
