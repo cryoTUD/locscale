@@ -69,6 +69,7 @@ def launch_amplitude_scaling(args):
         #parsed_arguments = comm.scatter(parsed_arguments, root=0)
         comm.barrier()
         parsed_arguments = comm.gather(parsed_arguments, root=0)
+        print("parsed_arg",len(parsed_arguments))
             
         
     
@@ -78,12 +79,16 @@ def launch_amplitude_scaling(args):
     
     if not args.mpi:
         input_to_scaling = parsed_arguments[:-1]
+        print(len(parsed_arguments))
+        print(len(input_to_scaling))
         LocScaleVol = run_window_function_including_scaling(*input_to_scaling)
         #LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile=use_pseudomaps, 
                                                 #            wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
         
     elif args.mpi:
         input_to_scaling = parsed_arguments[:-1]
+        print(len(parsed_arguments))
+        print(len(input_to_scaling))
         LocScaleVol, rank = run_window_function_including_scaling_mpi(*input_to_scaling)
         #LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix, 
         #                                                              use_theoretical_profile=use_pseudomaps,
