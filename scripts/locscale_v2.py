@@ -64,7 +64,7 @@ def launch_amplitude_scaling(args):
             #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
             ## ^ Above order is changed
         else:
-            pass
+            parsed_arguments = None
         
         #parsed_arguments = comm.scatter(parsed_arguments, root=0)
         comm.barrier()
