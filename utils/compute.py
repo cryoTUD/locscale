@@ -115,9 +115,11 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     print("RSCC:",compute_real_space_correlation(emmap,modmap))
+    print("_________________________________________________________________")
+    
     if audit:
         profiles_audit = {}
-    for k, j, i in tqdm(masked_xyz_locs - wn / 2):
+    for k, j, i in tqdm(masked_xyz_locs - wn / 2, desc="LocScale progress: "):
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
