@@ -203,8 +203,10 @@ def prepare_mask_and_maps_for_scaling(args):
     if verbose:
         print("Using Wilson Cutoff of: {:.2f} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
     
+    use_pseudomaps = bool(args.use_pseudomaps)
     
     if verbose:
         print("Preparation completed. Now running LocScale!")
     
-    return xyz_emmap, xyz_modmap, xyz_mask, wn, window_bleed_and_pad, apix, wilson_cutoff, fsc_cutoff
+    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose, window_bleed_and_pad)
+    return parsed_arguments
