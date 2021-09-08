@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 from argparse import RawTextHelpFormatter
+from mpi4py import MPI
 
 progname = os.path.basename(sys.argv[0])
 datmod = "2021-09-07"  # to be updated by gitlab after every commit
@@ -48,11 +49,24 @@ def launch_amplitude_scaling(args):
         for arg in vars(args):
             print('    {} : {}'.format(arg, getattr(args, arg)))
             
-            
-    emmap, modmap, mask, wn, window_bleed_and_pad, apix, frequency_cutoffs = prepare_mask_and_maps_for_scaling(args)
     
-    wilson_cutoff = frequency_cutoffs[0]
-    fsc_cutoff = frequency_cutoffs[1]
+    if not args.mpi:
+        emmap, modmap, mask, wn, window_bleed_and_pad, apix, wilson_cutoff, fsc_cutoff = prepare_mask_and_maps_for_scaling(args)
+    elif args.mpi:
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        size = comm.Get_size()
+        
+        if rank==0:
+            emmap, modmap, mask, wn, window_bleed_and_pad, apix, wilson_cutoff, fsc_cutoff = prepare_mask_and_maps_for_scaling(args)
+        else:
+            pass
+        
+        comm.barrier()
+            
+        
+    
+    
     
     use_pseudomaps = bool(args.use_pseudomaps)
     
