@@ -61,6 +61,7 @@ def launch_amplitude_scaling(args):
         
         if rank==0:
             parsed_arguments = prepare_mask_and_maps_for_scaling(args)
+            print("parsed_arg",len(parsed_arguments))
             #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
             ## ^ Above order is changed
         else:
