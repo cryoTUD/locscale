@@ -204,4 +204,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Using Wilson Cutoff of: {:.2f} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
     frequency_cutoffs = (wilson_cutoff, fsc_cutoff)
     
+    if verbose:
+        print("Preparation completed. Now running LocScale!")
+    
     return xyz_emmap, xyz_modmap, xyz_mask, wn, window_bleed_and_pad, apix, frequency_cutoffs
