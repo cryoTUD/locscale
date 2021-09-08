@@ -61,35 +61,31 @@ def launch_amplitude_scaling(args):
         
         if rank==0:
             parsed_arguments = prepare_mask_and_maps_for_scaling(args)
-            print("parsed_arg",len(parsed_arguments))
+          
             #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
             ## ^ Above order is changed
         else:
             parsed_arguments = None
         
-        #parsed_arguments = comm.scatter(parsed_arguments, root=0)
+        
         comm.barrier()
-        parsed_arguments = comm.gather(parsed_arguments, root=0)
-        print("parsed_arg",len(parsed_arguments))
+        parsed_arguments = comm.scatter(parsed_arguments, root=0)
+        #parsed_arguments = comm.gather(parsed_arguments, root=0)
+        
             
         
-    
-    
-    
     use_pseudomaps = bool(args.use_pseudomaps)
     
     if not args.mpi:
         input_to_scaling = parsed_arguments[:-1]
-        print(len(parsed_arguments))
-        print(len(input_to_scaling))
+        
         LocScaleVol = run_window_function_including_scaling(*input_to_scaling)
         #LocScaleVol = run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile=use_pseudomaps, 
                                                 #            wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
         
     elif args.mpi:
         input_to_scaling = parsed_arguments[:-1]
-        print(len(parsed_arguments))
-        print(len(input_to_scaling))
+        
         LocScaleVol, rank = run_window_function_including_scaling_mpi(*input_to_scaling)
         #LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix, 
         #                                                              use_theoretical_profile=use_pseudomaps,
