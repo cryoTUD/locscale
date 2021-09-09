@@ -172,7 +172,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
         if mpi:
             pbar[rank].update(1)
-            
+            comm.barrier()
         else:
             progress_bar.update(n=1)
         
