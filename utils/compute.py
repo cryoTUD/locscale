@@ -173,11 +173,12 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
         if mpi:
             pbar[rank].update(1)
+            pbar = {}
         else:
             progress_bar.update(n=1)
         
     if mpi:
-        comm.barrier()
+    #    comm.barrier()
     if audit:
         with open("profiles_audit.pickle","wb") as audit:
             pickle.dump(profiles_audit, audit)
