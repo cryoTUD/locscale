@@ -116,7 +116,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     
-    progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
+    
     mpi=False
     if process_name != 'LocScale':
         mpi=True
@@ -126,15 +126,18 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         rank=comm.Get_rank()
         size=comm.Get_size()
         
-        
-        
+        pbar = {}
+        for n in range(size):
+            pbar[n] = tqdm(total=len(masked_xyz_locs),desc=process_name)
+    else:
+        progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
     print("_________________________________________________________________")
     
     if audit:
         profiles_audit = {}
     for k, j, i in masked_xyz_locs - wn / 2:
-        progress_bar.update(n=1)
+        
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
@@ -168,7 +171,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
         
         if mpi:
-            comm.barrier()
+            pbar[rank].update(1)
+        else:
+            progress_bar.update(n=1)
         
     
     if audit:
