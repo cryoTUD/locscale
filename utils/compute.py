@@ -127,8 +127,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         size=comm.Get_size()
         
         pbar = {}
-        
-        pbar[rank] = tqdm(total=len(masked_xyz_locs),desc=process_name)
+        for n in range(size):
+            if rank == n:
+                pbar[rank] = tqdm(total=len(masked_xyz_locs),desc=process_name)
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
