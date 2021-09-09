@@ -110,12 +110,25 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     from utils.general import true_percent_probability
     import pickle
     
+    
     sharpened_vals = []
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
-    progress_bar= tqdm(total=len(masked_xyz_locs), desc=process_name)
-    print("RSCC:",compute_real_space_correlation(emmap,modmap))
+    
+    progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
+    mpi=False
+    if process_name != 'LocScale':
+        mpi=True
+        from mpi4py import MPI
+        
+        comm = MPI.COMM_WORLD
+        rank=comm.Get_rank()
+        size=comm.Get_size()
+        
+        
+        
+    
     print("_________________________________________________________________")
     
     if audit:
@@ -153,6 +166,10 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
 
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+        
+        if mpi:
+            comm.barrier()
+        
     
     if audit:
         with open("profiles_audit.pickle","wb") as audit:
