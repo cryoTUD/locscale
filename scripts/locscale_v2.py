@@ -56,8 +56,12 @@ def launch_amplitude_scaling(args):
         input_to_scaling = parsed_arguments[:-1]
         
         LocScaleVol = run_window_function_including_scaling(*input_to_scaling)
-        #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
-        ## ^ Above order is changed
+        
+        window_bleed_and_pad = parsed_arguments[-1]
+        wn = parsed_arguments[3]
+        apix = parsed_arguments[4]
+        write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
+        
     
     elif args.mpi:
         comm = MPI.COMM_WORLD
@@ -66,9 +70,7 @@ def launch_amplitude_scaling(args):
         
         if rank==0:
             parsed_arguments = prepare_mask_and_maps_for_scaling(args)
-          
-            #emmap, modmap, mask, wn, window_bleed_and_pad, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose = prepare_mask_and_maps_for_scaling(args)
-            ## ^ Above order is changed
+        
         else:
             parsed_arguments = None
         
@@ -80,16 +82,12 @@ def launch_amplitude_scaling(args):
         input_to_scaling = parsed_arguments[:-1]
         
         LocScaleVol, rank = run_window_function_including_scaling_mpi(*input_to_scaling)
-        #LocScaleVol, rank = run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix, 
-        #                                                              use_theoretical_profile=use_pseudomaps,
-        #                                                              wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, verbose=args.verbose)
-                                                                      
         
-    
-    window_bleed_and_pad = parsed_arguments[-1]
-    wn = parsed_arguments[3]
-    apix = parsed_arguments[4]
-    write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
+        if rank == 0:
+            window_bleed_and_pad = parsed_arguments[-1]
+            wn = parsed_arguments[3]
+            apix = parsed_arguments[4]
+            write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
     
     print("You can find the scaled map here: {}".format(args.outfile))
 
