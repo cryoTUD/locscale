@@ -62,6 +62,8 @@ def launch_amplitude_scaling(args):
         apix = parsed_arguments[4]
         write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
         
+        print("You can find the scaled map here: {}".format(args.outfile))
+        
     
     elif args.mpi:
         comm = MPI.COMM_WORLD
@@ -89,7 +91,7 @@ def launch_amplitude_scaling(args):
             apix = parsed_arguments[4]
             write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix=apix)
     
-    print("You can find the scaled map here: {}".format(args.outfile))
+            print("You can find the scaled map here: {}".format(args.outfile))
 
 
 def main():
