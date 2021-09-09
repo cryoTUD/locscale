@@ -114,6 +114,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
+    print(process_name)
     print("RSCC:",compute_real_space_correlation(emmap,modmap))
     print("_________________________________________________________________")
     
