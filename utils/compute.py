@@ -133,7 +133,6 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
-    print("_________________________________________________________________")
     
     if audit:
         profiles_audit = {}
@@ -173,7 +172,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
         if mpi:
             pbar[rank].update(1)
-            pbar = {}
+            
         else:
             progress_bar.update(n=1)
         
