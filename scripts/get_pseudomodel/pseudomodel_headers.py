@@ -11,16 +11,20 @@ import numpy as np
 
 def check_dependencies():
     import os
-    
+    dependency = {}
     paths = os.environ['PATH']
     allpaths = paths.split(':')
     for path in allpaths:
         if 'ccpem' in path and 'bin' in path:
             path_to_ccpem = "/".join(path.split("/")[:-1])
-        if 'ccp4' in path and 'bin' in path:
+            dependency['ccpem'] = path_to_ccpem
+        if 'ccp4' in path and 'bin' in path:            
             path_to_ccp4 = "/".join(path.split("/")[:-1])
+            dependency['ccp4'] = path_to_ccp4
         if 'locscale' in path and 'scripts' in path:
-            path_to_locscale = "/".join(path.split("/")[:-1])
+            locscale_index=path.split("/").index("locscale")
+            path_to_locscale = "/".join(path.split("/")[:locscale_index+1])
+            dependency['locscale'] = path_to_locscale
     
     '''
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
@@ -36,16 +40,12 @@ def check_dependencies():
         print("CCP4 Location at: ",path_to_ccp4)
         print("LocScale Location at: ",path_to_locscale)
     '''  
-    dependency = {}
-    dependency['ccp4'] = path_to_ccp4
-    dependency['ccpem'] = path_to_ccpem
-    dependency['locscale'] = path_to_locscale
     
     return dependency
     
 
 
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed_files=False):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed_files=False, output_file_path=None):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
@@ -74,7 +74,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
     
     if return_processed_files:
         print("Returning: sharpend_map_path, [rp_unsharp, rp_sharp, bfactor]")
-        return output_filename, [rp_unsharp, rp_sharp, bfactor]
+        return output_filename, fit
     else:
         return output_filename
 
@@ -242,13 +242,13 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         arranged_points = main_solver3D(
             emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
             capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, compute_map=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
-            integration='verlet',verbose=True)
+            integration='verlet',verbose=verbose)
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
 
     elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
-                pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=99,returnPointsOnly=True,verbose=True)
+                pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=total_iterations,returnPointsOnly=True,verbose=verbose)
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
     
