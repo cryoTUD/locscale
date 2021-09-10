@@ -267,6 +267,8 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
 def run_refmac(model_path,model_name,map_path,resolution,maskdims,  num_iter,verbose=True):
     import os
     from subprocess import run, PIPE
+    from emmer.pdb.pdb_utils import get_bfactors
+    
     path_to_locscale = check_dependencies()['locscale']
     path_to_ccpem = check_dependencies()['ccpem']
     path_to_ccp4 = check_dependencies()['ccp4']
@@ -280,10 +282,13 @@ def run_refmac(model_path,model_name,map_path,resolution,maskdims,  num_iter,ver
         
     refmac_output = run(refmac_command_line.split(),stdout=PIPE)
     refined_model_path = model_name+"_refmac_refined.pdb"
-        
+    bfactors = get_bfactors(in_model_path=refined_model_path)
+    
     if os.path.exists(refined_model_path):
         if verbose: 
             print("The refined PDB model is: "+refined_model_path+"\n\n")    
+            print("B factor range: \t ({:.2f} to {:.2f}".format(min(bfactors),max(bfactors)))
+            
         return refined_model_path
     else:
         print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
