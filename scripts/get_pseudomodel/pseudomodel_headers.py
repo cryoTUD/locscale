@@ -20,7 +20,7 @@ def check_dependencies():
         if 'ccp4' in path and 'bin' in path:
             path_to_ccp4 = "/".join(path.split("/")[:-1])
         if 'locscale' in path and 'scripts' in path:
-            path_to_locscale = "/".join(path.split("/")[:-2])
+            path_to_locscale = "/".join(path.split("/")[:-1])
     
     '''
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
