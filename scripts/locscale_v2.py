@@ -38,6 +38,7 @@ cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')
 cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', default=True,
                          help='Use pseudo-atomic model')
+
 def launch_amplitude_scaling(args):
     
     from utils.preparation import prepare_mask_and_maps_for_scaling
