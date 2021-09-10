@@ -273,8 +273,8 @@ def run_refmac(model_path,model_name,map_path,resolution,maskdims,  num_iter,ver
     path_to_ccpem = check_dependencies()['ccpem']
     path_to_ccp4 = check_dependencies()['ccp4']
     
-    path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.sh"
-    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])+" "+str(num_iter)
+    path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.zsh"
+    refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])+" "+str(num_iter)
     if verbose:
         print("Running REFMAC to refine the pseudo-atomic model using \n"+
               "Path to run_refmac: "+path_to_run_refmac+"\n"+
