@@ -5,13 +5,9 @@ Created on Mon Aug 17 11:31:51 2020
 
 @author: alok
 """
-import argparse
-from pam_headers import *
-import ipykernel
-from pseudomodel_analysis import *
-import pandas as pd
-from emmer.pdb.pdb_tools import *
-import pprint
+
+import numpy as np
+
 
 def check_dependencies():
     import os
@@ -20,11 +16,11 @@ def check_dependencies():
     allpaths = paths.split(':')
     for path in allpaths:
         if 'ccpem' in path and 'bin' in path:
-            path_to_ccpem = path[:-4]
+            path_to_ccpem = "/".join(path.split("/")[:-1])
         if 'ccp4' in path and 'bin' in path:
-            path_to_ccp4 = path[:-4]
+            path_to_ccp4 = "/".join(path.split("/")[:-1])
         if 'locscale' in path and 'scripts' in path:
-            path_to_locscale = path[:-8]
+            path_to_locscale = "/".join(path.split("/")[:-2])
     
     '''
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
@@ -53,6 +49,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from emmer.ndimage.map_tools import sharpen_maps
+    import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)
     emmap_unsharpened = emmap_mrc.data
@@ -67,8 +64,8 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
         print("FSC resolution is more than 3 A. Using 3 segments for bfactor estimation")
         num_segments = 3
         
-    bfactor,_,(fit,z) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution, num_segments=num_segments)
-    print("bfactor: {:.3f} and breakpoints: {}".format(bfactor, (1/np.sqrt(z)).round(2)))
+    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution, num_segments=num_segments)
+    print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor, (1/np.sqrt(z)).round(2),slopes))
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
     rp_sharp = compute_radial_profile(sharpened_map)
@@ -103,7 +100,8 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
 
     '''
     import os, sys
-    from subprocess import run
+    from subprocess import run, PIPE
+    import mrcfile
     # Preprocessing EM Map Path
     
     # Apply filter if filter_cutoff is not None
@@ -150,11 +148,10 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
         fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
                    
-        fdr_output = run(fdr_command_line.split(),stdout=PIPE)
+        run(fdr_command_line.split(),stdout=PIPE)
         emmap_name = emmap_path[:-4]
         mask_path = emmap_name+"_confidenceMap.mrc"
         if os.path.exists(mask_path):
-            mask_mrc = mrcfile.open(mask_path)
             if verbose:
                 print("FDR Procedure successful! \n"+
                       "Mask Path: "+mask_path)
@@ -163,71 +160,6 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
             print("FDR procedure unsuccessful. Returning None")
             return None
             
-
-def measure_mask_parameters(mask_path,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
-    '''
-    Parameters
-    ----------
-    mask_path : string 
-        Path to mask file
-    edge_threshold : float 
-        The threshold to strictly binarize the FDR map at the edges
-    protein_density : float, optional
-        Average protein density to calculate number of atoms. The default is 1.35.
-    average_atomic_weight : float, optional
-        Atomic weight of an "average atom present in protein". 
-        The default is 13.14. Found using calculating average atomic weight (molecular mass/num atoms) for 500 proteins.
-    verbose : bool, optional
-        Print statistics if True. The default is True.
-
-    Returns
-    -------
-    num_atoms : int
-        Estimated number of atoms based on mask volume, protein density and average atomic weight
-
-    '''
-    from scipy.constants import Avogadro
-    from emmer.ndimage.map_utils import average_voxel_size, binarizeMap
-    
-    mask_mrc = mrcfile.open(mask_path)
-    voxelsize = average_voxel_size(mask_mrc.voxel_size)
-    
-    ang_to_cm = 1e-8
-    mask = binarizeMap(mask_mrc.data, threshold=1)
-    
-    mask_vol = mask.sum()*(voxelsize*ang_to_cm)**3
-    mask_vol_A3 = mask.sum()*voxelsize**3
-    
-    protein_mass = protein_density * mask_vol
-    num_moles = protein_mass / average_atomic_weight
-    num_atoms = int((num_moles * Avogadro).round())
-    maskshape = mask.shape
-    mask_dims = [maskshape[0]*voxelsize,maskshape[1]*voxelsize,maskshape[2]*voxelsize]
-        
-    if verbose:
-        print("Mask parameters calculated are: \n"+
-              "Mask volume: "+str(round(mask_vol_A3,3))+" A$^3$ \n"+
-              "Protein mass: "+str(round(1e21*protein_mass))+" zg\n"+
-              "Num atoms: "+str(num_atoms)+"\n") 
-        
-    if not detailed_report:
-        return num_atoms,mask_dims
-    else:
-        return mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape
-
-def create_pseudo_mask(emmap_path,threshold):
-    emmap_mrc = mrcfile.open(emmap_path)
-    emmap = emmap_mrc.data
-    emmap.setflags(write=1)
-    emmap[emmap<threshold] = 0
-    emmap[emmap>=threshold] = 1
-    mask_path = emmap_path[:-4]+'_mask.mrc'
-    with mrcfile.new(mask_path,overwrite=True) as maskmrc:
-        maskmrc.set_data(emmap)
-        maskmrc.voxel_size = emmap_mrc.voxel_size
-        maskmrc.header.origin = emmap_mrc.header.origin
-    return mask_path
-
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             g=None,friction=None,scale_map=None,scale_lj=None,total_iterations=100,verbose=True):
     '''
@@ -275,6 +207,11 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         
 
     '''
+    import os
+    import mrcfile
+    import gemmi
+    from pseudomodel_solvers import main_solver3D, main_solver_kick
+    from pseudomodel_classes import extract_model_from_mask
     
     mrc = mrcfile.open(emmap_path)
     emmap = mrc.data
@@ -328,16 +265,18 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         
 
 def run_refmac(model_path,model_name,map_path,resolution,maskdims,  num_iter,verbose=True):
+    import os
+    from subprocess import run, PIPE
     path_to_locscale = check_dependencies()['locscale']
     path_to_ccpem = check_dependencies()['ccpem']
     path_to_ccp4 = check_dependencies()['ccp4']
     
-    path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.zsh"
-    refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])+" "+str(num_iter)
+    path_to_run_refmac = path_to_locscale+"/scripts/run_refmac.sh"
+    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(maskdims[0])+" "+str(maskdims[1])+" "+str(maskdims[2])+" "+str(num_iter)
     if verbose:
         print("Running REFMAC to refine the pseudo-atomic model using \n"+
-              "Path to run_refmac: "+path_to_run_refmac+
-              "Command line: "+refmac_command_line)
+              "Path to run_refmac: "+path_to_run_refmac+"\n"+
+              "Command line: \n"+refmac_command_line)
         
     refmac_output = run(refmac_command_line.split(),stdout=PIPE)
     refined_model_path = model_name+"_refmac_refined.pdb"
@@ -376,11 +315,15 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
         Path to reference map generated.
 
     '''
+    import os
+    import gemmi
+    import mrcfile
+    import pprint
     from emmer.pdb.pdb_to_map import pdb2map
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
     from emmer.ndimage.map_tools import get_center_of_mass
     from emmer.ndimage.map_tools import compute_real_space_correlation
-    import pandas as pd
+    
     
     if verbose: 
         print("Now simulating Reference Map using Refined Atomic Model")
@@ -407,8 +350,7 @@ def run_refmap(model_path,emmap_path,mask_path,resolution=None,verbose=True):
     
     ## Checklist: 
     
-    correlation = compute_real_space_correlation(mrcfile.open(emmap_path).data, 
-                                                 mrcfile.open(reference_map_path).data)
+    correlation = compute_real_space_correlation(emmap_path, reference_map_path)
     
     grid_comparison = compare_gemmi_grids(read_gemmi_map(emmap_path, return_grid=True)[1], 
                                           read_gemmi_map(reference_map_path,return_grid=True)[1])
@@ -457,7 +399,7 @@ def run_mapmask(emmap_path, return_same_path=False):
     from subprocess import run
     path_to_locscale = check_dependencies()['locscale']
     
-    mapmask_bash_script = path_to_locscale + "/scripts/mapmask.sh"
+    mapmask_bash_script = path_to_locscale + "/scripts/utils/mapmask.sh"
     
     if return_same_path:
         xyz_output_map = emmap_path

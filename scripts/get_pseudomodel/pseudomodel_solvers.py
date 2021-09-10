@@ -1,22 +1,11 @@
-from sklearn.neighbors import KDTree
-from scipy import spatial
-
-from skimage.color import rgb2gray
-from scipy import spatial
-from subprocess import call, Popen, PIPE, run
-from scipy.signal import correlate
-
-from math import pi as pi
-import math
-from scipy.interpolate import interpn
-from emmer.pdb.pdb_tools import *
-from datetime import datetime
-from pseudomodel_analysis import *
+import numpy as np
 
 def value_at_point(g,x,y,z):
     return g[z,y,x]
 
 def get_gradient(g,point):
+    from scipy.interpolate import interpn
+    
     [xi,yi,zi] = [int(round(point.position.x)),int(round(point.position.y)),int(round(point.position.z))]
     x = np.arange(xi-1,xi+2,1)
     y = np.arange(yi-1,yi+2,1)
@@ -33,6 +22,8 @@ def get_gradient(g,point):
 
         
 def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
+    from pseudomodel_classes import Vector
+    
     [x,y,z] = [int(round(point.position.x)),int(round(point.position.y)),int(round(point.position.z))]
 
     
@@ -59,7 +50,7 @@ def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
 
 
 def get_acceleration_from_lj_potential(targetpoint,lj_neighbors,epsilon,min_dist_in_pixel,lj_factor,capmagnitude_lj):
-    #print(lj_factor)
+    from pseudomodel_classes import Vector
 
     lj_neighbors_points = [x.position.get() for x in lj_neighbors]
     distance_vector = targetpoint.position.get() - lj_neighbors_points
@@ -69,30 +60,11 @@ def get_acceleration_from_lj_potential(targetpoint,lj_neighbors,epsilon,min_dist
     
     eps = epsilon
     rm = min_dist_in_pixel*lj_factor
-    rm1 = 1.23
-    rm2 = 1.33
-    rm3 = 1.45
-    rm4 = 1.52
-  
-    v_lj = eps * ((rm1/r)**12 - 2*(rm1/r)**6)
+
+    v_lj = eps * ((rm/r)**12 - 2*(rm/r)**6)
     
     f_r = np.array((12 * eps * rm**6 * (r**6 - rm**6))/r**13)
-    #f_r = np.array((288 * eps * rm1**48 * (r**48 - rm1**48))/r**97) + np.array((288 * eps * rm2**48 * (r**48 - rm2**48))/r**97) + np.array((288 * eps * rm3**48 * (r**48 - rm3**48))/r**97) + np.array((288 * eps * rm4**48 * (r**48 - rm4**48))/r**97)
-    '''
-    f_r = []
-    for i in range(len(r)):
-        if 0 <= r[i] < 1.3:
-            f_r.append(288 * eps * rm1**48 * (r[i]**48 - rm1**48)/r[i]**97)
-        elif 1.3 <= r[i] < 1.4:
-            f_r.append(288 * eps * rm2**48 * (r[i]**48 - rm2**48)/r[i]**97)
-        elif 1.4 <= r[i] < 1.5:
-            f_r.append(288 * eps * rm3**48 * (r[i]**48 - rm3**48)/r[i]**97)
-        else:
-            f_r.append(288 * eps * rm4**48 * (r[i]**48 - rm4**48)/r[i]**97)
-    
-    f_r = np.array(f_r)
-    '''
-    
+        
     f_r_vector = np.array([np.array(f_r[k])*np.array(unit_diff_vector[k]) for k in range(len(lj_neighbors))])
     
   
@@ -114,7 +86,7 @@ def get_neighborhood(points,min_dist_in_pixel,fromArray=False,only_neighbors=Fal
     input: points is a list of point objects. If the list is already a numpy array then the variable fromArray must be True
     rerturn a dictionary of neighborhoods. If only_neighbors is true, then only distance to neighbor is sent. Else, distance to neighbor and the indices of all nearest neighbors (distance of min_dist * 3 ) is sent
     '''
-    
+    from sklearn.neighbors import KDTree
 
     if fromArray==False:
         np_points = np.array([list(x.position.get()) for x in points])
@@ -183,10 +155,12 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     
         
     '''
+    import gemmi
     from emmer.ndimage.map_tools import compute_real_space_correlation
     from emmer.pdb.pdb_to_map import pdb2map
     from emmer.ndimage.profile_tools import compute_radial_profile
     from emmer.pdb.pdb_utils import set_atomic_bfactors
+    from pseudomodel_classes import Vector, add_Vector
     
     peak_bond_length_list = []
     map_values = []
@@ -354,6 +328,7 @@ def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iteratio
         Is a custom built class which has the coordinate information of all atoms after satisfying minimum distance criteria 
 
     '''
+    from pseudomodel_classes import Model, Atom
     points_array = np.array([x.position.get() for x in model_initial.list])
     number_of_contacts = []
     if verbose:

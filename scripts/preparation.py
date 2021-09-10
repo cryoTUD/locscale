@@ -100,10 +100,10 @@ def get_spherical_mask(emmap):
 def prepare_mask_and_maps_for_scaling(args):
     
     ## Added new part to include pseudo-atomic model
-    from pseudomodel_utils import get_modmap_from_pseudomodel
+    from get_pseudomodel.pipeline import get_modmap_from_pseudomodel
     from emmer.ndimage.map_utils import average_voxel_size
     from emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale_headers import run_FDR, run_mapmask, check_dependencies
+    from get_pseudomodel.pseudomodel_headers import run_FDR, run_mapmask, check_dependencies
     from utils.general import round_up_to_even, round_up_to_odd
     
     print(check_dependencies())

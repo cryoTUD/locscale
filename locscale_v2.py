@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from argparse import RawTextHelpFormatter
-from mpi4py import MPI
+#from mpi4py import MPI
 
 progname = os.path.basename(sys.argv[0])
 datmod = "2021-09-07"  # to be updated by gitlab after every commit
@@ -41,9 +41,9 @@ cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', default=True,
 
 def launch_amplitude_scaling(args):
     
-    from utils.preparation import prepare_mask_and_maps_for_scaling
-    from utils.compute import run_window_function_including_scaling, run_window_function_including_scaling_mpi
-    from utils.compute import write_out_final_volume_window_back_if_required
+    from scripts.preparation import prepare_mask_and_maps_for_scaling
+    from scripts.compute import run_window_function_including_scaling, run_window_function_including_scaling_mpi
+    from scripts.compute import write_out_final_volume_window_back_if_required
     
     if args.verbose and not args.mpi:
         print('\n  LocScale Arguments\n')
@@ -67,6 +67,7 @@ def launch_amplitude_scaling(args):
         
     
     elif args.mpi:
+        from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         size = comm.Get_size()

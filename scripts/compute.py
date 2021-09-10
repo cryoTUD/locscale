@@ -5,11 +5,11 @@ def get_theoretical_profile(length,apix):
     import os
     import pickle
     from emmer.ndimage.profile_tools import resample_1d
-    from locscale_headers import check_dependencies
+    from get_pseudomodel.pseudomodel_headers import check_dependencies
     
     
     path_to_locscale = check_dependencies()['locscale']
-    location_of_theoretical_profiles = path_to_locscale + "/scripts/theoretical_profiles.pickle"
+    location_of_theoretical_profiles = path_to_locscale + "/scripts/utils/theoretical_profiles.pickle"
     
     with open(location_of_theoretical_profiles,'rb') as f:
         profiles = pickle.load(f)
@@ -204,7 +204,7 @@ def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_the
             0.17892323,  0.        ,  0.        ,  0.        ,  0.        ,
             0.        ,  0.        ,  0.        ,  0.        ,  0.        ], dtype=float32)
     """
-    from utils.preparation import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from scripts.preparation import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
 
@@ -257,7 +257,7 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
     >>> n = [os.remove(each_file) for each_file in [emmap_name, modmap_name, mask_name, 'scaled.mrc']]
     """
     from mpi4py import MPI
-    from utils.preparation import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from scripts.preparation import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -302,7 +302,7 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
     return map_scaled, rank
 
 def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix):
-    from utils.preparation import pad_or_crop_volume
+    from scripts.preparation import pad_or_crop_volume
     from emmer.ndimage.map_utils import save_as_mrc
 
     if window_bleed_and_pad:

@@ -30,7 +30,8 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_d
         path/to/modmap.mrc
 
     '''
-    from locscale_headers import run_FDR, measure_mask_parameters, run_pam, run_refmac, run_refmap, prepare_sharpen_map
+    from pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map
+    from emmer.ndimage.map_utils import measure_mask_parameters
     from emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
     

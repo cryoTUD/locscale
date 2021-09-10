@@ -7,9 +7,12 @@ Created on Thu Oct 15 23:54:49 2020
 """
 
 ## This script is to analyse Gemmi models saved as PDBs
-
-from pam_headers import *
-from emmer.pdb.pdb_tools import *
+import numpy as np
+import math
+import gemmi
+import mrcfile
+#from pam_headers import *
+#from emmer.pdb.pdb_tools import *
 
 
 class Vector:
@@ -122,11 +125,16 @@ class Model:
     
     def calculate_nearest_neighbor_dist_for_each_point(self,voxelsize):
         ''' get_neighborhood works only on pixel distance. So use only pixel distance '''
+        from scripts.get_pseudomodel.pseudomodel_solvers import get_neighborhood
+        
         neighborhood = get_neighborhood(self.list,min_dist_in_pixel=3,only_neighbors=True)
         for i,point in enumerate(self.list):
             point.nearest_neighbor = neighborhood[i][0]*voxelsize
     
     def calculate_relative_acceleration_magnitude(self,emmap,min_dist_in_pixels,g,capmagnitude_map,epsilon,capmagnitude_lj):
+        
+        from scripts.get_pseudomodel.pseudomodel_solvers import get_neighborhood
+        from scripts.get_pseudomodel.pseudomodel_solvers import get_acceleration_from_gradient, get_acceleration_from_lj_potential
         neighborhood = get_neighborhood(self.list,min_dist_in_pixels)
         gz,gy,gx = np.gradient(emmap)
         for i,point in enumerate(self.list):
@@ -159,6 +167,8 @@ class Model:
         return np_array
     
     def get_distance_distribution(self,max_distance):
+        
+        from scipy import spatial
         np_array = self.extract_pdb_positions()
         sp_tree = spatial.KDTree(np_array)
         
@@ -166,6 +176,7 @@ class Model:
         return sparse_distance_matrix
     
     def filter_distance(self,min_distance,max_distance):
+        
         distance_matrix = self.get_distance_distribution(max_distance)
         points1 = []
         points2 = []
@@ -179,7 +190,7 @@ class Model:
         for index in final_points_index:
             point = self.list[index].copy()
             new_pseudomodel_list.append(point)
-        new_pseudomodel = AtomList(new_pseudomodel_list)
+        new_pseudomodel = Model(new_pseudomodel_list)
         return new_pseudomodel
     
     def copy(self):
@@ -246,12 +257,14 @@ class Model:
          return model
 
     def update_unitcell(self,voxelsize,unitcell=None):
+        from emmer.pdb.pdb_tools import get_unit_cell_estimate
+        
         if unitcell is not None:
             self.unitcell = unitcell
         else:
             voxelsize = self.voxelsize
             num = len(self.list)
-            self.unitcell = get_unit_cell_estimate(number_of_atoms=num, vsize=voxel_size)
+            self.unitcell = get_unit_cell_estimate(number_of_atoms=num, vsize=voxelsize)
         self.voxelsize = voxelsize
 
     def write_pdb(self,output_string,voxelsize,unitcell=None):
@@ -267,10 +280,8 @@ class Model:
          for atom in self.list:
               atom.pdb_position = atom.position.scale(voxelsize)
 
-
-
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
-    from pam_headers import Atom
+    from pseudomodel_classes import Atom
     import random
     
     all_inside_mask = np.asarray(np.where(mask>=threshold)).T.tolist()
@@ -286,7 +297,6 @@ def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     return model
 
 
-    
 def get_model_from_gemmi_pdb(pdb_path,emmap_path=None):
     gemmi_model = gemmi.read_pdb(pdb_path)[0]
     
@@ -344,23 +354,6 @@ def get_column_array(col_type,points_list):
     return column
     
 
-def modify_pdb_column(points,outpdb_name,voxelsize=1,b_factor_type=None,occupancy_type=None):
-    '''
-    Converts a column, either b factor or occupancy into a desired metric
-    
-    According to PDB format: b factor and occupancy have max 6 columns, with two decimal places (and one for decimal point)
-    Max real value: 999.99
-    
-    Use voxelsize as 1 if you are extracting from a saved gemmi model
-    '''
-    b_factor_array = get_column_array(b_factor_type,points.list)  
-    occupancy_array = get_column_array(occupancy_type,points.list)
-    
-    b_factor_array.clip(max=999.99)
-    occupancy_array.clip(max=999.99)
-    
-    points.convert_to_gemmi_model(points.list,voxelsize,b_factor_array,occupancy_array)
-    write_pdb(gemmi_model,outpdb_name)
 
 
                                           
