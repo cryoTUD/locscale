@@ -29,19 +29,20 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
         z, y, x = np.indices(ps.shape)
         center = tuple((a - 1) / 2.0 for a in ps.shape[::-1])
         radii = np.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
-        radii = radii.astype(np.int)
+        
+        radii = radii.astype(int)
     else:
         ps = np.abs( np.fft.rfftn(vol) )
         if not return_indices:
             x, y, z = np.indices(ps.shape)
             radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(np.int)
+            radii = radii.astype(int)
         else:
             [x, y, z] = np.mgrid[-dim[0]//2+m[0]:(dim[0]-1)//2+1, -dim[1]//2+m[1]:(dim[1]-1)//2+1, 0:dim[2]//2+1]
             x = np.fft.ifftshift(x)
             y = np.fft.ifftshift(y)
             radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(np.int)
+            radii = radii.astype(int)
     radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
     # exclude corner frequencies
     radial_profile = radial_profile[0:int(round((ps.shape[0]/2)))]
