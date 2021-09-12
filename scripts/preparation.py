@@ -204,7 +204,7 @@ def prepare_mask_and_maps_for_scaling(args):
     amit_singer_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     if fsc_resolution > 6:
         high_frequency_cutoff = amit_singer_cutoff
-        fsc_cutoff = apix*2
+        fsc_cutoff = (round(2*apix*10)+1)/10
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
@@ -212,7 +212,7 @@ def prepare_mask_and_maps_for_scaling(args):
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=amit_singer_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
         
         high_frequency_cutoff = 1/np.sqrt(z[-2])
-        fsc_cutoff = apix*2
+        fsc_cutoff = (round(2*apix*10)+1)/10
     if verbose:
         print("Using High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
     
