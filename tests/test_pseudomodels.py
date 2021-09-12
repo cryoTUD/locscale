@@ -10,19 +10,7 @@ import unittest
 import numpy as np
 import os
 
-
-class TestBasic(unittest.TestCase):
-    
-    def test_dependencies(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import check_dependencies
-        
-        dependency=check_dependencies()
-        keys = list(dependency.keys())
-        check = False
-        if 'ccpem' in keys and 'ccp4'in keys and 'locscale' in keys:
-            check = True
-        self.assertTrue(check)
-        
+      
 
 class TestPseudomodelHeaders(unittest.TestCase):
     

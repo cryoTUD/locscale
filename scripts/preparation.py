@@ -101,9 +101,11 @@ def prepare_mask_and_maps_for_scaling(args):
     
     ## Added new part to include pseudo-atomic model
     from get_pseudomodel.pipeline import get_modmap_from_pseudomodel
+    from pseudomodel_headers import number_of_segments
     from emmer.ndimage.map_utils import average_voxel_size
     from emmer.pdb.pdb_tools import find_wilson_cutoff
     from get_pseudomodel.pseudomodel_headers import run_FDR, run_mapmask, check_dependencies
+    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from utils.general import round_up_to_even, round_up_to_odd
     
     print(check_dependencies())
@@ -197,16 +199,27 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_modmap = pad_or_crop_volume(xyz_modmap, map_shape, pad_int_modmap)
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
     
-    
-    wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
-    fsc_cutoff = fsc_resolution
+
+    ## If resolution is bad > 6 A
+    amit_singer_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
+    if fsc_resolution > 6:
+        high_frequency_cutoff = amit_singer_cutoff
+        fsc_cutoff = apix*2
+    else:
+        rp_emmap = compute_radial_profile(xyz_emmap)
+        freq = frequency_array(amplitudes=rp_emmap, apix=apix)
+        num_segments = number_of_segments(fsc_resolution)
+        bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=amit_singer_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
+        
+        high_frequency_cutoff = 1/np.sqrt(z[-2])
+        fsc_cutoff = apix*2
     if verbose:
-        print("Using Wilson Cutoff of: {:.2f} and FSC cutoff of {}".format(wilson_cutoff, fsc_cutoff))
+        print("Using High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
     
     use_pseudomaps = bool(args.use_pseudomaps)
     
     if verbose:
         print("Preparation completed. Now running LocScale!")
     
-    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, wilson_cutoff, fsc_cutoff, verbose, window_bleed_and_pad)
+    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, high_frequency_cutoff, fsc_cutoff, verbose, window_bleed_and_pad)
     return parsed_arguments

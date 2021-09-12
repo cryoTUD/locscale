@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from emmer.ndimage.profile_tools import plot_radial_profile
 
-pickle_output = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/emd5778/dst_1o2_using_zsh/profiles_audit.pickle"
+pickle_output = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/emd5778/dst_1o2_using_zsh/profiles_audit_after_proper_resample.pickle"
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:

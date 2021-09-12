@@ -43,7 +43,16 @@ def check_dependencies():
     
     return dependency
     
-
+def number_of_segments(fsc_resolution):
+    if fsc_resolution < 3:
+        return 4
+    elif fsc_resolution >= 3:
+        return 3
+    elif fsc_resolution >= 5:
+        return 2
+    else:
+        print("Warning: resolution too low to estimate cutoffs. Returning 1")
+        return 1
 
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed_files=False, output_file_path=None):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
@@ -57,12 +66,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,return_processed
     
     rp_unsharp = compute_radial_profile(emmap_unsharpened)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
-    if fsc_resolution < 3:
-        print("FSC resolution is less than 3 A. Using 4 segments for bfactor estimation")
-        num_segments = 4
-    else:
-        print("FSC resolution is more than 3 A. Using 3 segments for bfactor estimation")
-        num_segments = 3
+    num_segments = number_of_segments(fsc_resolution)
         
     bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution, num_segments=num_segments)
     print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor, (1/np.sqrt(z)).round(2),slopes))
