@@ -1,5 +1,5 @@
 
-def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
+def get_modmap_from_pseudomodel(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 
@@ -47,11 +47,14 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_d
     
     num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
     
-    pseudomodel_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=1, num_atoms=num_atoms, 
-                               method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
-    if pseudomodel_path is None:
-        print("Problem running pseudo-atomic model generator. Returning None")
-        return None
+    if pdb_path is None:
+        pseudomodel_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=1, num_atoms=num_atoms, 
+                                   method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
+        if pseudomodel_path is None:
+            print("Problem running pseudo-atomic model generator. Returning None")
+            return None
+    else:
+        pseudomodel_path = pdb_path
     
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
     

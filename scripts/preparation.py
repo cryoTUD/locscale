@@ -170,10 +170,12 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         
-        if args.global_bfactor is not None:
+        if args.global_bfactor != 0:
             add_blur = float(args.global_bfactor)
         
-        modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, 
+        pdb_path = args.model_coordinates
+        
+        modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
                                                   fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur,verbose=verbose)
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
