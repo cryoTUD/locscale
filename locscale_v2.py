@@ -33,7 +33,7 @@ cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter 
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
 cmdl_parser.add_argument('-ref_it', '--refmac_iterations', help='For pseudo-atomic model: number of refmac iterations', default=5)
 cmdl_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
-cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map', default=None)
+cmdl_parser.add_argument('-b_global', '--global_bfactor', type=int, help='Globally sharpen the map', default=None)
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')
@@ -48,8 +48,7 @@ def launch_amplitude_scaling(args):
     if args.verbose and not args.mpi:
         print('\n  LocScale Arguments\n')
         for arg in vars(args):
-            print('    {} : {}'.format(arg, getattr(args, arg)))
-            
+            print('    {} : {}'.format(arg, getattr(args, arg)))           
     
     if not args.mpi:
         parsed_arguments = prepare_mask_and_maps_for_scaling(args)
@@ -77,7 +76,6 @@ def launch_amplitude_scaling(args):
         
         else:
             parsed_arguments = None
-        
         
         comm.barrier()
         

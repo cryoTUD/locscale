@@ -170,9 +170,12 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         
+        if args.global_bfactor is not None:
+            add_blur = float(args.global_bfactor)
+        
         modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, 
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
-                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, verbose=verbose)
+                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur,verbose=verbose)
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
     else:
@@ -202,28 +205,28 @@ def prepare_mask_and_maps_for_scaling(args):
     
 
     ## If resolution is bad > 6 A
-    amit_singer_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
+    wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     smooth_factor = args.smooth_factor
     if fsc_resolution > 6:
-        high_frequency_cutoff = amit_singer_cutoff
+        high_frequency_cutoff = wilson_cutoff
         fsc_cutoff = (round(2*apix*10)+1)/10
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
         num_segments = number_of_segments(fsc_resolution)
-        bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=amit_singer_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
+        bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
         
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         fsc_cutoff = (round(2*apix*10)+1)/10
     if verbose:
         print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
         print("To merge reference and theoretical profiles: \n")
-        print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(amit_singer_cutoff, smooth_factor))
+        print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
         
     scale_using_theoretical_profile = args.use_pseudomaps
     
     scale_factor_arguments = {}
-    scale_factor_arguments['wilson'] = amit_singer_cutoff
+    scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
     scale_factor_arguments['fsc_cutoff'] = fsc_cutoff
     scale_factor_arguments['smooth'] = smooth_factor
