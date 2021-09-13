@@ -53,29 +53,34 @@ def number_of_segments(fsc_resolution):
     else:
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
         return 1
+    
 
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None):
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
-    from emmer.ndimage.map_tools import sharpen_maps
+    from emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
     import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)
     emmap_unsharpened = emmap_mrc.data
     apix=average_voxel_size(emmap_mrc.voxel_size)
     
-    rp_unsharp = compute_radial_profile(emmap_unsharpened)
-    freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
-    num_segments = number_of_segments(fsc_resolution)
-        
-    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution, num_segments=num_segments)
+    bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    
     print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor, (1/np.sqrt(z)).round(2),slopes))
     if add_blur != 0:
         bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
+        print("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
+        
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
-    rp_sharp = compute_radial_profile(sharpened_map)
-    output_filename = emmap_path[:-4] +"_sharpened_to_zero_bfactor.mrc"
+    bfactor_final, z_final, slopes_final, _ = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    
+    print("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
+    print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor_final, (1/np.sqrt(z_final)).round(2),slopes_final))
+        
+    
+    output_filename = emmap_path[:-4] +"_global_sharpened.mrc"
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
     
     if return_processed_files:
