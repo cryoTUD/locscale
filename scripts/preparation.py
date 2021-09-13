@@ -109,6 +109,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from utils.general import round_up_to_even, round_up_to_odd
     
     print(check_dependencies())
+    print("Pseudo-maps: ", args.use_pseudomaps)
     
     emmap_path = args.em_map
     xyz_emmap_path = run_mapmask(emmap_path)
@@ -117,7 +118,7 @@ def prepare_mask_and_maps_for_scaling(args):
     
     verbose = bool(args.verbose)
     
-    fsc_resolution = float(args.fsc_resolution)
+    fsc_resolution = float(args.ref_resolution)
     
     if args.apix is None:
         apix = average_voxel_size(mrcfile.open(args.em_map).voxel_size)  ## Assuming voxelsize is the same in all directions
@@ -218,8 +219,8 @@ def prepare_mask_and_maps_for_scaling(args):
         print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
         print("To merge reference and theoretical profiles: \n")
         print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(amit_singer_cutoff, smooth_factor))
-    
-    use_pseudomaps = bool(args.use_pseudomaps)
+        
+    scale_using_theoretical_profile = args.use_pseudomaps
     
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = amit_singer_cutoff
@@ -228,7 +229,8 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments['smooth'] = smooth_factor
     
     if verbose:
+        
         print("Preparation completed. Now running LocScale!")
     
-    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, scale_factor_arguments, verbose, window_bleed_and_pad)
+    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, scale_using_theoretical_profile, scale_factor_arguments, verbose, window_bleed_and_pad)
     return parsed_arguments

@@ -57,7 +57,6 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     from emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
     #print("checkScaling", check_scaling)
     #print("useTheoretical", use_theoretical_profile)
-            
     if use_theoretical_profile:
         theoretical_profile_tuple = get_theoretical_profile(length=len(ref_profile),apix=apix)
         freq = theoretical_profile_tuple[0]
@@ -87,7 +86,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
-    if check_scaling:
+    if check_scaling and use_theoretical_profile:
         #print("checkScalingReport", check_scaling)
         temporary_dictionary['scale_factor'] = scale_factor
         return scale_factor, temporary_dictionary
@@ -113,7 +112,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
-    
+    print("Inside get_central_scaled_pixel_vals", use_theoretical_profile)
     
     mpi=False
     if process_name != 'LocScale':
@@ -142,12 +141,11 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
         em_profile = compute_radial_profile(emmap_wn)
         mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
-        #print("pos",(k,j,i,wn),"RSCC: \t",compute_real_space_correlation(emmap_wn, modmap_wn))
-        #print(emmap_wn.min(), emmap_wn.max(), modmap_wn.min(), modmap_wn.max())
+        
         
         check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
         
-        if check_scaling:
+        if check_scaling and use_theoretical_profile:
             scale_factors,report = compute_scale_factors(em_profile, mod_profile,apix=apix,scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
 check_scaling=check_scaling)
             profiles_audit[(k,j,i)] = report
@@ -171,7 +169,7 @@ check_scaling=check_scaling)
         
     if mpi:
         comm.barrier()
-    if audit:
+    if audit and use_theoretical_profile:
         with open("profiles_audit.pickle","wb") as audit:
             pickle.dump(profiles_audit, audit)
         
