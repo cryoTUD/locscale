@@ -1,0 +1,598 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 22 15:23:14 2021
+
+@author: alok
+"""
+
+from emmer.headers import *
+
+def frequency_array(amplitudes=None,apix=None,profile_size=None):
+    '''
+    Returns a numpy array with elements corresponding to the frequencies of a signal
+
+    Parameters
+    ----------
+    amplitudes : numpy.ndarray (1,N)
+        Amplitudes 
+    apix : float
+        pixel size, or more generally the size in real units for each index (time, or space)
+
+    Returns
+    -------
+    freq : numpy.ndarray (1,N)
+        Frequencies corresponding to the amplitudes, given the pixelsize
+        
+
+    '''
+    if amplitudes is not None:
+        n = len(amplitudes)
+    elif profile_size is not None:
+        n = profile_size
+    else:
+        print("Please enter the size of the array or send the array itself!")
+        return 0
+    
+    if apix is None:
+        print("Warning: voxelsize parameter not entered. \n Using apix = 1")
+        apix = 1
+        
+    freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
+    return freq
+
+def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True):
+    import matplotlib.pyplot as plt
+    '''
+    Given a list of amplitudes, plot them against a common frequency axis.
+
+    Parameters
+    ----------
+    freq : np.ndarray
+        Common frequency axis. Same size as the profiles in list of profiles
+    list_of_profiles : list 
+        List of amplitude profiles all having same size.
+        list_of_profiles = [profile_1(type=np.ndarray), profile_2(type=np.ndarray), ...]
+    colors : list, optional
+        Custom color list. Max 6 entries. The default is ['r','g','b','k','y','m'].
+    legends : lsit of string, optional
+        Attach a legend corresponding to each profile in the list of profile. 
+    font : int, optional
+        fontsize for the plots. The default is 12.
+    showlegend : bool, optional
+        If you need to hide the legends, set this parameter to False
+
+    Returns
+    -------
+    None.
+
+    '''
+    if len(list_of_profiles) > 6:
+        print("Enter maximum of 6 profiles only")
+        return None
+    i = 0
+    
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(True)
+    ax2 = ax1.twiny()
+    for profile in list_of_profiles:
+        ax1.plot(freq**2,np.log(profile),colors[i])
+        i += 1
+    
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
+    if legends is None:
+        legends = ["profile_"+str(i) for i in range(len(list_of_profiles))]
+    
+    ax1.legend(legends,fontsize=font)
+    ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
+    ax1.set_ylabel('log(|F|)',fontsize=font)
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
+    
+
+def merge_two_profiles(profile_1,profile_2,freq, smooth=1, d_cutoff=None, f_cutoff=None):
+    '''
+    Function to merge two profiles at a cutoff threshold based on differential weighting of two profiles
+
+    Parameters
+    ----------
+    profile_1 : numpy.ndarray
+        
+    profile_2 : numpy.ndarray
+        same size of profile_1
+    freq : numpy.ndarray
+        Frequencies corresponding to both profile_1 and profile_2
+    d_cutoff : float
+        Cutoff frequency defined in terms of distance (unit = A)
+    f_cutoff : float
+        Cutoff frequency given in terms of spatial frequency (unit = 1/A)
+    smooth : float, optional
+        smoothening parameter to control the transition region of two profiles
+
+    Returns
+    -------
+    merged_profile : tuple of two numpy.ndarray
+    
+
+    '''
+
+    if not (len(freq) == len(profile_1) and len(freq) == len(profile_2)):
+        print("Size of two profiles not equivalent. Please check the dimensions and give another input")
+        return None
+    
+    k = smooth
+    d = 1 / freq
+    
+    if d_cutoff is not None:
+        d_cutoff = d_cutoff
+    
+    elif f_cutoff is not None:
+        d_cutoff = 1 / f_cutoff
+    
+    else:
+        print("Please enter a cutoff frequency either in terms of spatial frequency (1/A) or distance (A)")
+        return None
+    
+    weight_1 = 1 / (1 + np.exp(k * (d_cutoff - d)))
+    weight_2 = 1 - weight_1
+    
+    merged_profile = weight_1 * profile_1 + weight_2 * profile_2
+    
+    return merged_profile
+
+def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
+    '''
+    Computes the radial profile of a given volume
+
+    Parameters
+    ----------
+    vol : numpy.ndarray
+        Input array
+    center : list, optional
+        DESCRIPTION. The default is [0,0,0].
+    return_indices : bool, optional
+        
+
+    Returns
+    -------
+    radial_profile : numpy.ndarray (1D)
+        Radial profile
+        
+
+    '''
+    dim = vol.shape
+    m = np.mod(vol.shape,2)
+    # make compliant with both fftn and rfftn
+    if center is None:
+        ps = np.abs(np.fft.fftshift((np.fft.fftn(vol))))
+        z, y, x = np.indices(ps.shape)
+        center = tuple((a - 1) / 2.0 for a in ps.shape[::-1])
+        radii = np.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
+        radii = radii.astype(np.int)
+    else:
+        ps = np.abs( np.fft.rfftn(vol) )
+        if not return_indices:
+            x, y, z = np.indices(ps.shape)
+            radii = np.sqrt(x**2 + y**2 + z**2)
+            radii = radii.astype(np.int)
+        else:
+            [x, y, z] = np.mgrid[-dim[0]//2+m[0]:(dim[0]-1)//2+1, -dim[1]//2+m[1]:(dim[1]-1)//2+1, 0:dim[2]//2+1]
+            x = np.fft.ifftshift(x)
+            y = np.fft.ifftshift(y)
+            radii = np.sqrt(x**2 + y**2 + z**2)
+            radii = radii.astype(np.int)
+    radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
+    # exclude corner frequencies
+    radial_profile = radial_profile[0:int(ps.shape[0]/2)]
+    if not return_indices:
+        return radial_profile
+    else:
+        return radial_profile, radii
+
+    
+def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
+    '''
+    Given a list of mrc paths, this function will extract volume data and plots a radial profile for each map. The legend by default will be the filename of the MRC map. Max six maps will be used as inputs (limit from plot_radial_profiles function)
+
+    Parameters
+    ----------
+    mrc_paths : list of strings
+        ["path/to/map1.mrc", "path/to/map2.mrc",..]
+    keys : list of strings, optional
+        ["map A", "map B",..]. The default is None.
+
+    Returns
+    -------
+    radial_profiles : dict 
+        Dictionary of radial profiles for each map.
+    emmaps : dict
+        Dictionary of emmap volumes for each map.
+
+    '''
+    if keys is None:
+        keys = [path.split('/')[-1] for path in mrc_paths]
+
+    mrcs = []
+    for mrc in mrc_paths:
+        mrcs.append(mrcfile.open(mrc))
+    
+    k = 0
+    emmaps = {}
+    radial_profiles = {}
+    freq={}
+    
+    for mrc in mrcs:
+        emmaps[keys[k]] = mrc.data
+        k += 1
+    for key in keys:
+        radial_profiles[key] = compute_radial_profile(emmaps[key])
+        
+    k = 0
+    for key in keys:
+        shapes = radial_profiles[key].shape[0]
+        apix = mrcs[k].voxel_size.x
+        freq[key] = np.linspace(1./(float(apix)*shapes), 1./(float(apix)*2), shapes,endpoint=True)
+        k += 1 
+    
+    
+    plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys)
+    
+    for key in keys:
+        radial_profiles[key] = tuple([freq,radial_profiles[key]])
+    return radial_profiles, emmaps
+            
+
+def measure_debye(freqs,amplitudes):
+    '''
+    Function to measure the "Debye Effect" from a radial profile
+
+    Parameters
+    ----------
+    freqs : numpy.ndarray
+        Frequency array
+    amplitudes : numpy.ndarray
+        Amplitudes
+
+    Returns
+    -------
+    Debye effect : dict 
+        Dictionary of debye effects at different identified peaks
+    freq_step : float
+        
+    filtered amplitudes : numpy.ndarray
+        DESCRIPTION.
+    exponential fit : numpy.ndarray
+        DESCRIPTION.
+
+    '''
+    from scipy.optimize import curve_fit
+    from scipy import signal
+    from emmer.ndimage.filter import butter_lowpass_filter
+    
+    # First filter the amplitude profile using Butterworth filter at nyq/2 and order =1
+    n = len(amplitudes)
+    freq_step = (freqs[-1]-freqs[0])/n
+    
+    nyq_freq = 1/(freq_step * 2)
+    
+    filtered_amplitudes = butter_lowpass_filter(amplitudes, nyq_freq/2, nyq_freq,order=1)
+    
+    debye_peaks = signal.find_peaks(filtered_amplitudes)[0]
+    
+    #debye_freqs = debye_peaks * freq_step
+    
+    
+    ## Find the amplitude of the spectrum at debye frequency
+    
+    # First get a best match exponential fit
+    
+    def exponential(x,a,b):
+        return a*np.exp(x*b)
+    
+    optimised_parameters,covariance = curve_fit(exponential,freqs,filtered_amplitudes)
+    fit_a, fit_b = optimised_parameters
+    #print(optimised_parameters)
+    exponential_fit_amplitudes = exponential(freqs, fit_a, fit_b)
+    debye_effect = {}
+    for peak_index in debye_peaks:
+        if peak_index*freq_step < 0.4:
+            exponential_amplitude_at_debye_freq = exponential_fit_amplitudes[peak_index]
+            filtered_amplitude_at_debye_freq = filtered_amplitudes[peak_index]
+            debye_effect[peak_index] = filtered_amplitude_at_debye_freq - exponential_amplitude_at_debye_freq
+    
+    return debye_effect,freq_step,filtered_amplitudes,exponential_fit_amplitudes
+
+def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return_amplitude=False):
+    '''
+    From a given radial profile, estimate the b_factor from the high frequency cutoff
+
+    Parameters
+    ----------
+    freq : numpy.ndarray
+        Frequency array
+    amplitude : numpy.ndarray
+        Amplitudes
+    wilson_cutoff : float
+        Frequency from which wilson statistics are valid. Units: Angstorm
+    fsc_cutoff : float
+        FSC resolution calculated at 0.143 (for halfmaps). Units: Angstorm
+        
+
+    Returns
+    -------
+    b_factor : float
+        The estimated b factor
+    
+    amp : float
+        The estimated amplitude of the exponential fit
+
+    '''
+    from scipy.optimize import curve_fit
+    
+    def linear_fit(xdata,slope,const):
+        ydata = const + slope*xdata
+        return ydata
+    
+    wilson_freq = 1 / wilson_cutoff
+    fsc_freq = 1 / fsc_cutoff
+    
+    start_index = np.where(freq>=wilson_freq)[0][0]
+    end_index = np.where(freq>=fsc_freq)[0][0]
+    
+    xdata = freq[start_index:end_index]**2
+    ydata = np.log(amplitude[start_index:end_index])
+    
+    param, _ = curve_fit(linear_fit,xdata,ydata)
+    
+    b_factor = param[0] * 4
+    exp_fit_amplitude = np.exp(param[1])
+    
+    #print("B factor: "+str(round(param[0]*4,2)))
+    
+    if return_amplitude:
+        return b_factor,exp_fit_amplitude
+    else:
+        return b_factor
+
+def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, fsc_cutoff):
+    '''
+    Function to scale an input theoretical profile to a reference profile
+
+    Parameters
+    ----------
+    reference_profile_tuple : tuple
+        (freq_reference, amplitude_reference)
+    scale_profile_tuple : tuple
+        (freq_theoretical, amplitude_theoretical)
+    just_use_exponential : bool, optional
+        Returns just an exponential fit and not a scaled profile
+    using_reference_profile : TYPE, optional
+        DESCRIPTION. The default is False.
+    start_freq : TYPE, optional
+        DESCRIPTION. The default is 0.3.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    '''
+    #power_zero_freq = reference_profile_tuple[1].max() 
+    
+    freq = reference_profile_tuple[0]
+    reference_amplitude = reference_profile_tuple[1]
+    
+    freq_scale = scale_profile_tuple[0]
+    scale_amplitude = scale_profile_tuple[1]
+ 
+    bfactor_reference, fit_amp_reference = estimate_bfactor_standard(freq, reference_amplitude, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, return_amplitude=True)
+    bfactor_scale, fit_amp_scale = estimate_bfactor_standard(freq_scale, scale_amplitude, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, return_amplitude=True)
+    
+    bfactor_diff = bfactor_reference-bfactor_scale
+    
+    amp_scaling_factor = fit_amp_reference / fit_amp_scale
+        
+    amplitude_scaled = amp_scaling_factor * scale_amplitude * np.exp(bfactor_diff * freq**2 / 4)
+    
+    
+
+    return (freq,amplitude_scaled)
+    
+def get_debye_statistics(radial_profiles_using_pdb):    
+    helix_freqs = []
+    sheet_freqs = []
+    missed = 0
+    min_debye_effect_mag = 0.005
+    max_debye_effect_mag = 0.01
+    
+    min_debye_freq = 0.1
+    max_debye_freq = 0.3
+    helix_profile_info = {}
+    sheet_profile_info = {}
+       
+    for pdb in radial_profiles_using_pdb.keys():
+        
+        try:
+            #apix = float(radial_profiles_using_pdb[pdb]['apix'])
+            #factor = 0.25/apix
+            
+            #freq = np.array(radial_profiles_using_pdb[pdb]['freq'])
+            #print(freq[0],freq[-1],len(freq))
+            
+            helix_amplitude=np.array(radial_profiles_using_pdb[pdb]['helix']) / max(radial_profiles_using_pdb[pdb]['helix'])
+            sheet_amplitude=np.array(radial_profiles_using_pdb[pdb]['sheet']) / max(radial_profiles_using_pdb[pdb]['sheet'])
+            
+            ## This for new data format in radial_profiles_using_pdb starting from March 2021 
+            apix_array = radial_profiles_using_pdb[pdb]['apix'][0]
+            #print(apix_array.x)
+            if apix_array.x == apix_array.y and apix_array.x == apix_array.z:
+                #print("Same")
+                apix = apix_array.x
+            else:
+                print("different for "+pdb)
+            n = len(helix_amplitude)
+            freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
+            
+            
+            debye_effect_helix,freq_step_helix,_,_ = measure_debye(freq,helix_amplitude)
+            debye_effect_sheet,freq_step_sheet,_,_ = measure_debye(freq,sheet_amplitude)
+            
+            for possible_debye_freq in debye_effect_helix.keys():
+                if min_debye_freq <= possible_debye_freq*freq_step_helix <= max_debye_freq and min_debye_effect_mag <= debye_effect_helix[possible_debye_freq] <= max_debye_effect_mag and helix_amplitude[possible_debye_freq] < 0.02:
+                    helix_freqs.append(possible_debye_freq*freq_step_helix)
+                    helix_profile_info[pdb] = tuple([[freq,radial_profiles_using_pdb[pdb]['helix']],debye_effect_helix])
+            for possible_debye_freq in debye_effect_sheet.keys():
+                if min_debye_freq <= possible_debye_freq*freq_step_sheet <= max_debye_freq and min_debye_effect_mag <= debye_effect_sheet[possible_debye_freq] <= max_debye_effect_mag and sheet_amplitude[possible_debye_freq] < 0.02:
+                    sheet_freqs.append(possible_debye_freq*freq_step_sheet)        
+                    sheet_profile_info[pdb] = tuple([[freq,radial_profiles_using_pdb[pdb]['sheet']],debye_effect_sheet])
+        except:
+            missed += 1
+            print(pdb,sys.exc_info())
+            pass
+            
+    return [helix_freqs,sheet_freqs,helix_profile_info,sheet_profile_info,missed]
+        
+def resample_1d(x_old,y_old,num,xlims=None):
+    '''
+    Sample an given x-y data in a new grid 
+
+    Parameters
+    ----------
+    x_old : numpy.ndarray
+        data in x axis (same dim as y_old)
+    y_old : numpy.ndarray
+        data in y axis (same dim as x_old)
+    num : int
+        new number of data points
+
+    Returns
+    -------
+    x_new : numpy.ndarray
+        resampled x axis
+    y_new : numpy.ndarray
+        resampled y axis
+
+    '''
+    
+    f = interp1d(x_old, y_old,kind='slinear',fill_value='extrapolate')
+    if xlims is None:
+        x_new = np.linspace(x_old[0], x_old[-1], num=num)
+    else:
+        xmin = xlims[0]
+        xmax = xlims[1]
+        x_new = np.linspace(xmin, xmax,num=num)
+        
+    y_new = f(x_new)
+    #y_new[y_new>1]=1
+    return x_new, y_new
+    
+def average_profiles(profiles_dictionary,num=1000):
+    resampled_profiles = {}
+    min_freq,max_freq = find_xmin_xmax([data[0] for data in profiles_dictionary.values()])
+    
+    for pdb in profiles_dictionary.keys():
+        try:
+            
+            freq_h = profiles_dictionary[pdb][0][0]
+            nyq = get_nyquist_limit(freq_h)
+            amplitudes_nofit_nonorm = butter_lowpass_filter(profiles_dictionary[pdb][0][1],nyq/2,nyq,1)
+                  
+            freq_h,amp_fit_nonorm = fit_series([freq_h,amplitudes_nofit_nonorm],min_freq,max_freq,num)     
+            amp_fit_norm = amp_fit_nonorm / amp_fit_nonorm.max()
+            
+            #resampled_freq,resampled_amp = resample_1d(freq_h,amp_fit_norm, num, xlims=[min_freq,max_freq])
+            resampled_profiles[pdb] = [freq_h,amp_fit_norm]
+            #plt.plot(freq_h,amp_fit_norm,'k'), 
+            
+        except:
+            
+            e = sys.exc_info()[0]
+            f = sys.exc_info()[1]
+            o = sys.exc_info()[2]
+            print(pdb,e,f,o)
+    
+    average_profile = np.zeros(num)
+    for pdb in resampled_profiles.keys():
+        average_profile += resampled_profiles[pdb][1]
+    common_freq = np.linspace(min_freq, max_freq,num)
+    average_profile /= len(profiles_dictionary.keys())
+    
+    return common_freq, average_profile, resampled_profiles    
+    
+   
+def find_xmin_xmax(profiles):
+    '''
+    profiles: python.list containing profile
+    
+    profile = [x_data,y_data]
+    profiles = [profile1,profile2,profile3...]
+    
+    '''
+    
+    for i,profile in enumerate(profiles):
+        
+        if i == 0:
+            xmin = profile[0][0]
+            xmax = profile[0][-1]
+            
+        else:
+            if profile[0][0] < xmin:
+                xmin = profile[0][0]
+            if profile[0][-1] > xmax:
+                xmax = profile[0][-1]
+    return xmin,xmax    
+
+def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=3):
+    '''
+    Function to automatically find out linear region in a given radial profile 
+
+
+    @Manual{pwlf,
+            author = {Jekel, Charles F. and Venter,     Gerhard},
+            title = {{pwlf:} A Python Library for Fitting 1D Continuous Piecewise Linear Functions},
+            year = {2019},
+            url = {https://github.com/cjekel/piecewise_linear_fit_py}
+}
+
+    Parameters
+    ----------
+    freq : numpy.ndarray
+        
+    amplitudes : numpy.ndarray
+        
+
+    Returns
+    -------
+    start_freq_in_angstorm, estimated_bfactor
+
+    '''
+    import pwlf
+    
+    start_freq = 1 / wilson_cutoff
+    end_freq = 1/fsc_cutoff
+    
+    start_index = np.where(freq>=start_freq)[0][0]
+    end_index = np.where(freq>=end_freq)[0][0]
+    x_data = freq[start_index:end_index]**2
+    y_data = np.log(amplitudes[start_index:end_index])
+    
+    piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
+    z = piecewise_linfit.fit(n_segments=num_segments)
+    
+    slopes = piecewise_linfit.calc_slopes()
+    
+    bfactor = slopes[-1] * 4
+    
+    amplitude_zero_freq = piecewise_linfit.predict(0)
+    
+    if return_all:
+        return bfactor, amplitude_zero_freq, (piecewise_linfit, z, slopes)
+    else:
+        return bfactor
+    
+    
+    
+    
+    
