@@ -14,8 +14,12 @@ class test_compute_scaling(unittest.TestCase):
     def setUp(self):
         from pseudomodel_headers import check_dependencies
         import pickle
-        self.fsc = 2.5
-        self.high_freq_cutoff = 4.9
+        scale_factor_arguments = {}
+        scale_factor_arguments['wilson'] = 8.55
+        scale_factor_arguments['high_freq'] = 4.91
+        scale_factor_arguments['fsc_cutoff'] = 2.5
+        scale_factor_arguments['smooth'] = 0.3
+        self.scale_factor_arguments = scale_factor_arguments
         self.apix = 1.2156
         self.locscale = check_dependencies()['locscale']
         data_folder = self.locscale + '/tests/test_data/' 
@@ -43,9 +47,9 @@ class test_compute_scaling(unittest.TestCase):
             self.assertTrue((rp_emmap_test==rp_emmap_target).all())
             self.assertTrue((rp_modmap_test==rp_modmap_target).all())
             
-            scale_factors_old = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, wilson_cutoff=self.high_freq_cutoff, fsc_cutoff=self.fsc, use_theoretical_profile=False)
+            scale_factors_old = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=False)
 
-            scale_factors_new, report = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, wilson_cutoff=self.high_freq_cutoff, fsc_cutoff=2*self.apix, use_theoretical_profile=True, check_scaling=True)
+            scale_factors_new, report = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=True, check_scaling=True)
             
             scaled_map_old_test = set_radial_profile(emmap_window, scale_factors_old,radii)
             scaled_map_new_test = set_radial_profile(emmap_window, scale_factors_new, radii)
