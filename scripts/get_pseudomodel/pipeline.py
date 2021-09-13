@@ -1,5 +1,5 @@
 
-def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, verbose):
+def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 
@@ -55,7 +55,7 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pseudomodel_method, pam_d
     
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
     
-    globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution, wilson_cutoff=wilson_cutoff)
+    globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution, wilson_cutoff=wilson_cutoff, add_blur=add_blur)
     
     refined_model_path = run_refmac(model_path=pseudomodel_path, model_name=pseudomodel_path[:-4], map_path=globally_sharpened_map, resolution=resolution, maskdims=mask_dims,num_iter=refmac_iter,verbose=verbose)
     if refined_model_path is None:
