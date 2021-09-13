@@ -202,6 +202,7 @@ def prepare_mask_and_maps_for_scaling(args):
 
     ## If resolution is bad > 6 A
     amit_singer_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
+    smooth_factor = args.smooth_factor
     if fsc_resolution > 6:
         high_frequency_cutoff = amit_singer_cutoff
         fsc_cutoff = (round(2*apix*10)+1)/10
@@ -214,12 +215,20 @@ def prepare_mask_and_maps_for_scaling(args):
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         fsc_cutoff = (round(2*apix*10)+1)/10
     if verbose:
-        print("Using High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
+        print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
+        print("To merge reference and theoretical profiles: \n")
+        print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(amit_singer_cutoff, smooth_factor))
     
     use_pseudomaps = bool(args.use_pseudomaps)
+    
+    scale_factor_arguments = {}
+    scale_factor_arguments['wilson'] = amit_singer_cutoff
+    scale_factor_arguments['high_freq'] = high_frequency_cutoff
+    scale_factor_arguments['fsc_cutoff'] = fsc_cutoff
+    scale_factor_arguments['smooth'] = smooth_factor
     
     if verbose:
         print("Preparation completed. Now running LocScale!")
     
-    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, high_frequency_cutoff, fsc_cutoff, verbose, window_bleed_and_pad)
+    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, use_pseudomaps, scale_factor_arguments, verbose, window_bleed_and_pad)
     return parsed_arguments

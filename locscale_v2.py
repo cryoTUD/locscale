@@ -34,6 +34,7 @@ cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic 
 cmdl_parser.add_argument('-it_ref', '--refmac_iterations', help='For pseudo-atomic model: number of refmac iterations', default=5)
 cmdl_parser.add_argument('-it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
 cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Globally sharpen the map', default=None)
+cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')
 cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', default=True,

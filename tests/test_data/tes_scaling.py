@@ -28,9 +28,15 @@ modmap_window = extract_window(modmap, random_center, size=size)
 rp_emmap = compute_radial_profile(emmap_window)
 rp_modmap, radii = compute_radial_profile(modmap_window,return_indices=True)
 
-scale_factors_old = compute_scale_factors(rp_emmap, rp_modmap, apix=1.2156, wilson_cutoff=4.9, fsc_cutoff=3.4, use_theoretical_profile=False)
+scale_factor_arguments = {}
+scale_factor_arguments['wilson'] = 8.5
+scale_factor_arguments['high_freq'] = 4.91
+scale_factor_arguments['fsc_cutoff'] = 2.5
+scale_factor_arguments['smooth'] = 0.3
 
-scale_factors_new, report = compute_scale_factors(rp_emmap, rp_modmap, apix=1.2156, wilson_cutoff=4.9, fsc_cutoff=2.5, use_theoretical_profile=True, check_scaling=True)
+scale_factors_old = compute_scale_factors(rp_emmap, rp_modmap, apix=1.2156, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=False)
+
+scale_factors_new, report = compute_scale_factors(rp_emmap, rp_modmap, apix=1.2156, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=True, check_scaling=True)
 
 scaled_window_old = set_radial_profile(emmap_window, scale_factors_old, radii=radii)
 
@@ -54,8 +60,8 @@ test_scaling_data['rp_scaled_new'] = rp_scaled_new
 test_scaling_data['report'] = report
 test_scaling_data['center'] = random_center
 
-#with open("test_scaling_data_temp.pickle","wb") as file:
-#    pickle.dump(test_scaling_data,file)
+with open("test_scaling_data_3.pickle","wb") as file:
+    pickle.dump(test_scaling_data,file)
 
 
 
