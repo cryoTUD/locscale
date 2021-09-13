@@ -60,8 +60,8 @@ test_scaling_data['rp_scaled_new'] = rp_scaled_new
 test_scaling_data['report'] = report
 test_scaling_data['center'] = random_center
 
-with open("test_scaling_data_3.pickle","wb") as file:
-    pickle.dump(test_scaling_data,file)
+#with open("test_scaling_data_3.pickle","wb") as file:
+#    pickle.dump(test_scaling_data,file)
 
 
 
