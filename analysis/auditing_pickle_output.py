@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from emmer.ndimage.profile_tools import plot_radial_profile
 
-pickle_output = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/dst_1o2/profiles_audit.pickle"
+pickle_output = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/locscale_check/using_master_branch_data/profiles_audit.pickle"
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:

@@ -37,8 +37,7 @@ cmdl_parser.add_argument('-b_global', '--global_sharpen', type=int, help='Global
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')
-cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', default=True,
-                         help='Use pseudo-atomic model')
+cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', help='Use pseudo-atomic model', action='store_true')
 
 def launch_amplitude_scaling(args):
     
