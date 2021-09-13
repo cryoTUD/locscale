@@ -15,7 +15,7 @@ class test_compute_scaling(unittest.TestCase):
         from pseudomodel_headers import check_dependencies
         import pickle
         scale_factor_arguments = {}
-        scale_factor_arguments['wilson'] = 8.55
+        scale_factor_arguments['wilson'] = 8.5
         scale_factor_arguments['high_freq'] = 4.91
         scale_factor_arguments['fsc_cutoff'] = 2.5
         scale_factor_arguments['smooth'] = 0.3
@@ -37,6 +37,8 @@ class test_compute_scaling(unittest.TestCase):
         
         test_file = {}
         for i in [1,2,3]:
+            print(i)
+            print(self.test_data[i]['report']['scaling_condition'])
             emmap_window = self.test_data[i]['emmap_window']
             modmap_window = self.test_data[i]['modmap_window']
             rp_emmap_test = compute_radial_profile(emmap_window)
@@ -56,8 +58,9 @@ class test_compute_scaling(unittest.TestCase):
             
             scaled_map_old_target = self.test_data[i]['scaled_window_old']
             scaled_map_new_target = self.test_data[i]['scaled_window_new']
-            
+            print("Old",(scaled_map_old_test==scaled_map_old_target).all())
             self.assertTrue((scaled_map_old_test==scaled_map_old_target).all())
+            
             self.assertTrue((scaled_map_new_test==scaled_map_new_target).all())
             
             
