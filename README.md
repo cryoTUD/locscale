@@ -40,7 +40,7 @@ Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)
 This project is using code from a number of third-party open-source projects. Projects used in the C++ library and included under include/:
 
 [FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: BSD 3-clause.  
-[]
+[EMDA](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/emda/emda.html) – Python library for electron microscopy map and model manipulations. Licence: MPL-2
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html), coordinate refinement program for macromolecular structures.
 
@@ -49,7 +49,6 @@ This project is using code from a number of third-party open-source projects. Pr
 If you found `LocScale` useful, please consider citing it:
 
 - A. Bharadwaj and A.J. Jakobi, [Title still to be determined](do-not-know-yet), A Journal 1, 1-2 (2021)
-
 - A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
 
 ---
