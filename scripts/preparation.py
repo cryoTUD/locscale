@@ -131,10 +131,11 @@ def prepare_mask_and_maps_for_scaling(args):
     from get_pseudomodel.pipeline import get_modmap_from_pseudomodel
     from pseudomodel_headers import number_of_segments
     from emmer.ndimage.map_utils import average_voxel_size
-    from emmer.pdb.pdb_tools import find_wilson_cutoff, shift_coordinates
+    from emmer.pdb.pdb_tools import find_wilson_cutoff
     from get_pseudomodel.pseudomodel_headers import run_FDR, run_mapmask, check_dependencies
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from utils.general import round_up_to_even, round_up_to_odd
+    from emmer.pdb.pdb_utils import shift_coordinates
     
     print(check_dependencies())
     print("Pseudo-maps: ", args.use_pseudomaps)
@@ -199,13 +200,14 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         
-        if args.global_bfactor != 0:
-            add_blur = float(args.global_bfactor)
+        
+        add_blur = float(args.global_bfactor)
         
         pdb_path = args.model_coordinates
         if pdb_path is not None:
-            pdb_path = shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
+            shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
                                          out_model_path=pdb_path[:-4]+"_shifted.pdb")
+            pdb_path = pdb_path[:-4]+"_shifted.pdb"
             
         
         modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
