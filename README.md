@@ -48,10 +48,12 @@ This project is using code from a number of third-party open-source projects. Pr
 
 If you found `LocScale` useful, please consider citing it:
 
-- A.J. Jakobi, MWilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
+- A. Bharadwaj and A.J. Jakobi, [Title still to be determined](do-not-know-yet), A Journal 1, 1-2 (2021)
+
+- A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
 
 ---
 
 
-For bug reports please use the [GitLab issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues). 
-For questions or comments please contact <a.jakobi@tudelft.nl> or a.bharadwaj@tudelft.nl
+For bug reports please use the [GitLab issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues).   
+For questions or comments please contact <a.jakobi@tudelft.nl> or a.bharadwaj@tudelft.nl.
