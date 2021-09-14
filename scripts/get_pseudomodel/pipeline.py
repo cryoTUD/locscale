@@ -30,6 +30,7 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pdb_path, pseudomodel_met
         path/to/modmap.mrc
 
     '''
+    print("PDB PATH: ",pdb_path)
     from pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map
     from emmer.ndimage.map_utils import measure_mask_parameters
     from emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -48,12 +49,14 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pdb_path, pseudomodel_met
     num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
     
     if pdb_path is None:
+        print("You have not entered a PDB path, running pseudo-atomic model generator!")
         pseudomodel_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=1, num_atoms=num_atoms, 
                                    method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
         if pseudomodel_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
     else:
+        print("You have entered a pdb_path {}. Using this to generate reference model".format(pdb_path))
         pseudomodel_path = pdb_path
     
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
