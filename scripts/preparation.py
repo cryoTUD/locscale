@@ -96,6 +96,34 @@ def get_spherical_mask(emmap):
         mask = pad_or_crop_volume(emmap, (emmap.shape), pad_value=0)
     
     return mask
+def shift_map_to_zero_origin(emmap_path):
+    '''
+    Determines the map origin from header file and changes it to zero
+
+    Parameters
+    ----------
+    emmap_path : str
+        DESCRIPTION.
+
+    Returns
+    -------
+    shift_vector : numpy.ndarray (len=3)
+
+    '''    
+    from emmer.ndimage.map_utils import save_as_mrc
+    
+    target_origin = np.array([0,0,0])
+    current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist())
+    print("Current origin: ", current_origin)
+    emmap_data = mrcfile.open(emmap_path).data
+    voxel_size = mrcfile.open(emmap_path).voxel_size.tolist()
+    output_file = emmap_path
+    save_as_mrc(map_data=emmap_data, output_filename=emmap_path, apix=voxel_size, origin=0)
+    
+    shift_vector = target_origin - current_origin
+    
+    return shift_vector
+
     
 def prepare_mask_and_maps_for_scaling(args):
     
@@ -103,7 +131,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from get_pseudomodel.pipeline import get_modmap_from_pseudomodel
     from pseudomodel_headers import number_of_segments
     from emmer.ndimage.map_utils import average_voxel_size
-    from emmer.pdb.pdb_tools import find_wilson_cutoff
+    from emmer.pdb.pdb_tools import find_wilson_cutoff, shift_coordinates
     from get_pseudomodel.pseudomodel_headers import run_FDR, run_mapmask, check_dependencies
     from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from utils.general import round_up_to_even, round_up_to_odd
@@ -112,6 +140,7 @@ def prepare_mask_and_maps_for_scaling(args):
     print("Pseudo-maps: ", args.use_pseudomaps)
     
     emmap_path = args.em_map
+    shift_vector=shift_map_to_zero_origin(emmap_path)
     xyz_emmap_path = run_mapmask(emmap_path)
     
     xyz_emmap = mrcfile.open(xyz_emmap_path).data
@@ -174,6 +203,10 @@ def prepare_mask_and_maps_for_scaling(args):
             add_blur = float(args.global_bfactor)
         
         pdb_path = args.model_coordinates
+        if pdb_path is not None:
+            pdb_path = shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
+                                         out_model_path=pdb_path[:-4]+"_shifted.pdb")
+            
         
         modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
