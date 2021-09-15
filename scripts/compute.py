@@ -82,7 +82,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
             temporary_dictionary['scaling_condition'] = scale_factor_arguments
     else:
         reference_profile_for_scaling = ref_profile
-    
+        
+    np.seterr(divide='ignore', invalid='ignore');
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     

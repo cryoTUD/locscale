@@ -58,9 +58,9 @@ class test_compute_scaling(unittest.TestCase):
             
             scaled_map_old_target = self.test_data[i]['scaled_window_old']
             scaled_map_new_target = self.test_data[i]['scaled_window_new']
-            print("Old",(scaled_map_old_test==scaled_map_old_target).all())
+            print("Not using theoretical profile: ",(scaled_map_old_test==scaled_map_old_target).all())
+            print("Using theoretical profile: ",(scaled_map_new_test==scaled_map_new_target).all())
             self.assertTrue((scaled_map_old_test==scaled_map_old_target).all())
-            
             self.assertTrue((scaled_map_new_test==scaled_map_new_target).all())
             
             
