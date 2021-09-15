@@ -37,7 +37,7 @@ Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)
 
 ## Credits
 
-This project is using code from a number of third-party open-source projects. Projects used in the C++ library and included under include/:
+This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
 [FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: BSD 3-clause.  
 [EMDA](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/emda/emda.html) – Python library for electron microscopy map and model manipulations. Licence: MPL-2
