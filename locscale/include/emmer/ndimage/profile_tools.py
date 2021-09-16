@@ -6,7 +6,9 @@ Created on Mon Mar 22 15:23:14 2021
 @author: alok
 """
 
-from emmer.headers import *
+#from emmer.headers import *
+import numpy as np
+
 
 def frequency_array(amplitudes=None,apix=None,profile_size=None):
     '''
@@ -229,6 +231,8 @@ def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
         Dictionary of emmap volumes for each map.
 
     '''
+    import mrcfile
+    
     if keys is None:
         keys = [path.split('/')[-1] for path in mrc_paths]
 
@@ -418,7 +422,9 @@ def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, 
 
     return (freq,amplitude_scaled)
     
-def get_debye_statistics(radial_profiles_using_pdb):    
+def get_debye_statistics(radial_profiles_using_pdb): 
+    import sys
+    
     helix_freqs = []
     sheet_freqs = []
     missed = 0
@@ -493,7 +499,8 @@ def resample_1d(x_old,y_old,num,xlims=None):
         resampled y axis
 
     '''
-    
+    from scipy.interpolate import interp1d
+
     f = interp1d(x_old, y_old,kind='slinear',fill_value='extrapolate')
     if xlims is None:
         x_new = np.linspace(x_old[0], x_old[-1], num=num)
@@ -507,6 +514,9 @@ def resample_1d(x_old,y_old,num,xlims=None):
     return x_new, y_new
     
 def average_profiles(profiles_dictionary,num=1000):
+    from locscale.include.emmer.ndimage.filter import get_nyquist_limit, butter_lowpass_filter, fit_series
+    import sys
+    
     resampled_profiles = {}
     min_freq,max_freq = find_xmin_xmax([data[0] for data in profiles_dictionary.values()])
     

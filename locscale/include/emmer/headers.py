@@ -21,4 +21,5 @@ from scipy.ndimage import rotate
 from scipy import fftpack
 
 
-import emmer
+import locscale.include.emmer as emmer
+

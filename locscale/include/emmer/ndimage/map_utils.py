@@ -1,4 +1,4 @@
-from emmer.headers import *
+import numpy as np
 
 def parse_input(input_map, allow_any_dims=True):
     '''
@@ -54,6 +54,8 @@ def read_gemmi_map(map_path, return_grid=False):
     emmap : numpy.ndarray
         
     '''
+    import gemmi
+    
     gemmi_ccp4Map = gemmi.read_ccp4_map(map_path)
     emmap = np.array(gemmi_ccp4Map.grid, copy=False)
     
@@ -84,6 +86,8 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
     Saves MRC .
 
     '''
+    import mrcfile
+    
     with mrcfile.new(output_filename,overwrite=True) as mrc:
         mrc.set_data(np.float32(map_data))
         
@@ -137,6 +141,8 @@ def save_as_mrc_2(map_data,output_filename, apix=None,origin=None,verbose=False,
     Saves MRC .
 
     '''
+    import mrcfile
+    
     with mrcfile.new(output_filename,overwrite=True) as mrc:
         mrc.set_data(np.float32(map_data))
         
@@ -336,6 +342,7 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     if np.any(imsize_new == None) and apix_new == None:
         imsize_new = im.shape
         apix_new = apix
+        pad_factor = imsize_new[0]/imsize[0]
         pad_factor = np.round(np.array(tuple([pad_factor*i for i in im.shape]))).astype('int')
     elif apix_new != None:
         imsize_new = np.round(imsize * apix / apix_new).astype('int')
@@ -424,6 +431,7 @@ def get_nyquist_limit(xdata):
 
 
 def fit_series(series,xmin,xmax,num):
+    from scipy.interpolate import interp1d
         
     xdata = series[0]
     ydata = series[1]
@@ -513,7 +521,7 @@ def dilate_mask(mask, radius, iterations=1):
 
     '''
     from scipy.ndimage import binary_dilation
-    from emmer.ndimage.map_utils import get_sphere
+    from locscale.include.emmer.ndimage.map_utils import get_sphere
     
     dilated = binary_dilation(mask, structure=get_sphere(radius), iterations=iterations).astype(int)
         

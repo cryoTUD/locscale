@@ -1,9 +1,10 @@
 import numpy as np
 #import gemmi
 
+
 def get_theoretical_profile(length,apix):
     import pickle
-    from emmer.ndimage.profile_tools import resample_1d
+    from locscale.include.emmer.ndimage.profile_tools import resample_1d
     from locscale.pseudomodel.pseudomodel_headers import check_dependencies
     
     
@@ -53,7 +54,7 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
                           use_theoretical_profile=True, check_scaling=False):
     
-    from emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
+    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
     #print("checkScaling", check_scaling)
     #print("useTheoretical", use_theoretical_profile)
     if use_theoretical_profile:
@@ -103,7 +104,7 @@ def set_radial_profile(vol, scale_factor, radii):
 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,scale_factor_arguments, verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
     from tqdm import tqdm
-    from emmer.ndimage.map_tools import compute_real_space_correlation
+    from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.utils.general import true_percent_probability
     import pickle
     
@@ -293,7 +294,7 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
 
 def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix):
     from locscale.utils.prepare_inputs import pad_or_crop_volume
-    from emmer.ndimage.map_utils import save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
         
     if window_bleed_and_pad:
         map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]

@@ -57,9 +57,9 @@ def number_of_segments(fsc_resolution):
     
 
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None):
-    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
-    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
-    from emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
+    from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
     import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)
@@ -126,7 +126,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
                     
     try:
         ## First attempt to use Emmer package to compute FDR map
-        from emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+        from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
         emmap = mrcfile.open(emmap_path).data
         voxel_size_record = mrcfile.open(emmap_path).voxel_size
         apix = average_voxel_size(voxel_size_record)
@@ -312,7 +312,7 @@ def is_pseudomodel(input_pdb_path):
 def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
     import os
     from subprocess import run, PIPE
-    from emmer.pdb.pdb_utils import get_bfactors
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     import mrcfile
     
     path_to_locscale = check_dependencies()['locscale']
@@ -389,10 +389,10 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     import gemmi
     import mrcfile
     import pprint
-    from emmer.pdb.pdb_to_map import pdb2map
-    from emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
-    from emmer.ndimage.map_tools import get_center_of_mass
-    from emmer.ndimage.map_tools import compute_real_space_correlation
+    from locscale.include.emmer.pdb.pdb_to_map import pdb2map
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, read_gemmi_map, compare_gemmi_grids
+    from locscale.include.emmer.ndimage.map_tools import get_center_of_mass
+    from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     
     
     if verbose: 

@@ -1,6 +1,6 @@
 import numpy as np
 import mrcfile
-
+import locscale.include.emmer as emmer
 
 
 def pad_or_crop_volume(vol, dim_pad=None, pad_value = None, crop_volume=False):
@@ -109,7 +109,7 @@ def shift_map_to_zero_origin(emmap_path):
     shift_vector : numpy.ndarray (len=3)
 
     '''    
-    from emmer.ndimage.map_utils import save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     
     target_origin = np.array([0,0,0])
     current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist())
@@ -131,10 +131,10 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
     from locscale.utils.general import round_up_to_even, round_up_to_odd
     
-    from emmer.ndimage.map_utils import average_voxel_size
-    from emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
-    from emmer.pdb.pdb_tools import find_wilson_cutoff
-    from emmer.pdb.pdb_utils import shift_coordinates
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     
     print(check_dependencies())
     print("Pseudo-maps: ", args.use_pseudomaps)
