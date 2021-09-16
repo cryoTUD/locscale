@@ -139,15 +139,13 @@ def launch_amplitude_scaling(args):
         if rank == 0:
             write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict)
     
-            print("You can find the scaled map here: {}".format(args.outfile))
+            print("You can find the scaled map here: {}\n".format(args.outfile))
             print("Finished amplitude scaling\n")
-            print("Processing time: {}".format(datetime.now()-start_time))
-        print("**************************************************")
-        print("*                                                *")
-        print("*         Good luck with your research!          *")
-        print("*            from CPU: {}                        *".format(rank))
-        print("**************************************************")
-                
+            print("Processing time: {}\n".format(datetime.now()-start_time))
+            print("**************************************************")
+            print("*         Good luck with your research!          *")
+            print("**************************************************")
+                    
 
 
 def main():
