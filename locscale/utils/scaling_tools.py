@@ -163,8 +163,14 @@ check_scaling=check_scaling)
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
         
         if mpi:
-            
-            pbar[rank].update(1)
+            if rank != 0:
+                comm.send(1,dest=0)
+            else:
+                pbar[0].update(1)
+                for i in range(size-1):
+                    data = comm.recv(source=i+1)
+                    pbar[i+1].update(data)
+                
         else:
             progress_bar.update(n=1)
         
