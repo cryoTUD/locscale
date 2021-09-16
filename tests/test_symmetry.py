@@ -7,8 +7,6 @@ Created on Fri Sep 10 19:42:23 2021
 """
 
 import unittest
-import numpy as np
-import os
 
       
 
@@ -35,6 +33,8 @@ class TestPseudomodelHeaders(unittest.TestCase):
         from tempfile import TemporaryDirectory
         
         with TemporaryDirectory() as tempDir:
+            import os
+            os.chdir(tempDir)
             sym = em.symmetry_average([self.emmap_path],[3.4],pglist=["C4"])
             self.assertEqual(sym[0].shape,(256,256,256))
         
