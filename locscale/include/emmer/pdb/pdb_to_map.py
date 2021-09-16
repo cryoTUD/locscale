@@ -6,10 +6,10 @@ Created on Wed Jul 14 10:06:12 2021
 import numpy as np
 import pypdb
 import gemmi
-from emmer.pdb.pdb_tools import get_unit_cell_estimate, set_to_center_of_unit_cell
-from emmer.pdb.pdb_utils import shift_coordinates
-from emmer.ndimage.filter import low_pass_filter
-from emmer.ndimage.map_utils import save_as_mrc
+from locscale.include.emmer.pdb.pdb_tools import get_unit_cell_estimate, set_to_center_of_unit_cell
+from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
+from locscale.include.emmer.ndimage.filter import low_pass_filter
+from locscale.include.emmer.ndimage.map_utils import save_as_mrc
 
 def detect_pdb_input(input_pdb):
     '''
@@ -95,8 +95,8 @@ def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=Fal
 
     '''
     from scipy.ndimage import center_of_mass
-    from emmer.ndimage.map_tools import sharpen_maps
-    from emmer.ndimage.map_utils import convert_to_tuple
+    from locscale.include.emmer.ndimage.map_tools import sharpen_maps
+    from locscale.include.emmer.ndimage.map_utils import convert_to_tuple
     pdb_structure = detect_pdb_input(input_pdb)
     
     if size is not None and apix is not None and unitcell is None:
@@ -201,126 +201,3 @@ def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=Fal
     else:
         return emmap
     
-
-def pdb_to_map(
-    pdb_id=None, pdb_path=None, pdb_structure=None, mdlidx=0, resolution=None, vsize=None, unitcell=None, size=None, save_mrc_path=None,
-    set_zero_origin=False, crop_to_center=False, perform_fftshift=False, remove_waters=True, return_grid=False, verbose=False):
-    '''
-    
-    Parameters
-    ----------
-    pdb_id : string, optional
-        PDB ID of the coordinate file, incase the file is not present locally or a gemmi structure is absent. Example: pdb_id = '3j5p'
-    pdb_path : string, optional
-        Location of .pdb file, incase the file is present locally. 
-    pdb_structure : gemmi.Structure(), Note: Either pdb_id, pdb_path or pdb_structure is required.
-        Gemmi structure file for programs written using gemmi API.
-    mdlidx : int, optional
-        if multiple models are present in pdb file or structure, select which model to use for map simulation.
-    resolution : float, optional
-        Resolution cut-off in Angstrom. 
-    vsize : float, required
-        apix in Angstrom. 
-    unitcell : gemmi.UnitCell(), optional
-        If this parameter is passed, then maps will be simulated strictly using this. Example: unitcell = gemmi.UnitCell(311.1,311.1,311.1,90,90,90)
-    size: : tuple, optional
-        If specified, the number of voxels of the simulated map is directly specified. The function will then ignore voxelsize. If left unspecified, the map size is determined by the unit cell and voxel size.
-    save_mrc_path : string, optional
-        If this parameter is passed, then maps simulated will be stored locally at this location. 
-        Please provide the .mrc extension. Example: "/dev/test.mrc"
-    set_zero_origin : BOOL, optional
-        If this option is set True, then the coordinates will be shifted such that center of mass will be at zero origin. 
-    perform_fftshift : BOOL, optional
-        If this option is set True, then  np.fft.fftshift(,axes=(0,1,2)) will be performed for the simulated volume
-    remove_waters : BOOL, optional
-        If set to True, removes all waters from model before simulating map. Set to True by default.
-    return_grid : BOOL, optional
-        IF set to True, returns the gemmi.FloatGrid object alongside the simulated map as an ndarray.
-    verbose : BOOL, optional
-        Shows some additional information on the status of the function.
-    
-    Returns
-    -------
-    emmap : numpy.ndarray
-        This is the simulated map showing the 3D volume of the structure
-    
-    '''
-
-    if pdb_id is not None:
-         pdbfile = pypdb.get_pdb_file(pdb_id,filetype='pdb',compression=False)
-         pdb_struct = gemmi.read_pdb_string(pdbfile)
-    elif pdb_path is not None:
-         pdb_struct = gemmi.read_pdb(pdb_path)
-    elif pdb_structure is not None:
-         pdb_struct = pdb_structure
-    else:
-         print("Please input a PDB model or path to PDB file or a PDB ID (as string)!")
-         return 0
-          
-    if mdlidx > len(pdb_struct):
-        print("selected model number not in pdb")
-        return 0
-    model = pdb_struct[mdlidx]
-    
-    if abs(pdb_struct.cell.a * pdb_struct.cell.b * pdb_struct.cell.c) <= 64 and unitcell is None:
-         pdb_struct.cell = get_unit_cell_estimate(pdb_struct,vsize)
-         
-    elif unitcell is not None:
-         pdb_struct.cell = unitcell
-         
-    if vsize is None and size is None:
-        print("Please enter a voxelsize (in A), or specify the size of the map. Returning null")
-        return 0
-
-    model_origin = np.array(model.calculate_center_of_mass().tolist()) # Center of mass of protein is taken as the "model_origin". This should be set to zero   
-    # Check if set_zero_origin is True and if model_origin is more than 1A away from zero origin
-    if set_zero_origin:
-        print(model_origin)
-        pdb_struct = set_to_center_of_unit_cell(pdb_struct, pdb_struct.cell)
-        print("New origin: ", pdb_struct[0].calculate_center_of_mass())
-    if verbose:
-        print("Using Gemmi structure with unit cell dimensions",pdb_struct.cell)
-    
-    if remove_waters:
-        pdb_struct.remove_waters()
-    pdb_struct.remove_empty_chains()
-
-    if size is None:
-        size = (int(round(pdb_struct.cell.a/vsize)), int(round(pdb_struct.cell.b/vsize)), int(round(pdb_struct.cell.c/vsize)))
-
-    dencalc = gemmi.DensityCalculatorE()    
-    dencalc.d_min = vsize * 2  # Added the weird coefficient at the end to get expected size in pixel (Can change, need to check!)
-    dencalc.rate = 1
-    dencalc.blur= 0
-    dencalc.set_grid_cell_and_spacegroup(pdb_struct)
-    try:
-        dencalc.grid.set_size(*size)
-        dencalc.add_model_density_to_grid(model)
-    except:
-        dencalc.put_model_density_on_grid(model)
-        
-    
-    emmap = np.array(dencalc.grid,copy=False)
-    
-    if perform_fftshift:
-        emmap = np.fft.fftshift(emmap)
-        
-    if resolution is not None:
-        emmap = low_pass_filter(emmap,resolution,vsize)
-         
-    if crop_to_center:
-        X,Y,Z = emmap.shape
-        cx,cy,cz = X//2,Y//2,Z//2
-        
-        expected_side_length_pix = int(round(pdb_struct.cell.a / vsize))
-        expected_half_side_length = int(expected_side_length_pix//2)
-        emmap = emmap[cz-expected_half_side_length:cz+expected_half_side_length,cy-expected_half_side_length:cy+expected_half_side_length,cx-expected_half_side_length:cx+expected_half_side_length]
-        #emmap = np.rot90(emmap,k=3,axes=(0,2))
-     
-    if save_mrc_path is not None:
-        save_as_mrc(map_data=emmap, output_filename=save_mrc_path, apix=pdb_struct.cell.a/emmap.shape[0])
-    if return_grid:
-        return emmap, dencalc.grid
-    else:
-        return emmap
-

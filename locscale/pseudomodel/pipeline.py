@@ -32,8 +32,8 @@ def get_modmap_from_pseudomodel(emmap_path, mask_path, pdb_path, pseudomodel_met
     '''
     print("PDB PATH: ",pdb_path)
     from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map, is_pseudomodel
-    from emmer.ndimage.map_utils import measure_mask_parameters
-    from emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)

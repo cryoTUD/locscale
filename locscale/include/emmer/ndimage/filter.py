@@ -1,4 +1,4 @@
-from emmer.headers import *
+from locscale.include.emmer.headers import *
 
 def calculate_fourier_frequencies(im, apix):
     """Return the image frequency for every voxel in Fourierspace
@@ -95,7 +95,7 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
     
     if output_filename is None:
         output_filename = emmap_path[:-4]+"_filtered_"+str(dmin)+"_A.mrc"
-    emmer.ndimage.map_tools.save_as_mrc(filtered_emmap, voxel_size_record=voxel_size_record, outfilename=output_filename)
+    locscale.include.emmer.ndimage.map_tools.save_as_mrc(filtered_emmap, voxel_size_record=voxel_size_record, outfilename=output_filename)
     
     return output_filename
 

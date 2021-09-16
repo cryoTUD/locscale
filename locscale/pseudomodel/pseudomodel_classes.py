@@ -257,7 +257,7 @@ class Model:
          return model
 
     def update_unitcell(self,voxelsize,unitcell=None):
-        from emmer.pdb.pdb_tools import get_unit_cell_estimate
+        from locscale.include.emmer.pdb.pdb_tools import get_unit_cell_estimate
         
         if unitcell is not None:
             self.unitcell = unitcell

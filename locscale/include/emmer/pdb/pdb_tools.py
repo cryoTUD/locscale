@@ -20,7 +20,7 @@ import pypdb
 import os
 import sys
 from scipy import signal
-from emmer.ndimage.filter import *
+#from emmer.ndimage.filter import *
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
 
@@ -79,7 +79,7 @@ def set_to_center_of_unit_cell(pdb_structure, unitcell):
     centered_pdb : gemmi.Structure
 
     '''
-    from emmer.pdb.pdb_utils import shift_coordinates
+    from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     
     pdb_structure_local = pdb_structure.clone()
     center_of_mass_old = np.array(pdb_structure_local[0].calculate_center_of_mass().tolist())
@@ -285,7 +285,7 @@ Reference:
 
     '''
     
-    from emmer.ndimage.map_utils import measure_mask_parameters
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
     if model_path is not None:
         gemmi_st = gemmi.read_pdb(model_path)
         num_atoms = gemmi_st[0].count_atom_sites()

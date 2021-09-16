@@ -7,8 +7,12 @@ Created on Thu Apr 15 00:40:10 2021
 
 @author: alok
 """
-from emmer.headers import  *
-from emmer.ndimage.map_utils import parse_input
+import numpy as np
+import mrcfile
+import gemmi
+
+
+from locscale.include.emmer.ndimage.map_utils import parse_input
     
 def compute_real_space_correlation(input_map_1,input_map_2):
     '''
@@ -29,7 +33,7 @@ def compute_real_space_correlation(input_map_1,input_map_2):
         Floating point number between 0 and 1 showing the RSCC between two arrays
 
     '''
-    from emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input
     array1 = parse_input(input_map_1, allow_any_dims=True)
     array2 = parse_input(input_map_2, allow_any_dims=True)
     
@@ -61,7 +65,7 @@ def get_center_of_mass(emmap_data, apix):
 
     '''
     from scipy.ndimage import center_of_mass
-    from emmer.ndimage.map_utils import convert_to_tuple
+    from locscale.include.emmer.ndimage.map_utils import convert_to_tuple
     
     com_pixels = np.array(center_of_mass(abs(emmap_data)))
     apix_array = np.array(convert_to_tuple(apix))
@@ -87,7 +91,7 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
 
     '''
     import mrcfile
-    from emmer.ndimage.map_utils import save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     halfmap1 = mrcfile.open(halfmap_1_path).data
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
@@ -115,7 +119,7 @@ def add_half_maps_2(halfmap_1_path, halfmap_2_path, output_filename):
 
     '''
     import mrcfile
-    from emmer.ndimage.map_utils import save_as_mrc_2
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc_2
     halfmap1 = mrcfile.open(halfmap_1_path).data
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
@@ -127,7 +131,7 @@ def add_half_maps_2(halfmap_1_path, halfmap_2_path, output_filename):
     return output_filename
     
 def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
-    from emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
+    from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
     
     rp_unsharp = compute_radial_profile(emmap)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
@@ -137,7 +141,17 @@ def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
     
     return bfactor, z, slopes, fit
     
-    
+def compute_scale_factors(em_profile, ref_profile):
+    scale_factor = np.sqrt(ref_profile**2/em_profile**2)
+    return scale_factor
+
+def set_radial_profile(vol, scale_factor, radii):
+    ps = np.fft.rfftn(vol)
+    for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
+            idx = radii == r
+            ps[idx] *= scale_factor[j]
+
+    return np.fft.irfftn(ps, s=vol.shape)    
 
 def sharpen_maps(vol, apix, global_bfactor=0):
     '''
@@ -157,8 +171,8 @@ def sharpen_maps(vol, apix, global_bfactor=0):
     sharpened_map : numpy.ndarray (dims=3)
 
     '''
-    from emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
-    from emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
     
     emmap_profile, radii = compute_radial_profile(vol,return_indices=True)
     freq = frequency_array(amplitudes=emmap_profile, apix=apix)
@@ -194,8 +208,8 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
 
     '''
-    from emmer.pdb.pdb_tools import get_atomic_positions_between_residues
-    from emmer.ndimage.map_utils import convert_pdb_to_mrc_position, dilate_mask
+    from locscale.include.emmer.pdb.pdb_tools import get_atomic_positions_between_residues
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, dilate_mask
     
     apix = mrcfile.open(emmap_path).voxel_size.x
     emmap = mrcfile.open(emmap_path).data

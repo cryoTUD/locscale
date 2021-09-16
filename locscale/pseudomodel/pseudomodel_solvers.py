@@ -156,10 +156,10 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         
     '''
     import gemmi
-    from emmer.ndimage.map_tools import compute_real_space_correlation
-    from emmer.pdb.pdb_to_map import pdb2map
-    from emmer.ndimage.profile_tools import compute_radial_profile
-    from emmer.pdb.pdb_utils import set_atomic_bfactors
+    from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
+    from locscale.include.emmer.pdb.pdb_to_map import pdb2map
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
+    from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
     from locscale.pseudomodel.pseudomodel_classes import Vector, add_Vector
     
     peak_bond_length_list = []
