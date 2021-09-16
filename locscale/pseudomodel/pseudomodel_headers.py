@@ -22,7 +22,7 @@ def check_dependencies():
         if 'ccp4' in path and 'bin' in path:            
             path_to_ccp4 = "/".join(path.split("/")[:-1])
             dependency['ccp4'] = path_to_ccp4
-        if 'locscale' in path and 'scripts' in path:
+        if 'locscale' in path.split("/"):
             locscale_index=path.split("/").index("locscale")
             path_to_locscale = "/".join(path.split("/")[:locscale_index+1])
             dependency['locscale'] = path_to_locscale

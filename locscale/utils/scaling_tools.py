@@ -294,18 +294,22 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
 def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix):
     from locscale.utils.prepare_inputs import pad_or_crop_volume
     from emmer.ndimage.map_utils import save_as_mrc
-
+        
     if window_bleed_and_pad:
         map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
 
+        
     save_as_mrc(map_data=LocScaleVol, output_filename=args.outfile, apix=apix, origin=0, verbose=True)
-    '''
-    with mrcfile.new(args.outfile) as LocScaleVol_out:
-        LocScaleVol_out.set_data(LocScaleVol.astype(np.float32))
-        LocScaleVol_out.voxel_size = np.rec.array(( args.apix,  args.apix,  args.apix), dtype=[('x', '<f4'), ('y', '<f4'), ('z', '<f4')])
-        LocScaleVol_out.header.nxstart, LocScaleVol_out.header.nystart, LocScaleVol_out.header.nzstart = [0,0,0]
-    '''
+    
+    if args.symmetry != "C1":
+        print("Imposing a symmetry condition of {}".format(args.symmetry))
+        import locscale.include.emda.emda.emda_methods as em
+        sym = em.symmetry_average([args.outfile],[args.ref_resolution],pglist=[args.symmetry])
+        locscale_symmetry = args.outfile[:-4]+"_{}_symmetry".format(args.symmetry)
+        save_as_mrc(map_data=sym[0], output_filename=locscale_symmetry, apix=apix, origin=0, verbose=False)
+        print("Find the location of LocScale with symmetry imposed:  {}".format(locscale_symmetry))
+        
 
     return LocScaleVol
 

@@ -1,0 +1,1172 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>emda_cmd_caller module &#8212; EMDA 1.1.3 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="emda_methods module" href="emda_methods.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emda_methods.html" title="emda_methods module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">EMDA 1.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">emda_cmd_caller module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="emda-cmd-caller-module">
+<h1>emda_cmd_caller module<a class="headerlink" href="#emda-cmd-caller-module" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">emda</span> <span class="p">[</span><span class="n">command</span><span class="p">]</span> <span class="p">[</span><span class="n">arguments</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Positional Arguments">
+<h2>Positional Arguments<a class="headerlink" href="#Positional Arguments" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd>command</kbd></dt>
+<dd><p>Possible choices: info, halffsc, fsc, singlemapfsc, ccmask, mapmask, lowpass, power, bfac, resol, half2full, map2mtz, map2mtzfull, transform, mtz2map, resample, resamplemap2map, rcc, mmcc, fcc, mapmodelfsc, overlay, average, diffmap, applymask, scalemap, bestmap, predfsc, refmac, occ, mirror, model2map, composite, magref</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="Named Arguments">
+<h2>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd>--version</kbd></dt>
+<dd><p>show program’s version number and exit</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="Sub-commands:">
+<h2>Sub-commands:<a class="headerlink" href="#Sub-commands:" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="info">
+<h3>info<a class="headerlink" href="#info" title="Permalink to this headline">¶</a></h3>
+<p>Output basic information about the map.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">info</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat1">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat1" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="halffsc">
+<h3>halffsc<a class="headerlink" href="#halffsc" title="Permalink to this headline">¶</a></h3>
+<p>Calculates FSC between half-maps.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">halffsc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat2">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat2" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input map1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input map2 map</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>input mask (mrc/map)</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output data table</p>
+<p>Default: “table_variances.txt”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="fsc">
+<h3>fsc<a class="headerlink" href="#fsc" title="Permalink to this headline">¶</a></h3>
+<p>Calculates FSC between two maps.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">fsc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">map1</span> <span class="n">MAP1</span> <span class="o">--</span><span class="n">map2</span> <span class="n">MAP2</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat3">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat3" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map1</kbd></dt>
+<dd><p>input map1 map</p>
+</dd>
+<dt><kbd>--map2</kbd></dt>
+<dd><p>input map2 map</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="singlemapfsc">
+<h3>singlemapfsc<a class="headerlink" href="#singlemapfsc" title="Permalink to this headline">¶</a></h3>
+<p>Calculates FSC using neighbour average.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">singlemapfsc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat4">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat4" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input map1 map</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>kernel radius in voxels</p>
+<p>Default: 3</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="ccmask">
+<h3>ccmask<a class="headerlink" href="#ccmask" title="Permalink to this headline">¶</a></h3>
+<p>Generates mask based on halfmaps correlation.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">ccmask</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nrm</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">itr</span> <span class="n">ITR</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">thr</span> <span class="n">THR</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat5">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat5" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>kernel radius in voxels</p>
+<p>Default: 10</p>
+</dd>
+<dt><kbd>--nrm</kbd></dt>
+<dd><p>if True use normalized maps</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--itr</kbd></dt>
+<dd><p>number of dilation cycles</p>
+<p>Default: 1</p>
+</dd>
+<dt><kbd>--thr</kbd></dt>
+<dd><p>cc threshold</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mapmask">
+<h3>mapmask<a class="headerlink" href="#mapmask" title="Permalink to this headline">¶</a></h3>
+<p>Generate a mask from a map.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">mapmask</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">prb</span> <span class="n">PRB</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">itr</span> <span class="n">ITR</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">fil</span> <span class="n">FIL</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat6">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat6" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>kernel radius in voxels</p>
+<p>Default: 5</p>
+</dd>
+<dt><kbd>--prb</kbd></dt>
+<dd><p>density cutoff probability in cumulative density function</p>
+<p>Default: 0.99</p>
+</dd>
+<dt><kbd>--itr</kbd></dt>
+<dd><p>number of dilate iterations</p>
+<p>Default: 3</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>lowpass resolution in Angstroms</p>
+<p>Default: 15.0</p>
+</dd>
+<dt><kbd>--fil</kbd></dt>
+<dd><p>filter type to use: ideal or butterworth</p>
+<p>Default: “butterworth”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="lowpass">
+<h3>lowpass<a class="headerlink" href="#lowpass" title="Permalink to this headline">¶</a></h3>
+<p>Lowpass filter to specified resolution.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">lowpass</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">res</span> <span class="n">RES</span> <span class="p">[</span><span class="o">--</span><span class="n">fil</span> <span class="n">FIL</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat7">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat7" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>lowpass resolution in Angstrom</p>
+</dd>
+<dt><kbd>--fil</kbd></dt>
+<dd><p>filter type to use: ideal or butterworth</p>
+<p>Default: “ideal”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="power">
+<h3>power<a class="headerlink" href="#power" title="Permalink to this headline">¶</a></h3>
+<p>Calculates power spectrum.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">power</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat8">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat8" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="bfac">
+<h3>bfac<a class="headerlink" href="#bfac" title="Permalink to this headline">¶</a></h3>
+<p>Apply a B-factor on the map.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">bfac</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">bfc</span> <span class="n">BFC</span> <span class="p">[</span><span class="n">BFC</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat9">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat9" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--bfc</kbd></dt>
+<dd><p>bfactor(s) to apply</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>if use, writes out map</p>
+<p>Default: False</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="resol">
+<h3>resol<a class="headerlink" href="#resol" title="Permalink to this headline">¶</a></h3>
+<p>Estimates map resolution based on FSC.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">resol</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat10">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat10" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="half2full">
+<h3>half2full<a class="headerlink" href="#half2full" title="Permalink to this headline">¶</a></h3>
+<p>Combine two halfmaps to make the fullmap.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">half2full</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat11">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat11" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map (mrc/map)</p>
+<p>Default: “fullmap.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="map2mtz">
+<h3>map2mtz<a class="headerlink" href="#map2mtz" title="Permalink to this headline">¶</a></h3>
+<p>Convert MRC/MAP to MTZ.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">map2mtz</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat12">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat12" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map (mtz)</p>
+<p>Default: “map2mtz.mtz”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="map2mtzfull">
+<h3>map2mtzfull<a class="headerlink" href="#map2mtzfull" title="Permalink to this headline">¶</a></h3>
+<p>Convert MRC/MAP to MTZ using half maps.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">map2mtzfull</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat13">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat13" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input hfmap1 (mrc/map)</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input hfmap2 (mrc/map)</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map (mtz)</p>
+<p>Default: “map2mtzfull.mtz”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="transform">
+<h3>transform<a class="headerlink" href="#transform" title="Permalink to this headline">¶</a></h3>
+<p>Apply a transformation on the map.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">transform</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="o">--</span><span class="n">tra</span> <span class="n">TRA</span> <span class="p">[</span><span class="n">TRA</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">rot</span> <span class="n">ROT</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">--</span><span class="n">axr</span> <span class="n">AXR</span> <span class="p">[</span><span class="n">AXR</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat14">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat14" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--tra</kbd></dt>
+<dd><p>translation vec. in Angstrom. eg 1.0 0.0 0.0</p>
+<p>Default: [0.0, 0.0, 0.0]</p>
+</dd>
+<dt><kbd>--rot</kbd></dt>
+<dd><p>rotation in degree</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--axr</kbd></dt>
+<dd><p>rotation axis</p>
+<p>Default: [1, 0, 0]</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map (mrc/map)</p>
+<p>Default: “transformed.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mtz2map">
+<h3>mtz2map<a class="headerlink" href="#mtz2map" title="Permalink to this headline">¶</a></h3>
+<p>Convert MTZ to MRC/MAP.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">mtz2map</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">mtz</span> <span class="n">MTZ</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">out</span> <span class="n">OUT</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat15">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat15" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--mtz</kbd></dt>
+<dd><p>input map (mtz)</p>
+</dd>
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map (mrc/map)</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="resample">
+<h3>resample<a class="headerlink" href="#resample" title="Permalink to this headline">¶</a></h3>
+<p>Resample a map in Fourier space.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">resample</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">pix</span> <span class="n">PIX</span> <span class="p">[</span><span class="o">--</span><span class="n">dim</span> <span class="n">DIM</span> <span class="p">[</span><span class="n">DIM</span> <span class="o">...</span><span class="p">]]</span>
+              <span class="p">[</span><span class="o">--</span><span class="n">cel</span> <span class="n">CEL</span> <span class="p">[</span><span class="n">CEL</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat16">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat16" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map (mrc/map)</p>
+</dd>
+<dt><kbd>--pix</kbd></dt>
+<dd><p>target pixel size (A)</p>
+</dd>
+<dt><kbd>--dim</kbd></dt>
+<dd><p>target map dimensions. e.g. 100 100 100</p>
+</dd>
+<dt><kbd>--cel</kbd></dt>
+<dd><p>target cell. e.g. a b c 90 90 90</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map name</p>
+<p>Default: “resampled.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="resamplemap2map">
+<h3>resamplemap2map<a class="headerlink" href="#resamplemap2map" title="Permalink to this headline">¶</a></h3>
+<p>Resample map2 on map1.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">resamplemap2map</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">map1</span> <span class="n">MAP1</span> <span class="o">--</span><span class="n">map2</span> <span class="n">MAP2</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat17">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat17" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map1</kbd></dt>
+<dd><p>static map (mrc/map)</p>
+</dd>
+<dt><kbd>--map2</kbd></dt>
+<dd><p>map to resample (mrc/map)</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map name</p>
+<p>Default: “resampled2staticmap.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="rcc">
+<h3>rcc<a class="headerlink" href="#rcc" title="Permalink to this headline">¶</a></h3>
+<p>real space correlation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">rcc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">mdl</span> <span class="n">MDL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nrm</span><span class="p">]</span>
+         <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lig</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lgf</span> <span class="n">LGF</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat18">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat18" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--mdl</kbd></dt>
+<dd><p>Input model (cif/pdb)</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>Resolution (A)</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>input mask (mrc/map)</p>
+</dd>
+<dt><kbd>--nrm</kbd></dt>
+<dd><p>if True use normalized maps</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>Kernel size (pixels)</p>
+<p>Default: 5</p>
+</dd>
+<dt><kbd>--lig</kbd></dt>
+<dd><p>use if there is ligand, but no description</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--lgf</kbd></dt>
+<dd><p>ligand description file</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mmcc">
+<h3>mmcc<a class="headerlink" href="#mmcc" title="Permalink to this headline">¶</a></h3>
+<p>real space correlation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">mmcc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">mdl</span> <span class="n">MDL</span> <span class="o">--</span><span class="n">res</span> <span class="n">RES</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span>
+          <span class="p">[</span><span class="o">--</span><span class="n">tpx</span> <span class="n">TPX</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lig</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lgf</span> <span class="n">LGF</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat19">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat19" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input full/deposited map</p>
+</dd>
+<dt><kbd>--mdl</kbd></dt>
+<dd><p>Input model (cif/pdb)</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>Resolution (A)</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>input mask (mrc/map)</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>Kernel size (pixels)</p>
+<p>Default: 5</p>
+</dd>
+<dt><kbd>--tpx</kbd></dt>
+<dd><p>mask trim by n pixels</p>
+<p>Default: 1</p>
+</dd>
+<dt><kbd>--lig</kbd></dt>
+<dd><p>use if there is ligand, but no description</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--lgf</kbd></dt>
+<dd><p>ligand description file</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="fcc">
+<h3>fcc<a class="headerlink" href="#fcc" title="Permalink to this headline">¶</a></h3>
+<p>Fourier space correlation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">fcc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat20">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat20" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>Kernel size (pixels)</p>
+<p>Default: 5</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mapmodelfsc">
+<h3>mapmodelfsc<a class="headerlink" href="#mapmodelfsc" title="Permalink to this headline">¶</a></h3>
+<p>map-model correlation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">mapmodelfsc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="o">--</span><span class="n">mdf</span> <span class="n">MDF</span> <span class="p">[</span><span class="o">--</span><span class="n">md1</span> <span class="n">MD1</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">bfc</span> <span class="n">BFC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lig</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lgf</span> <span class="n">LGF</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat21">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat21" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--mdf</kbd></dt>
+<dd><p>input full atomic model</p>
+</dd>
+<dt><kbd>--md1</kbd></dt>
+<dd><p>input halfmap1 atomic model</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>input mask (mrc/map)</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>Resolution (A)</p>
+</dd>
+<dt><kbd>--bfc</kbd></dt>
+<dd><p>Overall B factor for model. default=0.0</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--lig</kbd></dt>
+<dd><p>use if there is ligand, but no description</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--lgf</kbd></dt>
+<dd><p>ligand description file</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="overlay">
+<h3>overlay<a class="headerlink" href="#overlay" title="Permalink to this headline">¶</a></h3>
+<p>overlay maps</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">overlay</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="n">MAP</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span> <span class="p">[</span><span class="n">MSK</span> <span class="o">...</span><span class="p">]]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">tra</span> <span class="n">TRA</span> <span class="p">[</span><span class="n">TRA</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">rot</span> <span class="n">ROT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">axr</span> <span class="n">AXR</span> <span class="p">[</span><span class="n">AXR</span> <span class="o">...</span><span class="p">]]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">ncy</span> <span class="n">NCY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">int</span> <span class="n">INT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">hfm</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat22">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat22" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>maplist for overlay</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>masklist for overlay</p>
+</dd>
+<dt><kbd>--tra</kbd></dt>
+<dd><p>translation vector. default=[0.0, 0.0, 0.0]</p>
+<p>Default: [0.0, 0.0, 0.0]</p>
+</dd>
+<dt><kbd>--rot</kbd></dt>
+<dd><p>rotation in deg. default=0.0</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--axr</kbd></dt>
+<dd><p>rotation axis. default=[1,0,0]</p>
+<p>Default: [1, 0, 0]</p>
+</dd>
+<dt><kbd>--ncy</kbd></dt>
+<dd><p>number of fitting cycles. default=5</p>
+<p>Default: 5</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>starting fit resol. (A). default= 6 A</p>
+<p>Default: 6</p>
+</dd>
+<dt><kbd>--int</kbd></dt>
+<dd><p>interpolation method (linear/cubic). default= linear</p>
+<p>Default: “linear”</p>
+</dd>
+<dt><kbd>--hfm</kbd></dt>
+<dd><p>if True use half maps</p>
+<p>Default: False</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="average">
+<h3>average<a class="headerlink" href="#average" title="Permalink to this headline">¶</a></h3>
+<p>weighted average of several maps</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">average</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="n">MAP</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span> <span class="p">[</span><span class="n">MSK</span> <span class="o">...</span><span class="p">]]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">tra</span> <span class="n">TRA</span> <span class="p">[</span><span class="n">TRA</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">rot</span> <span class="n">ROT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">axr</span> <span class="n">AXR</span> <span class="p">[</span><span class="n">AXR</span> <span class="o">...</span><span class="p">]]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">ncy</span> <span class="n">NCY</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="nb">int</span> <span class="n">INT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat23">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat23" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>maplist to average</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>masklist for maps</p>
+</dd>
+<dt><kbd>--tra</kbd></dt>
+<dd><p>translation vec.</p>
+<p>Default: [0.0, 0.0, 0.0]</p>
+</dd>
+<dt><kbd>--rot</kbd></dt>
+<dd><p>rotation in deg</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--axr</kbd></dt>
+<dd><p>rotation axis</p>
+<p>Default: [1, 0, 0]</p>
+</dd>
+<dt><kbd>--ncy</kbd></dt>
+<dd><p>number of fitting cycles</p>
+<p>Default: 10</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>starting fit resol. (A)</p>
+<p>Default: 6</p>
+</dd>
+<dt><kbd>--int</kbd></dt>
+<dd><p>interpolation method ([linear]/cubic)</p>
+<p>Default: “linear”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="diffmap">
+<h3>diffmap<a class="headerlink" href="#diffmap" title="Permalink to this headline">¶</a></h3>
+<p>difference map using average maps</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">diffmap</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="n">MAP</span> <span class="o">...</span><span class="p">]</span> <span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span> <span class="p">[</span><span class="n">MSK</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">res</span> <span class="n">RES</span><span class="p">]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">mod</span> <span class="n">MOD</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat24">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat24" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>maplist to diffmap</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>masklist for maps</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>diffmap resol. (A) [default=0.0 A]</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--mod</kbd></dt>
+<dd><p>Choose from ampli, [norm], power</p>
+<p>Default: “norm”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="applymask">
+<h3>applymask<a class="headerlink" href="#applymask" title="Permalink to this headline">¶</a></h3>
+<p>apply mask on the map</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">applymask</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat25">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat25" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>map to be masked</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>mask to be applied</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map name</p>
+<p>Default: “mapmasked.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="scalemap">
+<h3>scalemap<a class="headerlink" href="#scalemap" title="Permalink to this headline">¶</a></h3>
+<p>scale onemap to another</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">scalemap</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">m1</span> <span class="n">M1</span> <span class="o">--</span><span class="n">m2</span> <span class="n">M2</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat26">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat26" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--m1</kbd></dt>
+<dd><p>input map</p>
+</dd>
+<dt><kbd>--m2</kbd></dt>
+<dd><p>map to be scaled</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map name</p>
+<p>Default: “scaledmap.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="bestmap">
+<h3>bestmap<a class="headerlink" href="#bestmap" title="Permalink to this headline">¶</a></h3>
+<p>calculate bestmap</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">bestmap</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">knl</span> <span class="n">KNL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">mod</span> <span class="n">MOD</span><span class="p">]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat27">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat27" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>mask to be applied</p>
+</dd>
+<dt><kbd>--knl</kbd></dt>
+<dd><p>kernel radius (pixels)</p>
+<p>Default: 5</p>
+</dd>
+<dt><kbd>--mod</kbd></dt>
+<dd><p>fsc type (1-resol bins, 2-local)</p>
+<p>Default: 1</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output map name</p>
+<p>Default: “bestmap.mrc”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="predfsc">
+<h3>predfsc<a class="headerlink" href="#predfsc" title="Permalink to this headline">¶</a></h3>
+<p>predict FSC based on # particles</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">predfsc</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">npa</span> <span class="n">NPA</span> <span class="p">[</span><span class="n">NPA</span> <span class="o">...</span><span class="p">]]</span>
+             <span class="p">[</span><span class="o">--</span><span class="n">bfc</span> <span class="n">BFC</span> <span class="p">[</span><span class="n">BFC</span> <span class="o">...</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat28">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat28" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>mask map</p>
+</dd>
+<dt><kbd>--npa</kbd></dt>
+<dd><p>n fold of particles</p>
+</dd>
+<dt><kbd>--bfc</kbd></dt>
+<dd><p>list of B factors</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="refmac">
+<h3>refmac<a class="headerlink" href="#refmac" title="Permalink to this headline">¶</a></h3>
+<p>prepare data for refmac refinement</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">refmac</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">h1</span> <span class="n">H1</span> <span class="o">--</span><span class="n">h2</span> <span class="n">H2</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">bfc</span> <span class="n">BFC</span> <span class="p">[</span><span class="n">BFC</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">--</span><span class="n">out</span> <span class="n">OUT</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat29">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat29" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--h1</kbd></dt>
+<dd><p>input halfmap1 map</p>
+</dd>
+<dt><kbd>--h2</kbd></dt>
+<dd><p>input halfmap2 map</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>mask map</p>
+</dd>
+<dt><kbd>--bfc</kbd></dt>
+<dd><p>b-factor list</p>
+</dd>
+<dt><kbd>--out</kbd></dt>
+<dd><p>output mtz file name</p>
+<p>Default: “output.mtz”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="occ">
+<h3>occ<a class="headerlink" href="#occ" title="Permalink to this headline">¶</a></h3>
+<p>overall correlation in real space</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">occ</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">m1</span> <span class="n">M1</span> <span class="o">--</span><span class="n">m2</span> <span class="n">M2</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">spc</span> <span class="n">SPC</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat30">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat30" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--m1</kbd></dt>
+<dd><p>input map1 map</p>
+</dd>
+<dt><kbd>--m2</kbd></dt>
+<dd><p>input map2 map</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>mask map</p>
+</dd>
+<dt><kbd>--spc</kbd></dt>
+<dd><p>space (real/fourier) for CC calculation</p>
+<p>Default: “real”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="mirror">
+<h3>mirror<a class="headerlink" href="#mirror" title="Permalink to this headline">¶</a></h3>
+<p>mirror the map</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">mirror</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat31">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat31" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>input map</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="model2map">
+<h3>model2map<a class="headerlink" href="#model2map" title="Permalink to this headline">¶</a></h3>
+<p>calculate model based map</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">model2map</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">mdl</span> <span class="n">MDL</span> <span class="o">--</span><span class="n">res</span> <span class="n">RES</span> <span class="o">--</span><span class="n">dim</span> <span class="n">DIM</span> <span class="p">[</span><span class="n">DIM</span> <span class="o">...</span><span class="p">]</span> <span class="o">--</span><span class="n">cel</span> <span class="n">CEL</span>
+               <span class="p">[</span><span class="n">CEL</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">bfc</span> <span class="n">BFC</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lig</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">lgf</span> <span class="n">LGF</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat32">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat32" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--mdl</kbd></dt>
+<dd><p>input atomic model</p>
+</dd>
+<dt><kbd>--res</kbd></dt>
+<dd><p>Resolution (A)</p>
+</dd>
+<dt><kbd>--dim</kbd></dt>
+<dd><p>map dim</p>
+</dd>
+<dt><kbd>--cel</kbd></dt>
+<dd><p>cell parameters</p>
+</dd>
+<dt><kbd>--bfc</kbd></dt>
+<dd><p>overall b-factor</p>
+<p>Default: 0.0</p>
+</dd>
+<dt><kbd>--lig</kbd></dt>
+<dd><p>use if there is ligand, but no description</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--lgf</kbd></dt>
+<dd><p>ligand description file</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="composite">
+<h3>composite<a class="headerlink" href="#composite" title="Permalink to this headline">¶</a></h3>
+<p>make composite map</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">composite</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="n">MAP</span> <span class="o">...</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">msk</span> <span class="n">MSK</span> <span class="p">[</span><span class="n">MSK</span> <span class="o">...</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat33">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat33" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>maplist to combine</p>
+</dd>
+<dt><kbd>--msk</kbd></dt>
+<dd><p>masklist for maps</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="magref">
+<h3>magref<a class="headerlink" href="#magref" title="Permalink to this headline">¶</a></h3>
+<p>magnification refinement</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">emda</span> <span class="n">magref</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="nb">map</span> <span class="n">MAP</span> <span class="p">[</span><span class="n">MAP</span> <span class="o">...</span><span class="p">]</span> <span class="o">--</span><span class="n">ref</span> <span class="n">REF</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments_repeat34">
+<h4>Named Arguments<a class="headerlink" href="#Named Arguments_repeat34" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd>--map</kbd></dt>
+<dd><p>maplist to correct for magnification [.mrc/.map]</p>
+</dd>
+<dt><kbd>--ref</kbd></dt>
+<dd><p>reference map [.mrc/.map]</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">emda_cmd_caller module</a><ul>
+<li><a class="reference internal" href="#Positional Arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#Named Arguments">Named Arguments</a></li>
+<li><a class="reference internal" href="#Sub-commands:">Sub-commands:</a><ul>
+<li><a class="reference internal" href="#info">info</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat1">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#halffsc">halffsc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat2">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fsc">fsc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat3">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#singlemapfsc">singlemapfsc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat4">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ccmask">ccmask</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat5">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mapmask">mapmask</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat6">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lowpass">lowpass</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat7">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#power">power</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat8">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bfac">bfac</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat9">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#resol">resol</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat10">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#half2full">half2full</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat11">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#map2mtz">map2mtz</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat12">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#map2mtzfull">map2mtzfull</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat13">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#transform">transform</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat14">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mtz2map">mtz2map</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat15">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#resample">resample</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat16">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#resamplemap2map">resamplemap2map</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat17">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#rcc">rcc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat18">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mmcc">mmcc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat19">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fcc">fcc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat20">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mapmodelfsc">mapmodelfsc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat21">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#overlay">overlay</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat22">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#average">average</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat23">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#diffmap">diffmap</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat24">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#applymask">applymask</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat25">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#scalemap">scalemap</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat26">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bestmap">bestmap</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat27">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#predfsc">predfsc</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat28">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#refmac">refmac</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat29">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#occ">occ</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat30">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mirror">mirror</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat31">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model2map">model2map</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat32">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#composite">composite</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat33">Named Arguments</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#magref">magref</a><ul>
+<li><a class="reference internal" href="#Named Arguments_repeat34">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="emda_methods.html"
+                        title="previous chapter">emda_methods module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/rst/emda_cmd_caller.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="emda_methods.html" title="emda_methods module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">EMDA 1.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">emda_cmd_caller module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Rangana Warshamanage, Garib N. Murshudov.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+  </body>
+</html>
