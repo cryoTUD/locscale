@@ -4,7 +4,7 @@ import math
 import gc
 import os
 import sys
-from confidenceMapUtil import mapUtil, locscaleUtil, FDRutil
+from locscale.include.confidenceMapUtil import mapUtil, locscaleUtil, FDRutil
 
 #--------------------------------------------------------------------------
 def calculateConfidenceMap(em_map, apix, noiseBox, testProc, ecdf, lowPassFilter_resolution, method, window_size, locResMap,

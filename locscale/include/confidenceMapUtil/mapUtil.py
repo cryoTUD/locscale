@@ -1,4 +1,4 @@
-from confidenceMapUtil import FDRutil
+from locscale.include.confidenceMapUtil import FDRutil
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
