@@ -113,8 +113,6 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
-    print("Inside get_central_scaled_pixel_vals", use_theoretical_profile)
-    
     mpi=False
     if process_name != 'LocScale':
         mpi=True
@@ -125,9 +123,10 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         size=comm.Get_size()
         
         pbar = {}
-        for n in range(size):
-            
-            pbar[n] = tqdm(total=len(masked_xyz_locs),desc=process_name)
+        if rank == 0:
+            for n in range(size):
+                pbar[n] = tqdm(total=len(masked_xyz_locs),desc=process_name)
+                
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
@@ -164,6 +163,7 @@ check_scaling=check_scaling)
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
         
         if mpi:
+            
             pbar[rank].update(1)
         else:
             progress_bar.update(n=1)
@@ -184,8 +184,7 @@ def put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, 
 
     return map_scaled
 
-def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_theoretical_profile, scale_factor_arguments, 
-                                          verbose=False):
+def run_window_function_including_scaling(parsed_inputs_dict):
     """
     >>> emmap, modmap, mask = setup_test_data()
     >>> scaled_vol = run_window_function_including_scaling(emmap,modmap,mask,wn=10,apix=1.0)
@@ -197,6 +196,15 @@ def run_window_function_including_scaling(emmap, modmap, mask, wn, apix, use_the
             0.17892323,  0.        ,  0.        ,  0.        ,  0.        ,
             0.        ,  0.        ,  0.        ,  0.        ,  0.        ], dtype=float32)
     """
+    mask = parsed_inputs_dict['mask']
+    wn = parsed_inputs_dict['wn']
+    emmap = parsed_inputs_dict['emmap']
+    modmap = parsed_inputs_dict['modmap']
+    use_theoretical_profile = parsed_inputs_dict['use_theoretical']
+    scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
+    apix = parsed_inputs_dict['apix']
+    verbose=parsed_inputs_dict['verbose']
+    
     from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
@@ -232,8 +240,7 @@ def merge_sequence_of_sequences(seq):
     return newseq
 
 
-def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_theoretical_profile,
-                                              scale_factor_arguments, verbose=False):
+def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     """
     >>> emmap_name, modmap_name, mask_name = setup_test_data_to_files()
     >>> import subprocess
@@ -248,6 +255,15 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
             0.        ,  0.        ,  0.        ,  0.        ,  0.        ], dtype=float32)
     >>> n = [os.remove(each_file) for each_file in [emmap_name, modmap_name, mask_name, 'scaled.mrc']]
     """
+    mask = parsed_inputs_dict['mask']
+    wn = parsed_inputs_dict['wn']
+    emmap = parsed_inputs_dict['emmap']
+    modmap = parsed_inputs_dict['modmap']
+    use_theoretical_profile = parsed_inputs_dict['use_theoretical']
+    scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
+    apix = parsed_inputs_dict['apix']
+    verbose=parsed_inputs_dict['verbose']
+    
     from mpi4py import MPI
     from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     
@@ -292,9 +308,14 @@ def run_window_function_including_scaling_mpi(emmap, modmap, mask, wn, apix,use_
 
     return map_scaled, rank
 
-def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pad, LocScaleVol, apix):
+def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
     from locscale.utils.prepare_inputs import pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    
+    
+    wn = parsed_inputs_dict['wn']
+    window_bleed_and_pad =parsed_inputs_dict['win_bleed_pad']
+    apix = parsed_inputs_dict['apix']
         
     if window_bleed_and_pad:
         map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
@@ -310,6 +331,8 @@ def write_out_final_volume_window_back_if_required(args, wn, window_bleed_and_pa
         locscale_symmetry = args.outfile[:-4]+"_{}_symmetry".format(args.symmetry)
         save_as_mrc(map_data=sym[0], output_filename=locscale_symmetry, apix=apix, origin=0, verbose=False)
         print("Find the location of LocScale with symmetry imposed:  {}".format(locscale_symmetry))
+        
+
         
 
     return LocScaleVol

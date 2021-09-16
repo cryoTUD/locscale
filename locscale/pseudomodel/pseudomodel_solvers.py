@@ -110,11 +110,14 @@ def get_neighborhood(points,min_dist_in_pixel,fromArray=False,only_neighbors=Fal
 
 
 def average_map_value(points):
-    sum_map_value = 0
+    map_val = []
     for point in points:
-        sum_map_value += point.map_value
-    average_mapvalue = sum_map_value/len(points)
-    return average_mapvalue
+        map_val.append(point.map_value)
+    map_val = np.array(map_val)
+    
+    average_mapvalue = round(map_val.mean(),3)
+    sd_mapvalue = round(map_val.std(),3)
+    return (average_mapvalue,sd_mapvalue)
 
 def acceleration_contribution(pseudomodel):
     gradient_list= []
@@ -173,7 +176,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         if myoutput is not None:
             myoutput.write(solver_properties)
     if verbose:    
-        print('# | Peak bond length  |  Minimum bond length  |  Average map value  |  Average gradient acc  |  Average LJ potential')        
+        print('# | Inter-atomic distance | Average map value | Average gradient acc | Average LJ potential')        
     profiles_iterations = []
     cross_correlation = []
     for iter in range(total_iterations):
@@ -259,12 +262,13 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     
         else:
             if verbose:
+                gradient_acc_arr = np.array(gradient_list)
+                lj_acc_arr = np.array(lj_list)
                 print(str(iter)+
                       "\t | \t "+str(round(peak_bond_length_list[iter],2))+
-                      "\t | \t "+str(round(all_bond_lengths.min(),2))+
-                      "\t | \t "+str(round(map_values[iter],2))+
-                      "\t | \t "+str(round(sum(gradient_list)/len(gradient_list),2))+
-                      "\t | \t "+str(round(sum(lj_list)/len(lj_list),2)) )    
+                      "\t | \t "+str(map_values[iter])+
+                      "\t | \t "+str(round(gradient_acc_arr.mean(),2))+
+                      "\t | \t "+str(round(lj_acc_arr.mean(),2)) )    
             
     pseudomodel.voxelsize = voxelsize
     pseudomodel.update_pdb_positions(voxelsize)

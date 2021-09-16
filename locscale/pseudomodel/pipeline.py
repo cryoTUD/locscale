@@ -1,5 +1,5 @@
 
-def get_modmap_from_pseudomodel(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
+def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 

@@ -112,22 +112,36 @@ def shift_map_to_zero_origin(emmap_path):
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     
     target_origin = np.array([0,0,0])
-    current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist())
+    voxel_size = np.array(mrcfile.open(emmap_path).voxel_size.tolist())
+    current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist()) 
+    
     print("Current origin: ", current_origin)
     emmap_data = mrcfile.open(emmap_path).data
-    voxel_size = mrcfile.open(emmap_path).voxel_size.tolist()
+    
     output_file = emmap_path
     save_as_mrc(map_data=emmap_data, output_filename=emmap_path, apix=voxel_size, origin=0)
     
     shift_vector = target_origin - current_origin
-    
+    print("Shift vector: {} ".format(shift_vector.round(2)))
     return shift_vector
 
     
 def prepare_mask_and_maps_for_scaling(args):
+    '''
+    Parse the command line arguments and return inputs for computing local amplitude scaling 
+
+    Parameters
+    ----------
+    args : Namespace
+
+    Returns
+    -------
+    parsed_inputs_dict : dict
+        Parsed inputs dictionary
+
+    '''
     
-    ## Added new part to include pseudo-atomic model
-    from locscale.pseudomodel.pipeline import get_modmap_from_pseudomodel
+    from locscale.pseudomodel.pipeline import get_modmap
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
     from locscale.utils.general import round_up_to_even, round_up_to_odd
     
@@ -136,12 +150,13 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     
+    print("Check relevant paths for LocScale \n")
     print(check_dependencies())
-    print("Pseudo-maps: ", args.use_pseudomaps)
-    
+        
     emmap_path = args.em_map
     shift_vector=shift_map_to_zero_origin(emmap_path)
-    xyz_emmap_path = run_mapmask(emmap_path)
+    xyz_emmap_path = run_mapmask(emmap_path)  
+    ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
     
     xyz_emmap = mrcfile.open(xyz_emmap_path).data
     
@@ -162,13 +177,13 @@ def prepare_mask_and_maps_for_scaling(args):
             print("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
         if args.fdr_window_size is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(xyz_emmap.shape[0] * 0.1)
-            print("FDR window size is not set. Using a default window size of {}".format(fdr_window_size))
+            print("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
         else:
             fdr_window_size = int(args.fdr_w)
         
         if args.fdr_filter is not None:
             filter_cutoff = float(args.fdr_filter)
-            print("A low pass filter value has been provided. The EM-map will be low pass filtered to {:.2f} A".format(filter_cutoff))
+            print("A low pass filter value has been provided. The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
         else:
             filter_cutoff = None
             
@@ -188,7 +203,16 @@ def prepare_mask_and_maps_for_scaling(args):
     ## Use the mask and emmap to generate a model map using pseudo-atomic model
         
     if args.model_map is None:
-        print("Reference Data not supplied! Using pseudo-model")
+        
+        pdb_path = args.model_coordinates
+        if pdb_path is not None:
+            shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
+                                         out_model_path=pdb_path[:-4]+"_shifted.pdb")
+            pdb_path = pdb_path[:-4]+"_shifted.pdb"
+            
+        add_blur = float(args.global_bfactor)
+        
+        ## Defaults for pseudo-atomic model 
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
         refmac_iter = int(args.refmac_iterations)
@@ -199,19 +223,15 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         
+        ## Get reference map using get_modmap_from_pseudomodel()
+        ## Note that if a pdb_path is provided then the function 
+        ## will use that instead of running pseudo-atomic model 
+        ## routine. 
         
-        add_blur = float(args.global_bfactor)
-        
-        pdb_path = args.model_coordinates
-        if pdb_path is not None:
-            shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
-                                         out_model_path=pdb_path[:-4]+"_shifted.pdb")
-            pdb_path = pdb_path[:-4]+"_shifted.pdb"
-            
-        
-        modmap_path = get_modmap_from_pseudomodel(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
+        modmap_path = get_modmap(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
                                                   fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur,verbose=verbose)
+        
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
     else:
@@ -240,7 +260,13 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
     
 
-    ## If resolution is bad > 6 A
+    ## Next few lines of code characterizes radial profile of 
+    ## input emmap : 
+        ## wilson cutoff : threshold between guinier and wilson regimes in the radial profile
+        ## high frequency cutoff : threshold above which to computing bfactor becomes valid  (for low resolution map, it's same as wilson cutoff)
+        ## FSC cutoff : threshold above which amplitudes of signal becomes weaked compared to noise
+        
+    
     wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     smooth_factor = args.smooth_factor
     if fsc_resolution > 6:
@@ -254,12 +280,15 @@ def prepare_mask_and_maps_for_scaling(args):
         
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         fsc_cutoff = (round(2*apix*10)+1)/10
-    if verbose:
+    
+    scale_using_theoretical_profile = args.use_pseudomaps
+    
+    if verbose and scale_using_theoretical_profile:
         print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
         print("To merge reference and theoretical profiles: \n")
         print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
         
-    scale_using_theoretical_profile = args.use_pseudomaps
+    
     
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
@@ -271,5 +300,17 @@ def prepare_mask_and_maps_for_scaling(args):
         
         print("Preparation completed. Now running LocScale!")
     
-    parsed_arguments = (xyz_emmap, xyz_modmap, xyz_mask, wn, apix, scale_using_theoretical_profile, scale_factor_arguments, verbose, window_bleed_and_pad)
-    return parsed_arguments
+    
+    parsed_inputs_dict = {}
+    parsed_inputs_dict['emmap'] = xyz_emmap
+    parsed_inputs_dict['modmap'] = xyz_modmap
+    parsed_inputs_dict['mask'] = xyz_mask
+    parsed_inputs_dict['wn'] = wn
+    parsed_inputs_dict['apix'] = apix
+    parsed_inputs_dict['use_theoretical'] = scale_using_theoretical_profile
+    parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
+    parsed_inputs_dict['verbose'] = verbose
+    parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
+    
+    
+    return parsed_inputs_dict
