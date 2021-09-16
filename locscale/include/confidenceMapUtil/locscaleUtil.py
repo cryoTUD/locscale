@@ -1,5 +1,5 @@
 import numpy as np
-from confidenceMapUtil import FDRutil
+from locscale.include.confidenceMapUtil import FDRutil
 import argparse, math, os, sys
 from argparse import RawTextHelpFormatter
 import time
