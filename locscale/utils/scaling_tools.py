@@ -125,7 +125,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         pbar = {}
         if rank == 0:
             for n in range(size):
-                pbar[n] = tqdm(total=len(masked_xyz_locs),desc=process_name)
+                description = "LocScale process {} of {}".format(n+1,size)
+                pbar[n] = tqdm(total=len(masked_xyz_locs),desc=description)
                 
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
