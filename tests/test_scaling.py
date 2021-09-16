@@ -12,7 +12,7 @@ import os
 
 class test_compute_scaling(unittest.TestCase):
     def setUp(self):
-        from pseudomodel_headers import check_dependencies
+        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
         import pickle
         scale_factor_arguments = {}
         scale_factor_arguments['wilson'] = 8.5
@@ -33,7 +33,7 @@ class test_compute_scaling(unittest.TestCase):
         
     
     def test_scaling(self):
-        from compute import compute_radial_profile, compute_scale_factors, set_radial_profile
+        from locscale.utils.scaling_tools import compute_radial_profile, compute_scale_factors, set_radial_profile
         
         test_file = {}
         for i in [1,2,3]:
@@ -62,6 +62,9 @@ class test_compute_scaling(unittest.TestCase):
             print("Using theoretical profile: ",(scaled_map_new_test==scaled_map_new_target).all())
             self.assertTrue((scaled_map_old_test==scaled_map_old_target).all())
             self.assertTrue((scaled_map_new_test==scaled_map_new_target).all())
+            
+
+            
             
             
             

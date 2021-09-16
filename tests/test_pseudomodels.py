@@ -15,7 +15,7 @@ import os
 class TestPseudomodelHeaders(unittest.TestCase):
     
     def setUp(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
         
         self.locscale_path = check_dependencies()['locscale']
         lPath = self.locscale_path
@@ -30,7 +30,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
                 
         
     def test_sharpen_maps(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import prepare_sharpen_map
+        from locscale.pseudomodel.pseudomodel_headers import prepare_sharpen_map
         
         print("Testing: prepare_sharpen_map \n")
         outfile, pwlf_fit = prepare_sharpen_map(emmap_path=self.emmap_path, wilson_cutoff=self.wilson_cutoff, fsc_resolution=self.fsc, return_processed_files=True)
@@ -51,7 +51,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         os.remove(outfile)
         
     def test_run_FDR(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import run_FDR
+        from locscale.pseudomodel.pseudomodel_headers import run_FDR
         print("Testing: run_FDR")
         import mrcfile
         mask_path = run_FDR(emmap_path=self.emmap_path, window_size=40, verbose=False)
@@ -64,7 +64,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         os.remove(mask_path)
         
     def test_run_pam(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import run_pam
+        from locscale.pseudomodel.pseudomodel_headers import run_pam
         import gemmi
         
         def quick_check_pseudomodel(pseudomodel_path):
@@ -102,9 +102,9 @@ class TestPseudomodelHeaders(unittest.TestCase):
         os.remove(pseudomodel_path_gradient)
         
     def test_run_refmac(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import run_refmac
+        from locscale.pseudomodel.pseudomodel_headers import run_refmac
         print("Testing: run_refmac refinement")
-        refined_model=run_refmac(model_path=self.kick_model,model_name=self.kick_model[:-4],map_path=self.emmap_path,resolution=self.fsc,maskdims=[256*1.2156,256*1.2156,256*1.2156],  num_iter=1,verbose=False)
+        refined_model=run_refmac(model_path=self.kick_model,map_path=self.emmap_path,resolution=self.fsc,num_iter=1,only_bfactor_refinement=True, verbose=False)
         
         refined_model_path_exists = os.path.exists(refined_model)
         self.assertTrue(refined_model_path_exists)
@@ -112,7 +112,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         os.remove(refined_model)
     
     def test_run_refmap(self):
-        from scripts.get_pseudomodel.pseudomodel_headers import run_refmap
+        from locscale.pseudomodel.pseudomodel_headers import run_refmap
         print("Testing: run_refmap")
         refmap_model = run_refmap(model_path=self.model_path,emmap_path=self.emmap_path,mask_path=self.mask_path,resolution=self.fsc,verbose=False)
         
@@ -123,11 +123,13 @@ class TestPseudomodelHeaders(unittest.TestCase):
         
         print("Testing if mapmask.sh is present")
         
-        mapmask_present = os.path.exists(self.locscale_path + "/scripts/utils/mapmask.sh")
+        mapmask_present = os.path.exists(self.locscale_path + "/locscale/utils/mapmask.sh")
         self.assertTrue(mapmask_present)
         
         os.remove(refmap_pseudomodel)
         os.remove(refmap_model)
+    
+    
         
 
 if __name__ == '__main__':
