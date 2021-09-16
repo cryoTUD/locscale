@@ -30,7 +30,7 @@ def detect_pdb_input(input_pdb):
         Returns nothing if input cannot be parsed properly.
 
     '''
-    from emmer.pdb.pdb_utils import get_gemmi_st_from_id
+    from locscale.include.emmer.pdb.pdb_utils import get_gemmi_st_from_id
     
     if isinstance(input_pdb, str):
         if input_pdb.split(sep='.')[-1] in ['pdb','cif']:  # Then input is a file path
