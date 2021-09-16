@@ -32,8 +32,11 @@ class TestPseudomodelHeaders(unittest.TestCase):
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
         import locscale.include.emda.emda.emda_methods as em
-        sym = em.symmetry_average([self.emmap_path],[3.4],pglist=["C4"])
-        self.assertEqual(sym[0].shape,(256,256,256))
+        from tempfile import TemporaryDirectory
+        
+        with TemporaryDirectory() as tempDir:
+            sym = em.symmetry_average([self.emmap_path],[3.4],pglist=["C4"])
+            self.assertEqual(sym[0].shape,(256,256,256))
         
         
     
