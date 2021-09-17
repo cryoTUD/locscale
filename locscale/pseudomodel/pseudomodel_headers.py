@@ -12,36 +12,17 @@ import numpy as np
 def check_dependencies():
     import os
     dependency = {}
-    paths = os.environ['PATH']
-    allpaths = paths.split(':')
+    path_to_ccpem = os.environ['CCPEM']
+    path_to_ccp4 = os.environ['CCP4']
+    path_to_locscale = os.environ['LOCSCALE_PATH']
     
-    for path in allpaths:
-        if 'ccpem' in path and 'bin' in path:
-            path_to_ccpem = "/".join(path.split("/")[:-1])
-            dependency['ccpem'] = path_to_ccpem
-        if 'ccp4' in path and 'bin' in path:            
-            path_to_ccp4 = "/".join(path.split("/")[:-1])
-            dependency['ccp4'] = path_to_ccp4
-        if 'locscale' in path.split("/"):
-            locscale_index=path.split("/").index("locscale")
-            path_to_locscale = "/".join(path.split("/")[:locscale_index+1])
-            dependency['locscale'] = path_to_locscale
-    
-    '''
+
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
         print("Required dependencies not found! ")
         print("CCPEM Location at: ",path_to_ccpem)
         print("CCP4 Location at: ",path_to_ccp4)
         print("LocScale Location at: ",path_to_locscale)
-        
-        exit
-    else:
-        print("Required dependencies are found at: \n ")
-        print("CCPEM Location at: ",path_to_ccpem)
-        print("CCP4 Location at: ",path_to_ccp4)
-        print("LocScale Location at: ",path_to_locscale)
-    '''  
-    
+            
     return dependency
     
 def number_of_segments(fsc_resolution):
