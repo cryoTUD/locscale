@@ -125,6 +125,26 @@ def shift_map_to_zero_origin(emmap_path):
     print("Shift vector: {} ".format(shift_vector.round(2)))
     return shift_vector
 
+def generate_filename_from_halfmap_path(in_path):
+    ## find filename in the path    
+    filename = in_path.split("/")[-1]
+    
+    ## find EMDB ID in filename
+    
+    possible_emdb_id = [filename[x:x+4] for x in range(len(filename)-3) if filename[x:x+4].isnumeric()]
+    if len(possible_emdb_id) == 1:
+        emdb_id = possible_emdb_id[0]
+        newfilename = ["EMD_"+emdb_id+"_unfiltered.mrc"]
+    else:
+        newfilename = ["emdb_map_unfiltered.mrc"]
+    
+    
+    new_path = "/".join(in_path.split("/")[:-1]+newfilename)
+    
+    return new_path
+    
+    
+    
     
 def prepare_mask_and_maps_for_scaling(args):
     '''
@@ -144,7 +164,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.pseudomodel.pipeline import get_modmap
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
     from locscale.utils.general import round_up_to_even, round_up_to_odd
-    
+    from locscale.include.emmer.ndimage.map_tools import add_half_maps
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -152,10 +172,18 @@ def prepare_mask_and_maps_for_scaling(args):
     
     print("Check relevant paths for LocScale \n")
     print(check_dependencies())
-        
-    emmap_path = args.em_map
-    shift_vector=shift_map_to_zero_origin(emmap_path)
-    xyz_emmap_path = run_mapmask(emmap_path)  
+    if args.em_map is not None:    
+        emmap_path = args.em_map
+        shift_vector=shift_map_to_zero_origin(emmap_path)
+        xyz_emmap_path = run_mapmask(emmap_path)  
+    elif args.half_map1 is not None and args.half_map2 is not None:
+        print("Adding the two half maps provided to generate a full map \n")
+        new_file_path = generate_filename_from_halfmap_path(args.half_map1)
+        emmap_path = add_half_maps(args.half_map1, args.half_map2,new_file_path)
+        xyz_emmap_path = run_mapmask(emmap_path)  
+    else:
+        raise FileNotFoundError("You need to provide atleast one unfiltered EM-map or two half-maps")
+    
     ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
     
     xyz_emmap = mrcfile.open(xyz_emmap_path).data
@@ -311,6 +339,18 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
     parsed_inputs_dict['verbose'] = verbose
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
+    
+    
+    ## all maps should have same shape
+    assert xyz_emmap.shape == xyz_modmap.shape == xyz_mask.shape, "The input maps and mask do not have the same shape"
+    ## emmap and modmap should not be zeros
+    assert abs(xyz_emmap.sum()) > 0 and abs(xyz_modmap.sum()) > 0, "Emmap and Modmap should not be zeros!"
+    ## No element of the mask should be negative
+    assert (xyz_mask>=0).any(), "Negative numbers found in mask"
+    
+    
+    
+    
     
     
     return parsed_inputs_dict

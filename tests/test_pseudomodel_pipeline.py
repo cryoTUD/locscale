@@ -25,7 +25,7 @@ class TestPseudomodelPipeline(unittest.TestCase):
         self.kick_model = lPath+"/tests/test_data/kick_pseudomodel.pdb"
     
     def test_pseudomodel_pipeline(self):
-        from locscale.pseudomodel.pipeline import get_modmap_from_pseudomodel
+        from locscale.pseudomodel.pipeline import get_modmap
         from tempfile import TemporaryDirectory
         
         print("Integration test: Pseudomodel building pipeline")
@@ -41,13 +41,14 @@ class TestPseudomodelPipeline(unittest.TestCase):
             run(["cp",self.mask_path,tempDir])
             temp_mask_path = tempDir + "/" + self.mask_path.split("/")[-1]
             
-            temp_modmap_gradient = get_modmap_from_pseudomodel(
+            os.chdir(tempDir)
+            temp_modmap_gradient = get_modmap(
                 temp_emmap_path, temp_mask_path, pdb_path=None,
                 pseudomodel_method='gradient',pam_distance=1.2, 
                 pam_iteration=1, fsc_resolution=3.4, 
                 refmac_iter=1, add_blur=0, verbose=True)
             
-            temp_modmap_kick = get_modmap_from_pseudomodel(
+            temp_modmap_kick = get_modmap(
                 temp_emmap_path, temp_mask_path, pdb_path=None,
                 pseudomodel_method='kick',pam_distance=1.2, 
                 pam_iteration=1, fsc_resolution=3.4, 
