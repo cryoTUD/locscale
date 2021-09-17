@@ -15,6 +15,9 @@ def check_dependencies():
     path_to_ccpem = os.environ['CCPEM']
     path_to_ccp4 = os.environ['CCP4']
     path_to_locscale = os.environ['LOCSCALE_PATH']
+    dependency['ccpem'] = path_to_ccpem
+    dependency['ccp4'] = path_to_ccp4
+    dependency['locscale'] = path_to_locscale
     
 
     if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
