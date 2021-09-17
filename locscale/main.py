@@ -27,7 +27,9 @@ simple_cmd_use_pm = 'python main.py -em emmap.mrc -ma mask.mrc -o loc_scaled.mrc
 
 
 
-cmdl_parser.add_argument('-em', '--em_map', required=True, help='Input filename EM map')
+cmdl_parser.add_argument('-em', '--em_map',  help='Input filename EM map')
+cmdl_parser.add_argument('-hf1', '--half_map1', help='Input filename first half map')
+cmdl_parser.add_argument('-hf2', '--half_map2', help='Input filename second half map')
 cmdl_parser.add_argument('-mm', '--model_map', help='Input filename PDB map')
 cmdl_parser.add_argument('-ma', '--mask', help='Input filename mask')
 cmdl_parser.add_argument('-mc', '--model_coordinates', help='Input PDB files', default=None)
