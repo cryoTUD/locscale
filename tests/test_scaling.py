@@ -35,7 +35,6 @@ class test_compute_scaling(unittest.TestCase):
     def test_scaling(self):
         from locscale.utils.scaling_tools import compute_radial_profile, compute_scale_factors, set_radial_profile
         
-        test_file = {}
         for i in [1,2,3]:
             print(i)
             print(self.test_data[i]['report']['scaling_condition'])
@@ -62,6 +61,56 @@ class test_compute_scaling(unittest.TestCase):
             print("Using theoretical profile: ",(scaled_map_new_test==scaled_map_new_target).all())
             self.assertTrue((scaled_map_old_test==scaled_map_old_target).all())
             self.assertTrue((scaled_map_new_test==scaled_map_new_target).all())
+    
+    def test_scaling_random(self):
+        from locscale.utils.scaling_tools import compute_radial_profile, compute_scale_factors, set_radial_profile
+        from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
+        from locscale.include.emmer.ndimage.map_utils import extract_window
+        import mrcfile
+        import random
+        
+        emmap_path = self.locscale + "/tests/test_data/emd5778_unfiltered.mrc"
+        modmap_path = self.locscale + "/tests/test_data/model_reference.mrc"
+        print("Testing random windows within the maps 100 times")
+        for i in range(100):
+            emmap = mrcfile.open(emmap_path).data
+            modmap = mrcfile.open(modmap_path).data
+            
+            centers = np.asarray(np.where(emmap>=7)).T.tolist()
+            random_center_1 = random.choice(centers)
+            random_center_2 = random.choice(centers)
+            
+            emmap_window = extract_window(emmap, random_center_1, 40)
+            modmap_window = extract_window(modmap, random_center_2, 40)
+            
+            rp_emmap_window = compute_radial_profile(emmap_window)
+            rp_modmap_window, radii = compute_radial_profile(modmap_window, return_indices=True)
+            sf_old = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
+                                           scale_factor_arguments=self.scale_factor_arguments,
+                                           check_scaling=False, use_theoretical_profile=False)
+            
+            sf_new, report = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
+                                           scale_factor_arguments=self.scale_factor_arguments,
+                                           check_scaling=True, use_theoretical_profile=True)
+            
+            quality_of_theoretical_profiles = rsc(report['scaled_reference_profile'], report['input_ref_profile'])
+            self.assertTrue(quality_of_theoretical_profiles > 0.99)
+            
+            rp_scaled_map_old = compute_radial_profile(set_radial_profile(emmap_window, sf_old, radii))
+            rp_scaled_map_new = compute_radial_profile(set_radial_profile(emmap_window, sf_new, radii))
+            
+            radial_profile_match_old = rsc(rp_modmap_window,rp_scaled_map_old )
+            radial_profile_match_new = rsc(rp_modmap_window,rp_scaled_map_new )
+            
+            self.assertTrue(radial_profile_match_old > 0.99)
+            self.assertTrue(radial_profile_match_new > 0.99)
+        
+        
+        
+        
+        
+        
+        
             
 
             

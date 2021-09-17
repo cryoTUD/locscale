@@ -16,9 +16,8 @@ def parse_input(input_map, allow_any_dims=True):
     '''
     import os
     import mrcfile
-    
     if isinstance(input_map, np.ndarray):
-        if allow_any_dims == False:
+        if not allow_any_dims:
             if len(input_map.shape) == 3:
                 return input_map
             else:
