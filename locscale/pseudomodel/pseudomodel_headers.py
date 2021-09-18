@@ -286,9 +286,9 @@ def is_pseudomodel(input_pdb_path):
                         num_waters += 1
     
     if num_waters == num_atoms:
-        print("Number of waters {} equal to number of atoms {}. \nHence {} is a pseudo-atomic model".format(num_waters, num_atoms, input_pdb_path))
+        print("Number of dummy atoms {} equal to total number of atoms {}. \nProceeding with pseudo-atomic model workflow for {}".format(num_waters, num_atoms, input_pdb_path))
         return True
-        print("Number of waters {} not equal to number of atoms {}.\nHence {} is a pseudo-atomic model".format(num_waters, num_atoms, input_pdb_path))
+        print("Number of dummy atoms {} not equal to total number of atoms {}.\nProceeding with default workflow for {}".format(num_waters, num_atoms, input_pdb_path))
         return False
     
 
