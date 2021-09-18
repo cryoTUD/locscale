@@ -325,8 +325,8 @@ Reference:
         f_cutoff = ko/Ro
         d_cutoff = 1/f_cutoff
     
-    print("Frequency cutoff: {:.2f} (in 1/A) \n".format(f_cutoff))
-    print("Frequency cutoff: {:.2f} (in A) \n ".format(d_cutoff))
+    print("Frequency cutoff: {:.2f}  (= {:.2f} A resolution)\n".format(f_cutoff, d_cutoff))
+    #print("Frequency cutoff: {:.2f} (in A) \n ".format(d_cutoff))
     
     if return_as_frequency:
         return f_cutoff
