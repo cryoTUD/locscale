@@ -211,6 +211,30 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
     else:
         return radial_profile, radii
 
+def offset_radial_profile(vol, offset, radii):
+     '''
+    F-shifts the radial profile of a given volume by user-defined offset
+
+    Parameters
+    ----------
+    vol : numpy.ndarray
+        Input array
+    center : list, optional
+        DESCRIPTION. The default is [0,0,0].
+    return_indices : bool, optional
+        
+
+    Returns
+    -------
+    radial_profile : numpy.ndarray (1D)
+        Radial profile
+    '''    
+    ps = np.fft.rfftn(vol)
+    for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
+            idx = radii == r
+            ps[idx] += offset
+
+    return np.fft.irfftn(ps, s=vol.shape)
     
 def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
     '''
