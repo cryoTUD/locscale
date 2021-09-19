@@ -219,15 +219,15 @@ def offset_radial_profile(vol, offset, radii):
     ----------
     vol : numpy.ndarray
         Input array
-    center : list, optional
-        DESCRIPTION. The default is [0,0,0].
-    return_indices : bool, optional
+    offset : float
+        Shift offset for Fourier amplitude array 
+    radii : numpy.ndarray
+        Fourier frequencies
         
-
     Returns
     -------
-    radial_profile : numpy.ndarray (1D)
-        Radial profile
+    volume : numpy.ndarray (1D)
+        Fourier amplitude-shifted input array 
     '''    
     ps = np.fft.rfftn(vol)
     for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
