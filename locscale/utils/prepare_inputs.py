@@ -144,8 +144,6 @@ def generate_filename_from_halfmap_path(in_path):
     return new_path
     
     
-    
-    
 def prepare_mask_and_maps_for_scaling(args):
     '''
     Parse the command line arguments and return inputs for computing local amplitude scaling 
@@ -172,6 +170,9 @@ def prepare_mask_and_maps_for_scaling(args):
     
     print("Check relevant paths for LocScale \n")
     print(check_dependencies())
+    
+    scale_using_theoretical_profile = args.ignore_profiles
+    
     if args.em_map is not None:    
         emmap_path = args.em_map
         shift_vector=shift_map_to_zero_origin(emmap_path)
@@ -234,11 +235,12 @@ def prepare_mask_and_maps_for_scaling(args):
         
         pdb_path = args.model_coordinates
         if pdb_path is not None:
+            scale_using_theoretical_profile = False ## If a PDB_path is provided, assume that it is an atomic model thus set this flag as False
             shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
                                          out_model_path=pdb_path[:-4]+"_shifted.pdb")
             pdb_path = pdb_path[:-4]+"_shifted.pdb"
             
-        add_blur = float(args.global_bfactor)
+        add_blur = float(args.add_blur)
         
         ## Defaults for pseudo-atomic model 
         pseudomodel_method=args.pseudomodel_method
@@ -263,6 +265,7 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
     else:
+        scale_using_theoretical_profile = False ## If a model map is provided, assume that it is from an atomic model thus set this flag as False no matter what the user input 
         modmap_path = args.model_map
         xyz_modmap_path = run_mapmask(modmap_path)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data        
@@ -309,7 +312,7 @@ def prepare_mask_and_maps_for_scaling(args):
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         fsc_cutoff = (round(2*apix*10)+1)/10
     
-    scale_using_theoretical_profile = args.use_pseudomaps
+    
     
     if verbose and scale_using_theoretical_profile:
         print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))

@@ -8,9 +8,11 @@ Created on Sat Sep 11 11:17:21 2021
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from emmer.ndimage.profile_tools import plot_radial_profile
+from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile
 
-pickle_output = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/locscale_check/using_master_branch_data/profiles_audit.pickle"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/emd5778/"
+pickle_output = folder+"profiles_audit.pickle"
+
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:
@@ -30,7 +32,7 @@ with open(pickle_output,"rb") as audit_file:
 
 import random
 random_positions = list(audit_scaling.keys())    
-sample = random.sample(random_positions, 3)
+sample = random.sample(random_positions, 1)
 for key in sample:
     freq = audit_scaling[key]['freq']
     em_profile = audit_scaling[key]['em_profile']
@@ -38,7 +40,9 @@ for key in sample:
     theoretical_profile = audit_scaling[key]['theoretical_amplitude']
     scaled_theoretical = audit_scaling[key]['scaled_theoretical_amplitude']
     merged_profile = audit_scaling[key]['scaled_reference_profile']
+    print(audit_scaling[key]['scaling_condition'])
     
-    plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, merged_profile],legends=['em_profile','ref_profile','th profile','scaled th profile','merged'])
+    
+    plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, merged_profile],legends=['em_profile','ref_profile','th profile','scaled th profile','merged']);
     
     
