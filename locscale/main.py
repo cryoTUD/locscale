@@ -39,7 +39,7 @@ cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstro
 cmdl_parser.add_argument('-wn', '--window_size', type=int, help='window size in pixels', default=None)
 cmdl_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
 cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
-cmdl_parser.add_argument('-use_pm', '--use_pseudomaps', help='Use pseudo-atomic model', action='store_true')
+cmdl_parser.add_argument('--ignore_profiles', help='Ignore average secondary structure profile during local scaling', action='store_false')
 cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
 cmdl_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
@@ -47,7 +47,7 @@ cmdl_parser.add_argument('-ref_it', '--refmac_iterations', help='For pseudo-atom
 cmdl_parser.add_argument('-sym', '--symmetry', default='C1', type=str, help='Impose symmetry condition for output')
 cmdl_parser.add_argument('-mpi', '--mpi', action='store_true', default=False,
                          help='MPI version call by: \"{0}\"'.format(mpi_cmd))
-cmdl_parser.add_argument('-b_global', '--global_bfactor', type=int, help='Globally sharpen the map', default=0)
+cmdl_parser.add_argument('--add_blur', type=int, help='Globally sharpen the map', default=0)
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 cmdl_parser.add_argument('-v', '--verbose', default=True,
                          help='Verbose output')

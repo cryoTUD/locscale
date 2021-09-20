@@ -344,6 +344,40 @@ def normalise_intensity_levels(from_emmap, to_levels=[0,1]):
     normalised = min_value + normalise_between_zero_one * scale_factor
     
     return normalised    
+
+def shift_radial_profile(from_emmap, to_emmap):
+    '''
+    To shift the radial profile of one emmap so that DC power matches another emmap
+
+    Parameters
+    ----------
+    from_emmap : numpy.ndarray
+        DESCRIPTION.
+    to_emmap : numpy.ndarray
+        DESCRIPTION.
+
+    Returns
+    -------
+    emmap_shifted_rp : numpy.ndarray
+
+    '''
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, plot_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
+    
+    rp_from_emmap = compute_radial_profile(from_emmap)
+    rp_to_emmap, radii = compute_radial_profile(to_emmap, return_indices=True)
+    
+    DC_power_diff = rp_to_emmap.max() - rp_from_emmap.max()
+    print((DC_power_diff))
+    new_rp_from_emmap = rp_from_emmap * 20
+    scale_factors = compute_scale_factors(rp_from_emmap, new_rp_from_emmap)
+    emmap_shifted_rp = set_radial_profile(from_emmap, scale_factors, radii)
+    rp_after_shifted = compute_radial_profile(emmap_shifted_rp)
+    freq = frequency_array(rp_from_emmap, 1.2156)
+    plot_radial_profile(freq,[rp_from_emmap, rp_to_emmap, new_rp_from_emmap,rp_after_shifted])
+    
+    
+    return emmap_shifted_rp
     
 def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbose=True):
     '''
