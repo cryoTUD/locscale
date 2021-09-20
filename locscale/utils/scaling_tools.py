@@ -19,8 +19,18 @@ def get_theoretical_profile(length,apix):
     resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
     return resampled_helix_profile
 
+def compute_radial_profile(vol_fft, frequency_map):
 
-def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
+    dim = vol_fft.shape;
+    ps = np.real(np.abs(vol_fft));
+    frequencies = np.fft.rfftfreq(dim[0]);
+    bins = np.digitize(frequency_map, frequencies);
+    bins = bins - 1;
+    radial_profile = np.bincount(bins.ravel(), ps.ravel()) / np.bincount(bins.ravel())
+
+    return radial_profile, frequencies;
+
+def compute_radial_profile_bck(vol, center=[0,0,0], return_indices=False):
     dim = vol.shape
     m = np.mod(vol.shape,2)
     # make compliant with both fftn and rfftn
@@ -94,7 +104,15 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     else:
         return scale_factor
 
-def set_radial_profile(vol, scale_factor, radii):
+def set_radial_profile(vol_fft, scale_factors, frequencies, frequency_map, shape):
+
+    scaling_map = np.interp(frequency_map, frequencies, scale_factors);
+    scaled_map_fft = scaling_map * vol_fft;
+    scaled_map = np.real(np.fft.irfftn(scaled_map_fft, shape, norm='ortho'));
+
+    return scaled_map, scaled_map_fft;
+
+def set_radial_profile_bck(vol, scale_factor, radii):
     ps = np.fft.rfftn(vol)
     for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
             idx = radii == r
@@ -106,6 +124,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.utils.general import true_percent_probability
+    from locscale.include.confidenceMapUtil import FDRutil
     import pickle
     
     
@@ -131,7 +150,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
-    
+    frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
+
     if audit:
         profiles_audit = {}
     for k, j, i in masked_xyz_locs - wn / 2:
@@ -139,10 +159,14 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
-
-        em_profile = compute_radial_profile(emmap_wn)
-        mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
+        emmap_wn_fft = np.fft.rfftn(np.copy(emmap_wn), norm='ortho');
+        modmap_wn_fft = np.fft.rfftn(np.copy(modmap_wn), norm='ortho');
         
+        #em_profile = compute_radial_profile(emmap_wn)
+        #mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
+
+        em_profile, frequencies_map = compute_radial_profile(emmap_wn_fft, frequency_map_window);
+        mod_profile, _ = compute_radial_profile(modmap_wn_fft, frequency_map_window);
         
         check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
         
@@ -154,8 +178,9 @@ check_scaling=check_scaling)
             scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
 check_scaling=check_scaling)
         
-        map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
-        
+        #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
+        map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn_fft, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
+
         #if verbose:
         #    if cnt%1000 == 0:
         #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
