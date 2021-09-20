@@ -19,8 +19,9 @@ def get_theoretical_profile(length,apix):
     resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
     return resampled_helix_profile
 
-def compute_radial_profile(vol_fft, frequency_map):
+def compute_radial_profile(vol, frequency_map):
 
+    vol_fft = np.fft.rfftn(np.copy(emmap_wn), norm='ortho');
     dim = vol_fft.shape;
     ps = np.real(np.abs(vol_fft));
     frequencies = np.fft.rfftfreq(dim[0]);
@@ -29,37 +30,6 @@ def compute_radial_profile(vol_fft, frequency_map):
     radial_profile = np.bincount(bins.ravel(), ps.ravel()) / np.bincount(bins.ravel())
 
     return radial_profile, frequencies;
-
-def compute_radial_profile_bck(vol, center=[0,0,0], return_indices=False):
-    dim = vol.shape
-    m = np.mod(vol.shape,2)
-    # make compliant with both fftn and rfftn
-    if center is None:
-        ps = np.abs(np.fft.fftshift((np.fft.fftn(vol))))
-        z, y, x = np.indices(ps.shape)
-        center = tuple((a - 1) / 2.0 for a in ps.shape[::-1])
-        radii = np.sqrt((x - center[0])**2 + (y - center[1])**2 + (z - center[2])**2)
-        
-        radii = radii.astype(int)
-    else:
-        ps = np.abs( np.fft.rfftn(vol) )
-        if not return_indices:
-            x, y, z = np.indices(ps.shape)
-            radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(int)
-        else:
-            [x, y, z] = np.mgrid[-dim[0]//2+m[0]:(dim[0]-1)//2+1, -dim[1]//2+m[1]:(dim[1]-1)//2+1, 0:dim[2]//2+1]
-            x = np.fft.ifftshift(x)
-            y = np.fft.ifftshift(y)
-            radii = np.sqrt(x**2 + y**2 + z**2)
-            radii = radii.astype(int)
-    radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
-    # exclude corner frequencies
-    radial_profile = radial_profile[0:int(round((ps.shape[0]/2)))]
-    if not return_indices:
-        return radial_profile
-    else:
-        return radial_profile, radii
 
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
                           use_theoretical_profile=True, check_scaling=False):
@@ -103,6 +73,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         return scale_factor, temporary_dictionary
     else:
         return scale_factor
+        
 
 def set_radial_profile(vol_fft, scale_factors, frequencies, frequency_map, shape):
 
@@ -112,13 +83,6 @@ def set_radial_profile(vol_fft, scale_factors, frequencies, frequency_map, shape
 
     return scaled_map, scaled_map_fft;
 
-def set_radial_profile_bck(vol, scale_factor, radii):
-    ps = np.fft.rfftn(vol)
-    for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
-            idx = radii == r
-            ps[idx] *= scale_factor[j]
-
-    return np.fft.irfftn(ps, s=vol.shape)
 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,scale_factor_arguments, verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
     from tqdm import tqdm
@@ -159,14 +123,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
-        emmap_wn_fft = np.fft.rfftn(np.copy(emmap_wn), norm='ortho');
-        modmap_wn_fft = np.fft.rfftn(np.copy(modmap_wn), norm='ortho');
-        
-        #em_profile = compute_radial_profile(emmap_wn)
-        #mod_profile, radii = compute_radial_profile(modmap_wn, return_indices=True)
 
-        em_profile, frequencies_map = compute_radial_profile(emmap_wn_fft, frequency_map_window);
-        mod_profile, _ = compute_radial_profile(modmap_wn_fft, frequency_map_window);
+        em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
+        mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
         
         check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
         
