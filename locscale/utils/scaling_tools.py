@@ -21,7 +21,7 @@ def get_theoretical_profile(length,apix):
 
 def compute_radial_profile(vol, frequency_map):
 
-    vol_fft = np.fft.rfftn(np.copy(emmap_wn), norm='ortho');
+    vol_fft = np.fft.rfftn(vol, norm='ortho');
     dim = vol_fft.shape;
     ps = np.real(np.abs(vol_fft));
     frequencies = np.fft.rfftfreq(dim[0]);
@@ -75,8 +75,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         return scale_factor
         
 
-def set_radial_profile(vol_fft, scale_factors, frequencies, frequency_map, shape):
-
+def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
+    vol_fft = np.fft.rfftn(np.copy(vol), norm='ortho');
     scaling_map = np.interp(frequency_map, frequencies, scale_factors);
     scaled_map_fft = scaling_map * vol_fft;
     scaled_map = np.real(np.fft.irfftn(scaled_map_fft, shape, norm='ortho'));
@@ -138,7 +138,7 @@ check_scaling=check_scaling)
 check_scaling=check_scaling)
         
         #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
-        map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn_fft, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
+        map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
 
         #if verbose:
         #    if cnt%1000 == 0:
@@ -317,7 +317,7 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     
     if args.symmetry != "C1":
         print("Imposing a symmetry condition of {}".format(args.symmetry))
-        import locscale.include.emda.emda.emda_methods as em
+        import emda.emda_methods as em
         sym = em.symmetry_average([args.outfile],[args.ref_resolution],pglist=[args.symmetry])
         locscale_symmetry = args.outfile[:-4]+"_{}_symmetry".format(args.symmetry)
         save_as_mrc(map_data=sym[0], output_filename=locscale_symmetry, apix=apix, origin=0, verbose=False)

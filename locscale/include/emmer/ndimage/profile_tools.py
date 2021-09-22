@@ -212,23 +212,6 @@ def compute_radial_profile(vol, center=[0,0,0], return_indices=False):
         return radial_profile, radii
 
 def offset_radial_profile(vol, offset, radii):
-     '''
-    F-shifts the radial profile of a given volume by user-defined offset
-
-    Parameters
-    ----------
-    vol : numpy.ndarray
-        Input array
-    offset : float
-        Shift offset for Fourier amplitude array 
-    radii : numpy.ndarray
-        Fourier frequencies
-        
-    Returns
-    -------
-    volume : numpy.ndarray (1D)
-        Fourier amplitude-shifted input array 
-    '''    
     ps = np.fft.rfftn(vol)
     for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
             idx = radii == r
