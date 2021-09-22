@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile
 
 folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/emd5778/"
-pickle_output = folder+"profiles_audit.pickle"
-
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:
@@ -27,6 +25,8 @@ temporary_dictionary['scaling_condition'] = [wilson_cutoff, fsc_cutoff]
 temporary_dictionary['merging_condition'] = [smooth, wilson_cutoff]
 temporary_dictionary['scale_factor'] = scale_factor
 '''
+
+pickle_output = folder+"profiles_audit.pickle"
 with open(pickle_output,"rb") as audit_file:
     audit_scaling = pickle.load(audit_file)
 

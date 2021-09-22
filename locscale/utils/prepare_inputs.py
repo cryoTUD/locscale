@@ -303,6 +303,7 @@ def prepare_mask_and_maps_for_scaling(args):
     if fsc_resolution > 6:
         high_frequency_cutoff = wilson_cutoff
         fsc_cutoff = (round(2*apix*10)+1)/10
+        bfactor_info = [0,0,0]
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
@@ -311,6 +312,7 @@ def prepare_mask_and_maps_for_scaling(args):
         
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         fsc_cutoff = (round(2*apix*10)+1)/10
+        bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
     
     
     
@@ -342,7 +344,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
     parsed_inputs_dict['verbose'] = verbose
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
-    
+    parsed_inputs_dict['bfactor_info'] = bfactor_info
     
     ## all maps should have same shape
     assert xyz_emmap.shape == xyz_modmap.shape == xyz_mask.shape, "The input maps and mask do not have the same shape"

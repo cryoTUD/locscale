@@ -111,6 +111,26 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         ax1.set_ylabel('log(|F|)',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
     
+    return fig
+
+def plot_emmap_section(emmap):
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    zn, yn, xn = emmap.shape
+    plt.subplot(131)
+    plt.title("XY plane")
+    plt.imshow(emmap[zn//2,:,:])
+    plt.subplot(132)
+    plt.title("YZ plane")
+    plt.imshow(emmap[:,:,xn//2])
+    plt.subplot(133)
+    plt.title("ZX plane")
+    plt.imshow(emmap[:,yn//2,:])
+    
+    return fig
+    
+    
+    
 
 def merge_two_profiles(profile_1,profile_2,freq, smooth=1, d_cutoff=None, f_cutoff=None):
     '''
