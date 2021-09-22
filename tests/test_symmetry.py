@@ -10,7 +10,7 @@ import unittest
 
       
 
-class TestPseudomodelHeaders(unittest.TestCase):
+class TestSymmetry(unittest.TestCase):
     
     def setUp(self):
         from locscale.pseudomodel.pseudomodel_headers import check_dependencies
@@ -29,7 +29,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
-        import locscale.include.emda.emda.emda_methods as em
+        import emda.emda_methods as em
         from tempfile import TemporaryDirectory
         
         with TemporaryDirectory() as tempDir:
