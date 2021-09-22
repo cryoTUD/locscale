@@ -107,9 +107,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         
         pbar = {}
         if rank == 0:
-            for n in range(size):
-                description = "LocScale process {} of {}".format(n+1,size)
-                pbar[n] = tqdm(total=len(masked_xyz_locs),desc=description)
+            description = "LocScale"
+            pbar = tqdm(total=len(masked_xyz_locs)*size,desc=description)
+        
                 
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
@@ -148,19 +148,15 @@ check_scaling=check_scaling)
         sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
         
         if mpi:
-            if rank != 0:
-                comm.send(1,dest=0)
-            else:
-                pbar[0].update(1)
-                for i in range(size-1):
-                    data = comm.recv(source=i+1)
-                    pbar[i+1].update(data)
+            if rank == 0:
+                pbar.update(size)
+            
                 
         else:
             progress_bar.update(n=1)
         
-    if mpi:
-        comm.barrier()
+    #if mpi:
+    #    comm.barrier()
     if audit and use_theoretical_profile:
         with open("profiles_audit.pickle","wb") as audit:
             pickle.dump(profiles_audit, audit)
