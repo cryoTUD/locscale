@@ -301,6 +301,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
 def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
     from locscale.utils.prepare_inputs import pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    from locscale.utils.general import make_locscale_report
     
     
     wn = parsed_inputs_dict['wn']
@@ -313,14 +314,17 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
 
         
     save_as_mrc(map_data=LocScaleVol, output_filename=args.outfile, apix=apix, origin=0, verbose=True)
+    if args.symmetry == "C1":
+        make_locscale_report(parsed_inputs_dict, LocScaleVol)
     
     if args.symmetry != "C1":
         print("Imposing a symmetry condition of {}".format(args.symmetry))
         import emda.emda_methods as em
         sym = em.symmetry_average([args.outfile],[args.ref_resolution],pglist=[args.symmetry])
-        locscale_symmetry = args.outfile[:-4]+"_{}_symmetry".format(args.symmetry)
+        locscale_symmetry = args.outfile[:-4]+"_{}_symmetry.mrc".format(args.symmetry)
         save_as_mrc(map_data=sym[0], output_filename=locscale_symmetry, apix=apix, origin=0, verbose=False)
-        print("Find the location of LocScale with symmetry imposed:  {}".format(locscale_symmetry))
+        make_locscale_report(parsed_inputs_dict, LocScaleVol)
+        
         
 
         
