@@ -49,38 +49,51 @@ cmdl_parser.add_argument('-mpi', '--mpi', action='store_true', default=False,
                          help='MPI version call by: \"{0}\"'.format(mpi_cmd))
 cmdl_parser.add_argument('--add_blur', type=int, help='Globally sharpen the map', default=0)
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
-cmdl_parser.add_argument('-v', '--verbose', default=True,
+cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
                          help='Verbose output')
 
 
 def print_arguments(args):
     print('\n  LocScale Arguments\n')
     for arg in vars(args):
-        print('    {} : {}'.format(arg, getattr(args, arg)))           
-    
+        print('    {} : {}'.format(arg, getattr(args, arg)))        
+        
+def print_start_banner(start_time):
+    print("Launching amplitude scaling\n")
+    print(start_time)
+    print("**************************************************")
+    print("*                      LOCSCALE                  *")
+    print("**************************************************")
+
+def print_end_banner(time_now, start_time):
+    print("Finished amplitude scaling\n")
+    print("Processing time: {}".format(time_now-start_time))
+    print("**************************************************")
+    print("*         Good luck with your research!          *")
+    print("**************************************************")
+
 
 def launch_amplitude_scaling(args):
     
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi, write_out_final_volume_window_back_if_required
+    from locscale.utils.general import change_directory
+    import os 
+    
+    current_directory = os.getcwd()
     
     if not args.mpi:
         start_time = datetime.now()
-        print("Launching amplitude scaling\n")
-        print(start_time)
-        print("**************************************************")
-        print("*                                                *")
-        print("*                      LOCSCALE                  *")
-        print("*                                                *")
-        print("**************************************************")
+        print_start_banner(start_time)
         if args.verbose:
             print_arguments(args)
+            copied_args = change_directory(args, "processing_files")  ## Copy the contents of files into a new directory
             
-        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(args)
+        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
         
-        write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict)
+        write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
         
         '''
         ** INFORMATION ABOUT parsed_inputs_dict VARIABLE **
@@ -98,13 +111,10 @@ def launch_amplitude_scaling(args):
         '''
         
         print("You can find the scaled map here: {}".format(args.outfile))
-        print("Finished amplitude scaling\n")
-        print("Processing time: {}".format(datetime.now()-start_time))
-        print("**************************************************")
-        print("*                                                *")
-        print("*         Good luck with your research!          *")
-        print("*                                                *")
-        print("**************************************************")
+        print_end_banner(datetime.now(), start_time=start_time)
+        
+        os.chdir(current_directory)
+
             
     
     elif args.mpi:
@@ -115,17 +125,12 @@ def launch_amplitude_scaling(args):
         
         if rank==0:
             start_time = datetime.now()
-            print("Launching amplitude scaling\n")
-            print(start_time)
-            print("**************************************************")
-            print("*                                                *")
-            print("*                      LOCSCALE                  *")
-            print("*                                                *")
-            print("**************************************************")
+            print_start_banner(start_time)
             if args.verbose:
                 print_arguments(args)
+                copied_args = change_directory(args, "processing_files")
             
-            parsed_inputs_dict = prepare_mask_and_maps_for_scaling(args)
+            parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         
         else:
             parsed_inputs_dict = None
@@ -139,14 +144,13 @@ def launch_amplitude_scaling(args):
         LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
         
         if rank == 0:
-            write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict)
+            write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
     
             print("You can find the scaled map here: {}\n".format(args.outfile))
-            print("Finished amplitude scaling\n")
-            print("Processing time: {}\n".format(datetime.now()-start_time))
-            print("**************************************************")
-            print("*         Good luck with your research!          *")
-            print("**************************************************")
+            print_end_banner(datetime.now(), start_time=start_time)
+            
+            os.chdir(current_directory)
+
                     
 
 
