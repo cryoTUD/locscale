@@ -158,7 +158,10 @@ check_scaling=check_scaling)
     #if mpi:
     #    comm.barrier()
     if audit and use_theoretical_profile:
-        with open("profiles_audit.pickle","wb") as audit:
+        import os
+        cwd = os.getcwd()
+        pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
+        with open(pickle_file_output,"wb") as audit:
             pickle.dump(profiles_audit, audit)
         
 

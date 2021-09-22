@@ -92,7 +92,7 @@ def launch_amplitude_scaling(args):
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
-        
+        os.chdir(current_directory)
         write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
         
         '''
@@ -113,7 +113,7 @@ def launch_amplitude_scaling(args):
         print("You can find the scaled map here: {}".format(args.outfile))
         print_end_banner(datetime.now(), start_time=start_time)
         
-        os.chdir(current_directory)
+        
 
             
     
@@ -144,12 +144,13 @@ def launch_amplitude_scaling(args):
         LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
         
         if rank == 0:
+            os.chdir(current_directory)
             write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
     
             print("You can find the scaled map here: {}\n".format(args.outfile))
             print_end_banner(datetime.now(), start_time=start_time)
             
-            os.chdir(current_directory)
+            
 
                     
 
