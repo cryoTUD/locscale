@@ -30,6 +30,17 @@ pip install locscale
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 <br> 
 
+To run on multiple CPUs in parallel, `LocScale` uses MPI for distributed-memory parallelisation. Execution of the MPI-parallelized version requires installation of an MPI implementation (e.g. [openMPI](http://www.open-mpi.de/)) on your system.  
+
+`LocScale` needs [mpi4py](http://pythonhosted.org/mpi4py/) to interface with the MPI implementation. Both can be installed via conda/pip:
+
+
+```
+conda install openmpi
+pip install mpi4py
+```
+
+
 ## Usage, tutorial and FAQs
 
 Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) pages for usage instructions, FAQs and tutorial.
@@ -39,8 +50,9 @@ Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)
 
 This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
-[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: BSD 3-clause.  
+[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.  
 [EMDA](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/emda/emda.html) – Python library for electron microscopy map and model manipulations. Licence: MPL-2
+[ProShade](https://github.com/michaltykac/proshade) - Protein Shape Description and Symmetry Detection. Licence: 3-Clause BSD
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html) – coordinate refinement program for macromolecular structures. Refmac is distributed as part of CCP-EM.
 
