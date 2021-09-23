@@ -97,12 +97,13 @@ def print_input_arguments(args):
     path_arguments = [x for x in vars(args) if x in ["em_map","half_map1","half_map2","model_map",
                                                   "mask","model_coordinates","outfile"]]
     for arg in vars(args):
-        if arg in path_arguments:
-            full_path = getattr(args, arg)
+        val = getattr(args, arg)
+        if arg in path_arguments and val is not None:
+            full_path = val
             filename = full_path.split("/")[-1]
             text.append([arg, filename])
         else:
-            text.append([arg, filename])
+            text.append([arg, val])
     
     
     table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
@@ -159,7 +160,7 @@ def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad)
     if parsed_input['use_theoretical']:
         pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
         pdf.savefig(pickle_output_sample_fig)
-        print("table pickle")
+        
     
     pdf.close()
     
