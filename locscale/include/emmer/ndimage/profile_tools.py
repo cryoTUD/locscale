@@ -113,19 +113,28 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
     
     return fig
 
-def plot_emmap_section(emmap):
+def plot_emmap_section(emmap, title="EMMAP Sections"):
     import matplotlib.pyplot as plt
     fig = plt.figure()
+    plt.title(title)
+    plt.axis("off")
     zn, yn, xn = emmap.shape
-    plt.subplot(131)
+    
+    ax1 = fig.add_subplot(131)
     plt.title("XY plane")
     plt.imshow(emmap[zn//2,:,:])
-    plt.subplot(132)
+    
+    ax2 = fig.add_subplot(132)
     plt.title("YZ plane")
     plt.imshow(emmap[:,:,xn//2])
-    plt.subplot(133)
-    plt.title("ZX plane")
+    ax2.yaxis.set_major_locator(plt.NullLocator())
+
+    
+    ax3 = fig.add_subplot(133)
+    plt.title("XZ plane")
     plt.imshow(emmap[:,yn//2,:])
+    ax3.yaxis.set_major_locator(plt.NullLocator())
+
     
     return fig
     

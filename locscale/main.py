@@ -33,13 +33,15 @@ cmdl_parser.add_argument('-hf2', '--half_map2', help='Input filename second half
 cmdl_parser.add_argument('-mm', '--model_map', help='Input filename PDB map')
 cmdl_parser.add_argument('-ma', '--mask', help='Input filename mask')
 cmdl_parser.add_argument('-mc', '--model_coordinates', help='Input PDB files', default=None)
-cmdl_parser.add_argument('-o', '--outfile', required=True, help='Output filename')
-cmdl_parser.add_argument('-res', '--ref_resolution', required=True, type=float, help='Resolution target for Refmac refinement')
+cmdl_parser.add_argument('-o', '--outfile', help='Output filename')
+cmdl_parser.add_argument('-res', '--ref_resolution', type=float, help='Resolution target for Refmac refinement')
+cmdl_parser.add_argument('-mres', '--model_resolution', type=float, help='Resolution limit for Model Map generation')
 cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 cmdl_parser.add_argument('-wn', '--window_size', type=int, help='window size in pixels', default=None)
 cmdl_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
 cmdl_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
-cmdl_parser.add_argument('--ignore_profiles', help='Ignore average secondary structure profile during local scaling', action='store_false')
+cmdl_parser.add_argument('--ignore_profiles', help='Ignore average secondary structure profile during local scaling', action='store_true')
+cmdl_parser.add_argument('--skip_refine', help='Ignore REFMAC refinement', action='store_true')
 cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
 cmdl_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
@@ -75,6 +77,11 @@ def print_end_banner(time_now, start_time):
 
 def launch_amplitude_scaling(args):
     
+    from locscale.utils.general import check_user_input
+    
+    
+    #******************************************************************************************************************#
+    
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi, write_out_final_volume_window_back_if_required
     from locscale.utils.general import change_directory
@@ -83,6 +90,7 @@ def launch_amplitude_scaling(args):
     current_directory = os.getcwd()
     
     if not args.mpi:
+        check_user_input(args)   ## Check user inputs
         start_time = datetime.now()
         print_start_banner(start_time)
         if args.verbose:
@@ -122,34 +130,38 @@ def launch_amplitude_scaling(args):
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
         
-        
-        if rank==0:
-            start_time = datetime.now()
-            print_start_banner(start_time)
-            if args.verbose:
-                print_arguments(args)
-                copied_args = change_directory(args, "processing_files")
+        try:
+            if rank==0:
+                check_user_input(args)   ## Check user inputs
+                start_time = datetime.now()
+                print_start_banner(start_time)
+                if args.verbose:
+                    print_arguments(args)
+                    copied_args = change_directory(args, "processing_files")
+                
+                parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
             
-            parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
-        
-        else:
-            parsed_inputs_dict = None
-        
-        comm.barrier()
-        
-        parsed_inputs_dict = comm.bcast(parsed_inputs_dict, root=0)
-    
-        #input_to_scaling = parsed_arguments[:-1]
-        
-        LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
-        
-        if rank == 0:
-            os.chdir(current_directory)
-            write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
-    
-            print("You can find the scaled map here: {}\n".format(args.outfile))
-            print_end_banner(datetime.now(), start_time=start_time)
+            else:
+                parsed_inputs_dict = None
             
+            comm.barrier()
+            
+            parsed_inputs_dict = comm.bcast(parsed_inputs_dict, root=0)
+        
+            #input_to_scaling = parsed_arguments[:-1]
+            
+            LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
+            
+            if rank == 0:
+                os.chdir(current_directory)
+                write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
+        
+                print("You can find the scaled map here: {}\n".format(args.outfile))
+                print_end_banner(datetime.now(), start_time=start_time)
+        except Exception as e:
+            print(e)
+            
+        
             
 
                     
