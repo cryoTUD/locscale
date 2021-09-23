@@ -95,6 +95,7 @@ def get_spherical_mask(emmap):
         mask = pad_or_crop_volume(emmap, (emmap.shape), pad_value=0)
     
     return mask
+
 def shift_map_to_zero_origin(emmap_path):
     '''
     Determines the map origin from header file and changes it to zero
@@ -158,10 +159,11 @@ def prepare_mask_and_maps_for_scaling(args):
         Parsed inputs dictionary
 
     '''
-    
+
+    print("Preparing your inputs for LocScale")
     from locscale.pseudomodel.pipeline import get_modmap
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
-    from locscale.utils.general import round_up_to_even, round_up_to_odd
+    from locscale.utils.general import round_up_to_even, round_up_to_odd, get_emmap_path_from_args
     from locscale.include.emmer.ndimage.map_tools import add_half_maps
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
@@ -171,19 +173,11 @@ def prepare_mask_and_maps_for_scaling(args):
     print("Check relevant paths for LocScale \n")
     print(check_dependencies())
     
-    scale_using_theoretical_profile = args.ignore_profiles
+    scale_using_theoretical_profile = not(args.ignore_profiles)
     
-    if args.em_map is not None:    
-        emmap_path = args.em_map
-        shift_vector=shift_map_to_zero_origin(emmap_path)
-        xyz_emmap_path = run_mapmask(emmap_path)  
-    elif args.half_map1 is not None and args.half_map2 is not None:
-        print("Adding the two half maps provided to generate a full map \n")
-        new_file_path = generate_filename_from_halfmap_path(args.half_map1)
-        emmap_path = add_half_maps(args.half_map1, args.half_map2,new_file_path)
-        xyz_emmap_path = run_mapmask(emmap_path)  
-    else:
-        raise FileNotFoundError("You need to provide atleast one unfiltered EM-map or two half-maps")
+    emmap_path = get_emmap_path_from_args(args)
+    xyz_emmap_path = run_mapmask(emmap_path)  
+    shift_vector=shift_map_to_zero_origin(xyz_emmap_path)
     
     ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
     
@@ -241,7 +235,8 @@ def prepare_mask_and_maps_for_scaling(args):
             pdb_path = pdb_path[:-4]+"_shifted.pdb"
             
         add_blur = float(args.add_blur)
-        
+        skip_refine = args.skip_refine
+        model_resolution = args.model_resolution
         ## Defaults for pseudo-atomic model 
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
@@ -260,7 +255,8 @@ def prepare_mask_and_maps_for_scaling(args):
         
         modmap_path = get_modmap(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
-                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur,verbose=verbose)
+                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur, 
+                                                  skip_refine=skip_refine, model_resolution = model_resolution, verbose=verbose)
         
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data

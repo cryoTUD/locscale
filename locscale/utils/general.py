@@ -57,19 +57,23 @@ def change_directory(args, folder_name="processed"):
 def gather_statistics(parsed_inputs_dict):
     import matplotlib.pyplot as plt
     
-    fig, ax =plt.subplots(figsize=(8,16))
+    fig, ax =plt.subplots(figsize=(16,16))
     
     ax.axis('off')
     
     required_stats = {}
     required_stats['UseTheoreticalProfiles'] = parsed_inputs_dict['use_theoretical']
-    required_stats['WilsonCutoff'] = parsed_inputs_dict['scale_factor_args']['wilson']
-    required_stats['HighFreqCutoff'] = parsed_inputs_dict['scale_factor_args']['high_freq']
-    required_stats['FSC'] = parsed_inputs_dict['scale_factor_args']['fsc_cutoff']
+    required_stats['WindowSizePixel'] = parsed_inputs_dict['wn']
+    required_stats['apix'] = parsed_inputs_dict['apix']
+    required_stats['WindowBleedPad'] = parsed_inputs_dict['win_bleed_pad']
+    required_stats['EmmapShape'] = parsed_inputs_dict['emmap'].shape
+    required_stats['WilsonCutoff'] = round(parsed_inputs_dict['scale_factor_args']['wilson'],2)
+    required_stats['HighFreqCutoff'] = round(parsed_inputs_dict['scale_factor_args']['high_freq'],2)
+    required_stats['FSC'] = round(parsed_inputs_dict['scale_factor_args']['fsc_cutoff'],2)
     required_stats['Smooth'] = parsed_inputs_dict['scale_factor_args']['smooth']
     required_stats['Bfactor'] = parsed_inputs_dict['bfactor_info'][0]
-    required_stats['Breakpoints'] = np.array(parsed_inputs_dict['bfactor_info'][1]).round(1)
-    required_stats['Slopes'] = np.array(parsed_inputs_dict['bfactor_info'][2]).round(1)
+    required_stats['Breakpoints'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][1]]
+    required_stats['Slopes'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][2]]
     
     text = []
     for key in required_stats.keys():
@@ -81,9 +85,34 @@ def gather_statistics(parsed_inputs_dict):
     table.set_fontsize(16)
     table.scale(1,4)
     return fig
-    
 
-def make_locscale_report(parsed_input, locscale_map):
+def print_input_arguments(args):
+    import matplotlib.pyplot as plt
+    
+    fig, ax =plt.subplots(figsize=(16,16))
+    
+    ax.axis('off')
+    
+    text = []
+    path_arguments = [x for x in vars(args) if x in ["em_map","half_map1","half_map2","model_map",
+                                                  "mask","model_coordinates","outfile"]]
+    for arg in vars(args):
+        if arg in path_arguments:
+            full_path = getattr(args, arg)
+            filename = full_path.split("/")[-1]
+            text.append([arg, filename])
+        else:
+            text.append([arg, filename])
+    
+    
+    table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(16)
+    table.scale(1,2)
+    return fig
+   
+
+def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad):
     from locscale.include.emmer.ndimage.profile_tools import plot_emmap_section
     from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile, compute_radial_profile, frequency_array 
     from matplotlib.backends.backend_pdf import PdfPages
@@ -95,29 +124,43 @@ def make_locscale_report(parsed_input, locscale_map):
     pdffile = "/".join(save_file_in_folder.split("/")+["locscale_report.pdf"])
     print("Preparing LocScale report: \n {}".format(pdffile))
     
-    rp_emmap = compute_radial_profile(parsed_input['emmap'])
-    rp_modmap = compute_radial_profile(parsed_input['modmap'])
+    if window_bleed_and_pad:
+        from locscale.utils.prepare_inputs import pad_or_crop_volume
+        emmap = pad_or_crop_volume(parsed_input['emmap'], locscale_map.shape)
+        modmap = pad_or_crop_volume(parsed_input['modmap'], locscale_map.shape)
+    else:
+        emmap = parsed_input['emmap']
+        modmap = parsed_input['modmap']
+        
+    rp_emmap = compute_radial_profile(emmap)
+    rp_modmap = compute_radial_profile(modmap)
     rp_locscale = compute_radial_profile(locscale_map)
-    
     freq = frequency_array(rp_emmap, apix=parsed_input['apix'])
-    
+
     radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],
                                              legends=['input_emmap', 'model_map','locscale_map'])
     
-    emmap_section_fig = plot_emmap_section(parsed_input['emmap'])
-    locscale_section_fig = plot_emmap_section(locscale_map)
+    emmap_section_fig = plot_emmap_section(parsed_input['emmap'], title="Input")
+    
+    locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
     
     stats_table = gather_statistics(parsed_input)
     
-    if parsed_input['use_theoretical']:
-        pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
+    input_table = print_input_arguments(args)
+    
     
     
     pdf = PdfPages(pdffile)
+    pdf.savefig(input_table)
     pdf.savefig(radial_profile_fig)
     pdf.savefig(emmap_section_fig)
     pdf.savefig(locscale_section_fig)
     pdf.savefig(stats_table)
+    if parsed_input['use_theoretical']:
+        pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
+        pdf.savefig(pickle_output_sample_fig)
+        print("table pickle")
+    
     pdf.close()
     
     
@@ -148,4 +191,155 @@ def plot_pickle_output(folder):
     fig=plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, merged_profile],legends=['em_profile','ref_profile','th profile','scaled th profile','merged'])
     
     return fig
+
+def is_input_path_valid(list_of_test_paths):
+    '''
+    Check if a list of paths are not None and if path points to an actual file
+
+    Parameters
+    ----------
+    list_of_test_paths : list
+        list of paths
+
+    Returns
+    -------
+    None.
+
+    '''
+    import os
+    
+    for test_path in list_of_test_paths:
+        if test_path is None:
+            is_test_path_valid = False
+            return is_test_path_valid
+        if not os.path.exists(test_path):
+            is_test_path_valid = False
+            return is_test_path_valid
+    
+    ## If all tests passed then return True
+    is_test_path_valid = True
+    return is_test_path_valid
+            
+def get_emmap_path_from_args(args):
+    from locscale.utils.prepare_inputs import generate_filename_from_halfmap_path
+    from locscale.include.emmer.ndimage.map_tools import add_half_maps
+    
+    if args.em_map is not None:    
+        emmap_path = args.em_map
+    elif args.half_map1 is not None and args.half_map2 is not None:
+        print("Adding the two half maps provided to generate a full map \n")
+        new_file_path = generate_filename_from_halfmap_path(args.half_map1)
+        emmap_path = add_half_maps(args.half_map1, args.half_map2,new_file_path)
+    
+    return emmap_path
         
+        ## TBC
+
+def check_user_input(args):
+    '''
+    Check user inputs for errors and conflicts
+
+    Parameters
+    ----------
+    args : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    import mrcfile
+    print("ignore profiles default", args.ignore_profiles)
+    ## Check input files
+    emmap_absent = True
+    if args.em_map is not None:
+        if is_input_path_valid([args.em_map]):
+            emmap_absent = False
+    
+    half_maps_absent = True
+    if args.half_map1 is not None and args.half_map2 is not None:
+        if is_input_path_valid([args.half_map1, args.half_map2]):
+            half_maps_absent = False
+    
+    mask_absent = True
+    if args.mask is not None:
+        if is_input_path_valid([args.mask]):
+            mask_absent = False
+    
+    model_map_absent = True
+    if args.model_map is not None:
+        if is_input_path_valid([args.model_map]):
+            model_map_absent = False
+    
+    model_coordinates_absent = True
+    if args.model_coordinates is not None:
+        if is_input_path_valid([args.model_coordinates]):
+            model_coordinates_absent = False
+    
+    ## Rename variables
+    emmap_present, half_maps_present = not(emmap_absent), not(half_maps_absent)
+    model_map_present, model_coordinates_present = not(model_map_absent), not(model_coordinates_absent)
+    ## Sanity checks
+    
+    ## If emmap is absent or half maps are absent, raise Exceptions
+    
+    if emmap_absent and half_maps_absent:
+        raise UserWarning("Please input either an unsharpened map or two half maps")
+    
+    if emmap_present and args.ref_resolution is None:
+        raise UserWarning("Please input the resolution target for REFMAC calculation. Typically this is the FSC calculated from halfmaps")
+    
+    if half_maps_present and mask_absent:
+        raise UserWarning("Please provide a mask along with the two half maps")
+    
+    
+    if model_coordinates_present and model_map_present:
+        raise UserWarning("Please provide either a model map or a model coordinates. Not both")
+    
+    ## If neither model map or model coordinates are provided, then users cannot use --ignore_profiles and --skip_refine flags
+    if model_coordinates_absent and model_map_absent:
+        if args.ignore_profiles:
+            raise UserWarning("You have not provided a Model Map or Model Coordinates. Pseudo-atomic model needs to use theoretical profiles for \
+                              local sharpening. Please do not raise the --ignore_profiles flag")
+        if args.skip_refine:
+            raise UserWarning("You have not provided a Model Map or Model Coordinates. Performing REFMAC refinement is essential for \
+                              succesful operation of the procedue. Please do not raise the --skip_refine flag")
+
+    ## If model coordinates are present and an argument to skip refine is given: provide a Warning
+    if args.skip_refine and model_coordinates_present:
+        print("You have asked to skip REFMAC refinement. Atomic bfactors from the input model will be used for simulating Model Map")
+    
+    
+    
+    
+    ## Check for window size < 10 A
+    if args.window_size is not None:
+        window_size_pixels = int(args.window_size)
+        if args.apix is not None:
+            apix = float(args.apix)
+        else:
+            if args.em_map is not None:
+                apix = mrcfile.open(args.em_map).voxel_size.x
+            elif args.half_map1 is not None:
+                apix = mrcfile.open(args.half_map1).voxel_size.x
+        
+        window_size_ang = window_size_pixels * apix
+        
+        if window_size_ang < 10:
+            print("Warning: Provided window size of {} is too small for pixel size of {}. \
+                  Default window size is generally 25 A. Think of increasing the window size".format(window_size_pixels, apix))
+
+
+    if args.outfile is None:
+        print("You have not entered a filename for LocScale output. Using a standard output file name: loc_scale.mrc. \
+              Any file with the same name in the current directory will be overwritten")
+
+        outfile = [x for x in vars(args) if x=="outfile"]
+        
+        setattr(args, outfile[0], "loc_scale.mrc")
+    
+
+        
+    
+    

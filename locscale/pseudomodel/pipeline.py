@@ -1,5 +1,5 @@
 
-def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, verbose):
+def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, skip_refine, model_resolution, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 
@@ -32,12 +32,12 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
     '''
     print("PDB PATH: ",pdb_path)
     from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map, is_pseudomodel
-    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)
-       
+    apix = average_voxel_size(emmap_mrc.voxel_size)
     pam_bond_length = pam_distance
     pam_method = pseudomodel_method
     pam_iteration = pam_iteration
@@ -68,17 +68,36 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
     
     globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution, wilson_cutoff=wilson_cutoff, add_blur=add_blur)
     
-    refined_model_path = run_refmac(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
-    if refined_model_path is None:
-        print("Problem running REFMAC. Returning None")
-        return None
-    
-    #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
-    #pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
-                                                                 #emmap_path=args.em_map, 
-                                                                 #mask_path=mask_path, verbose=verbose)
-    
+    if skip_refine:
+        if verbose: 
+            print("Skipping REFMAC refinements based on user input\n")
+        refined_model_path = input_pdb_path
+    else:
+        refined_model_path = run_refmac(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
+        if refined_model_path is None:
+            print("Problem running REFMAC. Returning None")
+            return None
+        
+        #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
+        #pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
+                                                                     #emmap_path=args.em_map, 
+                                                                     #mask_path=mask_path, verbose=verbose)
+        
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
+    
+    if model_resolution is not None:
+        if verbose:
+            print("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
+        from locscale.include.emmer.ndimage.filter import low_pass_filter
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+        
+        pseudo_map_unfiltered_data = mrcfile.open(pseudomodel_modmap).data
+        pseudo_map_filtered_data = low_pass_filter(im=pseudo_map_unfiltered_data, cutoff=model_resolution, apix=apix)
+        
+        filename = pseudomodel_modmap[:-4]+"_filered.mrc"
+        save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, header=emmap_mrc.header)
+        
+        pseudomodel_modmap = filename
     
     
     

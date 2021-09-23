@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/emd5778/"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/locscale_check/pdb2map_cursed/testing_mpi/again/"
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:
