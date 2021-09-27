@@ -433,8 +433,12 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
                                           return_grid=True, align_output=True, verbose=True, set_refmac_blur=True, blur=add_blur)
     
     ## Normalise intensity levels of refmap_data
+    '''
     refmap_data_normalised = normalise_intensity_levels(
         from_emmap=refmap_data, to_levels=[emmap_data.min(),emmap_data.max()])
+    '''
+    refmap_data_normalised = refmap_data
+    
     
     ## Output filename
     reference_map_path = model_path[:-4]+"_4locscale.mrc"
