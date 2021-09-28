@@ -28,16 +28,17 @@ pip install locscale
 ```
 You may need to install dependencies for proshade before installing locscale. You can find these [here](https://github.com/michaltykac/proshade)
 
-'''
+```
  sudo apt-get install gcc g++ make cmake git fftw3-dev liblapack-dev zlib1g-dev
-'''
+```
 
 Make sure to update your apt-get before installing dependencies
 
-'''
+```
 sudo apt-get update
 sudo apt-get upgrade
-'''
+```
+
 
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
