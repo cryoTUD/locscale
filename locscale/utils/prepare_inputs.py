@@ -176,6 +176,7 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_using_theoretical_profile = not(args.ignore_profiles)
     
     emmap_path = get_emmap_path_from_args(args)
+    
     xyz_emmap_path = run_mapmask(emmap_path)  
     shift_vector=shift_map_to_zero_origin(xyz_emmap_path)
     
@@ -188,7 +189,7 @@ def prepare_mask_and_maps_for_scaling(args):
     fsc_resolution = float(args.ref_resolution)
     
     if args.apix is None:
-        apix = average_voxel_size(mrcfile.open(args.em_map).voxel_size)  ## Assuming voxelsize is the same in all directions
+        apix = average_voxel_size(mrcfile.open(emmap_path).voxel_size)  ## Assuming voxelsize is the same in all directions
     else:
         apix = float(args.apix)
     

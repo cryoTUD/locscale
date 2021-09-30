@@ -86,7 +86,6 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
 
     '''
     import mrcfile
-    
     with mrcfile.new(output_filename,overwrite=True) as mrc:
         mrc.set_data(np.float32(map_data))
         
@@ -97,7 +96,6 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
             if apix is not None:
                 #apix_list = [apix['x'], apix['y'], apix['z']]
                 ## apix can be either a float or a list. If it's a single number, then the function convert_to_tuple will use it three times
-                
                 apix_tuple = convert_to_tuple(apix, num_dims=3)
                 rec_array_apix = np.rec.array(apix_tuple, dtype=[('x','<f4'),('y','<f4'),('z','<f4')])
                 mrc.voxel_size = rec_array_apix

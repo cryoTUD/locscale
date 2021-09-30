@@ -97,8 +97,9 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
     
     full_map = halfmap1 + halfmap2
     full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
+    
     full_header = mrcfile.open(halfmap_1_path).header
-    save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True, header=full_header) 
+    save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
     return output_filename
 

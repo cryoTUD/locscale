@@ -55,6 +55,7 @@ cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
                          help='Verbose output')
 
 
+
 def print_arguments(args):
     print('\n  LocScale Arguments\n')
     for arg in vars(args):

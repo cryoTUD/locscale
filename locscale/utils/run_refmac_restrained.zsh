@@ -39,6 +39,7 @@ ncsr local
 reso ${RES}
 ridge dist sigma 0.01
 ridge dist dmax 4.2
+BFACtor SET 50
 end
 eof
 
