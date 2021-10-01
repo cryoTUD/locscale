@@ -39,7 +39,8 @@ def change_directory(args, folder_name="processed"):
     
     current_directory = os.getcwd()
     new_directory = "/".join(current_directory.split("/")+[folder_name])
-    os.mkdir(new_directory)
+    if not os.path.isdir(new_directory):
+        os.mkdir(new_directory)
     
     for arg in vars(args):
         value = getattr(args, arg)
