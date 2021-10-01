@@ -1,7 +1,6 @@
 import numpy as np
 #from fsc_attributes_calc import *
 #from spline_fit_fsc import *
-from fft_util import pyfftw_flag
 
 def calculate_edge(wn):
     '''
@@ -143,3 +142,89 @@ def plot_fscs(dict_points,outfile,xlabel=None,ylabel=None,map_apix=1.0,
     plt.xticks(locs[1:], labels,rotation='vertical')
     plt.savefig(outfile)
     plt.close()
+
+def calculate_fsc_maps(input_map_1, input_map_2):
+    '''
+    Wrapper to calculate FSC curve from the above functions
+
+    Parameters
+    ----------
+    input_map_1 : TYPE
+        DESCRIPTION.
+    input_map_2 : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    
+    emmap_1 = parse_input(input_map_1)
+    emmap_2 = parse_input(input_map_2)
+    
+    fft_1 = np.fft.rfftn(emmap_1)
+    fft_2 = np.fft.rfftn(emmap_2)
+    
+    _, radii = compute_radial_profile(emmap_1, return_indices=True)
+    
+    map_shape = emmap_1.shape
+    
+    _, fsc, _ = calculate_fsc(fft_1, fft_2, radii, map_shape)
+    fsc = np.array(fsc)
+    return np.array(fsc)
+
+def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=16, legend=None):
+
+    import matplotlib.pyplot as plt
+    from scipy.interpolate import interp1d
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array
+    
+    emmap_1 = parse_input(input_map_1)
+    emmap_2 = parse_input(input_map_2)
+    mask = parse_input(input_mask)
+    
+    masked_emmap_1 = mask*emmap_1
+    masked_emmap_2 = mask*emmap_2
+    fsc = calculate_fsc_maps(masked_emmap_1, masked_emmap_2)
+    freq = frequency_array(fsc, apix=apix)
+    
+    
+    
+    ## get relation between freq and fsc
+    f = interp1d(fsc, freq)
+    
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(True)
+    ax2 = ax1.twiny()
+    
+    ax1.plot(freq,fsc, 'b')
+    ax1.plot(freq,np.ones(len(fsc))*0.143,'k--')  
+    ax1.plot(freq,np.ones(len(fsc))*0.5,'k-')  
+        
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+    if legend is None:
+        legend = ['FSC curve','FSC=0.143','FSC=0.5']
+    
+    ax1.legend(legend,fontsize=font)
+    ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
+    ax1.set_ylabel('FSC',fontsize=font)
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
+    
+    
+    fsc_value = f(calc_fsc)
+    
+    return fig, fsc_value
+    
+        
+    
+    
+    
