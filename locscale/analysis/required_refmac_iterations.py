@@ -14,18 +14,21 @@ from emmer.pdb.pdb_utils import get_bfactors
 
 ## Script to analyse how many REFMAC iterations are required for sufficient refinement
 
-input_model_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/temp_files/3j5p_pseudomodel_gradient.pdb"
+input_model_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/emd0038/pdb6gml.ent"
 
-input_map_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/temp_files/emd5778_unfiltered.mrc"
+input_map_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/emd0038/emd_0038_half_map_1.map"
 
-resolution = 3.4
+#validate_map_path = input_map_path
+validate_map_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/emd0038/emd_0038_half_map_2.map"
+
+resolution = 3.2
 
 gemmi_st = gemmi.read_structure(input_model_path)
 dims = [gemmi_st.cell.a, gemmi_st.cell.b, gemmi_st.cell.c]
 
 refined_bfactors_list = {}
 refined_model_path = {}
-for num_iter in np.arange(start=25, stop=50, step=5):
+for num_iter in np.arange(start=1, stop=20, step=2):
     print("Using num_iter of {} \n".format(num_iter))
     refined_model_path[num_iter] = run_refmac(model_path=input_model_path, model_name = input_model_path[:-4], map_path=input_map_path, resolution=resolution, maskdims=dims, num_iter=num_iter, verbose=True)
     
