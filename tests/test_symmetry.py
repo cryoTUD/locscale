@@ -17,13 +17,13 @@ class TestSymmetry(unittest.TestCase):
         
         self.locscale_path = check_dependencies()['locscale']
         lPath = self.locscale_path
-        self.emmap_path = lPath+"/tests/test_data/emd5778_unfiltered.mrc"
-        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined_cropped.pdb"
+        self.emmap_path = lPath+"/tests/test_data/emd5778_map.mrc"
+        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined.pdb"
         self.mask_path = lPath+"/tests/test_data/emd5778_mask.mrc"
         self.out_dir = lPath+"/tests/processed/"
         self.wilson_cutoff = 8.55
         self.fsc = 3.4
-        self.kick_model = lPath+"/tests/test_data/kick_pseudomodel.pdb"
+        self.kick_model = lPath+"/tests/test_data/pseudomodel.pdb"
         
                 
         

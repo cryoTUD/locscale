@@ -1,5 +1,5 @@
 
-def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, skip_refine, model_resolution, verbose):
+def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, skip_refine, pg_symmetry, model_resolution, verbose):
     '''
     Function to generate a model map using pseudo-atomic model
 
@@ -85,6 +85,15 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
         
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
+    if pg_symmetry != "C1":
+        print("Imposing a symmetry condition of {}".format(pg_symmetry))
+        import emda.emda_methods as em
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+        sym = em.symmetry_average([pseudomodel_modmap],[resolution],pglist=[pg_symmetry])
+        symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(pg_symmetry)
+        save_as_mrc(map_data=sym[0], output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=False)
+        pseudomodel_modmap = symmetrised_modmap
+    
     if model_resolution is not None:
         if verbose:
             print("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
@@ -94,8 +103,8 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
         pseudo_map_unfiltered_data = mrcfile.open(pseudomodel_modmap).data
         pseudo_map_filtered_data = low_pass_filter(im=pseudo_map_unfiltered_data, cutoff=model_resolution, apix=apix)
         
-        filename = pseudomodel_modmap[:-4]+"_filered.mrc"
-        save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, header=emmap_mrc.header)
+        filename = pseudomodel_modmap[:-4]+"_filtered.mrc"
+        save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, apix=apix)
         
         pseudomodel_modmap = filename
     

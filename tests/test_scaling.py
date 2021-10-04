@@ -17,8 +17,8 @@ class test_compute_scaling(unittest.TestCase):
         from locscale.include.confidenceMapUtil import FDRutil
         self.frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((40, 40, 40)));
         scale_factor_arguments = {}
-        scale_factor_arguments['wilson'] = 8.5
-        scale_factor_arguments['high_freq'] = 4.91
+        scale_factor_arguments['wilson'] = 9.69
+        scale_factor_arguments['high_freq'] = 4.69
         scale_factor_arguments['fsc_cutoff'] = 2.5
         scale_factor_arguments['smooth'] = 0.3
         self.scale_factor_arguments = scale_factor_arguments
@@ -75,14 +75,14 @@ class test_compute_scaling(unittest.TestCase):
         import mrcfile
         import random
         
-        emmap_path = self.locscale + "/tests/test_data/emd5778_unfiltered.mrc"
+        emmap_path = self.locscale + "/tests/test_data/emd5778_map.mrc"
         modmap_path = self.locscale + "/tests/test_data/model_reference.mrc"
         print("Testing random windows within the maps 100 times")
         for i in range(100):
             emmap = mrcfile.open(emmap_path).data
             modmap = mrcfile.open(modmap_path).data
             
-            centers = np.asarray(np.where(emmap>=7)).T.tolist()
+            centers = np.asarray(np.where(emmap>=0.01)).T.tolist()
             random_center_1 = random.choice(centers)
             random_center_2 = random.choice(centers)
             

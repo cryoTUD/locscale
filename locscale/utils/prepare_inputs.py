@@ -257,7 +257,7 @@ def prepare_mask_and_maps_for_scaling(args):
         modmap_path = get_modmap(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
                                                   pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
                                                   fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur, 
-                                                  skip_refine=skip_refine, model_resolution = model_resolution, verbose=verbose)
+                                                  skip_refine=skip_refine, model_resolution = model_resolution, pg_symmetry=args.symmetry, verbose=verbose)
         
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
