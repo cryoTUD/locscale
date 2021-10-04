@@ -19,13 +19,13 @@ class TestPseudomodelHeaders(unittest.TestCase):
         
         self.locscale_path = check_dependencies()['locscale']
         lPath = self.locscale_path
-        self.emmap_path = lPath+"/tests/test_data/emd5778_unfiltered.mrc"
-        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined_cropped.pdb"
+        self.emmap_path = lPath+"/tests/test_data/emd5778_map.mrc"
+        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined.pdb"
         self.mask_path = lPath+"/tests/test_data/emd5778_mask.mrc"
         self.out_dir = lPath+"/tests/processed/"
-        self.wilson_cutoff = 8.55
+        self.wilson_cutoff = 9.69
         self.fsc = 3.4
-        self.kick_model = lPath+"/tests/test_data/kick_pseudomodel.pdb"
+        self.kick_model = lPath+"/tests/test_data/pseudomodel.pdb"
         
                 
         
@@ -41,11 +41,14 @@ class TestPseudomodelHeaders(unittest.TestCase):
         slopes = pwlf_fit.calc_slopes()
         self.assertEqual(len(slopes),3)
         self.assertTrue(slopes[0]<0 and slopes[1] > 0 and slopes[2] < 0)
-        self.assertAlmostEqual(slopes[2]*4, -61, delta=5.0)
+        self.assertAlmostEqual(slopes[2]*4, -221, delta=5.0)
         
         f2_breakpoints = pwlf_fit.fit(n_segments=3)
         d_breakpoints = np.sqrt(1/f2_breakpoints)
-        self.assertTrue(d_breakpoints[0] < 8.55 and d_breakpoints[1] > 5 and d_breakpoints[2] > 4)
+        self.assertAlmostEqual(d_breakpoints[0], 9.5, delta=0.1)
+        self.assertAlmostEqual(d_breakpoints[1], 6.2, delta=0.1)
+        self.assertAlmostEqual(d_breakpoints[2], 4.7, delta=0.1)
+        self.assertAlmostEqual(d_breakpoints[3], 3.4, delta=0.1)
         
         ## Remove files
         os.remove(outfile)
@@ -59,7 +62,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         mask_exists = os.path.exists(mask_path)
         self.assertTrue(mask_exists)
         mask = mrcfile.open(mask_path).data
-        self.assertAlmostEqual(mask.sum(), 277867, delta=27786.7)
+        self.assertAlmostEqual(mask.sum(), 414495, delta=200)
         
         os.remove(mask_path)
         

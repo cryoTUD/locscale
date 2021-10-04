@@ -288,13 +288,7 @@ def check_user_input(args):
     
     if emmap_absent and half_maps_absent:
         raise UserWarning("Please input either an unsharpened map or two half maps")
-    
-    if emmap_present and args.ref_resolution is None:
-        raise UserWarning("Please input the resolution target for REFMAC calculation. Typically this is the FSC calculated from halfmaps")
-    
-    if half_maps_present and mask_absent:
-        raise UserWarning("Please provide a mask along with the two half maps")
-    
+          
     
     if model_coordinates_present and model_map_present:
         raise UserWarning("Please provide either a model map or a model coordinates. Not both")
@@ -302,18 +296,28 @@ def check_user_input(args):
     ## If neither model map or model coordinates are provided, then users cannot use --ignore_profiles and --skip_refine flags
     if model_coordinates_absent and model_map_absent:
         if args.ignore_profiles:
-            raise UserWarning("You have not provided a Model Map or Model Coordinates. Pseudo-atomic model needs to use theoretical profiles for \
+            raise UserWarning("You have not provided a Model Map or Model Coordinates. Thus, pseudo-atomic model will be used for \
                               local sharpening. Please do not raise the --ignore_profiles flag")
         if args.skip_refine:
             raise UserWarning("You have not provided a Model Map or Model Coordinates. Performing REFMAC refinement is essential for \
                               succesful operation of the procedue. Please do not raise the --skip_refine flag")
+        
+        if args.ref_resolution is None:
+            raise UserWarning("You have not provided a Model Map or Model Coordinates. To use REFMAC refinement, resolution target is necessary. \
+                              Please provide a target resolution using -res or --ref_resolution")
+                            
+    
+    if model_coordinates_present and model_map_absent:
+        if args.skip_refine:
+            print("You have asked to skip REFMAC refinement. Atomic bfactors from the input model will be used for simulating Model Map")
+        else:
+            if args.ref_resolution is None:
+                raise UserWarning("You have provided Model Coordinates. By default, the model bfactors will be refined using REFMAC. \
+                                  For this, a target resolution is required. Please provide this resolution target using -res or --ref_resolution. \
+                                      Instead if you think model bfactors are accurate, then raise the --skip_refine flag to ignore bfactor refinement.")
+            
 
-    ## If model coordinates are present and an argument to skip refine is given: provide a Warning
-    if args.skip_refine and model_coordinates_present:
-        print("You have asked to skip REFMAC refinement. Atomic bfactors from the input model will be used for simulating Model Map")
-    
-    
-    
+   
     
     ## Check for window size < 10 A
     if args.window_size is not None:

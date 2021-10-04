@@ -16,13 +16,13 @@ class TestPseudomodelPipeline(unittest.TestCase):
         
         self.locscale_path = check_dependencies()['locscale']
         lPath = self.locscale_path
-        self.emmap_path = lPath+"/tests/test_data/emd5778_unfiltered.mrc"
-        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined_cropped.pdb"
+        self.emmap_path = lPath+"/tests/test_data/emd5778_map.mrc"
+        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined.pdb"
         self.mask_path = lPath+"/tests/test_data/emd5778_mask.mrc"
         self.out_dir = lPath+"/tests/processed/"
-        self.wilson_cutoff = 8.55
+        self.wilson_cutoff = 9.69
         self.fsc = 3.4
-        self.kick_model = lPath+"/tests/test_data/kick_pseudomodel.pdb"
+        self.kick_model = lPath+"/tests/test_data/pseudomodel.pdb"
     
     def test_pseudomodel_pipeline(self):
         from locscale.pseudomodel.pipeline import get_modmap
@@ -45,13 +45,13 @@ class TestPseudomodelPipeline(unittest.TestCase):
             temp_modmap_gradient = get_modmap(
                 temp_emmap_path, temp_mask_path, pdb_path=None,
                 pseudomodel_method='gradient',pam_distance=1.2, 
-                pam_iteration=1, fsc_resolution=3.4, 
+                pam_iteration=1, fsc_resolution=3.4, skip_refine=False, model_resolution=None, pg_symmetry="C4",
                 refmac_iter=1, add_blur=0, verbose=True)
             
             temp_modmap_kick = get_modmap(
                 temp_emmap_path, temp_mask_path, pdb_path=None,
                 pseudomodel_method='kick',pam_distance=1.2, 
-                pam_iteration=1, fsc_resolution=3.4, 
+                pam_iteration=1, fsc_resolution=3.4, skip_refine=False, model_resolution=None, pg_symmetry="C1",
                 refmac_iter=1, add_blur=0, verbose=True)
             
             gradient_modmap_exists = os.path.exists(temp_modmap_gradient)

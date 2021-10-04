@@ -86,8 +86,7 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
 
     '''
     import mrcfile
-    print("apix",apix)
-    print("header",header)
+
     with mrcfile.new(output_filename,overwrite=True) as mrc:
         mrc.set_data(np.float32(map_data))
         
