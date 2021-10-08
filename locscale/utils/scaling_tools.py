@@ -91,7 +91,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     from locscale.include.confidenceMapUtil import FDRutil
     import pickle
     
-    
+    if use_theoretical_profile:
+        print("Using theoretical profiles for Local Scaling with the following parameters: \n")
+        print(scale_factor_arguments)
     sharpened_vals = []
     central_pix = int(round(wn / 2.0))
     total = (masked_xyz_locs - wn / 2).shape[0]
@@ -316,11 +318,6 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     save_as_mrc(map_data=LocScaleVol, output_filename=args.outfile, apix=apix, origin=0, verbose=True)
     make_locscale_report(args, parsed_inputs_dict, LocScaleVol, window_bleed_and_pad)
     
-        
-        
-        
-
-        
 
     return LocScaleVol
 
