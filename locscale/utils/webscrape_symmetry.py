@@ -30,6 +30,8 @@ def extract_symmetry(emdid):
     
     dataframes = pd.read_html(page_html)
     
+    symmetry = "unknown"
+
     for df in dataframes:
         if 0 in list(df.keys()):
             if "Imposed Symmetry" in df[0].values:
