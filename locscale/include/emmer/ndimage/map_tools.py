@@ -96,7 +96,7 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
     if assert halfmap1.shape == halfmap2.shape:
-       full_map = halfmap1 + halfmap2
+       full_map = (halfmap1 + halfmap2)/2
        full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
        full_header = mrcfile.open(halfmap_1_path).header
