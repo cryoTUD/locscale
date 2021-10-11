@@ -95,14 +95,17 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
     halfmap1 = mrcfile.open(halfmap_1_path).data
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
-    full_map = halfmap1 + halfmap2
-    full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
+    if assert halfmap1.shape == halfmap2.shape:
+       full_map = halfmap1 + halfmap2
+       full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
-    full_header = mrcfile.open(halfmap_1_path).header
-    print(full_voxel_size)
-    save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
+       full_header = mrcfile.open(halfmap_1_path).header
+       #print(full_voxel_size)
+       save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
-    return output_filename
+       return output_filename
+    else
+      print("Half maps are not of equal dimension.")
 
     
 def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
