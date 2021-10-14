@@ -13,21 +13,22 @@ import random
 from tqdm import tqdm
 emdid = "0038"
 folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/bfactor_correlation/emd0038/"
-pseudomap_path = os.path.join(folder+"using_pseudoatomic_model.mrc")
+pseudomap_path = os.path.join(folder+"using_pseudoatomic_model_new.mrc")
 atomic_map_path = os.path.join(folder+"using_atomic_model.mrc")
-unsharpened_map_path = os.path.join(folder+"emd_0038_map.mrc")
-mask_path = os.path.join(folder+"emd_0038_mask.map")
+resmap_path = os.path.join(folder+"emd_0038_map_resmap.mrc")
+mask_path = os.path.join(folder+"emd_0038_full_confidenceMap.mrc")
 
 pseudomap = mrcfile.open(pseudomap_path).data
 modmap = mrcfile.open(atomic_map_path).data
-emmap = mrcfile.open(unsharpened_map_path).data
+resmap = mrcfile.open(resmap_path).data
 mask = mrcfile.open(mask_path).data
 
 emmap_1 = pseudomap
 emmap_2 = modmap
-emmap_3 = emmap
+emmap_3 = resmap
 
-apix = mrcfile.open(unsharpened_map_path).voxel_size.x
+resolution_limits = (2,6)
+apix = mrcfile.open(mask_path).voxel_size.x
 
 ## Get the following from the report generated
 high_frequency_cutoff = 11.58
@@ -85,7 +86,7 @@ from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlat
 
 for center in tqdm(random_centers, desc="Analysing"):
     try:
-        intensity = emmap_3[center[2],center[1],center[0]]
+        local_resolution = emmap_3[center[2],center[1],center[0]]
         
         vol1 = get_box(emmap_1, center, boxsize)
         vol2 = get_box(emmap_2, center, boxsize)
@@ -110,7 +111,7 @@ for center in tqdm(random_centers, desc="Analysing"):
         
         rscc_profile = compute_real_space_correlation(rad_profile_1, rad_profile_2)
         
-        analysis[center] = [intensity,bfactor_1,bfactor_2, bfactor_3, amp_1, amp_2, amp_3,radial_distance]
+        analysis[center] = [local_resolution,bfactor_1,bfactor_2, bfactor_3, amp_1, amp_2, amp_3,radial_distance]
     except:
         print("Error at",center)
         
@@ -122,11 +123,11 @@ import seaborn as sns
 
 num_bins = 200
 import matplotlib.pyplot as plt
-df = pd.DataFrame(analysis,columns=list(analysis.keys()),index=['intensity','bfactor_1','bfactor_2','bfactor_3', 'amp_1','amp_2','amp_3','radial_distance']).T
+df = pd.DataFrame(analysis,columns=list(analysis.keys()),index=['local_resolution','bfactor_1','bfactor_2','bfactor_3', 'amp_1','amp_2','amp_3','radial_distance']).T
 #df['intensity_bins'] = pd.qcut(df['intensity'],q=num_bins)
 #sorted_data = df.groupby(['intensity_bins']).mean()
-sns.relplot(data=df,x='bfactor_1',y='bfactor_2',hue='radial_distance')
+sns.relplot(data=df,x='bfactor_1',y='bfactor_2',hue='local_resolution',hue_norm=resolution_limits)
 plt.title("Correlation plots for EMD: "+emdid)
 plt.xlabel("Local estimate bfactor from pseudoatomic model")
 plt.ylabel("Local estimate bfactor from atomic model")
-plot_radial_profile(freq, [rad_profile_1, rad_profile_2, rad_profile_3], legends=["local pseudomap","local atomic map","local emmap"])
+#plot_radial_profile(freq, [rad_profile_1, rad_profile_2, rad_profile_3], legends=["local pseudomap","local atomic map","local emmap"])

@@ -348,12 +348,17 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     elif imsize_new != None:
         imsize_new = np.array(imsize_new)
         pad_factor = imsize_new/imsize
-
+    
+    
     ft = np.fft.fftn(im)
     ft = np.fft.fftshift(ft)
+    
     ft = pad_or_crop_image(ft, pad_factor)
+    
     ft = np.fft.ifftshift(ft)
-    return np.fft.ifftn(ft).real
+    
+    real_image =np.fft.ifftn(ft).real
+    return real_image
 
 def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=1,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
     import mrcfile
