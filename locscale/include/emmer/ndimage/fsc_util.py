@@ -224,7 +224,26 @@ def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=
     
     return fig, fsc_value
     
-        
+def get_fsc_filter(input_map_1, input_map_2, input_mask, apix):
+    fsc_curve = calculate_fsc_maps(input_map_1, input_map_2)
+    C_ref = 2*fsc_curve / (1+fsc_curve)
+    
+    return C_ref
+    
+def apply_fsc_filter(emmap, apix, fsc_curve=None, halfmap_1=None, halfmap_2=None, input_mask=None):
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
+    from locscale.include.emmer.ndimage.map_tools import compute_scale_factors, set_radial_profile
+    if fsc_curve is not None:
+        C_ref = 2*fsc_curve / (1+fsc_curve)
+    elif halfmap_1 is not None and halfmap_2 is not None and input_mask is not None:
+        C_ref = get_fsc_filter(halfmap_1, halfmap_2, input_mask, apix)
     
     
+    rp_emmap, radii = compute_radial_profile(emmap, return_indices=True)
+    fsc_filtered_rp = rp_emmap * C_ref
+    
+    sf = compute_scale_factors(rp_emmap, fsc_filtered_rp)
+    filtered_emmap = set_radial_profile(emmap, sf, radii)
+    
+    return filtered_emmap, C_ref
     

@@ -299,16 +299,16 @@ def prepare_mask_and_maps_for_scaling(args):
     smooth_factor = args.smooth_factor
     if fsc_resolution > 6:
         high_frequency_cutoff = wilson_cutoff
-        #fsc_cutoff = (round(2*apix*10)+1)/10
-        fsc_cutoff = fsc_resolution
+        fsc_cutoff = (round(2*apix*10)+1)/10
+        #fsc_cutoff = fsc_resolution
         bfactor_info = [0,0,0]
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
         num_segments = number_of_segments(fsc_resolution)
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
-        #fsc_cutoff = (round(2*apix*10)+1)/10
-        fsc_cutoff = fsc_resolution
+        fsc_cutoff = (round(2*apix*10)+1)/10
+        #fsc_cutoff = fsc_resolution
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
     
@@ -324,7 +324,7 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
-    scale_factor_arguments['fsc_cutoff'] = fsc_resolution
+    scale_factor_arguments['fsc_cutoff'] = fsc_cutoff
     scale_factor_arguments['smooth'] = smooth_factor
     
     if verbose:
