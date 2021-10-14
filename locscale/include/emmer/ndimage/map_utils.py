@@ -118,56 +118,6 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
         
     mrc.close()
 
-def save_as_mrc_2(map_data,output_filename, apix=None,origin=None,verbose=False, header=None):
-    '''
-    Function to save a numpy array containing volume, as a MRC file with proper header
-
-    Parameters
-    ----------
-    map_data : numpy.ndarray
-        Volume data showing the intensities of the EM Map at different points
-
-    apix : float or any iterable
-        In case voxelsize in x,y,z are all equal you can also just pass one parameter. 
-    output_filename : str
-        Path to save the MRC file. Example: 'path/to/map.mrc'
-    origin: float or any iterable, optional
-        In case origin index in x,y,z are all equal you can also just pass one parameter. 
-
-    Returns
-    -------
-    Saves MRC .
-
-    '''
-    import mrcfile
-    
-    with mrcfile.new(output_filename,overwrite=True) as mrc:
-        mrc.set_data(np.float32(map_data))
-        
-        if header is not None:
-            mrc.set_extended_header(header)
-        
-        if apix is not None:
-            apix_tuple = convert_to_tuple_2(apix, num_dims=3)
-            rec_array_apix = np.rec.array(apix_tuple, dtype=[('x','<f4'),('y','<f4'),('z','<f4')])
-            mrc.voxel_size = rec_array_apix
-        else:
-            print("Please pass a voxelsize value either as a float or an iterable")
-            return 0
-        
-        if origin is not None:    
-            origin_tuple = convert_to_tuple_2(origin,num_dims=3)
-        else:
-            origin_tuple = convert_to_tuple_2(input_variable=0,num_dims=3)
-        rec_array_origin = np.rec.array(origin_tuple, dtype=[('x','<f4'),('y','<f4'),('z','<f4')])
-        mrc.header.origin = origin_tuple
-            
-        if verbose:
-            print("Saving as MRC file format with following properties: ")
-            print("Voxel size", mrc.voxel_size)
-            print("Origin", mrc.header.origin)
-        
-    mrc.close()
 
 def compare_gemmi_grids(grid_1, grid_2):
     '''
