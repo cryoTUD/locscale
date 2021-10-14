@@ -95,42 +95,18 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
     halfmap1 = mrcfile.open(halfmap_1_path).data
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
-    full_map = halfmap1 + halfmap2
-    full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
+    if assert halfmap1.shape == halfmap2.shape:
+       full_map = (halfmap1 + halfmap2)/2
+       full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
-    full_header = mrcfile.open(halfmap_1_path).header
-    print(full_voxel_size)
-    save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
+       full_header = mrcfile.open(halfmap_1_path).header
+       #print(full_voxel_size)
+       save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
-    return output_filename
+       return output_filename
+    else
+      print("Half maps are not of equal dimension.")
 
-def add_half_maps_2(halfmap_1_path, halfmap_2_path, output_filename):
-    '''
-    Function to add two half maps
-
-    Parameters
-    ----------
-    halfmap_1_path : TYPE
-        DESCRIPTION.
-    halfmap_2_path : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    '''
-    import mrcfile
-    from locscale.include.emmer.ndimage.map_utils import save_as_mrc_2
-    halfmap1 = mrcfile.open(halfmap_1_path).data
-    halfmap2 = mrcfile.open(halfmap_2_path).data
-    
-    full_map = halfmap1 + halfmap2
-    full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size
-    full_header = mrcfile.open(halfmap_1_path).header
-    save_as_mrc_2(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True, header=full_header) 
-    
-    return output_filename
     
 def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
     from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
