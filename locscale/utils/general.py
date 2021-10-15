@@ -221,6 +221,38 @@ def is_input_path_valid(list_of_test_paths):
     ## If all tests passed then return True
     is_test_path_valid = True
     return is_test_path_valid
+
+def shift_map_to_zero_origin(emmap_path):
+    '''
+    Determines the map origin from header file and changes it to zero
+
+    Parameters
+    ----------
+    emmap_path : str
+        DESCRIPTION.
+
+    Returns
+    -------
+    shift_vector : numpy.ndarray (len=3)
+
+    '''    
+    import mrcfile
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    
+    target_origin = np.array([0,0,0])
+    voxel_size = np.array(mrcfile.open(emmap_path).voxel_size.tolist())
+    current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist()) 
+    
+    print("Current origin: ", current_origin)
+    emmap_data = mrcfile.open(emmap_path).data
+    
+    output_file = emmap_path
+    save_as_mrc(map_data=emmap_data, output_filename=emmap_path, apix=voxel_size, origin=0)
+    
+    shift_vector = target_origin - current_origin
+    print("Shift vector: {} ".format(shift_vector.round(2)))
+    return shift_vector
+
             
 def get_emmap_path_from_args(args):
     from locscale.utils.prepare_inputs import generate_filename_from_halfmap_path
@@ -228,12 +260,14 @@ def get_emmap_path_from_args(args):
     
     if args.em_map is not None:    
         emmap_path = args.em_map
+        shift_vector=shift_map_to_zero_origin(args.em_map)
     elif args.half_map1 is not None and args.half_map2 is not None:
         print("Adding the two half maps provided to generate a full map \n")
         new_file_path = generate_filename_from_halfmap_path(args.half_map1)
         emmap_path = add_half_maps(args.half_map1, args.half_map2,new_file_path)
+        shift_vector=shift_map_to_zero_origin(args.half_map1)
     
-    return emmap_path
+    return emmap_path, shift_vector
         
         ## TBC
 

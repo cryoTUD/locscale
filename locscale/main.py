@@ -33,6 +33,7 @@ cmdl_parser.add_argument('-hf2', '--half_map2', help='Input filename second half
 cmdl_parser.add_argument('-mm', '--model_map', help='Input filename PDB map')
 cmdl_parser.add_argument('-ma', '--mask', help='Input filename mask')
 cmdl_parser.add_argument('-mc', '--model_coordinates', help='Input PDB files', default=None)
+cmdl_parser.add_argument('-mw', '--molecular_weight', help='Input molecular weight (in kDa)', default=None)
 cmdl_parser.add_argument('-o', '--outfile', help='Output filename')
 cmdl_parser.add_argument('-res', '--ref_resolution', type=float, help='Resolution target for Refmac refinement')
 cmdl_parser.add_argument('-mres', '--model_resolution', type=float, help='Resolution limit for Model Map generation')

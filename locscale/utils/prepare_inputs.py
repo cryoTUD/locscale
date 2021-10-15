@@ -96,35 +96,6 @@ def get_spherical_mask(emmap):
     
     return mask
 
-def shift_map_to_zero_origin(emmap_path):
-    '''
-    Determines the map origin from header file and changes it to zero
-
-    Parameters
-    ----------
-    emmap_path : str
-        DESCRIPTION.
-
-    Returns
-    -------
-    shift_vector : numpy.ndarray (len=3)
-
-    '''    
-    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-    
-    target_origin = np.array([0,0,0])
-    voxel_size = np.array(mrcfile.open(emmap_path).voxel_size.tolist())
-    current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist()) 
-    
-    print("Current origin: ", current_origin)
-    emmap_data = mrcfile.open(emmap_path).data
-    
-    output_file = emmap_path
-    save_as_mrc(map_data=emmap_data, output_filename=emmap_path, apix=voxel_size, origin=0)
-    
-    shift_vector = target_origin - current_origin
-    print("Shift vector: {} ".format(shift_vector.round(2)))
-    return shift_vector
 
 def generate_filename_from_halfmap_path(in_path):
     ## find filename in the path    
@@ -175,10 +146,10 @@ def prepare_mask_and_maps_for_scaling(args):
     
     scale_using_theoretical_profile = not(args.ignore_profiles)
     
-    emmap_path = get_emmap_path_from_args(args)
+    emmap_path, shift_vector = get_emmap_path_from_args(args)
     
     xyz_emmap_path = run_mapmask(emmap_path)  
-    shift_vector=shift_map_to_zero_origin(xyz_emmap_path)
+    
     
     ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
     
@@ -225,7 +196,7 @@ def prepare_mask_and_maps_for_scaling(args):
     
     
     ## Use the mask and emmap to generate a model map using pseudo-atomic model
-        
+    molecular_weight = float(args.molecular_weight)    
     if args.model_map is None:
         
         pdb_path = args.model_coordinates
@@ -254,10 +225,24 @@ def prepare_mask_and_maps_for_scaling(args):
         ## will use that instead of running pseudo-atomic model 
         ## routine. 
         
-        modmap_path = get_modmap(emmap_path=xyz_emmap_path, mask_path=xyz_mask_path, pdb_path=pdb_path,
-                                                  pseudomodel_method=pseudomodel_method, pam_distance=pam_distance, pam_iteration=pam_iteration,
-                                                  fsc_resolution=fsc_resolution, refmac_iter = refmac_iter, add_blur=add_blur, 
-                                                  skip_refine=skip_refine, model_resolution = model_resolution, pg_symmetry=args.symmetry, verbose=verbose)
+        modmap_args = {
+            'emmap_path':xyz_emmap_path,
+            'mask_path':xyz_mask_path,
+            'pdb_path':pdb_path,
+            'pseudomodel_method':pseudomodel_method,
+            'pam_distance':pam_distance,
+            'pam_iteration':pam_iteration,
+            'fsc_resolution':fsc_resolution,
+            'refmac_iter':refmac_iter,
+            'add_blur':add_blur,
+            'skip_refine':skip_refine,
+            'model_resolution':model_resolution,
+            'pg_symmetry':args.symmetry,
+            'molecular_weight':molecular_weight,
+            'verbose':verbose
+        }
+        
+        modmap_path = get_modmap(modmap_args)
         
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data

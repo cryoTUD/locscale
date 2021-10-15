@@ -95,7 +95,7 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
     halfmap1 = mrcfile.open(halfmap_1_path).data
     halfmap2 = mrcfile.open(halfmap_2_path).data
     
-    if assert halfmap1.shape == halfmap2.shape:
+    if halfmap1.shape == halfmap2.shape:
        full_map = (halfmap1 + halfmap2)/2
        full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
@@ -104,7 +104,7 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
        save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
        return output_filename
-    else
+    else:
       print("Half maps are not of equal dimension.")
 
     
