@@ -66,7 +66,8 @@ def get_modmap(modmap_args):
         num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
     else:
         avg_mass_per_atom = 13.14  #amu
-        num_atoms = molecular_weight * 1000 / avg_mass_per_atom
+        num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
+
         
     
     if pdb_path is None:
