@@ -1,5 +1,5 @@
 
-def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance, pam_iteration, fsc_resolution, refmac_iter, add_blur, skip_refine, pg_symmetry, model_resolution, verbose):
+def get_modmap(modmap_args):
     '''
     Function to generate a model map using pseudo-atomic model
 
@@ -30,7 +30,24 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
         path/to/modmap.mrc
 
     '''
-    print("PDB PATH: ",pdb_path)
+    emmap_path = modmap_args['emmap_path']
+    mask_path = modmap_args['mask_path']
+    pdb_path = modmap_args['pdb_path']
+    pseudomodel_method = modmap_args['pseudomodel_method']
+    pam_distance = modmap_args['pam_distance']
+    pam_iteration = modmap_args['pam_iteration']
+    fsc_resolution = modmap_args['fsc_resolution']
+    refmac_iter = modmap_args['refmac_iter']
+    add_blur = modmap_args['add_blur']
+    skip_refine = modmap_args['skip_refine']
+    pg_symmetry = modmap_args['pg_symmetry']
+    model_resolution = modmap_args['model_resolution']
+    molecular_weight = modmap_args['molecular_weight']
+    verbose = modmap_args['verbose']
+
+    if verbose:
+        print("Model map arguments: \n")
+        print(modmap_args)
     from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map, is_pseudomodel
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -45,8 +62,12 @@ def get_modmap(emmap_path, mask_path, pdb_path, pseudomodel_method, pam_distance
     resolution = fsc_resolution
     verbose = verbose
     
-    
-    num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
+    if molecular_weight is None:
+        num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
+    else:
+        avg_mass_per_atom = 13.14  #amu
+        num_atoms = molecular_weight * 1000 / avg_mass_per_atom
+        
     
     if pdb_path is None:
         print("You have not entered a PDB path, running pseudo-atomic model generator!")

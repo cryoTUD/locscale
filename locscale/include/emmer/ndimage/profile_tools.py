@@ -43,7 +43,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True):
+def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True):
     import matplotlib.pyplot as plt
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
@@ -73,6 +73,9 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         print("Enter maximum of 6 profiles only if you want to see colors")
         
     i = 0
+    
+    if showPoints:
+        colors = [x+".-" for x in colors]
     
     if len(list_of_profiles) <= 6:
         fig = plt.figure()
