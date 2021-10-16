@@ -61,7 +61,7 @@ for parameter in parameter_values_range.keys():
         
         input_map_copy = os.path.join(value_folder_path,"input_map.mrc")
         shutil.copyfile(input_map, input_map_copy)
-        locscale_run_cmd = ['mpirun','-np','2','python',run_script,'-em',input_map_copy,'-res',str(input_map_res),'-v','-mpi']
+        locscale_run_cmd = ['python',run_script,'-em',input_map_copy,'-res',str(input_map_res),'-v','-mpi']
         locscale_run_cmd.append("--"+parameter)
         locscale_run_cmd.append(str(value))
         print(" ".join(locscale_run_cmd))
