@@ -19,7 +19,7 @@ from subprocess import run, PIPE
 locscale_path = os.environ['LOCSCALE_PATH']
 run_script = os.path.join(locscale_path, "locscale","main.py")
 
-output_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/parametric_analysis/"
+output_folder = "/home/abharadwaj1/dev/new_tests_locscale/parametric_analysis/"
 
 input_map = os.path.join(locscale_path, "tests","test_data","emd5778_map.mrc")
 apix = float(mrcfile.open(input_map).voxel_size.x)
@@ -29,7 +29,6 @@ analysis_parameter_list = ['pm','pm_it','ref_it','add_blur','s','fdr_f','wn','mr
 
 parameter_values_range = {}
 parameter_values_range['pseudomodel_method'] = ['gradient','kick']
-'''
 parameter_values_range['total_iterations'] = list(np.arange(1,26,1,dtype=int))
 parameter_values_range['refmac_iterations'] = list(np.arange(1,16,1,dtype=int))
 parameter_values_range['add_blur'] = list(np.arange(5,50,5,dtype=int))
@@ -37,7 +36,6 @@ parameter_values_range['smooth_factor'] = list(np.arange(0.1,1.1,0.1).round(2))
 parameter_values_range['fdr_filter'] = list(np.arange(2,10,1))
 parameter_values_range['window_size'] = list(np.arange(15,45,5,dtype=int))
 parameter_values_range['model_resolution'] = [3.4,round(apix*2,2)]
-'''
 
 print("Analysis parameters:\n")
 print(parameter_values_range)
@@ -61,7 +59,7 @@ for parameter in parameter_values_range.keys():
         outputfile = open(os.path.join(value_folder_path,"log.txt"),"w+")
         input_map_copy = os.path.join(value_folder_path,"input_map.mrc")
         shutil.copyfile(input_map, input_map_copy)
-        locscale_run_cmd = ['python',run_script,'-em',input_map_copy,'-res',str(input_map_res),'-v','-mpi']
+        locscale_run_cmd = ['mpirun','-np','4','python',run_script,'-em',input_map_copy,'-res',str(input_map_res),'-v','-mpi']
         locscale_run_cmd.append("--"+parameter)
         locscale_run_cmd.append(str(value))
         print(" ".join(locscale_run_cmd))

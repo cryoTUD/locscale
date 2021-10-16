@@ -196,7 +196,11 @@ def prepare_mask_and_maps_for_scaling(args):
     
     
     ## Use the mask and emmap to generate a model map using pseudo-atomic model
-    molecular_weight = float(args.molecular_weight)    
+    if args.molecular_weight is not None:
+        molecular_weight = float(args.molecular_weight)    
+    else:
+        molecular_weight = None
+
     if args.model_map is None:
         
         pdb_path = args.model_coordinates
