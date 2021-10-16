@@ -133,7 +133,7 @@ def acceleration_contribution(pseudomodel):
 def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxelsize,
                   dt=0.05,capmagnitude_lj=400,epsilon=1,scale_lj=1,lj_factor=1,capmagnitude_map=100,scale_map=1,total_iterations=50, 
                   compute_map=False,emmap_path=None,mask_path=None,returnPointsOnly=True,verbose=False,
-                  integration='verlet',myoutput=None):
+                  integration='verlet',myoutput=None, save_path=None):
     '''
     Function to solve pseudoatomic model using gradient descent approach. 
     
@@ -250,7 +250,11 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             gemmi_structure = gemmi.Structure()
             gemmi_structure.add_model(gemmi_model)
             gemmi_structure.cell = unitcell
-            gemmi_structure_bzero = set_atomic_bfactors(input_gemmi_st=gemmi_structure, b_iso=0)
+            gemmi_structure_bzero = set_atomic_bfactors(input_gemmi_st=gemmi_structure, b_iso=20)
+            if save_path is not None:
+                import os
+                save_file = os.path.join(save_path,"pseudomodel_iteration_{}.pdb".format(iter))
+                gemmi_structure_bzero.write_pdb(save_file)
             map_iteration = pdb2map(input_pdb=gemmi_structure,apix=voxelsize,size=emmap.shape, align_output=True)
             size = map_iteration.size
             cc = compute_real_space_correlation(map_iteration, emmap)
