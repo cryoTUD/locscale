@@ -58,7 +58,7 @@ for parameter in parameter_values_range.keys():
         
         os.mkdir(value_folder_path)
         os.chdir(value_folder_path)
-        
+        outputfile = open(os.path.join(value_folder_path,"log.txt"),"w+")
         input_map_copy = os.path.join(value_folder_path,"input_map.mrc")
         shutil.copyfile(input_map, input_map_copy)
         locscale_run_cmd = ['python',run_script,'-em',input_map_copy,'-res',str(input_map_res),'-v','-mpi']
@@ -69,9 +69,10 @@ for parameter in parameter_values_range.keys():
         
         time.sleep(1)
         print(str(datetime.now()))
+        outputfile.close()
         
         os.chdir(output_folder)
         
 
-outputfile.close()
+        
 
