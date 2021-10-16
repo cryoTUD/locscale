@@ -30,6 +30,7 @@ analysis_parameter_list = ['pm','pm_it','ref_it','add_blur','s','fdr_f','wn','mr
 parameter_values_range = {}
 parameter_values_range['pseudomodel_method'] = ['gradient','kick']
 parameter_values_range['total_iterations'] = list(np.arange(1,26,1,dtype=int))
+parameter_values_range['distance'] = [1, 1.2, 1.4, 1.6, 1.8, 2]
 parameter_values_range['refmac_iterations'] = list(np.arange(1,16,1,dtype=int))
 parameter_values_range['add_blur'] = list(np.arange(5,50,5,dtype=int))
 parameter_values_range['smooth_factor'] = list(np.arange(0.1,1.1,0.1).round(2))
@@ -41,7 +42,6 @@ print("Analysis parameters:\n")
 print(parameter_values_range)
 
 os.chdir(output_folder)
-outputfile = open(os.path.join(output_folder,"log.txt"),"w+")
 
 for parameter in parameter_values_range.keys():
     parameter_folder_path = os.path.join(output_folder,parameter)
@@ -68,9 +68,7 @@ for parameter in parameter_values_range.keys():
         time.sleep(1)
         print(str(datetime.now()))
         outputfile.close()
-        
-        os.chdir(output_folder)
-        
+                
 
         
 
