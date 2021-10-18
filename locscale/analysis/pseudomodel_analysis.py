@@ -16,11 +16,12 @@ from locscale.pseudomodel.pseudomodel_solvers import main_solver3D, main_solver_
 from locscale.pseudomodel.pseudomodel_classes import extract_model_from_mask
 from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
     
-locscale_path = os.environ['LOCSCALE_PATH']
+folder_path = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_pseudomodel/gbp/"
 
-emmap_path = os.path.join(locscale_path,"tests","test_data","emd5778_map.mrc")
 
-mask_path = os.path.join(locscale_path,"tests","test_data","emd5778_mask.mrc")
+emmap_path = os.path.join(folder_path,"gbp.mrc")
+
+mask_path = os.path.join(folder_path,"gbp_confidenceMap.mrc")
 
 mrc = mrcfile.open(emmap_path)
 emmap = mrc.data
@@ -43,7 +44,7 @@ scale_lj = 1
 scale_map = 1 
 friction = 10
             
-save_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/Test/pseudomodel_analysis/"        
+save_folder = folder_path 
 pseudomodel, peak_bond_length_list, map_values, cross_correlation, profiles_iterations = main_solver3D(
             emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=1.2,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
             capmagnitude_map=100,scale_map=scale_map,total_iterations=50, compute_map=True,emmap_path=None,mask_path=None,returnPointsOnly=False,
