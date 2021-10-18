@@ -29,7 +29,7 @@ symmetry = "C4"
 analysis_parameter_list = ['pm','pm_it','ref_it','add_blur','s','fdr_f','wn','mres']
 
 parameter_values_range = {}
-parameter_values_range['pseudomodel_method'] = ['gradient','kick']
+parameter_values_range['pseudomodel_method'] = ['gradient','random']
 parameter_values_range['total_iterations'] = list(np.arange(1,26,1,dtype=int))
 parameter_values_range['distance'] = [1, 1.2, 1.4, 1.6, 1.8, 2]
 parameter_values_range['refmac_iterations'] = list(np.arange(1,16,1,dtype=int))
