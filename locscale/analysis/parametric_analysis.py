@@ -25,7 +25,7 @@ input_map = os.path.join(locscale_path, "tests","test_data","emd5778_map.mrc")
 input_mask = os.path.join(locscale_path, "tests","test_data","emd5778_mask.mrc")
 apix = float(mrcfile.open(input_map).voxel_size.x)
 input_map_res = 3.4
-
+symmetry = "C4"
 analysis_parameter_list = ['pm','pm_it','ref_it','add_blur','s','fdr_f','wn','mres']
 
 parameter_values_range = {}
@@ -62,7 +62,7 @@ for parameter in parameter_values_range.keys():
         input_mask_copy = os.path.join(value_folder_path,"input_mask.mrc")
         shutil.copyfile(input_map, input_map_copy)
         shutil.copyfile(input_mask, input_mask_copy)
-        locscale_run_cmd = ['mpirun','-np','4','python',run_script,'-em',input_map_copy,'-ma',input_mask_copy,'-res',str(input_map_res),'-v','-mpi']
+        locscale_run_cmd = ['mpirun','-np','4','python',run_script,'-em',input_map_copy,'-ma',input_mask_copy,'-res',str(input_map_res),'-sym',symmetry,'-v','-mpi']
         locscale_run_cmd.append("--"+parameter)
         locscale_run_cmd.append(str(value))
         print(" ".join(locscale_run_cmd))
