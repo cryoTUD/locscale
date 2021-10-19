@@ -285,6 +285,10 @@ def check_user_input(args):
     None.
 
     '''
+    if args.god_mode:
+        print("You are in God mode. Not checking user input!")
+        return 
+    
     import mrcfile
     print("ignore profiles default", args.ignore_profiles)
     ## Check input files
