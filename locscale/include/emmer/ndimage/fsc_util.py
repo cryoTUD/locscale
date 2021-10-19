@@ -177,6 +177,37 @@ def calculate_fsc_maps(input_map_1, input_map_2):
     fsc = np.array(fsc)
     return np.array(fsc)
 
+def plot_fscs(freq, list_of_fsc, colors=['r','g','b','k','y','m'], legends=None, font=12,showlegend=True, showPoints=True):
+    import matplotlib.pyplot as plt
+    
+    if len(list_of_fsc) > 6:
+        print("Enter maximum of 6 profiles only if you want to see colors")
+        
+    i = 0
+    
+    if showPoints:
+        colors = [x+".-" for x in colors]
+        
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(True)
+    ax2 = ax1.twiny()
+    for fsc in list_of_fsc:
+        ax1.plot(freq,fsc, colors[i])
+        i = i+1
+            
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+    if legends is None:
+        legends = ["FSC_"+str(i) for i in range(len(list_of_fsc))]
+        
+        
+    ax1.legend(legends,fontsize=font)
+    ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
+    ax1.set_ylabel('FSC',fontsize=font)
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
+
 def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=16, legend=None):
 
     import matplotlib.pyplot as plt
@@ -223,7 +254,8 @@ def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=
     fsc_value = f(calc_fsc)
     
     return fig, fsc_value
-    
+
+
 def get_fsc_filter(input_map_1, input_map_2, input_mask, apix):
     fsc_curve = calculate_fsc_maps(input_map_1, input_map_2)
     C_ref = 2*fsc_curve / (1+fsc_curve)

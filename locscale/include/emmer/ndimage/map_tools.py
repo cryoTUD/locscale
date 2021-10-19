@@ -214,4 +214,70 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     return cropped_map
 
+def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter=None, output_filename=None):
+    '''
+    Function to extract map intensities around atoms between a given residue range
+
+    Parameters
+    ----------
+    emmap_path : str
+        Path to a reference emmap for metadata
+    pdb_path : str
+        Path to a PDB/MMCIF file
+  
+    dilation_radius : float, optional
+        The radius of the sphere (in Ang) to place at atomic positions determined by the PDB file. Default is 3A.
+
+    Returns
+    -------
+    model_mask : str
     
+
+    '''
+    from locscale.include.emmer.pdb.pdb_tools import get_atomic_positions_between_residues
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, dilate_mask, save_as_mrc
+    import mrcfile
+    import os
+    
+    pdb_folder = "".join(pdb_path.split("/")[:-1])
+    apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
+    emmap = mrcfile.open(emmap_path).data
+    map_shape = emmap.shape
+    
+    
+    gemmi_st = gemmi.read_structure(pdb_path)
+    
+    
+    mask = np.zeros(map_shape)
+    pdb_positions = []
+    for model in gemmi_st:
+        for chain in model:
+            for res in chain:
+                for atom in res:
+                    pdb_positions.append(atom.pos.tolist())
+                        
+        
+    print("Found {} atom sites".format(len(pdb_positions)))
+        
+    mrc_position = convert_pdb_to_mrc_position(pdb_positions, apix)
+    zz,yy,xx = zip(*mrc_position)
+    mask[zz,yy,xx] = 1
+        
+    dilation_radius_int = round(dilation_radius / apix)
+    dilated_mask = dilate_mask(mask, radius=dilation_radius_int)
+    
+    if cutoff_filter is not None:
+        from locscale.include.emmer.ndimage.filter import low_pass_filter
+        dilated_mask = low_pass_filter(dilated_mask, cutoff=cutoff_filter, apix=apix)
+    
+        
+    if output_filename is None:
+        output_filename = os.path.join(pdb_folder, "model_mask.mrc")
+            
+    save_as_mrc(dilated_mask, output_filename=output_filename, apix=apix)
+        
+    return output_filename
+    
+    
+    
+        

@@ -223,6 +223,7 @@ def prepare_mask_and_maps_for_scaling(args):
             pam_iteration = 50
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
+        build_ca_only = args.build_ca_only
         
         ## Get reference map using get_modmap_from_pseudomodel()
         ## Note that if a pdb_path is provided then the function 
@@ -243,6 +244,7 @@ def prepare_mask_and_maps_for_scaling(args):
             'model_resolution':model_resolution,
             'pg_symmetry':args.symmetry,
             'molecular_weight':molecular_weight,
+            'build_ca_only':build_ca_only,
             'verbose':verbose
         }
         

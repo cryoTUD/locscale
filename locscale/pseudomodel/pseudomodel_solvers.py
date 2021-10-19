@@ -163,6 +163,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     from locscale.include.emmer.pdb.pdb_to_map import pdb2map
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
+    from locscale.include.emmer.pdb.modify_pdb import set_pdb_cell_based_on_gradient
     from locscale.pseudomodel.pseudomodel_classes import Vector, add_Vector
     
     peak_bond_length_list = []
@@ -255,11 +256,13 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
                 import os
                 save_file = os.path.join(save_path,"pseudomodel_iteration_{}.pdb".format(iter))
                 gemmi_structure_bzero.write_pdb(save_file)
+                set_pdb_cell_based_on_gradient(gemmi_structure_bzero, emmap, apix=voxelsize, outpdb_name=os.path.join(save_path,"pseudomodel_iteration_{}.pdb".format(iter)))
             map_iteration = pdb2map(input_pdb=gemmi_structure,apix=voxelsize,size=emmap.shape, align_output=True)
             size = map_iteration.size
             cc = compute_real_space_correlation(map_iteration, emmap)
             cross_correlation.append(cc.max())
             profiles_iterations.append(compute_radial_profile(map_iteration))
+            
     
             if verbose: 
                 print(str(iter)+": #peak_bond_length = "+str(peak_bond_length_list[iter])+": #map_value = "+str(map_values[iter])+": cc_max = "+str(cc.max()))    

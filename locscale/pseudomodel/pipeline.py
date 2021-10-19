@@ -43,6 +43,7 @@ def get_modmap(modmap_args):
     pg_symmetry = modmap_args['pg_symmetry']
     model_resolution = modmap_args['model_resolution']
     molecular_weight = modmap_args['molecular_weight']
+    build_ca_only = modmap_args['build_ca_only']
     verbose = modmap_args['verbose']
 
     if verbose:
@@ -68,7 +69,12 @@ def get_modmap(modmap_args):
         avg_mass_per_atom = 13.14  #amu
         num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
 
-        
+    if build_ca_only:
+        num_atoms = int(num_atoms/9)  ## Assuming 9 atoms per residue
+        pam_bond_length = 3.8  ## Ca atom distances for secondary structures
+        pam_method = 'gradient'  ## use this exclusively for Gradient
+        if pam_method != 'gradient':
+            print("Using gradient method for building pseudo-atomic model! Not using user input:\t {}".format(pam_method))
     
     if pdb_path is None:
         print("You have not entered a PDB path, running pseudo-atomic model generator!")

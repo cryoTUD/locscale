@@ -11,12 +11,12 @@ import os
 import numpy as np
 import random
 from tqdm import tqdm
-emdid = "0038"
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/bfactor_correlation/emd0038/"
-pseudomap_path = os.path.join(folder+"using_pseudoatomic_model_new.mrc")
-atomic_map_path = os.path.join(folder+"using_atomic_model.mrc")
-resmap_path = os.path.join(folder+"emd_0038_map_resmap.mrc")
-mask_path = os.path.join(folder+"emd_0038_full_confidenceMap.mrc")
+emdid = "5778 - 50 iteration "
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/Pseudomodel method tests/bfactor_correlation"
+pseudomap_path = os.path.join(folder,"emd5778_gradient_pseudomodel_refined_c4_symmetry.mrc")
+atomic_map_path = os.path.join(folder,"using_atomic_model.mrc")
+resmap_path = os.path.join(folder,"emd5778_map_resmap.mrc")
+mask_path = os.path.join(folder,"emd5778_mask.mrc")
 
 pseudomap = mrcfile.open(pseudomap_path).data
 modmap = mrcfile.open(atomic_map_path).data
@@ -27,12 +27,12 @@ emmap_1 = pseudomap
 emmap_2 = modmap
 emmap_3 = resmap
 
-resolution_limits = (2,6)
+resolution_limits = (2,8)
 apix = mrcfile.open(mask_path).voxel_size.x
 
 ## Get the following from the report generated
-high_frequency_cutoff = 11.58
-fsc_cutoff = 3.2
+high_frequency_cutoff = 9.69
+fsc_cutoff = 3.4
 boxsize = 22
 
 
@@ -126,7 +126,7 @@ import matplotlib.pyplot as plt
 df = pd.DataFrame(analysis,columns=list(analysis.keys()),index=['local_resolution','bfactor_1','bfactor_2','bfactor_3', 'amp_1','amp_2','amp_3','radial_distance']).T
 #df['intensity_bins'] = pd.qcut(df['intensity'],q=num_bins)
 #sorted_data = df.groupby(['intensity_bins']).mean()
-sns.relplot(data=df,x='bfactor_1',y='bfactor_2',hue='local_resolution',hue_norm=resolution_limits)
+sns.relplot(data=df,x='bfactor_1',y='bfactor_2',hue='local_resolution', hue_norm=resolution_limits)
 plt.title("Correlation plots for EMD: "+emdid)
 plt.xlabel("Local estimate bfactor from pseudoatomic model")
 plt.ylabel("Local estimate bfactor from atomic model")
