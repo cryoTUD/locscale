@@ -45,6 +45,7 @@ cmdl_parser.add_argument('--ignore_profiles', help='Ignore average secondary str
 cmdl_parser.add_argument('--skip_refine', help='Ignore REFMAC refinement', action='store_true')
 cmdl_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
 cmdl_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
+cmdl_parser.add_argument('--build_ca_only', help='For gradient pseudomodel building: use only Ca atoms with interatomic distance 3.8', action='store_true',default=False)
 cmdl_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
 cmdl_parser.add_argument('-ref_it', '--refmac_iterations', help='For pseudo-atomic model: number of refmac iterations', default=15)
 cmdl_parser.add_argument('-sym', '--symmetry', default='C1', type=str, help='Impose symmetry condition for output')
