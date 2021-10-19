@@ -55,7 +55,8 @@ cmdl_parser.add_argument('--add_blur', type=int, help='Globally sharpen the map'
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
                          help='Verbose output')
-
+cmdl_parser.add_argument('--god_mode', action='store_true', default=False,
+                         help='If true, this will force locscale to use the theoretical profile even if model map present')
 
 
 def print_arguments(args):
