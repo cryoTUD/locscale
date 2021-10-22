@@ -99,7 +99,7 @@ def launch_amplitude_scaling(args):
         print_start_banner(start_time)
         if args.verbose:
             print_arguments(args)
-            copied_args = change_directory(args, "processing_files")  ## Copy the contents of files into a new directory
+        copied_args = change_directory(args, "processing_files")  ## Copy the contents of files into a new directory
             
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         

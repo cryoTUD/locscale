@@ -11,9 +11,9 @@ import os
 import numpy as np
 import random
 from tqdm import tqdm
-emdid = "5778 - 50 iteration "
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/Pseudomodel method tests/bfactor_correlation"
-pseudomap_path = os.path.join(folder,"emd5778_gradient_pseudomodel_refined_c4_symmetry.mrc")
+emdid = "5778 - random pseudomodel"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/parametric_analysis/Pseudomodel_method_tests/bfactor_correlation"
+pseudomap_path = os.path.join(folder,"emd5778_kick_pseudomodel_refmac_refined_4locscale_C4_symmetry.mrc")
 atomic_map_path = os.path.join(folder,"using_atomic_model.mrc")
 resmap_path = os.path.join(folder,"emd5778_map_resmap.mrc")
 mask_path = os.path.join(folder,"emd5778_mask.mrc")
@@ -111,7 +111,7 @@ for center in tqdm(random_centers, desc="Analysing"):
         
         rscc_profile = compute_real_space_correlation(rad_profile_1, rad_profile_2)
         
-        analysis[center] = [local_resolution,bfactor_1,bfactor_2, bfactor_3, amp_1, amp_2, amp_3,radial_distance]
+        analysis[center] = [local_resolution,abs(bfactor_1),abs(bfactor_2), abs(bfactor_3), amp_1, amp_2, amp_3,radial_distance]
     except:
         print("Error at",center)
         
@@ -126,7 +126,7 @@ import matplotlib.pyplot as plt
 df = pd.DataFrame(analysis,columns=list(analysis.keys()),index=['local_resolution','bfactor_1','bfactor_2','bfactor_3', 'amp_1','amp_2','amp_3','radial_distance']).T
 #df['intensity_bins'] = pd.qcut(df['intensity'],q=num_bins)
 #sorted_data = df.groupby(['intensity_bins']).mean()
-sns.relplot(data=df,x='bfactor_1',y='bfactor_2',hue='local_resolution', hue_norm=resolution_limits)
+sns.relplot(data=df,x='bfactor_1',y='bfactor_2')#,hue='local_resolution', hue_norm=resolution_limits)
 plt.title("Correlation plots for EMD: "+emdid)
 plt.xlabel("Local estimate bfactor from pseudoatomic model")
 plt.ylabel("Local estimate bfactor from atomic model")

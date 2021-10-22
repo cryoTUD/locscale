@@ -17,19 +17,34 @@ def pad_or_crop_volume(vol, dim_pad=None, pad_value = None, crop_volume=False):
             crop_volume = True
 
         if crop_volume:
-            crop_vol = vol[int(round(vol.shape[0]/2-dim_pad[0]/2)):int(round(vol.shape[0]/2+dim_pad[0]/2+dim_pad[0]%2)), :, :]
-            crop_vol = crop_vol[:, int(round(vol.shape[1]/2-dim_pad[1]/2)):int(round(vol.shape[1]/2+dim_pad[1]/2+dim_pad[1]%2)), :]
-            crop_vol = crop_vol[:, :, int(round(vol.shape[2]/2-dim_pad[2]/2)):int(round(vol.shape[2]/2+dim_pad[2]/2+dim_pad[2]%2))]
+            k_start = round_up(vol.shape[0]/2-dim_pad[0]/2)
+            k_end = round_up(vol.shape[0]/2+dim_pad[0]/2+dim_pad[0]%2)
+            j_start = round_up(vol.shape[1]/2-dim_pad[1]/2)
+            j_end = round_up(vol.shape[1]/2+dim_pad[1]/2+dim_pad[1]%2)
+            i_start = round_up(vol.shape[2]/2-dim_pad[2]/2)
+            i_end = round_up(vol.shape[2]/2+dim_pad[2]/2+dim_pad[2]%2)
+            crop_vol = vol[k_start:k_end, :, :]
+            crop_vol = crop_vol[:, j_start:j_end, :]
+            crop_vol = crop_vol[:, :, i_start:i_end]
 
             return crop_vol
 
         else:
-            pad_vol = np.pad(vol, ((int(round(dim_pad[0]/2-vol.shape[0]/2)), int(round(dim_pad[0]/2-vol.shape[0]/2+dim_pad[0]%2))), (0,0), (0,0) ), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (int(round(dim_pad[1]/2-vol.shape[1]/2)), int(round(dim_pad[1]/2-vol.shape[1]/2+dim_pad[1]%2)) ), (0,0)), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (0,0), (int(round(dim_pad[2]/2-vol.shape[2]/2)), int(round(dim_pad[2]/2-vol.shape[2]/2+dim_pad[2]%2)))), 'constant', constant_values=(pad_value,))
+            k_start = round_up(dim_pad[0]/2-vol.shape[0]/2)
+            k_end = round_up(dim_pad[0]/2-vol.shape[0]/2+dim_pad[0]%2)
+            j_start = round_up(dim_pad[1]/2-vol.shape[1]/2)
+            j_end = round_up(dim_pad[1]/2-vol.shape[1]/2+dim_pad[1]%2)
+            i_start = round_up(dim_pad[2]/2-vol.shape[2]/2)
+            i_end = round_up(dim_pad[2]/2-vol.shape[2]/2+dim_pad[2]%2)
+            
+            pad_vol = np.pad(vol, ((k_start, k_end ), (0,0), (0,0) ), 'constant', constant_values=(pad_value,))
+            pad_vol = np.pad(pad_vol, ((0,0), (j_start, j_end ), (0,0)), 'constant', constant_values=(pad_value,))
+            pad_vol = np.pad(pad_vol, ((0,0), (0,0), (i_start, i_end )), 'constant', constant_values=(pad_value,))
 
             return pad_vol
 
+def round_up(x):
+    return np.ceil(x).astype(int)
 
 def compute_padding_average(vol, mask):
     mask = (mask == 1).astype(np.int8)
@@ -260,12 +275,12 @@ def prepare_mask_and_maps_for_scaling(args):
         
     
     if args.window_size is None:   ## Use default window size of 25 A
-        wn = round_up_to_odd(25 / apix)+1
+        wn = round_up_to_odd(25 / apix)
         if verbose:
             print("Using a default window size of 25 A, corresponding to approximately {} pixels".format(wn))
         
     elif args.window_size is not None:
-        wn = round_up_to_odd(float(args.window_size))
+        wn = int(args.window_size)
         if verbose:
             print("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
 

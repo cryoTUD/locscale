@@ -290,39 +290,41 @@ Reference:
         gemmi_st = gemmi.read_pdb(model_path)
         num_atoms = gemmi_st[0].count_atom_sites()
         Rg = find_radius_of_gyration(input_gemmi_st=gemmi_st)
+        molecular_weight = gemmi_st[0].calculate_mass()
     elif input_gemmi_st is not None:
         gemmi_st = input_gemmi_st.clone()
         num_atoms = gemmi_st[0].count_atom_sites()
         Rg = find_radius_of_gyration(input_gemmi_st=gemmi_st)
+        molecular_weight = gemmi_st[0].calculate_mass()
     elif mask_path is not None:
         mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask_path=mask_path, detailed_report=True)
-        
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
         Rg = R_constant * num_atoms**v
+        protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
+        molecular_weight = mask_vol_A3 * protein_density
     elif mask is not None and apix is not None and mask_path is None:
         mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask=mask, apix=apix, detailed_report=True)
         
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
         Rg = R_constant * num_atoms**v
-        
+        protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
+        molecular_weight = mask_vol_A3 * protein_density
         
     else:
         print("Input error!")
         return 0
     
     
-    print("Number of atoms: {} \nRadius of Gyration: {:.2f}".format(num_atoms,Rg))
+    print("Number of atoms: {} \nRadius of Gyration: {:.2f}\n".format(num_atoms,Rg))
+    print("Molecular weight estimated to be {} Da\n".format(round(molecular_weight,1)))
     if method.lower() == 'rosenthal_henderson':
         d_cutoff = 2*np.pi*Rg
         f_cutoff = 1/d_cutoff
     elif method.lower() == 'singer':
-        ko = num_atoms**(-1/12) # Guiner transition non-dimensional
         
-        Ro = Rg * np.cbrt(1/num_atoms) # Unit cell dimension around each atom
-        
-        f_cutoff = ko/Ro
+        f_cutoff = 0.309 * np.power(molecular_weight, -1/12)  ## From Singer, 2021
         d_cutoff = 1/f_cutoff
     
     print("Frequency cutoff: {:.2f}  (= {:.2f} A resolution)\n".format(f_cutoff, d_cutoff))
