@@ -77,13 +77,16 @@ def plot_fsc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
     st = gemmi.read_structure(pdb_path)
     st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
     simmap = pdb2map(st, apix=apix, size=size, verbose=False, set_refmac_blur=True)
+    
     masked_simmap = mask * simmap
     
     fsc_curves = {}
     map_names_legend = []
     fsc_metric = {}
     for emmap_path in list_of_emmap_path:
+        from locscale.include.emmer.ndimage.map_utils import resample_image
         map_name = emmap_path.split("/")[-1]
+        print(map_name)
         emmap = mrcfile.open(emmap_path).data
         masked_emmap = mask * emmap
         fsc_curves[map_name] = calculate_fsc_maps(masked_emmap, masked_simmap)
