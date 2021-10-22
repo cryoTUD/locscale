@@ -95,7 +95,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         print("Using theoretical profiles for Local Scaling with the following parameters: \n")
         print(scale_factor_arguments)
     sharpened_vals = []
-    central_pix = int(round(wn / 2.0))
+    central_pix = np.ceil(wn / 2.0).astype(int)
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     mpi=False
@@ -122,7 +122,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         profiles_audit = {}
     for k, j, i in masked_xyz_locs - wn / 2:
         
-        k,j,i,wn = int(round(k)),int(round(j)),int(round(i)),int(round(wn))
+        k,j,i,wn = np.ceil(k).astype(int), np.ceil(j).astype(int), np.ceil(i).astype(int), np.ceil(wn).astype(int)
+        
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
 
@@ -217,7 +218,7 @@ def split_sequence_evenly(seq, size):
     newseq = []
     splitsize = 1.0 / size * len(seq)
     for i in range(size):
-        newseq.append(seq[int(round(i * splitsize)):int(round((i + 1) * splitsize))])
+        newseq.append(seq[np.ceil(i * splitsize).astype(int):np.ceil((i+1) * splitsize).astype(int)])
     return newseq
 
 def merge_sequence_of_sequences(seq):

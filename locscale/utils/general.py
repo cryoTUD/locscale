@@ -67,7 +67,7 @@ def gather_statistics(parsed_inputs_dict):
     required_stats['WindowSizePixel'] = parsed_inputs_dict['wn']
     required_stats['apix'] = parsed_inputs_dict['apix']
     required_stats['WindowBleedPad'] = parsed_inputs_dict['win_bleed_pad']
-    required_stats['EmmapShape'] = parsed_inputs_dict['emmap'].shape
+    required_stats['EmmapShapeForLocScale'] = parsed_inputs_dict['emmap'].shape
     required_stats['WilsonCutoff'] = round(parsed_inputs_dict['scale_factor_args']['wilson'],2)
     required_stats['HighFreqCutoff'] = round(parsed_inputs_dict['scale_factor_args']['high_freq'],2)
     required_stats['FSC'] = round(parsed_inputs_dict['scale_factor_args']['fsc_cutoff'],2)
@@ -253,6 +253,10 @@ def shift_map_to_zero_origin(emmap_path):
     print("Shift vector: {} ".format(shift_vector.round(2)))
     return shift_vector
 
+
+def round_up(x):
+    return np.ceil(x).astype(int)
+
             
 def get_emmap_path_from_args(args):
     from locscale.utils.prepare_inputs import generate_filename_from_halfmap_path
@@ -373,6 +377,7 @@ def check_user_input(args):
         if window_size_ang < 10:
             print("Warning: Provided window size of {} is too small for pixel size of {}. \
                   Default window size is generally 25 A. Think of increasing the window size".format(window_size_pixels, apix))
+                  
 
 
     if args.outfile is None:
