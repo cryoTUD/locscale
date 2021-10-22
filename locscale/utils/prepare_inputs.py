@@ -355,6 +355,9 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['verbose'] = verbose
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
     parsed_inputs_dict['bfactor_info'] = bfactor_info
+    parsed_inputs_dict['fsc_resolution'] = fsc_resolution
+    parsed_inputs_dict['PWLF_fit'] = fit.r_squared()
+    parsed_inputs_dict['emmap_path'] = xyz_emmap_path
     
     ## all maps should have same shape
     assert xyz_emmap.shape == xyz_modmap.shape == xyz_mask.shape, "The input maps and mask do not have the same shape"

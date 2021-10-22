@@ -87,6 +87,63 @@ def gather_statistics(parsed_inputs_dict):
     table.scale(1,4)
     return fig
 
+def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_through_pwlf
+    from scipy.stats import kurtosis
+    import mrcfile
+    
+    
+    ## Quality based on radial profile
+    rp_locscale_map = compute_radial_profile(locscale_map)
+    apix = parsed_inputs_dict['apix']
+    freq = frequency_array(rp_locscale_map, apix=apix)
+    wilson_cutoff = parsed_inputs_dict['scale_factor_args']['wilson']
+    fsc_cutoff = parsed_inputs_dict['fsc_resolution']
+    
+    
+    bfactor_locscale, _,(fit, z, slopes_locscale) = estimate_bfactor_through_pwlf(freq, rp_locscale_map, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
+    
+    breakpoints = (1/np.sqrt(z)).round(2)
+    debye_slope = slopes_locscale[1]
+    r_squared = fit.r_squared()
+    
+    slopes_unsharp = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][2]]
+    debye_slope_unsharp = slopes_unsharp[1]
+    bfactor_unsharp = parsed_inputs_dict['bfactor_info'][0]
+    
+    ## Kurtosis metric
+    map_kurtosis = kurtosis(locscale_map.flatten())
+    emmap_unsharpened = mrcfile.open(parsed_inputs_dict['emmap_path']).data
+    unsharpened_kurtosis = kurtosis(emmap_unsharpened.flatten())
+    
+    map_quality = {}
+    map_quality['kurtosis_unsharpened'] = unsharpened_kurtosis
+    map_quality['kurtosis_locscale'] = map_kurtosis
+    map_quality['debye_slope_unsharpened'] = debye_slope_unsharp
+    map_quality['debye_slope_locscale'] = debye_slope
+    map_quality['bfactor_unsharp'] = bfactor_unsharp
+    map_quality['bfactor_locscale'] = bfactor_locscale
+    map_quality['pwlf_breakpoints'] = breakpoints
+    map_quality['pwlf_slopes'] = slopes_locscale.round(2)
+    map_quality['pwlf_r_sq'] = round(r_squared,2)
+    map_quality['general:shape'] = locscale_map.shape
+    map_quality['general:scale'] = [round(locscale_map.min(),2),round(locscale_map.max(),2)]
+    
+    import matplotlib.pyplot as plt
+    fig, ax =plt.subplots(figsize=(16,16))
+    ax.axis('off')
+    
+    text = []
+    for key in map_quality.keys():
+        text.append([key, map_quality[key]])
+        
+ 
+    table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(16)
+    table.scale(1,4)
+    return fig
+
 def print_input_arguments(args):
     import matplotlib.pyplot as plt
     
@@ -150,13 +207,14 @@ def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad)
     
     input_table = print_input_arguments(args)
     
-    
+    map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
     
     pdf = PdfPages(pdffile)
     pdf.savefig(input_table)
     pdf.savefig(radial_profile_fig)
     pdf.savefig(emmap_section_fig)
     pdf.savefig(locscale_section_fig)
+    pdf.savefig(map_quality_table)
     pdf.savefig(stats_table)
     if parsed_input['use_theoretical']:
         pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
