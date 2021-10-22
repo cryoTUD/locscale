@@ -117,17 +117,18 @@ def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     unsharpened_kurtosis = kurtosis(emmap_unsharpened.flatten())
     
     map_quality = {}
-    map_quality['kurtosis_unsharpened'] = unsharpened_kurtosis
-    map_quality['kurtosis_locscale'] = map_kurtosis
+    map_quality['kurtosis_unsharpened'] = round(unsharpened_kurtosis,2)
+    map_quality['kurtosis_locscale'] = round(map_kurtosis,2)
     map_quality['debye_slope_unsharpened'] = debye_slope_unsharp
-    map_quality['debye_slope_locscale'] = debye_slope
+    map_quality['debye_slope_locscale'] = round(debye_slope,1)
     map_quality['bfactor_unsharp'] = bfactor_unsharp
     map_quality['bfactor_locscale'] = bfactor_locscale
     map_quality['pwlf_breakpoints'] = breakpoints
     map_quality['pwlf_slopes'] = slopes_locscale.round(2)
     map_quality['pwlf_r_sq'] = round(r_squared,2)
-    map_quality['general:shape'] = locscale_map.shape
-    map_quality['general:scale'] = [round(locscale_map.min(),2),round(locscale_map.max(),2)]
+    map_quality['Locscale-shape'] = locscale_map.shape
+    map_quality['Locscale-scale'] = [round(locscale_map.min(),2),round(locscale_map.max(),2)]
+    map_quality['Unsharpened_map-scale'] = [round(emmap_unsharpened.min(),2),round(emmap_unsharpened.max(),2)]
     
     import matplotlib.pyplot as plt
     fig, ax =plt.subplots(figsize=(16,16))

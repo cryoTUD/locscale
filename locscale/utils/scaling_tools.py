@@ -305,14 +305,17 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     from locscale.utils.prepare_inputs import pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.general import make_locscale_report
+    import mrcfile
     
+    input_map = mrcfile.open(parsed_inputs_dict['emmap_path']).data
     
     wn = parsed_inputs_dict['wn']
     window_bleed_and_pad =parsed_inputs_dict['win_bleed_pad']
     apix = parsed_inputs_dict['apix']
         
     if window_bleed_and_pad:
-        map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
+        #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
+        map_shape = input_map.shape
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
 
         
