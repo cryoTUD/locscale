@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 26 13:46:15 2021
+
+@author: alok
+"""
+## Script to calculate adjusted surface area of a map
+
+import os
+import numpy as np
+
+
+def calculate_surface_area(binary_data, spacing, origin):
+    from tvtk.api import tvtk
+    from tvtk.common import configure_input
+
+    grid = tvtk.ImageData(spacing=spacing, origin=origin)
+    grid.point_data.scalars = binary_data.T.ravel()
+    grid.point_data.scalars.name = 'scalars'
+    grid.dimensions = binary_data.shape
+
+    iso = tvtk.ImageMarchingCubes()
+    configure_input(iso, grid)  
+    
+    mass = tvtk.MassProperties()
+    configure_input(mass, iso)
+    surface_area = mass.surface_area
+    
+    return surface_area
+
+def calculate_surface_area_at_threshold(emmap, apix_tuple, origin, reference_threshold):
+    binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+    surface_area = calculate_surface_area(binarised_emmap, apix_tuple, origin)
+    return surface_area
+
+
+def count_distinct_regions(emmap, reference_threshold):
+    from skimage import measure
+    
+    binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+    labels, num_regions = measure.label(binarised_emmap, background=0, return_num=True)
+    
+    return num_regions
+
+def find_volume_matching_threshold(emmap, reference_volume, apix, num_bins=100):
+    threshold_bins = np.linspace(0, emmap.max(), num=num_bins)
+    
+    for threshold in threshold_bins:
+        binarised_map = (emmap>=threshold).astype(np.int_)
+        sum_of_voxels = binarised_map.sum()
+        volume_real_units = sum_of_voxels * apix**3
+        if volume_real_units <= reference_volume:
+            matching_threshold = threshold
+            break
+    
+    
+    return matching_threshold
+
+def find_c_scale(sharpest_map, most_blurred_map, reference_threshold, apix_tuple, origin):
+    print("Calculating scale factor...")
+    SA_blurred = calculate_surface_area_at_threshold(
+        most_blurred_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+    
+    SA_sharpened = calculate_surface_area_at_threshold(
+        sharpest_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+    
+    num_regions_blurred = count_distinct_regions(most_blurred_map, reference_threshold)
+    num_regions_sharpened = count_distinct_regions(sharpest_map, reference_threshold)
+    
+    C_scale = (SA_blurred - SA_sharpened) / (num_regions_blurred - num_regions_sharpened)
+    
+    print("Scaling factor is: {:.2f}".format(C_scale))
+    
+    asa_blurred = SA_blurred - C_scale * num_regions_blurred
+    asa_sharpened = SA_sharpened - C_scale * num_regions_sharpened
+    
+
+    return C_scale, asa_blurred, asa_sharpened
+
+def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_highest=300, b_lowest=0, mask_emmap=True):
+    from locscale.include.emmer.ndimage.map_tools import sharpen_maps
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile, estimate_bfactor_through_pwlf
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    import mrcfile
+    
+    emmap = mrcfile.open(emmap_path).data
+    apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
+    apix = apix_tuple[0]
+    origin = mrcfile.open(emmap_path).header.origin.tolist()
+    
+    mask = mrcfile.open(mask_path).data
+    
+    if mask_emmap:
+        emmap = emmap * mask
+    
+    mask_volume = mask.sum() * apix**3
+    reference_mask_volume = mask_volume * 0.2  ## Thresholded at 20% of molecular volume  
+    
+    print("Finding reference threshold corresponding to 20% of molecular volume determined from mask")
+    reference_threshold = find_volume_matching_threshold(emmap, reference_mask_volume, apix)
+    print("Reference threshold found to be {:.2f}".format(reference_threshold))
+
+    wilson_cutoff = find_wilson_cutoff(mask=mask, apix=apix)
+    fsc_cutoff = fsc_resolution
+    
+    rp_emmap = compute_radial_profile(emmap)
+    freq = frequency_array(rp_emmap, apix=apix)
+    
+    current_bfactor = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff)[0]
+    
+    sharpening_bfactor = current_bfactor - b_lowest 
+    blurring_bfactor = b_highest + current_bfactor
+    
+    sharpest_map = sharpen_maps(emmap, apix, global_bfactor=sharpening_bfactor)
+    most_blurred_map = sharpen_maps(emmap, apix, global_bfactor=blurring_bfactor)
+    
+    scale_factor, asa_blurred, asa_sharpened = find_c_scale(
+        sharpest_map, most_blurred_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+    
+    surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
+        emmap, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+    
+    num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
+    
+    adjusted_surface_area = surface_area_emmap_at_reference_threshold - scale_factor * num_distinct_regions_at_reference_threshold
+    
+    print("Adjusted surface area measured to be: {:.2f} nm squared".format(adjusted_surface_area/1000))
+    
+    if adjusted_surface_area < asa_blurred or adjusted_surface_area < asa_sharpened:
+        print("Calculated adjusted surface area lesser than the extreme values of bfactor considered for calculated scale factor. ")
+        print("Adjusted surface area at the most blurred: {:.2f} nm squared".format(asa_blurred/1000))
+        print("Adjusted surface area at the most sharpened: {:.2f} nm squared".format(asa_sharpened/1000))
+    
+    return adjusted_surface_area
+
+
+#%%
+
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778"
+
+emmap_path = os.path.join(folder, "loc_scale_oct14.mrc")
+mask_path = os.path.join(folder, "pdb3j5p_mask.mrc")
+fsc_resolution = 3.4
+    
+
+#%%
+ASA = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_highest=300, b_lowest=0, mask_emmap=True)
