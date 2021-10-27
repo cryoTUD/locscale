@@ -84,6 +84,7 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
     
+    print("Calculating adjusted surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
     apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
     apix = apix_tuple[0]
@@ -137,6 +138,7 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
 
 #%%
 
+
 folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778"
 
 emmap_path = os.path.join(folder, "loc_scale_oct14.mrc")
@@ -145,4 +147,3 @@ fsc_resolution = 3.4
     
 
 #%%
-ASA = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_highest=300, b_lowest=0, mask_emmap=True)

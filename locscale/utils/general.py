@@ -348,8 +348,8 @@ def check_user_input(args):
     None.
 
     '''
-    if args.god_mode:
-        print("You are in God mode. Not checking user input!")
+    if args.dev_mode:
+        print("Warning: You are in Dev mode. Not checking user input! Results maybe unreliable")
         return 
     
     import mrcfile
