@@ -76,11 +76,13 @@ def gather_statistics(parsed_inputs_dict):
     required_stats['Breakpoints'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][1]]
     required_stats['Slopes'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][2]]
     
+    print("General statistics: \n")
+    print(required_stats)
+    
     text = []
     for key in required_stats.keys():
         text.append([key, required_stats[key]])
-        
- 
+    
     table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
     table.auto_set_font_size(False)
     table.set_fontsize(16)
@@ -129,6 +131,8 @@ def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     map_quality['Locscale-shape'] = locscale_map.shape
     map_quality['Locscale-scale'] = [round(locscale_map.min(),2),round(locscale_map.max(),2)]
     map_quality['Unsharpened_map-scale'] = [round(emmap_unsharpened.min(),2),round(emmap_unsharpened.max(),2)]
+    print("Map quality results: \n")
+    print(map_quality)
     
     import matplotlib.pyplot as plt
     fig, ax =plt.subplots(figsize=(16,16))
