@@ -318,9 +318,9 @@ def prepare_mask_and_maps_for_scaling(args):
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
     
-    god_mode = args.god_mode
-    if god_mode:
-        print("GOD MODE: Scaling using theoretical profiles even if you have input an atomic model!")
+    dev_mode = args.dev_mode
+    if dev_mode:
+        print("DEV MODE: Scaling using theoretical profiles even if you have input an atomic model!")
         print("Before: scale_using_theoretical_profile=",scale_using_theoretical_profile)
         scale_using_theoretical_profile = None
         scale_using_theoretical_profile = True
