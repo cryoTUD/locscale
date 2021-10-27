@@ -13,17 +13,17 @@ import numpy as np
 import random
 from tqdm import tqdm
 from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/xray_maps"
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778"
-
-locscale_path = os.path.join(folder,"loc_scale_oct14.mrc")
-emmap_path = os.path.join(folder, "emd5778_map.mrc")
-mask_path = os.path.join(folder,"emd5778_mask.mrc" )
+locscale_path = os.path.join(folder,"emd_21109_map_centered.mrc")
+emmap_path = os.path.join(folder, "emd_21109_map_centered.mrc")
+mask_path = os.path.join(folder,"emd_21109_mask.mrc" )
 
 window_size = 40
-wilson_cutoff = 9.6
-fsc_cutoff = 3.4
+wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+fsc_cutoff = 1.5
 
 def get_box(big_volume,center,size):
     return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
@@ -54,27 +54,32 @@ local_analysis = {}
 
 volumes = {}
 for center in tqdm(random_centers, desc="Validating"):
-    window_locscale = get_box(locscale_map, center, window_size)
-    window_emmap = get_box(emmap, center, window_size)
-    
-    ## calculate rp
-    rp_locscale = compute_radial_profile(window_locscale)
-    rp_emmap = compute_radial_profile(window_emmap)
-    freq = frequency_array(rp_locscale, apix)
-    bfactor_locscale = estimate_bfactor_standard(freq, rp_locscale, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
-    bfactor_emmap = estimate_bfactor_standard(freq, rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
-    
-    ## histogram metrics
-    
-    skew_locsale = skew(window_locscale.flatten())
-    kurtosis_locscale = kurtosis(window_locscale.flatten())
-    skew_emmap = skew(window_emmap.flatten())
-    kurtosis_emmap = kurtosis(window_emmap.flatten())
-    
-    distance_to_center = distance_from_center_of_box(center, locscale_map.shape)
-    
-    local_analysis[center] = [bfactor_locscale, bfactor_emmap, kurtosis_locscale, skew_locsale, kurtosis_emmap, skew_emmap, tuple(center), distance_to_center]
-    volumes[center] = window_locscale
+    try:
+        distance_to_center = distance_from_center_of_box(center, locscale_map.shape)
+       
+        window_locscale = get_box(locscale_map, center, window_size)
+        window_emmap = get_box(emmap, center, window_size)
+        
+        ## calculate rp
+        rp_locscale = compute_radial_profile(window_locscale)
+        rp_emmap = compute_radial_profile(window_emmap)
+        freq = frequency_array(rp_locscale, apix)
+        bfactor_locscale = estimate_bfactor_standard(freq, rp_locscale, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
+        bfactor_emmap = estimate_bfactor_standard(freq, rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff)
+        
+        ## histogram metrics
+        
+        skew_locsale = skew(window_locscale.flatten())
+        kurtosis_locscale = kurtosis(window_locscale.flatten())
+        skew_emmap = skew(window_emmap.flatten())
+        kurtosis_emmap = kurtosis(window_emmap.flatten())
+        
+        
+        
+        local_analysis[center] = [bfactor_locscale, bfactor_emmap, kurtosis_locscale, skew_locsale, kurtosis_emmap, skew_emmap, tuple(center), distance_to_center]
+        volumes[center] = window_locscale
+    except:
+        continue
 
 
  
@@ -91,6 +96,9 @@ df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bf
 
 def binomial_quadratic(x):
     return 1+x**2
+
+def general_quadratic(x,a,b,c):
+    return a + b*x + c* x**2
 
 def r2(y_fit, y_data):
     y_mean = y_data.mean()
