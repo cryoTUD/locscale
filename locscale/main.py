@@ -35,6 +35,7 @@ cmdl_parser.add_argument('-ma', '--mask', help='Input filename mask')
 cmdl_parser.add_argument('-mc', '--model_coordinates', help='Input PDB files', default=None)
 cmdl_parser.add_argument('-mw', '--molecular_weight', help='Input molecular weight (in kDa)', default=None)
 cmdl_parser.add_argument('-o', '--outfile', help='Output filename')
+cmdl_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
 cmdl_parser.add_argument('-res', '--ref_resolution', type=float, help='Resolution target for Refmac refinement')
 cmdl_parser.add_argument('-mres', '--model_resolution', type=float, help='Resolution limit for Model Map generation')
 cmdl_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
@@ -99,7 +100,7 @@ def launch_amplitude_scaling(args):
         print_start_banner(start_time)
         if args.verbose:
             print_arguments(args)
-        copied_args = change_directory(args, "processing_files")  ## Copy the contents of files into a new directory
+        copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
             
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         
