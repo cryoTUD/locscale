@@ -45,7 +45,7 @@ def change_directory(args, folder_name="processed"):
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile":
+            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files":
                 print("Copying {} to a new directory: \n{}".format(value, new_directory))
                 new_location=copy_file_to_folder(value, new_directory)
                 print("file saved at: {}".format(new_location))
@@ -317,9 +317,9 @@ def shift_map_to_zero_origin(emmap_path):
     return shift_vector
 
 
-def round_up(x):
-    return np.ceil(x).astype(int)
-
+def round_up_proper(x):
+    epsilon = 1e-15  ## To round up in case of rounding to odd
+    return np.round(x+epsilon).astype(int)
             
 def get_emmap_path_from_args(args):
     from locscale.utils.prepare_inputs import generate_filename_from_halfmap_path
@@ -427,6 +427,8 @@ def check_user_input(args):
     ## Check for window size < 10 A
     if args.window_size is not None:
         window_size_pixels = int(args.window_size)
+        if window_size_pixels%2 > 0:
+            print("You have input an odd window size. For best performance, an even numbered window size is required. Adding 1 to the provided window size ")
         if args.apix is not None:
             apix = float(args.apix)
         else:
@@ -436,6 +438,7 @@ def check_user_input(args):
                 apix = mrcfile.open(args.half_map1).voxel_size.x
         
         window_size_ang = window_size_pixels * apix
+        
         
         if window_size_ang < 10:
             print("Warning: Provided window size of {} is too small for pixel size of {}. \
