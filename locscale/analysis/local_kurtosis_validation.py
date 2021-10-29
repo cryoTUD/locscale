@@ -15,11 +15,11 @@ from tqdm import tqdm
 from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
 from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/xray_maps"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/map_quality_metric/xray_maps/emd10091/"
 
-locscale_path = os.path.join(folder,"emd_21109_map_centered.mrc")
-emmap_path = os.path.join(folder, "emd_21109_map_centered.mrc")
-mask_path = os.path.join(folder,"emd_21109_mask.mrc" )
+locscale_path = os.path.join(folder,"emd_10091.map")
+emmap_path = os.path.join(folder, "emd_10091.map")
+mask_path = os.path.join(folder,"emd_10091.map" )
 
 window_size = 40
 wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
@@ -45,15 +45,15 @@ apix = mrcfile.open(locscale_path).voxel_size.tolist()[0]
 
 
 
-#z,y,x = np.where(emmap>=0.008)
-z,y,x = np.where(mask == 1)
+z,y,x = np.where(emmap>=2)
+#z,y,x = np.where(mask == 1)
 all_points = list(zip(x,y,z))
 random_centers = random.sample(all_points,15000)
 
 local_analysis = {}
 
 volumes = {}
-for center in tqdm(random_centers, desc="Validating"):
+for center in tqdm(random_centers, desc="Analysing"):
     try:
         distance_to_center = distance_from_center_of_box(center, locscale_map.shape)
        
@@ -88,7 +88,7 @@ import pandas as pd
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from datetime import datetime
-import mplcursors
+from scipy.optimize import curve_fit
 import seaborn as sns
 
 df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bfactor_emmap','kurtosis_locscale', 'skew_locscale',
@@ -97,9 +97,10 @@ df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bf
 def binomial_quadratic(x):
     return 1+x**2
 
-def general_quadratic(x,a,b,c):
-    return a + b*x + c* x**2
 
+def general_quadratic(x,a,b,c):
+    return a * x**2 + b*x + c
+    
 def r2(y_fit, y_data):
     y_mean = y_data.mean()
     residual_squares = (y_data-y_fit)**2
@@ -115,6 +116,7 @@ def r2(y_fit, y_data):
 df.sort_values(by=['skew_locscale'])
 
 def clickable_plot(data, x_col, y_col, click_val):
+    import mplcursors
     df = data.copy()
 
     labels = list(df[click_val])
@@ -138,6 +140,49 @@ def clickable_plot(data, x_col, y_col, click_val):
     
     plt.show()
 
+def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+    from matplotlib.offsetbox import AnchoredText
+    f, ax = plt.subplots(1,1)
+
+    def get_sign(x, leading=False):
+        if x < 0:
+            return "-"
+        else:
+            if leading:
+                return ""
+            else:
+                return "+"
+            
+    data_unsort = data_input.copy()
+    data=data_unsort.sort_values(by=x_col)
+    x_data = data[x_col]
+    y_data = data[y_col]
+    
+    p_opt, p_cov = curve_fit(general_quadratic, x_data, y_data)
+    a,b,c = p_opt
+    
+    y_fit = general_quadratic(x_data, *p_opt)
+    
+    r_squared = r2(y_fit, y_data)
+    
+    ax.plot(x_data, y_data,'bo')
+    ax.plot(x_data, y_fit, 'r-')
+    equation = "y = {} {} x$^2$ {} {} x {} {}".format(get_sign(a,True),round(abs(a),1),get_sign(b), round(abs(b),1),get_sign(c),round(abs(c),1))
+    legend_text = equation + "\n" + "R$^2$={}".format(round(r_squared,2))
+    anchored_text=AnchoredText(legend_text, loc=2)
+    ax.add_artist(anchored_text)
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    else:
+        ax.set_xlabel(x_col)
+        
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    else:
+        ax.set_ylabel(y_col)
+    ax.set_title(title_text)
+    
+    
 
 #%%
 
@@ -158,3 +203,9 @@ def click(event):
             
             
 '''    
+
+map_name = emmap_path.split("/")[-1]
+locscale_name = locscale_path.split("/")[-1]
+plot_regression(df, "skew_locscale", "kurtosis_locscale",title_text="locscale for "+map_name)
+
+plot_regression(df, "skew_emmap", "kurtosis_emmap",title_text=map_name)
