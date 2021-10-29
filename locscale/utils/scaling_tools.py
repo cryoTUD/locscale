@@ -83,6 +83,9 @@ def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
 
     return scaled_map, scaled_map_fft;
 
+def round_up_proper(x):
+    epsilon = 1e-5  ## To round up in case of rounding to odd
+    return np.round(x+epsilon).astype(int)
 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,scale_factor_arguments, verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
     from tqdm import tqdm
@@ -95,7 +98,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         print("Using theoretical profiles for Local Scaling with the following parameters: \n")
         print(scale_factor_arguments)
     sharpened_vals = []
-    central_pix = np.ceil(wn / 2.0).astype(int)
+    central_pix = round_up_proper(wn / 2.0)
     total = (masked_xyz_locs - wn / 2).shape[0]
     cnt = 1.0
     mpi=False
@@ -122,7 +125,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         profiles_audit = {}
     for k, j, i in masked_xyz_locs - wn / 2:
         
-        k,j,i,wn = np.ceil(k).astype(int), np.ceil(j).astype(int), np.ceil(i).astype(int), np.ceil(wn).astype(int)
+        k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
         
         emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
         modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
@@ -218,7 +221,7 @@ def split_sequence_evenly(seq, size):
     newseq = []
     splitsize = 1.0 / size * len(seq)
     for i in range(size):
-        newseq.append(seq[np.ceil(i * splitsize).astype(int):np.ceil((i+1) * splitsize).astype(int)])
+        newseq.append(seq[round_up_proper(i * splitsize):round_up_proper((i+1) * splitsize)])
     return newseq
 
 def merge_sequence_of_sequences(seq):
