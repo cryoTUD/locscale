@@ -10,6 +10,7 @@ Created on Sun Jul 18 14:08:55 2021
 
 # global imports
 import gemmi
+import numpy as np
 
 #%% functions
      
@@ -115,6 +116,37 @@ def split_model_based_on_nucleotides(gemmi_st):
     rna_st.add_model(rna_model)
 
     return dna_st, rna_st    
+
+def shake_pdb(input_pdb, rmsd):
+    '''
+    Function to generate a new pdb by shaking an old PDB
+
+    Parameters
+    ----------
+    input_pdb : path to pdb or gemmi.Structure()
+        DESCRIPTION.
+    rmsd : float
+        The default is 0.5.
+
+    Returns
+    -------
+    shaked_st : gemmi.Structure
+
+    '''
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    input_gemmi_st = detect_pdb_input(input_pdb)
+    
+    for model in input_gemmi_st:
+        for chain in model:
+            for res in chain:
+                for atom in res:
+                    current_pos = np.array(atom.pos.tolist())
+                    shake_vector = np.random.normal(loc=0, scale=rmsd)
+                    new_pos = current_pos + shake_vector
+                    atom.pos = gemmi.Position(new_pos[0], new_pos[1], new_pos[2])
+    
+    return input_gemmi_st
+                    
 
 def get_bfactors(in_model_path, return_as_list=True):
     """
