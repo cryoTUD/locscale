@@ -15,15 +15,15 @@ from tqdm import tqdm
 from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
 from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/map_quality_metric/xray_maps/emd10091/"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/map_quality_metric/simulated_maps/"
 
-locscale_path = os.path.join(folder,"emd_10091.map")
-emmap_path = os.path.join(folder, "emd_10091.map")
-mask_path = os.path.join(folder,"emd_10091.map" )
+locscale_path = os.path.join(folder,"simulated_bfactor_0.mrc")
+emmap_path = os.path.join(folder, "simulated_bfactor_50.mrc")
+mask_path = os.path.join(folder,"pdb3j5p_mask.mrc" )
 
 window_size = 40
 wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
-fsc_cutoff = 1.5
+fsc_cutoff = 2.5
 
 def get_box(big_volume,center,size):
     return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
@@ -45,8 +45,8 @@ apix = mrcfile.open(locscale_path).voxel_size.tolist()[0]
 
 
 
-z,y,x = np.where(emmap>=2)
-#z,y,x = np.where(mask == 1)
+#z,y,x = np.where(emmap>=2)
+z,y,x = np.where(mask == 1)
 all_points = list(zip(x,y,z))
 random_centers = random.sample(all_points,15000)
 
@@ -74,9 +74,20 @@ for center in tqdm(random_centers, desc="Analysing"):
         skew_emmap = skew(window_emmap.flatten())
         kurtosis_emmap = kurtosis(window_emmap.flatten())
         
+        mean_locscale = window_locscale.mean()
+        variance_locscale = window_locscale.var()
+        
+        mean_emmap = window_emmap.mean()
+        variance_emmap = window_emmap.var()
+        
+        q_emmap = variance_emmap/mean_emmap
+        p_emmap = 1-q_emmap
+        
+        q_locscale = variance_locscale/mean_locscale
+        p_locscale = 1-q_locscale
         
         
-        local_analysis[center] = [bfactor_locscale, bfactor_emmap, kurtosis_locscale, skew_locsale, kurtosis_emmap, skew_emmap, tuple(center), distance_to_center]
+        local_analysis[center] = [bfactor_locscale, bfactor_emmap, mean_locscale, variance_locscale, mean_emmap, variance_emmap, kurtosis_locscale, skew_locsale, kurtosis_emmap, skew_emmap, p_locscale, p_emmap, tuple(center), distance_to_center]
         volumes[center] = window_locscale
     except:
         continue
@@ -91,8 +102,8 @@ from datetime import datetime
 from scipy.optimize import curve_fit
 import seaborn as sns
 
-df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bfactor_emmap','kurtosis_locscale', 'skew_locscale',
-                                                         'kurtosis_emmap', 'skew_emmap','center', 'radius'])
+df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bfactor_emmap','mean_locscale','variance_locscale','mean_emmap','variance_emmap','kurtosis_locscale', 'skew_locscale',
+                                                         'kurtosis_emmap', 'skew_emmap', 'p_locscale','p_emmap','center', 'radius'])
 
 def binomial_quadratic(x):
     return 1+x**2
