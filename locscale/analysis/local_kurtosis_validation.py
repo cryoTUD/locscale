@@ -15,15 +15,15 @@ from tqdm import tqdm
 from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
 from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/test_locscale/map_quality_metric/simulated_maps/"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778/"
 
-locscale_path = os.path.join(folder,"simulated_bfactor_0.mrc")
-emmap_path = os.path.join(folder, "simulated_bfactor_50.mrc")
-mask_path = os.path.join(folder,"pdb3j5p_mask.mrc" )
+locscale_path = os.path.join(folder,"loc_scale_gradient.mrc")
+emmap_path = os.path.join(folder, "emd5778_map.mrc")
+mask_path = os.path.join(folder,"emd5778_mask.mrc" )
 
 window_size = 40
 wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
-fsc_cutoff = 2.5
+fsc_cutoff = 3.4
 
 def get_box(big_volume,center,size):
     return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
@@ -107,7 +107,8 @@ df = pd.DataFrame(data=local_analysis.values(), columns=['bfactor_locscale', 'bf
 
 def binomial_quadratic(x):
     return 1+x**2
-
+def linear(x,a,b):
+    return a * x + b
 
 def general_quadratic(x,a,b,c):
     return a * x**2 + b*x + c
@@ -193,7 +194,47 @@ def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_
         ax.set_ylabel(y_col)
     ax.set_title(title_text)
     
+def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+    from matplotlib.offsetbox import AnchoredText
+    f, ax = plt.subplots(1,1)
+
+    def get_sign(x, leading=False):
+        if x < 0:
+            return "-"
+        else:
+            if leading:
+                return ""
+            else:
+                return "+"
+            
+    data_unsort = data_input.copy()
+    data=data_unsort.sort_values(by=x_col)
+    x_data = data[x_col]
+    y_data = data[y_col]
     
+    p_opt, p_cov = curve_fit(linear, x_data, y_data)
+    a,b = p_opt
+    
+    y_fit = linear(x_data, *p_opt)
+    
+    r_squared = r2(y_fit, y_data)
+    
+    ax.plot(x_data, y_data,'bo')
+    ax.plot(x_data, y_fit, 'r-')
+    equation = "y = {} {} x {} {} ".format(get_sign(a,True),round(abs(a),1),get_sign(b), round(abs(b),1))
+    legend_text = equation + "\n" + "R$^2$={}".format(round(r_squared,2))
+    anchored_text=AnchoredText(legend_text, loc=2)
+    ax.add_artist(anchored_text)
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    else:
+        ax.set_xlabel(x_col)
+        
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    else:
+        ax.set_ylabel(y_col)
+    ax.set_title(title_text)    
 
 #%%
 
@@ -217,6 +258,8 @@ def click(event):
 
 map_name = emmap_path.split("/")[-1]
 locscale_name = locscale_path.split("/")[-1]
-plot_regression(df, "skew_locscale", "kurtosis_locscale",title_text="locscale for "+map_name)
+plot_regression(df, "skew_locscale", "kurtosis_locscale",title_text=locscale_name+" for "+map_name)
 
 plot_regression(df, "skew_emmap", "kurtosis_emmap",title_text=map_name)
+plot_linear_regression(df, "mean_emmap","variance_emmap", title_text=map_name)
+plot_linear_regression(df, "mean_locscale","variance_locscale", title_text=locscale_name+" for "+map_name)
