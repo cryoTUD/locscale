@@ -312,7 +312,7 @@ def prepare_mask_and_maps_for_scaling(args):
         high_frequency_cutoff = wilson_cutoff
         fsc_cutoff = (round(2*apix*10)+1)/10
         #fsc_cutoff = fsc_resolution
-        bfactor_info = [0,0,0]
+        bfactor_info = [0,np.array([0,0,0]),np.array([0,0,0])]
         pwlf_fit_quality = 0
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
