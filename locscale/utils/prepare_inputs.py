@@ -313,6 +313,7 @@ def prepare_mask_and_maps_for_scaling(args):
         fsc_cutoff = (round(2*apix*10)+1)/10
         #fsc_cutoff = fsc_resolution
         bfactor_info = [0,0,0]
+        pwlf_fit_quality = 0
     else:
         rp_emmap = compute_radial_profile(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
@@ -322,6 +323,7 @@ def prepare_mask_and_maps_for_scaling(args):
         #fsc_cutoff = fsc_resolution
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
+        pwlf_fit_quality = fit.r_squared()
     
     dev_mode = args.dev_mode
     if dev_mode:
@@ -361,7 +363,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
     parsed_inputs_dict['bfactor_info'] = bfactor_info
     parsed_inputs_dict['fsc_resolution'] = fsc_resolution
-    parsed_inputs_dict['PWLF_fit'] = fit.r_squared()
+    parsed_inputs_dict['PWLF_fit'] = pwlf_fit_quality
     parsed_inputs_dict['emmap_path'] = xyz_emmap_path
     
     ## all maps should have same shape
