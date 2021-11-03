@@ -33,7 +33,7 @@ def copy_file_to_folder(full_path_to_file, new_folder):
     
     return destination
 
-def change_directory(args, folder_name="processed"):
+def change_directory(args, folder_name):
     import os    
     from locscale.utils.general import copy_file_to_folder
     
@@ -89,6 +89,179 @@ def gather_statistics(parsed_inputs_dict):
     table.scale(1,4)
     return fig
 
+def validation_metrics(args, parsed_inputs_dict, locscale_path):
+    print("Calculating map quality metrics...")
+    import pandas as pd
+    from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb, local_histogram_analysis, measure_debye_pwlf
+    from locscale.include.emmer.ndimage.map_quality_tools import calculate_adjusted_surface_area
+    from locscale.pseudomodel.pseudomodel_headers import number_of_segments
+    ## Em-map based quality metrics
+    
+    emmap_path = parsed_inputs_dict['emmap_path']
+    mask_path = parsed_inputs_dict['mask_path']
+    locscale_path = locscale_path
+    fsc_resolution = parsed_inputs_dict['fsc_resolution']
+    
+    wilson_cutoff = parsed_inputs_dict['scale_factor_args']['wilson']
+    
+    if args.model_coordinates is not None:
+        pdb_path = args.model_coordinates
+        calculate_pdb_based_metric = True
+    else:
+        calculate_pdb_based_metric = False
+    
+    emmap_kurtosis = map_quality_kurtosis(emmap_path, mask_path)
+    locscale_kurtosis = map_quality_kurtosis(locscale_path, mask_path)
+    
+    emmap_adjusted_surface_area = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution=fsc_resolution)
+    locscale_adjusted_surface_area = calculate_adjusted_surface_area(locscale_path, mask_path, fsc_resolution=fsc_resolution)
+    
+    emmap_debye_slope = measure_debye_pwlf(emmap_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
+    locscale_debye_slope = measure_debye_pwlf(locscale_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
+    
+    emmap_local_df, emmap_local_r_squared_skew_kurtosis, emmap_local_r_squared_mean_variance = local_histogram_analysis(emmap_path, mask_path, fsc_resolution)
+    locscale_local_df, locscale_local_r_squared_skew_kurtosis, locscale_local_r_squared_mean_variance = local_histogram_analysis(locscale_path, mask_path, 
+                                                                                                                                 fsc_resolution)
+    
+    quality_metrics = {
+        'emmap_kurtosis': emmap_kurtosis,
+        'locscale_kurtosis': locscale_kurtosis,
+        'emmap_adjusted_surface_area':emmap_adjusted_surface_area,
+        'locscale_adjusted_surface_area':locscale_adjusted_surface_area,
+        'emmap_debye_slope':emmap_debye_slope,
+        'locscale_debye_slope':locscale_debye_slope,
+        'emmap_masked_local_r_squared_skew_kurtosis':emmap_local_r_squared_skew_kurtosis,
+        'emmap_masked_local_r_squared_mean_variance':emmap_local_r_squared_mean_variance,
+        'locscale_local_r_squared_skew_kurtosis':locscale_local_r_squared_skew_kurtosis,
+        'locscale_local_r_squared_mean_variance':locscale_local_r_squared_mean_variance}
+    
+    if calculate_pdb_based_metric:
+        emmap_rscc_metric = map_quality_pdb(emmap_path, mask_path, pdb_path, test='rscc')
+        locscale_rscc_metric = map_quality_pdb(locscale_path, mask_path, pdb_path, test='rscc')
+        
+        emmap_fsc_metric = map_quality_pdb(emmap_path, mask_path, pdb_path, test='fsc')
+        locscale_fsc_metric = map_quality_pdb(locscale_path, mask_path, pdb_path, test='fsc')
+        
+        quality_metrics['emmap_rscc_metric'] = emmap_rscc_metric
+        quality_metrics['locscale_rscc_metric'] = locscale_rscc_metric
+        quality_metrics['emmap_fsc_metric'] = emmap_fsc_metric
+        quality_metrics['locscale_fsc_metric'] = locscale_fsc_metric
+    
+    return quality_metrics, emmap_local_df, locscale_local_df
+
+def linear(x,a,b):
+    return a * x + b
+
+def general_quadratic(x,a,b,c):
+    return a * x**2 + b*x + c
+    
+def r2(y_fit, y_data):
+    y_mean = y_data.mean()
+    residual_squares = (y_data-y_fit)**2
+    variance = (y_data-y_mean)**2
+    
+    residual_sum_of_squares = residual_squares.sum()
+    sum_of_variance = variance.sum()
+    
+    r_squared = 1 - residual_sum_of_squares/sum_of_variance
+    
+    return r_squared
+
+def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+    from matplotlib.offsetbox import AnchoredText
+    import matplotlib.pyplot as plt
+    from scipy.optimize import curve_fit
+    
+    
+    f, ax = plt.subplots(1,1)
+
+    def get_sign(x, leading=False):
+        if x < 0:
+            return "-"
+        else:
+            if leading:
+                return ""
+            else:
+                return "+"
+            
+    data_unsort = data_input.copy()
+    data=data_unsort.sort_values(by=x_col)
+    x_data = data[x_col]
+    y_data = data[y_col]
+    
+    p_opt, p_cov = curve_fit(general_quadratic, x_data, y_data)
+    a,b,c = p_opt
+    
+    y_fit = general_quadratic(x_data, *p_opt)
+    
+    r_squared = r2(y_fit, y_data)
+    
+    ax.plot(x_data, y_data,'bo')
+    ax.plot(x_data, y_fit, 'r-')
+    equation = "y = {} {} x$^2$ {} {} x {} {}".format(get_sign(a,True),round(abs(a),1),get_sign(b), round(abs(b),1),get_sign(c),round(abs(c),1))
+    legend_text = equation + "\n" + "R$^2$={}".format(round(r_squared,2))
+    anchored_text=AnchoredText(legend_text, loc=2)
+    ax.add_artist(anchored_text)
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    else:
+        ax.set_xlabel(x_col)
+        
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    else:
+        ax.set_ylabel(y_col)
+    ax.set_title(title_text)
+    
+    return f
+    
+def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+    from matplotlib.offsetbox import AnchoredText
+    import matplotlib.pyplot as plt
+    from scipy.optimize import curve_fit
+    
+    f, ax = plt.subplots(1,1)
+
+    def get_sign(x, leading=False):
+        if x < 0:
+            return "-"
+        else:
+            if leading:
+                return ""
+            else:
+                return "+"
+            
+    data_unsort = data_input.copy()
+    data=data_unsort.sort_values(by=x_col)
+    x_data = data[x_col]
+    y_data = data[y_col]
+    
+    p_opt, p_cov = curve_fit(linear, x_data, y_data)
+    a,b = p_opt
+    
+    y_fit = linear(x_data, *p_opt)
+    
+    r_squared = r2(y_fit, y_data)
+    
+    ax.plot(x_data, y_data,'bo')
+    ax.plot(x_data, y_fit, 'r-')
+    equation = "y = {} {} x {} {} ".format(get_sign(a,True),round(abs(a),1),get_sign(b), round(abs(b),1))
+    legend_text = equation + "\n" + "R$^2$={}".format(round(r_squared,2))
+    anchored_text=AnchoredText(legend_text, loc=2)
+    ax.add_artist(anchored_text)
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    else:
+        ax.set_xlabel(x_col)
+        
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    else:
+        ax.set_ylabel(y_col)
+    ax.set_title(title_text)  
+    
+    return f
+    
 def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_through_pwlf
     from scipy.stats import kurtosis
@@ -176,12 +349,14 @@ def print_input_arguments(args):
     return fig
    
 
-def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad):
+def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad, report_output_filename=None, statistic_output_filename=None):
     from locscale.include.emmer.ndimage.profile_tools import plot_emmap_section
     from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile, compute_radial_profile, frequency_array 
     from matplotlib.backends.backend_pdf import PdfPages
     import os
+    import mrcfile
     ## Input-Output characteristics
+    locscale_map = mrcfile.open(locscale_path).data
     
     cwd = os.getcwd()
     save_file_in_folder = "/".join(cwd.split("/")+["processing_files"])
@@ -213,6 +388,17 @@ def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad)
     input_table = print_input_arguments(args)
     
     map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
+    quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
+    
+    local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+                                                         title_text="Emmap local analysis: skew and kurtosis")
+    local_histogram_analysis_mean_var_emmap_fig = plot_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+                                                         title_text="Emmap local analysis: mean and variance")
+    
+    local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+                                                         title_text="Locscale local analysis: skew and kurtosis")
+    local_histogram_analysis_mean_var_locscale_fig = plot_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+                                                         title_text="Locscale local analysis: mean and variance")
     
     pdf = PdfPages(pdffile)
     pdf.savefig(input_table)
@@ -221,12 +407,35 @@ def make_locscale_report(args, parsed_input, locscale_map, window_bleed_and_pad)
     pdf.savefig(locscale_section_fig)
     pdf.savefig(map_quality_table)
     pdf.savefig(stats_table)
+    pdf.savefig(local_histogram_analysis_skew_kurt_emmap_fig)
+    pdf.savefig(local_histogram_analysis_skew_kurt_locscale_fig)
+    pdf.savefig(local_histogram_analysis_mean_var_emmap_fig)
+    pdf.savefig(local_histogram_analysis_mean_var_locscale_fig)
+    
     if parsed_input['use_theoretical']:
         pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
         pdf.savefig(pickle_output_sample_fig)
         
     
     pdf.close()
+    
+    cwd = os.getcwd()
+    save_file_in_folder = "/".join(cwd.split("/")+["processing_files"])
+    csvfile = "/".join(save_file_in_folder.split("/")+["quality_metrics.csv"])
+    print("Saving quality metrics: \n {}".format(csvfile))
+    
+    import csv
+    
+    with open(csvfile, "w") as output:
+        writer = csv.writer(output)
+        for key in quality_metrics.keys():
+            writer.writerow([key, quality_metrics[key]])
+        
+        
+    
+
+    
+    
     
     
     
