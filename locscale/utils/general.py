@@ -359,8 +359,8 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     locscale_map = mrcfile.open(locscale_path).data
     
     cwd = os.getcwd()
-    save_file_in_folder = "/".join(cwd.split("/")+["processing_files"])
-    pdffile = "/".join(save_file_in_folder.split("/")+["locscale_report.pdf"])
+    save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
+    pdffile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_general.pdf"])
     print("Preparing LocScale report: \n {}".format(pdffile))
     
     if window_bleed_and_pad:
@@ -392,12 +392,12 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     
     local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
                                                          title_text="Emmap local analysis: skew and kurtosis")
-    local_histogram_analysis_mean_var_emmap_fig = plot_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
                                                          title_text="Emmap local analysis: mean and variance")
     
     local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
                                                          title_text="Locscale local analysis: skew and kurtosis")
-    local_histogram_analysis_mean_var_locscale_fig = plot_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
                                                          title_text="Locscale local analysis: mean and variance")
     
     pdf = PdfPages(pdffile)
@@ -420,8 +420,8 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     pdf.close()
     
     cwd = os.getcwd()
-    save_file_in_folder = "/".join(cwd.split("/")+["processing_files"])
-    csvfile = "/".join(save_file_in_folder.split("/")+["quality_metrics.csv"])
+    save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
+    csvfile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_quality_metrics.csv"])
     print("Saving quality metrics: \n {}".format(csvfile))
     
     import csv
