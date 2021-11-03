@@ -259,7 +259,6 @@ def click(event):
 map_name = emmap_path.split("/")[-1]
 locscale_name = locscale_path.split("/")[-1]
 plot_regression(df, "skew_locscale", "kurtosis_locscale",title_text=locscale_name+" for "+map_name)
-
 plot_regression(df, "skew_emmap", "kurtosis_emmap",title_text=map_name)
 plot_linear_regression(df, "mean_emmap","variance_emmap", title_text=map_name)
 plot_linear_regression(df, "mean_locscale","variance_locscale", title_text=locscale_name+" for "+map_name)
