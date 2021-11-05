@@ -15,11 +15,11 @@ from tqdm import tqdm
 from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
 from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778/"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778"
 
 locscale_path = os.path.join(folder,"loc_scale_gradient.mrc")
 emmap_path = os.path.join(folder, "emd5778_map.mrc")
-mask_path = os.path.join(folder,"emd5778_mask.mrc" )
+mask_path = os.path.join(folder,"pdb3j5p_mask.mrc" )
 
 window_size = 40
 wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
@@ -40,7 +40,7 @@ def distance_from_center_of_box(center_of_window,shape):
 mask = mrcfile.open(mask_path).data
 locscale_map = mrcfile.open(locscale_path).data
 emmap = mrcfile.open(emmap_path).data
-
+emmap = emmap * mask
 apix = mrcfile.open(locscale_path).voxel_size.tolist()[0]
 
 
@@ -48,7 +48,7 @@ apix = mrcfile.open(locscale_path).voxel_size.tolist()[0]
 #z,y,x = np.where(emmap>=2)
 z,y,x = np.where(mask == 1)
 all_points = list(zip(x,y,z))
-random_centers = random.sample(all_points,15000)
+random_centers = random.sample(all_points,10000)
 
 local_analysis = {}
 
