@@ -78,6 +78,27 @@ def find_c_scale(sharpest_map, most_blurred_map, reference_threshold, apix_tuple
 
     return C_scale, asa_blurred, asa_sharpened
 
+def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
+    
+    emmap_profile, radii = compute_radial_profile(emmap,return_indices=True)
+    freq = frequency_array(amplitudes=emmap_profile, apix=apix)
+    
+    A_sharpen = np.exp(0.25 * b_sharpen * freq**2)
+    A_blur = np.exp(-0.25 * b_blur * freq**2)
+    
+    w_sharpen = 1 / (1+np.exp(k * (d_cut - 1/freq)))
+    w_blur = 1 - w_sharpen
+    
+    sharpening_profile = w_sharpen * A_sharpen + w_blur * A_blur
+    sharpened_profile = emmap_profile * sharpening_profile
+
+    scale_factors = compute_scale_factors(emmap_profile, sharpened_profile)
+    sharpened_map = set_radial_profile(emmap, scale_factors, radii)
+    
+    return sharpened_map
+    
 def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_highest=300, b_lowest=0, mask_emmap=True):
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile, estimate_bfactor_through_pwlf
@@ -113,8 +134,9 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
     sharpening_bfactor = current_bfactor - b_lowest 
     blurring_bfactor = b_highest + current_bfactor
     
-    sharpest_map = sharpen_maps(emmap, apix, global_bfactor=sharpening_bfactor)
-    most_blurred_map = sharpen_maps(emmap, apix, global_bfactor=blurring_bfactor)
+    sharpest_map = apply_b_sharpen(emmap, apix, b_sharpen=sharpening_bfactor, d_cut = 1/fsc_cutoff)
+    most_blurred_map = apply_b_sharpen(emmap, apix, b_sharpen=blurring_bfactor, d_cut = 1/fsc_cutoff)
+    
     
     scale_factor, asa_blurred, asa_sharpened = find_c_scale(
         sharpest_map, most_blurred_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
