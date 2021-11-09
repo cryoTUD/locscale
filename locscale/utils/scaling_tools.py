@@ -34,7 +34,7 @@ def compute_radial_profile(vol, frequency_map):
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
                           use_theoretical_profile=True, check_scaling=False):
     
-    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles
+    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, add_deviations_to_reference_profile
     #print("checkScaling", check_scaling)
     #print("useTheoretical", use_theoretical_profile)
     if use_theoretical_profile:
@@ -43,15 +43,27 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         reference_profile_tuple = (freq, ref_profile)
         
         scaled_theoretical_tuple = scale_profiles(reference_profile_tuple, theoretical_profile_tuple,
-                                                  wilson_cutoff=scale_factor_arguments['high_freq'], fsc_cutoff=scale_factor_arguments['fsc_cutoff'])
+                                                  wilson_cutoff=scale_factor_arguments['high_freq'], fsc_cutoff=scale_factor_arguments['nyquist'], return_bfactor_properties=False)
         
         scaled_theoretical_amplitude = scaled_theoretical_tuple[1]
+        
+
         smooth = scale_factor_arguments['smooth']
+        
+        ## Using merge_profile
         scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=smooth,d_cutoff=scale_factor_arguments['wilson'])
         
-        reference_profile_for_scaling = scaled_reference_profile
+        ## Using deviations calculated directly from scaled theoretical profile
+        deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, ref_profile, scaled_theoretical_amplitude, 
+                                                                       wilson_cutoff=scale_factor_arguments['wilson'], 
+                                                                       fsc_cutoff=scale_factor_arguments['nyquist'], 
+                                                                       deviation_freq_start=scale_factor_arguments['wilson'], deviation_freq_end=None, 
+                                                                       magnify=scale_factor_arguments['boost_secondary_structure'])
+        
+        
+        
+        reference_profile_for_scaling = deviated_reference_profile
         if check_scaling:
-            #print(check_scaling)
             temporary_dictionary = {}
             temporary_dictionary['em_profile'] = em_profile
             temporary_dictionary['input_ref_profile'] = ref_profile
@@ -59,6 +71,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
             temporary_dictionary['theoretical_amplitude'] = theoretical_profile_tuple[1]
             temporary_dictionary['scaled_theoretical_amplitude'] = scaled_theoretical_amplitude
             temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
+            temporary_dictionary['deviated_reference_profile'] = deviated_reference_profile
+            temporary_dictionary['exponential_fit'] = exp_fit
             temporary_dictionary['scaling_condition'] = scale_factor_arguments
     else:
         reference_profile_for_scaling = ref_profile
@@ -321,7 +335,9 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         map_shape = input_map.shape
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
     output_filename = args.outfile
-    save_as_mrc(map_data=LocScaleVol, output_filename=args.outfile, apix=apix, origin=0, verbose=True)
+    if args.dev_mode:
+        output_filename = args.outfile[:-4]+"_devmode.mrc"
+    save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
     if args.symmetry != "C1":
         resolution = parsed_inputs_dict['fsc_resolution']

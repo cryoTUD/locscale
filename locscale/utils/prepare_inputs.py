@@ -308,9 +308,10 @@ def prepare_mask_and_maps_for_scaling(args):
     
     wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     smooth_factor = args.smooth_factor
+    boost_secondary_structure = args.boost_secondary_structure
     if fsc_resolution > 6:
         high_frequency_cutoff = wilson_cutoff
-        fsc_cutoff = (round(2*apix*10)+1)/10
+        nyquist = (round(2*apix*10)+1)/10
         #fsc_cutoff = fsc_resolution
         bfactor_info = [0,np.array([0,0,0]),np.array([0,0,0])]
         pwlf_fit_quality = 0
@@ -319,7 +320,7 @@ def prepare_mask_and_maps_for_scaling(args):
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
         num_segments = number_of_segments(fsc_resolution)
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
-        fsc_cutoff = (round(2*apix*10)+1)/10
+        nyquist = (round(2*apix*10)+1)/10
         #fsc_cutoff = fsc_resolution
         high_frequency_cutoff = 1/np.sqrt(z[-2])
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
@@ -334,7 +335,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("After: scale_using_theoretical_profile=",scale_using_theoretical_profile)        
     
     if verbose and scale_using_theoretical_profile:
-        print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, fsc_cutoff))
+        print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, nyquist))
         print("To merge reference and theoretical profiles: \n")
         print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
         
@@ -343,8 +344,10 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
-    scale_factor_arguments['fsc_cutoff'] = fsc_cutoff
+    scale_factor_arguments['fsc_cutoff'] = fsc_resolution
+    scale_factor_arguments['nyquist'] = nyquist
     scale_factor_arguments['smooth'] = smooth_factor
+    scale_factor_arguments['boost_secondary_structure'] = boost_secondary_structure
     
     if verbose:
         

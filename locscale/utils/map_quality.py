@@ -55,7 +55,7 @@ def map_quality_pdb(emmap_path, mask_path, pdb_path, test='rscc'):
     size=emmap.shape
     st = gemmi.read_structure(pdb_path)
     st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
-    simmap = pdb2map(st, apix=apix, size=size, verbose=False, set_refmac_blur=True)
+    simmap = pdb2map(st_0, apix=apix, size=size, verbose=False, set_refmac_blur=True)
     
     masked_emmap = emmap * mask
     masked_simmap = simmap * mask
@@ -191,7 +191,7 @@ def local_histogram_analysis(emmap_path, mask_path, fsc_resolution, num_location
     return df, r_squared_skew_kurtosis, r_squared_mean_variance
     
 
-def plot_rscc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
+def plot_rscc_metric_multiple(list_of_emmap_path, mask_path, pdb_path, legends=None):
     import matplotlib.pyplot as plt
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     
@@ -201,7 +201,10 @@ def plot_rscc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
         map_name = emmap_path.split("/")[-1]
         map_quality_rscc[map_name] = map_quality_pdb(emmap_path, mask_path, pdb_path)
     
-    plt.plot(list(map_quality_rscc.keys()), list(map_quality_rscc.values()),'kx-')
+    if legends is None:
+        plt.plot(list(map_quality_rscc.keys()), list(map_quality_rscc.values()),'kx-')
+    else:
+        plt.plot(legends, list(map_quality_rscc.values()),'kx-')
     plt.xticks(rotation=45)
     plt.ylabel("RSCC with zero bfactor atomic model")
     plt.title("Map quality metric determined by Model-map correlation")
@@ -210,7 +213,7 @@ def plot_rscc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
         
     
 
-def plot_fsc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
+def plot_fsc_metric_multiple(list_of_emmap_path, mask_path, pdb_path, plot_fsc=True, legends=None):
     from locscale.include.emmer.ndimage.fsc_util import calculate_fsc_maps
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
     from locscale.include.emmer.pdb.pdb_to_map import pdb2map
@@ -223,7 +226,7 @@ def plot_fsc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
     size=mask.shape
     st = gemmi.read_structure(pdb_path)
     st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
-    simmap = pdb2map(st, apix=apix, size=size, verbose=False, set_refmac_blur=True)
+    simmap = pdb2map(st_0, apix=apix, size=size, verbose=False, set_refmac_blur=True)
     
     masked_simmap = mask * simmap
     
@@ -243,14 +246,22 @@ def plot_fsc_metric_multiple(list_of_emmap_path, mask_path, pdb_path):
     from locscale.include.emmer.ndimage.fsc_util import plot_fscs
     
     freq = frequency_array(fsc_curves[map_name], apix=apix)
- #   plt.figure(1)
- #   plot_fscs(freq, list(fsc_curves.values()), legends=list(fsc_curves.keys()))
-    plt.figure(2)
-    plt.plot(list(fsc_metric.keys()), list(fsc_metric.values()),'kx-')
-    plt.xticks(rotation=45)
-    plt.ylabel("Average FSC with zero bfactor atomic model")
-    plt.title("Map quality metric determined by average FSC")
-        
+    if plot_fsc:
+        plt.figure(1)
+        if legends is None:
+            plot_fscs(freq, list(fsc_curves.values()), legends=list(fsc_curves.keys()))
+        else:
+            plot_fscs(freq, list(fsc_curves.values()), legends=legends)
+    else:
+        plt.figure(2)
+        if legends is None:
+            plt.plot(list(fsc_metric.keys()), list(fsc_metric.values()),'kx-')
+        else:
+            plt.plot(legends, list(fsc_metric.values()),'kx-')
+        plt.xticks(rotation=45)
+        plt.ylabel("Average FSC with zero bfactor atomic model")
+        plt.title("Map quality metric determined by average FSC")
+            
     
 
 def plot_adjusted_surface_area_multiple(list_of_emmap_paths, mask_path, fsc_resolution):
@@ -269,7 +280,7 @@ def plot_adjusted_surface_area_multiple(list_of_emmap_paths, mask_path, fsc_reso
     plt.title("Map quality metric determined by Adjusted Surface Area (in nm$^2$)")
     
     
-def plot_map_kurtosis_multiple(list_of_emmap_paths, mask_path):
+def plot_map_kurtosis_multiple(list_of_emmap_paths, mask_path, legends=None):
     from locscale.utils.map_quality import map_quality_kurtosis
     import matplotlib.pyplot as plt
     
@@ -279,7 +290,10 @@ def plot_map_kurtosis_multiple(list_of_emmap_paths, mask_path):
         kurtosis_map = map_quality_kurtosis(emmap_path, mask_path)
         kurtosis[map_name] = kurtosis_map
     
-    plt.plot(list(kurtosis.keys()), list(kurtosis.values()),'kx-')
+    if legends is None:
+        plt.plot(list(kurtosis.keys()), list(kurtosis.values()),'kx-')
+    else:
+        plt.plot(legends, list(kurtosis.values()),'kx-')
     plt.xticks(rotation=45)
     plt.ylabel("Map kurtosis")
     plt.title("Map quality metric determined by Kurtosis")

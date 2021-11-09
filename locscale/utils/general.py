@@ -264,7 +264,7 @@ def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_through_pwlf
     from scipy.stats import kurtosis
     import mrcfile
-    
+    from locscale.utils.map_quality import map_quality_kurtosis
     
     ## Quality based on radial profile
     rp_locscale_map = compute_radial_profile(locscale_map)
@@ -287,10 +287,10 @@ def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     ## Kurtosis metric
     map_kurtosis = kurtosis(locscale_map.flatten())
     emmap_unsharpened = mrcfile.open(parsed_inputs_dict['emmap_path']).data
-    unsharpened_kurtosis = kurtosis(emmap_unsharpened.flatten())
+    unsharpened_kurtosis = map_quality_kurtosis(parsed_inputs_dict['emmap_path'], parsed_inputs_dict['mask_path'])
     
     map_quality = {}
-    map_quality['kurtosis_unsharpened'] = round(unsharpened_kurtosis,2)
+    map_quality['kurtosis_unsharpened (unmasked)'] = round(unsharpened_kurtosis,2)
     map_quality['kurtosis_locscale'] = round(map_kurtosis,2)
     map_quality['debye_slope_unsharpened'] = debye_slope_unsharp
     map_quality['debye_slope_locscale'] = round(debye_slope,1)

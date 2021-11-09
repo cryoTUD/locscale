@@ -54,6 +54,7 @@ cmdl_parser.add_argument('-mpi', '--mpi', action='store_true', default=False,
                          help='MPI version call by: \"{0}\"'.format(mpi_cmd))
 cmdl_parser.add_argument('--add_blur', type=int, help='Globally sharpen the map', default=0)
 cmdl_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
+cmdl_parser.add_argument('--boost_secondary_structure', type=float, help='Amplify signal corresponding to secondary structures', default=1.5)
 cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
                          help='Verbose output')
 cmdl_parser.add_argument('--dev_mode', action='store_true', default=False,
