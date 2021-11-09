@@ -118,6 +118,7 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
 
 def plot_emmap_section(emmap, title="EMMAP Sections"):
     import matplotlib.pyplot as plt
+    
     fig = plt.figure()
     plt.title(title)
     plt.axis("off")
@@ -142,8 +143,74 @@ def plot_emmap_section(emmap, title="EMMAP Sections"):
     return fig
     
     
-    
+def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end, magnify=1):
+    '''
+    Function to add deviations from a reference profile which is assumed to be exponential at high frequencies
 
+    Parameters
+    ----------
+    freq : TYPE
+        DESCRIPTION.
+    reference_profile : TYPE
+        DESCRIPTION.
+    scaled_theoretical_profile : TYPE
+        DESCRIPTION.
+    deviation_freq_start : TYPE
+        DESCRIPTION.
+    deviation_freq_end : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    deviated_profile_tuple : tuple
+        (freq, deviated_profile)
+
+    '''
+    
+    deviations, exponential_fit = calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end)
+    if magnify > 1:
+        f = magnification_function(magnify)
+        deviated_reference_profile = reference_profile * f(deviations)
+    else:
+        deviated_reference_profile = reference_profile * deviations
+    
+    return deviated_reference_profile, exponential_fit
+    
+def magnification_function(magnify, cutoff=1, x_max = 10):
+    '''
+    Returns a magnified deviations curve based on product 
+
+    Parameters
+    ----------
+    deviations : TYPE
+        DESCRIPTION.
+    magnify : TYPE
+        DESCRIPTION.
+    cutoff : TYPE, optional
+        DESCRIPTION. The default is 1.
+
+    Returns
+    -------
+    None.
+
+    '''
+    from scipy.interpolate import interp1d
+    xdata = np.array(list(np.linspace(0, cutoff, 100))+list(np.linspace(cutoff, x_max,100)))
+    ydata = []
+    for x in xdata:
+        if x < cutoff:
+            ydata.append(x/magnify)
+        elif x > cutoff:
+            ydata.append(x*magnify)
+        else:
+            ydata.append(cutoff)
+    
+    ydata = np.array(ydata)
+    
+    f = interp1d(x=xdata, y=ydata)
+    
+    return f
+    
 def merge_two_profiles(profile_1,profile_2,freq, smooth=1, d_cutoff=None, f_cutoff=None):
     '''
     Function to merge two profiles at a cutoff threshold based on differential weighting of two profiles
@@ -167,7 +234,6 @@ def merge_two_profiles(profile_1,profile_2,freq, smooth=1, d_cutoff=None, f_cuto
     -------
     merged_profile : tuple of two numpy.ndarray
     
-
     '''
 
     if not (len(freq) == len(profile_1) and len(freq) == len(profile_2)):
@@ -399,8 +465,15 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
     wilson_freq = 1 / wilson_cutoff
     fsc_freq = 1 / fsc_cutoff
     
-    start_index = np.where(freq>=wilson_freq)[0][0]
-    end_index = np.where(freq>=fsc_freq)[0][0]
+    if freq[0] >= wilson_freq:
+        start_index = 0
+    else:
+        start_index = np.where(freq>=wilson_freq)[0][0]
+    
+    if freq[-1] <= fsc_freq:
+        end_index = len(freq)
+    else:
+        end_index = np.where(freq>=fsc_freq)[0][0]
     
     xdata = freq[start_index:end_index]**2
     ydata = np.log(amplitude[start_index:end_index])
@@ -417,7 +490,48 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
     else:
         return b_factor
 
-def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, fsc_cutoff):
+def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end=None):
+    '''
+    Function to calculate the deviations per frequency from a scaled theoretical profile
+
+    Parameters
+    ----------
+    scaled_theoretical_profile : TYPE
+        DESCRIPTION.
+    wilson_cutoff : TYPE
+        DESCRIPTION.
+    fsc_cutoff : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    deviations : numpy.ndarray
+    deviations = scaled_theoretical - exponential_fit
+
+    '''
+    bfactor, amp = estimate_bfactor_standard(freq, scaled_theoretical_profile, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, 
+                                             return_amplitude=True)
+    
+    exponential_fit = amp * np.exp(bfactor * 0.25 * freq**2)
+    deviations = scaled_theoretical_profile / exponential_fit
+    
+    deviation_freq_start_freq = 1/deviation_freq_start
+    
+    
+    start_index = np.where(freq>=deviation_freq_start_freq)[0][0]
+    deviations[:start_index] = 1
+    
+    if deviation_freq_end is not None:
+        deviation_freq_end_freq = 1/deviation_freq_end
+        end_index = np.where(freq>=deviation_freq_end_freq)[0][0]
+        deviations[end_index:] = 1
+    
+    return deviations, exponential_fit
+    
+    
+    
+
+def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, fsc_cutoff, return_bfactor_properties=False):
     '''
     Function to scale an input theoretical profile to a reference profile
 
@@ -458,8 +572,10 @@ def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, 
     amplitude_scaled = amp_scaling_factor * scale_amplitude * np.exp(bfactor_diff * freq**2 / 4)
     
     
-
-    return (freq,amplitude_scaled)
+    if return_bfactor_properties:
+        return (freq,amplitude_scaled), (bfactor_reference, fit_amp_reference)
+    else:
+        return (freq, amplitude_scaled)
     
 def get_debye_statistics(radial_profiles_using_pdb): 
     import sys
@@ -651,8 +767,16 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
     start_freq = 1 / wilson_cutoff
     end_freq = 1/fsc_cutoff
     
-    start_index = np.where(freq>=start_freq)[0][0]
-    end_index = np.where(freq>=end_freq)[0][0]
+    if freq[0] >= start_freq:
+        start_index = 0
+    else:
+        start_index = np.where(freq>=start_freq)[0][0]
+    
+    if freq[-1] <= end_freq:
+        end_index = len(freq)
+    else:
+        end_index = np.where(freq>=end_freq)[0][0]
+    
     x_data = freq[start_index:end_index]**2
     y_data = np.log(amplitudes[start_index:end_index])
     
