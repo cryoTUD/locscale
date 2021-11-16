@@ -57,7 +57,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, ref_profile, scaled_theoretical_amplitude, 
                                                                        wilson_cutoff=scale_factor_arguments['wilson'], 
                                                                        fsc_cutoff=scale_factor_arguments['nyquist'], 
-                                                                       deviation_freq_start=scale_factor_arguments['wilson'], deviation_freq_end=None, 
+                                                                       deviation_freq_start=scale_factor_arguments['wilson'], deviation_freq_end=scale_factor_arguments['fsc_cutoff'], 
                                                                        magnify=scale_factor_arguments['boost_secondary_structure'])
         
         
@@ -336,7 +336,7 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
     output_filename = args.outfile
     if args.dev_mode:
-        output_filename = args.outfile[:-4]+"_devmode.mrc"
+        output_filename = output_filename[:-4]+"_devmode.mrc"
     save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
     if args.symmetry != "C1":
@@ -344,10 +344,10 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         print("Imposing a symmetry condition of {}".format(args.symmetry))
         import emda.emda_methods as em
         
-        LocScaleVol_sym = em.symmetry_average([args.outfile,],[resolution],pglist=[args.symmetry])
-        output_filename = args.outfile[:-4]+"_symmetrised.mrc"
+        LocScaleVol_sym = em.symmetry_average([output_filename],[resolution],pglist=[args.symmetry])
+        output_filename = output_filename[:-4]+"_symmetrised.mrc"
 
-        save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
+        save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
     make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
     
 
