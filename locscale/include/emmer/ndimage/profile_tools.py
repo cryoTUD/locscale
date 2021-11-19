@@ -171,8 +171,9 @@ def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoreti
     if magnify > 1:
         f = magnification_function(magnify)
         deviated_reference_profile = reference_profile * f(deviations)
+        #deviated_reference_profile = np.log(reference_profile) + magnify * deviations
     else:
-        deviated_reference_profile = reference_profile * deviations
+        deviated_reference_profile = np.log(reference_profile) * deviations
     
     return deviated_reference_profile, exponential_fit
     
@@ -513,18 +514,20 @@ def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff
                                              return_amplitude=True)
     
     exponential_fit = amp * np.exp(bfactor * 0.25 * freq**2)
+    
     deviations = scaled_theoretical_profile / exponential_fit
+    #deviations = np.log(scaled_theoretical_profile) - np.log(exponential_fit)
     
     deviation_freq_start_freq = 1/deviation_freq_start
     
-    
     start_index = np.where(freq>=deviation_freq_start_freq)[0][0]
     deviations[:start_index] = 1
-    
+    #deviations[:start_index] = 0
     if deviation_freq_end is not None:
         deviation_freq_end_freq = 1/deviation_freq_end
         end_index = np.where(freq>=deviation_freq_end_freq)[0][0]
         deviations[end_index:] = 1
+        #deviations[end_index:] = 0
     
     return deviations, exponential_fit
     

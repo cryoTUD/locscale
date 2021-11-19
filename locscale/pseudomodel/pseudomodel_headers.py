@@ -117,7 +117,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         fdr = fdr
         fdr_mask, fdr_threshold = compute_FDR_confidenceMap_easy(
             emmap, apix=apix, fdr=fdr, window_size=window_size, 
-            lowPassFilter_resolution=filter_cutoff)
+            lowPassFilter_resolution=filter_cutoff, remove_temp_files=False)
         
         print("FDR threshold found to be: \t", fdr_threshold)
         emmap_path_without_ext = emmap_path[:-4]

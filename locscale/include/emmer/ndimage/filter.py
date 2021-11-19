@@ -62,6 +62,32 @@ def high_pass_filter(im, cutoff, apix):
     im_filtered = np.fft.irfftn(im_fft_filtered)
     return im_filtered
 
+def band_pass_filter(im, cutoff_lims, apix):
+    '''
+    
+
+    Parameters
+    ----------
+    im : TYPE
+        DESCRIPTION.
+    cutoff_lims : list
+        DESCRIPTION.
+    apix : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    low_pass_filter_cutoff = min(cutoff_lims)
+    high_pass_filter_cutoff = max(cutoff_lims)
+    
+    im_low_pass = low_pass_filter(im, low_pass_filter_cutoff, apix)
+    im_high_pass = high_pass_filter(im_low_pass, high_pass_filter_cutoff, apix)
+    
+    return im_high_pass
+
 def apply_filter_to_map(emmap_path,dmin,output_filename=None):
     '''
     This function applies a low pass tanh filter to a MRC file given the map and filter cutoff as input

@@ -35,15 +35,58 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
                           use_theoretical_profile=True, check_scaling=False):
     
     from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, add_deviations_to_reference_profile
+    
     #print("checkScaling", check_scaling)
     #print("useTheoretical", use_theoretical_profile)
-    if use_theoretical_profile:
+    if scale_factor_arguments['no_reference']:
+        use_theoretical_profile = False
+        from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard
+        theoretical_profile_tuple = get_theoretical_profile(length=len(em_profile),apix=apix)
+        freq = theoretical_profile_tuple[0]
+        scaled_theoretical_amplitude = theoretical_profile_tuple[1]
+        wilson_cutoff = scale_factor_arguments['wilson']
+        fsc_cutoff = scale_factor_arguments['fsc_cutoff']
+        b_sharpen, amplitude = estimate_bfactor_standard(freq, em_profile, wilson_cutoff, fsc_cutoff, return_amplitude=True)
+        sharpening_profile = np.exp(0.25 * -1*b_sharpen * freq**2)
+        scaled_reference_profile = em_profile * sharpening_profile
+        fsc_filtered_reference_profile = merge_two_profiles(scaled_reference_profile, np.zeros(len(freq)), freq, smooth=10, d_cutoff=fsc_cutoff)
+        
+        deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, fsc_filtered_reference_profile, scaled_theoretical_amplitude, 
+                                                                       wilson_cutoff=scale_factor_arguments['wilson'], 
+                                                                       fsc_cutoff=scale_factor_arguments['nyquist'], 
+                                                                       deviation_freq_start=scale_factor_arguments['wilson'], 
+                                                                       deviation_freq_end=scale_factor_arguments['fsc_cutoff'], 
+                                                                       magnify=scale_factor_arguments['boost_secondary_structure'])
+        
+        
+        reference_profile_for_scaling = deviated_reference_profile
+        if check_scaling:
+            temporary_dictionary = {}
+            temporary_dictionary['em_profile'] = em_profile
+            temporary_dictionary['input_ref_profile'] = fsc_filtered_reference_profile
+            temporary_dictionary['freq'] = freq
+            temporary_dictionary['theoretical_amplitude'] = theoretical_profile_tuple[1]
+            temporary_dictionary['scaled_theoretical_amplitude'] = scaled_theoretical_amplitude
+            temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
+            temporary_dictionary['fsc_filtered_reference_profile'] = fsc_filtered_reference_profile
+            temporary_dictionary['deviated_reference_profile'] = deviated_reference_profile
+            temporary_dictionary['exponential_fit'] = exp_fit
+            temporary_dictionary['bfactor'] = b_sharpen
+            temporary_dictionary['amplitude'] = amplitude
+            temporary_dictionary['scaling_condition'] = scale_factor_arguments
+    
+    elif use_theoretical_profile:
         theoretical_profile_tuple = get_theoretical_profile(length=len(ref_profile),apix=apix)
         freq = theoretical_profile_tuple[0]
+        
+        num_atoms = ref_profile[0]
+        mol_weight = num_atoms * 16  # daltons 
+        wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
+
         reference_profile_tuple = (freq, ref_profile)
         
-        scaled_theoretical_tuple = scale_profiles(reference_profile_tuple, theoretical_profile_tuple,
-                                                  wilson_cutoff=scale_factor_arguments['high_freq'], fsc_cutoff=scale_factor_arguments['nyquist'], return_bfactor_properties=False)
+        scaled_theoretical_tuple,(bfactor,amp) = scale_profiles(reference_profile_tuple, theoretical_profile_tuple,
+                                                  wilson_cutoff=wilson_cutoff_local, fsc_cutoff=scale_factor_arguments['nyquist'], return_bfactor_properties=True)
         
         scaled_theoretical_amplitude = scaled_theoretical_tuple[1]
         
@@ -51,14 +94,23 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         smooth = scale_factor_arguments['smooth']
         
         ## Using merge_profile
-        scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=smooth,d_cutoff=scale_factor_arguments['wilson'])
+        scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=smooth,d_cutoff=wilson_cutoff_local)
         
         ## Using deviations calculated directly from scaled theoretical profile
+        deviations_begin = wilson_cutoff_local
+        deviations_end = scale_factor_arguments['nyquist']
+        magnify = scale_factor_arguments['boost_secondary_structure']
         deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, ref_profile, scaled_theoretical_amplitude, 
-                                                                       wilson_cutoff=scale_factor_arguments['wilson'], 
+                                                                       wilson_cutoff=wilson_cutoff_local, 
                                                                        fsc_cutoff=scale_factor_arguments['nyquist'], 
+<<<<<<< HEAD
+                                                                       deviation_freq_start=wilson_cutoff_local, 
+                                                                       deviation_freq_end=deviations_end, 
+                                                                       magnify=magnify)
+=======
                                                                        deviation_freq_start=scale_factor_arguments['wilson'], deviation_freq_end=scale_factor_arguments['fsc_cutoff'], 
                                                                        magnify=scale_factor_arguments['boost_secondary_structure'])
+>>>>>>> bb36f854e26805e9e4e5ab3490759aa62675a3e9
         
         
         
@@ -73,6 +125,12 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
             temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
             temporary_dictionary['deviated_reference_profile'] = deviated_reference_profile
             temporary_dictionary['exponential_fit'] = exp_fit
+            temporary_dictionary['bfactor'] = bfactor
+            temporary_dictionary['amplitude'] = amp
+            temporary_dictionary['local_wilson'] = wilson_cutoff_local
+            temporary_dictionary['deviations_begin'] = deviations_begin
+            temporary_dictionary['deviations_end'] = deviations_end
+            temporary_dictionary['magnify'] = magnify
             temporary_dictionary['scaling_condition'] = scale_factor_arguments
     else:
         reference_profile_for_scaling = ref_profile
@@ -81,7 +139,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
-    if check_scaling and use_theoretical_profile:
+    if check_scaling and (use_theoretical_profile or scale_factor_arguments['no_reference']) :
         #print("checkScalingReport", check_scaling)
         temporary_dictionary['scale_factor'] = scale_factor
         return scale_factor, temporary_dictionary
@@ -108,9 +166,9 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     from locscale.include.confidenceMapUtil import FDRutil
     import pickle
     
-    if use_theoretical_profile:
-        print("Using theoretical profiles for Local Scaling with the following parameters: \n")
-        print(scale_factor_arguments)
+    #if use_theoretical_profile:
+    #    print("Using theoretical profiles for Local Scaling with the following parameters: \n")
+    #    print(scale_factor_arguments)
     sharpened_vals = []
     central_pix = round_up_proper(wn / 2.0)
     total = (masked_xyz_locs - wn / 2).shape[0]
@@ -345,11 +403,14 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         import emda.emda_methods as em
         
         LocScaleVol_sym = em.symmetry_average([output_filename],[resolution],pglist=[args.symmetry])
+<<<<<<< HEAD
+        output_filename = args.outfile[:-4]+"_symmetrised.mrc"
+=======
         output_filename = output_filename[:-4]+"_symmetrised.mrc"
+>>>>>>> bb36f854e26805e9e4e5ab3490759aa62675a3e9
 
         save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
     make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
     
-
     return LocScaleVol
 

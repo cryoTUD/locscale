@@ -60,7 +60,8 @@ cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
 cmdl_parser.add_argument('--dev_mode', action='store_true', default=False,
                          help='If true, this will force locscale to use the theoretical profile even if model map present and will not check for user input consistency')
 cmdl_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
-
+cmdl_parser.add_argument('--no_reference', action='store_true', default=False,
+                         help='Run locscale without using any reference information')
 
 def print_arguments(args):
     print('\n  LocScale Arguments\n')
@@ -123,6 +124,13 @@ def launch_amplitude_scaling(args):
         
         ['verbose'] : bool          | Verbose parameter
         ['win_bleed_pad'] : bool    | Window bleed and pad         
+        
+        ['bfactor_info'] : list     | Information about bfactors, slopes and breakpoints from PWLF
+        ['fsc_resolution'] : float  | FSC resolution
+        ['PWLF_fit'] : float        | R^2 of PWLF for the radial profile of the input EM map
+        ['emmap_path'] : str        | Em map path (after running mapmask command)
+        ['mask_path'] : str         | Mask path (after running mapmask command)
+        
         '''
         
         print("You can find the scaled map here: {}".format(args.outfile))
@@ -144,7 +152,7 @@ def launch_amplitude_scaling(args):
                 print_start_banner(start_time)
                 if args.verbose:
                     print_arguments(args)
-                    copied_args = change_directory(args, "processing_files")
+                    copied_args = change_directory(args, args.output_processing_files)
                 
                 parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
             
