@@ -82,7 +82,7 @@ def calculate_fsc(ps1,ps2,radii,map_shape):
     listfreq, listfsc, listnsf = zip(*sorted(zip(list_radii, list_fsc, list_nsf))) 
     return listfreq,listfsc,listnsf
 
-def plot_fscs(dict_points,outfile,xlabel=None,ylabel=None,map_apix=1.0,
+def plot_fscs_old(dict_points,outfile,xlabel=None,ylabel=None,map_apix=1.0,
               xlim=None,ylim=None,line=True,marker=True,lstyle=True,
               maxRes=1.5,minRes=20.0):
     '''
@@ -208,7 +208,7 @@ def plot_fscs(freq, list_of_fsc, colors=['r','g','b','k','y','m'], legends=None,
     ax1.set_ylabel('FSC',fontsize=font)
     ax2.set_xlabel('$d [\AA]$',fontsize=font)
 
-def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=16, legend=None):
+def plot_fsc_maps(input_map_1, input_map_2, apix, input_mask=None, calc_fsc=None,font=16, legend=None, title=None):
 
     import matplotlib.pyplot as plt
     from scipy.interpolate import interp1d
@@ -217,14 +217,15 @@ def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=
     
     emmap_1 = parse_input(input_map_1)
     emmap_2 = parse_input(input_map_2)
-    mask = parse_input(input_mask)
     
-    masked_emmap_1 = mask*emmap_1
-    masked_emmap_2 = mask*emmap_2
-    fsc = calculate_fsc_maps(masked_emmap_1, masked_emmap_2)
+    if input_mask is not None:
+        mask = parse_input(input_mask)
+        masked_emmap_1 = mask*emmap_1
+        masked_emmap_2 = mask*emmap_2
+        fsc = calculate_fsc_maps(masked_emmap_1, masked_emmap_2)
+    else:
+        fsc = calculate_fsc_maps(emmap_1, emmap_2)
     freq = frequency_array(fsc, apix=apix)
-    
-    
     
     ## get relation between freq and fsc
     f = interp1d(fsc, freq)
@@ -238,7 +239,9 @@ def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=
     ax1.plot(freq,fsc, 'b')
     ax1.plot(freq,np.ones(len(fsc))*0.143,'k--')  
     ax1.plot(freq,np.ones(len(fsc))*0.5,'k-')  
-        
+    
+    if title is not None:
+        ax1.set_title(title)
     ax2.set_xticks(ax1.get_xticks())
     ax2.set_xbound(ax1.get_xbound())
     ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
@@ -251,9 +254,14 @@ def plot_fsc_maps(input_map_1, input_map_2, input_mask, apix, calc_fsc=0.5,font=
     ax2.set_xlabel('$d [\AA]$',fontsize=font)
     
     
-    fsc_value = f(calc_fsc)
+    if calc_fsc is not None:
+        fsc_value = f(calc_fsc)
     
-    return fig, fsc_value
+        return fig, fsc_value
+    else:
+        return fig
+    
+    
 
 
 def get_fsc_filter(input_map_1, input_map_2, input_mask, apix):

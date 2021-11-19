@@ -113,8 +113,8 @@ def validation_metrics(args, parsed_inputs_dict, locscale_path):
     emmap_kurtosis = map_quality_kurtosis(emmap_path, mask_path)
     locscale_kurtosis = map_quality_kurtosis(locscale_path, mask_path)
     
-    #emmap_adjusted_surface_area = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution=fsc_resolution)
-    #locscale_adjusted_surface_area = calculate_adjusted_surface_area(locscale_path, mask_path, fsc_resolution=fsc_resolution)
+    emmap_adjusted_surface_area = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution=fsc_resolution)
+    locscale_adjusted_surface_area = calculate_adjusted_surface_area(locscale_path, mask_path, fsc_resolution=fsc_resolution)
     
     emmap_debye_slope = measure_debye_pwlf(emmap_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
     locscale_debye_slope = measure_debye_pwlf(locscale_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
@@ -128,6 +128,8 @@ def validation_metrics(args, parsed_inputs_dict, locscale_path):
         'locscale_kurtosis': locscale_kurtosis,
         'emmap_debye_slope':emmap_debye_slope,
         'locscale_debye_slope':locscale_debye_slope,
+        'emmap_adjusted_surface_area':emmap_adjusted_surface_area,
+        'locscale_adjusted_surface_area':locscale_adjusted_surface_area,
         'emmap_masked_local_r_squared_skew_kurtosis':emmap_local_r_squared_skew_kurtosis,
         'emmap_masked_local_r_squared_mean_variance':emmap_local_r_squared_mean_variance,
         'locscale_local_r_squared_skew_kurtosis':locscale_local_r_squared_skew_kurtosis,
@@ -290,7 +292,7 @@ def print_locscale_quality_metrics(parsed_inputs_dict, locscale_map):
     unsharpened_kurtosis = map_quality_kurtosis(parsed_inputs_dict['emmap_path'], parsed_inputs_dict['mask_path'])
     
     map_quality = {}
-    map_quality['kurtosis_unsharpened (unmasked)'] = round(unsharpened_kurtosis,2)
+    map_quality['kurtosis_unsharpened'] = round(unsharpened_kurtosis,2)
     map_quality['kurtosis_locscale'] = round(map_kurtosis,2)
     map_quality['debye_slope_unsharpened'] = debye_slope_unsharp
     map_quality['debye_slope_locscale'] = round(debye_slope,1)
@@ -353,6 +355,8 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     from matplotlib.backends.backend_pdf import PdfPages
     import os
     import mrcfile
+    from locscale.include.emmer.ndimage.fsc_util import plot_fsc_maps
+    
     ## Input-Output characteristics
     locscale_map = mrcfile.open(locscale_path).data
     
@@ -368,26 +372,29 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     else:
         emmap = parsed_input['emmap']
         modmap = parsed_input['modmap']
-        
+    print("1) Padded and cropped")        
+    print(parsed_input['apix'])
+    print(emmap.shape, modmap.shape, locscale_map.shape)
     rp_emmap = compute_radial_profile(emmap)
     rp_modmap = compute_radial_profile(modmap)
     rp_locscale = compute_radial_profile(locscale_map)
     freq = frequency_array(rp_emmap, apix=parsed_input['apix'])
-
+    print("2) Calculated radial profiles")
     radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],
                                              legends=['input_emmap', 'model_map','locscale_map'])
     
     emmap_section_fig = plot_emmap_section(parsed_input['emmap'], title="Input")
     
     locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
-    
+    print("3) Plotted map sections")
     stats_table = gather_statistics(parsed_input)
-    
+    print("4) Gathered statistics")
     input_table = print_input_arguments(args)
-    
+    print("5) Printed input arguments")
     map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
+    print("6) Printed locscale quality metrics")
     quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
-    
+    print("7) validation metrics done")
     local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
                                                          title_text="Emmap local analysis: skew and kurtosis")
     local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
@@ -398,17 +405,20 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
                                                          title_text="Locscale local analysis: mean and variance")
     
+    fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map")
+    
     pdf = PdfPages(pdffile)
     pdf.savefig(input_table)
     pdf.savefig(radial_profile_fig)
+    pdf.savefig(fsc_figure)
     pdf.savefig(emmap_section_fig)
     pdf.savefig(locscale_section_fig)
     pdf.savefig(map_quality_table)
     pdf.savefig(stats_table)
-    pdf.savefig(local_histogram_analysis_skew_kurt_emmap_fig)
-    pdf.savefig(local_histogram_analysis_skew_kurt_locscale_fig)
-    pdf.savefig(local_histogram_analysis_mean_var_emmap_fig)
-    pdf.savefig(local_histogram_analysis_mean_var_locscale_fig)
+ #   pdf.savefig(local_histogram_analysis_skew_kurt_emmap_fig)
+ #   pdf.savefig(local_histogram_analysis_skew_kurt_locscale_fig)
+ #   pdf.savefig(local_histogram_analysis_mean_var_emmap_fig)
+ #   pdf.savefig(local_histogram_analysis_mean_var_locscale_fig)
     
     if parsed_input['use_theoretical']:
         pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
@@ -449,11 +459,12 @@ def plot_pickle_output(folder):
     ref_profile = audit_scaling[key]['input_ref_profile']
     theoretical_profile = audit_scaling[key]['theoretical_amplitude']
     scaled_theoretical = audit_scaling[key]['scaled_theoretical_amplitude']
-    merged_profile = audit_scaling[key]['scaled_reference_profile']
+    deviated_profile = audit_scaling[key]['deviated_reference_profile']
+    exponential_fit = audit_scaling[key]['exponential_fit']
     
         
         
-    fig=plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, merged_profile],legends=['em_profile','ref_profile','th profile','scaled th profile','merged'])
+    fig=plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, deviated_profile, exponential_fit],legends=['em_profile','ref_profile','th profile','scaled th profile','Deviated profile','exponential fit'])
     
     return fig
 

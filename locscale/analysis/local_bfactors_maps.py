@@ -11,12 +11,12 @@ import os
 import numpy as np
 import random
 from tqdm import tqdm
-emdid = "5778 - random pseudomodel"
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/parametric_analysis/Pseudomodel_method_tests/bfactor_correlation"
-pseudomap_path = os.path.join(folder,"emd5778_kick_pseudomodel_refmac_refined_4locscale_C4_symmetry.mrc")
+emdid = "5778"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/emd5778"
+pseudomap_path = os.path.join(folder,"using_pseudoatomic_model.mrc")
 atomic_map_path = os.path.join(folder,"using_atomic_model.mrc")
 resmap_path = os.path.join(folder,"emd5778_map_resmap.mrc")
-mask_path = os.path.join(folder,"emd5778_mask.mrc")
+mask_path = os.path.join(folder,"pdb3j5p_mask.mrc")
 
 pseudomap = mrcfile.open(pseudomap_path).data
 modmap = mrcfile.open(atomic_map_path).data
@@ -31,7 +31,7 @@ resolution_limits = (2,8)
 apix = mrcfile.open(mask_path).voxel_size.x
 
 ## Get the following from the report generated
-high_frequency_cutoff = 9.69
+high_frequency_cutoff = 10
 fsc_cutoff = 3.4
 boxsize = 22
 
@@ -111,7 +111,7 @@ for center in tqdm(random_centers, desc="Analysing"):
         
         rscc_profile = compute_real_space_correlation(rad_profile_1, rad_profile_2)
         
-        analysis[center] = [local_resolution,abs(bfactor_1),abs(bfactor_2), abs(bfactor_3), amp_1, amp_2, amp_3,radial_distance]
+        analysis[center] = [local_resolution,(bfactor_1),(bfactor_2), (bfactor_3), amp_1, amp_2, amp_3,radial_distance]
     except:
         print("Error at",center)
         
@@ -130,4 +130,5 @@ sns.relplot(data=df,x='bfactor_1',y='bfactor_2')#,hue='local_resolution', hue_no
 plt.title("Correlation plots for EMD: "+emdid)
 plt.xlabel("Local estimate bfactor from pseudoatomic model")
 plt.ylabel("Local estimate bfactor from atomic model")
+print("Correlation: {:.2f}".format(df['bfactor_1'].corr(df['bfactor_2'])))
 #plot_radial_profile(freq, [rad_profile_1, rad_profile_2, rad_profile_3], legends=["local pseudomap","local atomic map","local emmap"])

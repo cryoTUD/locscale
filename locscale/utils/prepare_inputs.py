@@ -221,7 +221,7 @@ def prepare_mask_and_maps_for_scaling(args):
     else:
         molecular_weight = None
 
-    if args.model_map is None:
+    if args.model_map is None and not args.no_reference:
         
         pdb_path = args.model_coordinates
         if pdb_path is not None:
@@ -272,12 +272,28 @@ def prepare_mask_and_maps_for_scaling(args):
         
         xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
-    else:
+    elif args.model_map is not None and not args.no_reference:
         scale_using_theoretical_profile = False ## If a model map is provided, assume that it is from an atomic model thus set this flag as False no matter what the user input 
         modmap_path = args.model_map
+        model_resolution = args.model_resolution
+        if model_resolution is not None:
+            if verbose:
+                print("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
+            from locscale.include.emmer.ndimage.filter import low_pass_filter
+            from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+            
+            pseudo_map_unfiltered_data = mrcfile.open(modmap_path).data
+            pseudo_map_filtered_data = low_pass_filter(im=pseudo_map_unfiltered_data, cutoff=model_resolution, apix=apix)
+            
+            filename = modmap_path[:-4]+"_filtered.mrc"
+            save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, apix=apix)
+            
+            modmap_path = filename
         xyz_modmap_path = run_mapmask(modmap_path)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data        
-        
+    else:
+        print("Running locscale without using any reference")
+        xyz_modmap = np.ones(xyz_emmap.shape)
     
     if args.window_size is None:   ## Use default window size of 25 A
         wn = round_up_to_even(25 / apix)
@@ -348,6 +364,7 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments['nyquist'] = nyquist
     scale_factor_arguments['smooth'] = smooth_factor
     scale_factor_arguments['boost_secondary_structure'] = boost_secondary_structure
+    scale_factor_arguments['no_reference'] = args.no_reference
     
     if verbose:
         
