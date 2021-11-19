@@ -103,14 +103,12 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, ref_profile, scaled_theoretical_amplitude, 
                                                                        wilson_cutoff=wilson_cutoff_local, 
                                                                        fsc_cutoff=scale_factor_arguments['nyquist'], 
-<<<<<<< HEAD
+
                                                                        deviation_freq_start=wilson_cutoff_local, 
                                                                        deviation_freq_end=deviations_end, 
                                                                        magnify=magnify)
-=======
-                                                                       deviation_freq_start=scale_factor_arguments['wilson'], deviation_freq_end=scale_factor_arguments['fsc_cutoff'], 
-                                                                       magnify=scale_factor_arguments['boost_secondary_structure'])
->>>>>>> bb36f854e26805e9e4e5ab3490759aa62675a3e9
+
+
         
         
         
@@ -403,11 +401,8 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         import emda.emda_methods as em
         
         LocScaleVol_sym = em.symmetry_average([output_filename],[resolution],pglist=[args.symmetry])
-<<<<<<< HEAD
-        output_filename = args.outfile[:-4]+"_symmetrised.mrc"
-=======
+
         output_filename = output_filename[:-4]+"_symmetrised.mrc"
->>>>>>> bb36f854e26805e9e4e5ab3490759aa62675a3e9
 
         save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
     make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
