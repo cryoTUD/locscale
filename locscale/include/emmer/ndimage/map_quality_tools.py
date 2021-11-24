@@ -99,7 +99,7 @@ def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
     
     return sharpened_map
     
-def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_highest=300, b_lowest=0, mask_emmap=True):
+def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_highest=300, b_lowest=-100, mask_emmap=True):
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile, estimate_bfactor_through_pwlf
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -112,6 +112,7 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
     origin = mrcfile.open(emmap_path).header.origin.tolist()
     
     mask = mrcfile.open(mask_path).data
+    mask = (mask==1).astype(np.int_)
     
     if mask_emmap:
         emmap = emmap * mask
@@ -137,6 +138,10 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
     sharpest_map = apply_b_sharpen(emmap, apix, b_sharpen=sharpening_bfactor, d_cut = 1/fsc_cutoff)
     most_blurred_map = apply_b_sharpen(emmap, apix, b_sharpen=blurring_bfactor, d_cut = 1/fsc_cutoff)
     
+    bfactor_sharpest_map = estimate_bfactor_through_pwlf(freq, compute_radial_profile(sharpest_map), wilson_cutoff, fsc_cutoff)
+    bfactor_blurred_map = estimate_bfactor_through_pwlf(freq, compute_radial_profile(most_blurred_map), wilson_cutoff, fsc_cutoff)
+    
+    print("Finding adjusted surface area based on sharpest map with bfactor {:.2f} and most blurred map with bfactor {:.2f}".format(bfactor_sharpest_map, bfactor_blurred_map))
     
     scale_factor, asa_blurred, asa_sharpened = find_c_scale(
         sharpest_map, most_blurred_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
@@ -148,12 +153,12 @@ def calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution, b_hig
     
     adjusted_surface_area = surface_area_emmap_at_reference_threshold - scale_factor * num_distinct_regions_at_reference_threshold
     
-    print("Adjusted surface area measured to be: {:.2f} nm squared".format(adjusted_surface_area/1000))
+    print("Adjusted surface area measured to be: {:.2f} nm squared".format(adjusted_surface_area/100))
     
     if adjusted_surface_area < asa_blurred or adjusted_surface_area < asa_sharpened:
         print("Calculated adjusted surface area lesser than the extreme values of bfactor considered for calculated scale factor. ")
-        print("Adjusted surface area at the most blurred: {:.2f} nm squared".format(asa_blurred/1000))
-        print("Adjusted surface area at the most sharpened: {:.2f} nm squared".format(asa_sharpened/1000))
+        print("Adjusted surface area at the most blurred: {:.2f} nm squared".format(asa_blurred/100))
+        print("Adjusted surface area at the most sharpened: {:.2f} nm squared".format(asa_sharpened/100))
     
     return adjusted_surface_area
 

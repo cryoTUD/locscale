@@ -43,6 +43,7 @@ def map_quality_kurtosis(emmap_path, mask_path=None):
     print("Map kurtosis is: {}".format(round(k,2)))
     return k
 
+
 def map_quality_pdb(emmap_path, mask_path, pdb_path, test='rscc'):
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rscc
     from locscale.include.emmer.ndimage.fsc_util import calculate_fsc_maps
