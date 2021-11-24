@@ -155,7 +155,7 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_hi
     mask_volume = mask.sum() * apix**3
     reference_mask_volume = mask_volume * 0.2  ## Thresholded at 20% of molecular volume  
     
-    print("Finding reference threshold corresponding to 20% of molecular volume determined from mask")
+    print("Finding reference threshold corresponding to 20% of molecular volume determined from mask = {} ang cubed ".format(reference_mask_volume))
     reference_threshold = find_volume_matching_threshold(emmap, reference_mask_volume, apix)
     print("Reference threshold found to be {:.2f}".format(reference_threshold))
 
