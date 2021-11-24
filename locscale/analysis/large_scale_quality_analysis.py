@@ -24,7 +24,7 @@ fsc_resolution = {}
 for data in fsc_resolutions_list:
     pdb_id = data.split("_")[0]
     resolution = float(data.split("_")[1])
-    fsc_resolution[data] = resolution
+    fsc_resolution[pdb_id] = resolution
     
 unsharpened_map_path_prefix = "EMDBmaps/"
 sharpened_map_path_prefix = "EMDBmaps/sharpened_map/"
