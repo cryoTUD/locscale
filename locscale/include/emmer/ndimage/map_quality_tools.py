@@ -10,6 +10,12 @@ Created on Tue Oct 26 13:46:15 2021
 import os
 import numpy as np
 
+def mesh_surface_area(data, threshold, apix):
+    from skimage import measure
+    print(data.min(), data.max())
+    verts, faces,_,_ = measure.marching_cubes(data, threshold)
+    surface_area = measure.mesh_surface_area(verts, faces) * apix**2
+    return surface_area
 
 def calculate_surface_area(binary_data, spacing, origin):
     from tvtk.api import tvtk
@@ -31,7 +37,7 @@ def calculate_surface_area(binary_data, spacing, origin):
 
 def calculate_surface_area_at_threshold(emmap, apix_tuple, origin, reference_threshold):
     binarised_emmap = (emmap>reference_threshold).astype(np.int_)
-    surface_area = calculate_surface_area(binarised_emmap, apix_tuple, origin)
+    surface_area = mesh_surface_area(binarised_emmap, reference_threshold, apix_tuple[0])
     return surface_area
 
 
@@ -102,7 +108,7 @@ def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
 def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
     import mrcfile
     
-    print("Calculating adjusted surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
+    print("Calculating unit surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
     apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
     apix = apix_tuple[0]
