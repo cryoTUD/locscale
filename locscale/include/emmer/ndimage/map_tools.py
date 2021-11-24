@@ -279,5 +279,20 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter
     return output_filename
     
     
+def apply_radial_profile(emmap, reference_map):
+    from locscale.include.emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_utils import parse_input
     
+    emmap = parse_input(emmap)
+    reference_map = parse_input(reference_map)
+    
+    rp_emmap = compute_radial_profile(emmap)
+    rp_reference_map, radii = compute_radial_profile(reference_map, return_indices=True)
+    
+    sf = compute_scale_factors(rp_emmap, rp_reference_map)
+    
+    scaled_map = set_radial_profile(emmap, sf, radii)
+    
+    return scaled_map
         
