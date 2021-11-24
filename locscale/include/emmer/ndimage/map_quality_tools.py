@@ -98,6 +98,41 @@ def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
     sharpened_map = set_radial_profile(emmap, scale_factors, radii)
     
     return sharpened_map
+
+def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
+    import mrcfile
+    
+    print("Calculating adjusted surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
+    emmap = mrcfile.open(emmap_path).data
+    apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
+    apix = apix_tuple[0]
+    origin = mrcfile.open(emmap_path).header.origin.tolist()
+    
+    mask = mrcfile.open(mask_path).data
+    mask = (mask==1).astype(np.int_)
+    
+    if mask_emmap:
+        emmap = emmap * mask
+    
+    mask_volume = mask.sum() * apix**3
+    reference_mask_volume = mask_volume * 0.2  ## Thresholded at 20% of molecular volume  
+    
+    print("Finding reference threshold corresponding to 20% of molecular volume determined from mask = {} ang cubed ".format(reference_mask_volume))
+    reference_threshold = find_volume_matching_threshold(emmap, reference_mask_volume, apix)
+    print("Reference threshold found to be {:.2f}".format(reference_threshold))
+    
+    surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
+        emmap, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+    
+    num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
+    
+    if num_distinct_regions_at_reference_threshold > 0:
+        unit_surface_area = surface_area_emmap_at_reference_threshold / num_distinct_regions_at_reference_threshold
+        print("Unit surface area for {} found to be {:.2f} nm squared per discontinous region".format(emmap_path, unit_surface_area / 100))
+        return unit_surface_area
+    else:
+        print("Error calculating unit surface are for {}: number of distinct regions is < 1")
+        return 0
     
 def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_highest=300, b_lowest=-100, mask_emmap=True):
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps
