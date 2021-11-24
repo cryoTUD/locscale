@@ -104,7 +104,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
                                                                        wilson_cutoff=wilson_cutoff_local, 
                                                                        fsc_cutoff=scale_factor_arguments['nyquist'], 
 
-                                                                       deviation_freq_start=wilson_cutoff_local, 
+                                                                       deviation_freq_start=deviations_begin, 
                                                                        deviation_freq_end=deviations_end, 
                                                                        magnify=magnify)
 
