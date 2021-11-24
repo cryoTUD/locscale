@@ -135,6 +135,7 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
     if num_distinct_regions_at_reference_threshold > 0:
         unit_surface_area = surface_area_emmap_at_reference_threshold / num_distinct_regions_at_reference_threshold
         print("Unit surface area for {} found to be {:.2f} nm squared per discontinous region".format(emmap_path, unit_surface_area / 100))
+        print("Number of discontinous region: {}".format(num_distinct_regions_at_reference_threshold))
         return unit_surface_area
     else:
         print("Error calculating unit surface are for {}: number of distinct regions is < 1")
