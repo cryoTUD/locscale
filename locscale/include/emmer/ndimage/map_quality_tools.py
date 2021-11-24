@@ -141,7 +141,7 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
         print("Error calculating unit surface are for {}: number of distinct regions is < 1")
         return 0
     
-def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_highest=300, b_lowest=-100, mask_emmap=True):
+def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_blurrest=-300, b_sharpest=100, mask_emmap=True):
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile, estimate_bfactor_through_pwlf
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -174,8 +174,8 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_hi
     
     current_bfactor = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff)[0]
     
-    sharpening_bfactor = current_bfactor - b_lowest 
-    blurring_bfactor = b_highest + current_bfactor
+    sharpening_bfactor = b_sharpest - current_bfactor 
+    blurring_bfactor = b_blurrest - current_bfactor
     
     sharpest_map = apply_b_sharpen(emmap, apix, b_sharpen=sharpening_bfactor, d_cut = 1/fsc_cutoff)
     most_blurred_map = apply_b_sharpen(emmap, apix, b_sharpen=blurring_bfactor, d_cut = 1/fsc_cutoff)
