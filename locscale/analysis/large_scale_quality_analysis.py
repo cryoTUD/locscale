@@ -11,7 +11,7 @@ import csv
 import pickle
 import os
 from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb
-from locscale.include.emmer.ndimage.map_quality_tools import calculate_adjusted_surface_area
+from locscale.include.emmer.ndimage.map_quality_tools import calculate_adjusted_surface_area, calculate_unit_surface_area
 
 
 parent_folder = "/tudelft/abharadwaj1/staff-umbrella/ajlab/students/MEP/2021/RB/mapdata"
@@ -70,6 +70,9 @@ for emdb_pdb in EMDB_PDB_ids:
         adjusted_surface_area_unsharpened_map = "unk"
         adjusted_surface_area_sharpened_map = "unk"
     
+    unsharpened_map_unit_surface_area = calculate_unit_surface_area(unsharpened_map_path, mask_path)
+    sharpened_map_unit_surface_area = calculate_unit_surface_area(md_locscale_path, mask_path)
+    
     map_quality_result[emdb_pdb] = {
         'masked_unsharpened_map_kurtosis':masked_unsharpened_map_kurtosis, 
         'unsharpened_map_kurtosis':unsharpened_map_kurtosis,
@@ -79,7 +82,9 @@ for emdb_pdb in EMDB_PDB_ids:
         'average_fsc_metric_unsharpened_map':average_fsc_metric_unsharpened_map,
         'average_fsc_metric_sharpened_map':average_fsc_metric_sharpened_map,
         'adjusted_surface_area_unsharpened_map':adjusted_surface_area_unsharpened_map,
-        'adjusted_surface_area_sharpened_map':adjusted_surface_area_sharpened_map}
+        'adjusted_surface_area_sharpened_map':adjusted_surface_area_sharpened_map, 
+        'unsharpened_map_unit_surface_area':unsharpened_map_unit_surface_area,
+        'sharpened_map_unit_surface_area':sharpened_map_unit_surface_area}
 
 
 with open(pickle_output_file, "wb") as result_file:
