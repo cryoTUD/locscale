@@ -176,7 +176,9 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_hi
     bfactor_sharpest_map = estimate_bfactor_through_pwlf(freq, compute_radial_profile(sharpest_map), wilson_cutoff, fsc_cutoff)
     bfactor_blurred_map = estimate_bfactor_through_pwlf(freq, compute_radial_profile(most_blurred_map), wilson_cutoff, fsc_cutoff)
     
-    print("Finding adjusted surface area based on sharpest map with bfactor {:.2f} and most blurred map with bfactor {:.2f}".format(bfactor_sharpest_map, bfactor_blurred_map))
+    print("Current bfactor \t: {}".format(current_bfactor[0]))
+    print("Bfactor of sharpest map \t: {}".format(bfactor_sharpest_map[0]))
+    print("Bfactor of blurred map \t: {}".format(bfactor_blurred_map[0]))
     
     scale_factor, asa_blurred, asa_sharpened = find_c_scale(
         sharpest_map, most_blurred_map, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
