@@ -48,7 +48,7 @@ for emdb_pdb in EMDB_PDB_ids:
     MD_locscale_filename = "emd_{}_MD_sharpened_refit_10_blur_20.map".format(emdb_id)
     
     unsharpened_map_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
-    mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
+    mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
     md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
     pdb_path = os.path.join(parent_folder, emdb_pdb, pdb_path_prefix, pdb_filename)
     
