@@ -110,7 +110,7 @@ def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
     
     return sharpened_map
 
-def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
+def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=True):
     import mrcfile
     
     print("Calculating unit surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))

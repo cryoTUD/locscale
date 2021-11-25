@@ -10,9 +10,10 @@ import numpy as np
 import csv
 import pickle
 import os
-from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb_multiple
+from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb_multiple, measure_debye_pwlf
 from locscale.include.emmer.ndimage.map_quality_tools import calculate_adjusted_surface_area, calculate_unit_surface_area
-
+from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+from locscale.pseudomodel.pseudomodel_headers import number_of_segments
 
 parent_folder = "/home/abharadwaj1/dev/new_tests_locscale/large_scale_analysis/mapdata_copy/mapdata"
 pickle_output_file = os.path.join(parent_folder, "map_quality_result.pickle")
@@ -61,6 +62,13 @@ for emdb_pdb in EMDB_PDB_ids:
     unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
     sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
     
+    unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                 fsc_cutoff=fsc_resolution_map, num_segments=number_of_segments(fsc_resolution_map))
+    
+    sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                 fsc_cutoff=fsc_resolution_map, num_segments=number_of_segments(fsc_resolution_map))
+    
+    
     pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
     rscc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['rscc']
     rscc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['rscc']
@@ -84,6 +92,8 @@ for emdb_pdb in EMDB_PDB_ids:
         'sharpened_map_kurtosis':sharpened_map_kurtosis,
         'rscc_metric_unsharpened_map':rscc_metric_unsharpened_map,
         'rscc_metric_sharpened_map':rscc_metric_sharpened_map,
+        'unsharp_map_debye_slope':unsharp_map_debye_slope,
+        'sharpened_map_debye_slope':sharpened_map_debye_slope,
         'average_fsc_metric_unsharpened_map':average_fsc_metric_unsharpened_map,
         'average_fsc_metric_sharpened_map':average_fsc_metric_sharpened_map,
         'adjusted_surface_area_unsharpened_map':adjusted_surface_area_unsharpened_map,
