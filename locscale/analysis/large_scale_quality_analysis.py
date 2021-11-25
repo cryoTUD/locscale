@@ -64,15 +64,18 @@ for emdb_pdb in EMDB_PDB_ids:
     masked_unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=mask_path)
     unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
     sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
-    num_segments=number_of_segments(fsc_resolution_map)
-    print("Calculating debye slopes using {} linear segments".format(num_segments))
-    unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                 fsc_cutoff=fsc_resolution_map, num_segments=num_segments )
-    
-    sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                 fsc_cutoff=fsc_resolution_map, num_segments=num_segments)
-    
-    
+    if calculate_asa and fsc_resolution < 5:
+        num_segments=number_of_segments(fsc_resolution_map)
+        print("Calculating debye slopes using {} linear segments".format(num_segments))
+        unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                     fsc_cutoff=fsc_resolution_map, num_segments=num_segments )
+        
+        sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                     fsc_cutoff=fsc_resolution_map, num_segments=num_segments)
+        
+    else:
+        unsharp_map_debye_slope = 0
+        sharpened_map_debye_slope = 0
     pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
     rscc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['rscc']
     rscc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['rscc']
