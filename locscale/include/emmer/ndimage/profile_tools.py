@@ -769,7 +769,10 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
     import pwlf
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments
     
-    if number_of_segments < 2:
+    if num_segments is None:
+            num_segments = number_of_segments(fsc_cutoff)
+            
+    if num_segments < 2:
         print("Number of segments = 1 using standard method of evaluating bfactor")
         bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True)
         piecewise_linfit = amplitude_zero_freq * np.exp(0.25 * bfactor * freq**2)
@@ -795,8 +798,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
         y_data = np.log(amplitudes[start_index:end_index])
         
         piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
-        if num_segments is None:
-            num_segments = number_of_segments(fsc_cutoff)
+        
         z = piecewise_linfit.fit(n_segments=num_segments)
         
         slopes = piecewise_linfit.calc_slopes()
