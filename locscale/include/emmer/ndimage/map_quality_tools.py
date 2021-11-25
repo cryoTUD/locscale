@@ -181,7 +181,7 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     num_segments = number_of_segments(fsc_resolution)
     
     current_bfactor = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff, num_segments=num_segments)[0]
-    fit = current_bfactor[-1][1]
+ 
     sharpening_bfactor = b_sharpest - current_bfactor 
     blurring_bfactor = b_blurrest - current_bfactor
     
