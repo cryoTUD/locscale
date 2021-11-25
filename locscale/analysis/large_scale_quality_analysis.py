@@ -64,12 +64,13 @@ for emdb_pdb in EMDB_PDB_ids:
     masked_unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=mask_path)
     unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
     sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
-    
+    num_segments=number_of_segments(fsc_resolution_map)
+    print("Calculating debye slopes using {} linear segments".format(num_segments))
     unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                 fsc_cutoff=fsc_resolution_map, num_segments=number_of_segments(fsc_resolution_map))
+                                                 fsc_cutoff=fsc_resolution_map, num_segments=num_segments )
     
     sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                 fsc_cutoff=fsc_resolution_map, num_segments=number_of_segments(fsc_resolution_map))
+                                                 fsc_cutoff=fsc_resolution_map, num_segments=num_segments)
     
     
     pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
