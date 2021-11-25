@@ -36,8 +36,8 @@ def calculate_surface_area(binary_data, spacing, origin):
     return surface_area
 
 def calculate_surface_area_at_threshold(emmap, apix, origin, reference_threshold):
-    binarised_emmap = (emmap>reference_threshold).astype(np.int_)
-    surface_area = mesh_surface_area(binarised_emmap, reference_threshold, apix)
+    #binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+    surface_area = mesh_surface_area(emmap, reference_threshold, apix)
     return surface_area
 
 
