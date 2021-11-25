@@ -51,18 +51,20 @@ def map_quality_pdb_multiple(list_of_emmap_path, mask_path, pdb_path):
     from locscale.include.emmer.ndimage.profile_tools import frequency_array
     
     metrics_per_emmap = {}
+    mask = mrcfile.open(mask_path).data
+    apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
+    size=mask.shape
+    st = gemmi.read_structure(pdb_path)
+    st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
+    simmap = pdb2map(st_0, apix=apix, size=size, verbose=False, set_refmac_blur=True)
+    masked_simmap = simmap * mask
+        
     for emmap_path in list_of_emmap_path:
         metric_dictionary = {}
         emmap = mrcfile.open(emmap_path).data
-        mask = mrcfile.open(mask_path).data
-        apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
-        size=emmap.shape
-        st = gemmi.read_structure(pdb_path)
-        st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
-        simmap = pdb2map(st_0, apix=apix, size=size, verbose=False, set_refmac_blur=True)
+
         
         masked_emmap = emmap * mask
-        masked_simmap = simmap * mask
         
         
         metric_dictionary['rscc'] = rscc(masked_emmap, masked_simmap)
