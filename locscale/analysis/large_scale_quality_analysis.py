@@ -10,7 +10,7 @@ import numpy as np
 import csv
 import pickle
 import os
-from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb
+from locscale.utils.map_quality import map_quality_kurtosis, map_quality_pdb_multiple
 from locscale.include.emmer.ndimage.map_quality_tools import calculate_adjusted_surface_area, calculate_unit_surface_area
 
 
@@ -33,6 +33,7 @@ pdb_path_prefix = "PDBgemmis/"
 map_quality_result = {}
 
 for emdb_pdb in EMDB_PDB_ids:
+    print(emdb_pdb)
     emdb_id = emdb_pdb.split("_")[0]
     pdb_id = emdb_pdb.split("_")[1]
     try:
@@ -57,11 +58,12 @@ for emdb_pdb in EMDB_PDB_ids:
     unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
     sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
     
-    rscc_metric_unsharpened_map = map_quality_pdb(unsharpened_map_path, mask_path, pdb_path, test='rscc')
-    rscc_metric_sharpened_map = map_quality_pdb(md_locscale_path, mask_path, pdb_path, test='rscc')
+    pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
+    rscc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['rscc']
+    rscc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['rscc']
     
-    average_fsc_metric_unsharpened_map = map_quality_pdb(unsharpened_map_path, mask_path, pdb_path, test='fsc')
-    average_fsc_metric_sharpened_map = map_quality_pdb(md_locscale_path, mask_path, pdb_path, test='fsc')
+    average_fsc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['fsc']
+    average_fsc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['fsc']
     
     if calculate_asa:
         adjusted_surface_area_unsharpened_map = calculate_adjusted_surface_area(unsharpened_map_path, fsc_resolution_map, mask_path)
