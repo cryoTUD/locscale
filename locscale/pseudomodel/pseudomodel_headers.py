@@ -31,9 +31,9 @@ def check_dependencies():
 def number_of_segments(fsc_resolution):
     if fsc_resolution < 3:
         return 4
-    elif fsc_resolution >= 3:
+    elif fsc_resolution >= 3 and fsc_resolution < 5:
         return 3
-    elif fsc_resolution >= 5:
+    elif fsc_resolution >= 5 and fsc_resolution < 6:
         return 2
     else:
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
