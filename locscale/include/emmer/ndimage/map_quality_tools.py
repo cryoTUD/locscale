@@ -36,8 +36,8 @@ def calculate_surface_area(binary_data, spacing, origin):
     return surface_area
 
 def calculate_surface_area_at_threshold(emmap, apix, origin, reference_threshold):
-    #binarised_emmap = (emmap>reference_threshold).astype(np.int_)
-    surface_area = mesh_surface_area(emmap, reference_threshold, apix)
+    binarised_emmap = (emmap>=reference_threshold).astype(np.int_)
+    surface_area = mesh_surface_area(binarised_emmap, 0.9999999, apix)
     return surface_area
 
 
@@ -109,6 +109,67 @@ def apply_b_sharpen(emmap, apix, b_sharpen, d_cut, b_blur=200, k=10):
     sharpened_map = set_radial_profile(emmap, scale_factors, radii)
     
     return sharpened_map
+
+def calculate_blob_surface_statistics(emmap_path, mask_path, mask_emmap=True):
+    def count_distinct_regions_inner(emmap, reference_threshold):
+        from skimage import measure
+        
+        binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+        labels, num_regions = measure.label(binarised_emmap, background=0, return_num=True)
+        
+        return labels, num_regions
+    
+    import mrcfile
+    print("Calculating blob surface statistics for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
+    emmap = mrcfile.open(emmap_path).data
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())[0]
+    apix = apix
+    origin = mrcfile.open(emmap_path).header.origin.tolist()
+    
+    mask = mrcfile.open(mask_path).data
+    mask = (mask==1).astype(np.int_)
+    
+    if mask_emmap:
+        emmap = emmap * mask
+    
+    mask_volume = mask.sum() * apix**3
+    reference_mask_volume = mask_volume * 0.2  ## Thresholded at 20% of molecular volume  
+    
+    print("Finding reference threshold corresponding to 20% of molecular volume determined from mask = {} ang cubed ".format(reference_mask_volume))
+    reference_threshold = find_volume_matching_threshold(emmap, reference_mask_volume, apix)
+    print("Reference threshold found to be {:.2f}".format(reference_threshold))
+    
+    labels, num_regions = count_distinct_regions_inner(emmap, reference_threshold)
+    
+    surface_area_per_region = {}
+    volume_per_region = {}
+    surface_area_to_volume = {}
+    
+    for region in np.unique(labels):
+        binarised_label = (labels==region).astype(np.int_)
+        surface_area_per_region[region] = mesh_surface_area(binarised_label, 0.999999, apix)
+        volume_per_region[region] = binarised_label.sum() * apix**3
+        surface_area_to_volume[region] = surface_area_per_region[region] /volume_per_region[region]
+    
+    
+    
+    binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+    total_surface_area = mesh_surface_area(binarised_emmap, 0.999999, apix)
+    
+    surface_area_to_volume_array = np.array(list(surface_area_to_volume.values()))
+    surface_area_array = np.array(list(surface_area_per_region.values()))
+    volume_array = np.array(list(volume_per_region))
+    
+    blob_statistics = {
+        'total_surface_area':total_surface_area,
+        'num_regions':num_regions,
+        'surface_area_to_volume_array':surface_area_to_volume_array,
+        'surface_area_array':surface_area_array,
+        'volume_array':volume_array}
+    
+    return blob_statistics
+    
+    
 
 def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=True):
     import mrcfile
