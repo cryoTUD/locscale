@@ -769,32 +769,41 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
     import pwlf
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments
     
-    start_freq = 1 / wilson_cutoff
-    end_freq = 1/fsc_cutoff
+    if number_of_segments < 2:
+        print("Number of segments = 1 using standard method of evaluating bfactor")
+        bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True)
+        piecewise_linfit = amplitude_zero_freq * np.exp(0.25 * bfactor * freq**2)
+        z = [(1/wilson_cutoff)**2, (1/fsc_cutoff)**2]
+        slopes = [bfactor / 4]
     
-    if freq[0] >= start_freq:
-        start_index = 0
     else:
-        start_index = np.where(freq>=start_freq)[0][0]
-    
-    if freq[-1] <= end_freq:
-        end_index = len(freq)
-    else:
-        end_index = np.where(freq>=end_freq)[0][0]
-    
-    x_data = freq[start_index:end_index]**2
-    y_data = np.log(amplitudes[start_index:end_index])
-    
-    piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
-    if num_segments is None:
-        num_segments = number_of_segments(fsc_cutoff)
-    z = piecewise_linfit.fit(n_segments=num_segments)
-    
-    slopes = piecewise_linfit.calc_slopes()
-    
-    bfactor = slopes[-1] * 4
-    
-    amplitude_zero_freq = piecewise_linfit.predict(0)
+        
+        start_freq = 1 / wilson_cutoff
+        end_freq = 1/fsc_cutoff
+        
+        if freq[0] >= start_freq:
+            start_index = 0
+        else:
+            start_index = np.where(freq>=start_freq)[0][0]
+        
+        if freq[-1] <= end_freq:
+            end_index = len(freq)
+        else:
+            end_index = np.where(freq>=end_freq)[0][0]
+        
+        x_data = freq[start_index:end_index]**2
+        y_data = np.log(amplitudes[start_index:end_index])
+        
+        piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
+        if num_segments is None:
+            num_segments = number_of_segments(fsc_cutoff)
+        z = piecewise_linfit.fit(n_segments=num_segments)
+        
+        slopes = piecewise_linfit.calc_slopes()
+        
+        bfactor = slopes[-1] * 4
+        
+        amplitude_zero_freq = piecewise_linfit.predict(0)
     
     if return_all:
         return bfactor, amplitude_zero_freq, (piecewise_linfit, z, slopes)

@@ -325,7 +325,7 @@ def prepare_mask_and_maps_for_scaling(args):
     wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
     smooth_factor = args.smooth_factor
     boost_secondary_structure = args.boost_secondary_structure
-    if fsc_resolution > 6:
+    if fsc_resolution >= 6:
         high_frequency_cutoff = wilson_cutoff
         nyquist = (round(2*apix*10)+1)/10
         #fsc_cutoff = fsc_resolution

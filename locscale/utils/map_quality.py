@@ -80,7 +80,7 @@ def map_quality_pdb_multiple(list_of_emmap_path, mask_path, pdb_path):
         freq = frequency_array(fsc_curve, apix=apix)
         metric_dictionary['fsc'] = fsc_curve.mean()
         metrics_per_emmap[emmap_path] = metric_dictionary
-        print(metrics_per_emmap[emmap_path])
+        print(emmap_path.split("/")[-1], metrics_per_emmap[emmap_path])
 
     return metrics_per_emmap
 
