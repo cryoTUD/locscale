@@ -151,6 +151,7 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile, estimate_bfactor_through_pwlf
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
+    from locscale.pseudomodel.pseudomodel_headers import number_of_segments
     
     print("Calculating adjusted surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
@@ -177,8 +178,10 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     rp_emmap = compute_radial_profile(emmap)
     freq = frequency_array(rp_emmap, apix=apix)
     
-    current_bfactor = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff)[0]
+    num_segments = number_of_segments(fsc_resolution)
     
+    current_bfactor = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff, num_segments=num_segments)[0]
+    fit = current_bfactor[-1][1]
     sharpening_bfactor = b_sharpest - current_bfactor 
     blurring_bfactor = b_blurrest - current_bfactor
     
