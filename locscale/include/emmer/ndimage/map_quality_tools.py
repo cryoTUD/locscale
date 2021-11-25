@@ -115,7 +115,7 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
     
     print("Calculating unit surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
-    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())[0]
     apix = apix
     origin = mrcfile.open(emmap_path).header.origin.tolist()
     
