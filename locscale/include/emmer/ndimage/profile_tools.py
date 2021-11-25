@@ -741,7 +741,7 @@ def number_of_segments(fsc_resolution):
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
         return 1
     
-def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=3):
+def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=None):
     '''
     Function to automatically find out linear region in a given radial profile 
 
@@ -766,6 +766,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
 
     '''
     import pwlf
+    from locscale.pseudomodel.pseudomodel_headers import number_of_segments
     
     start_freq = 1 / wilson_cutoff
     end_freq = 1/fsc_cutoff
@@ -784,6 +785,8 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
     y_data = np.log(amplitudes[start_index:end_index])
     
     piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
+    if num_segments is None:
+        num_segments = number_of_segments(fsc_cutoff)
     z = piecewise_linfit.fit(n_segments=num_segments)
     
     slopes = piecewise_linfit.calc_slopes()

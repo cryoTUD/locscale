@@ -36,12 +36,15 @@ map_quality_result = {}
 
 
 for emdb_pdb in EMDB_PDB_ids:
+    print("#################################################################################################### \n")
+    print("#################################################################################################### \n")
     csv_writer = open(csv_output_file, mode="a")
     print(emdb_pdb)
     emdb_id = emdb_pdb.split("_")[0]
     pdb_id = emdb_pdb.split("_")[1]
     try:
         fsc_resolution_map = fsc_resolution[pdb_id]
+        print("FSC resolution = {}".format(fsc_resolution_map))
         calculate_asa = True
     except:
         print("Unable to fetch FSC resolution for {}".format(emdb_pdb))
@@ -105,6 +108,9 @@ for emdb_pdb in EMDB_PDB_ids:
         csv_writer.write("%s,%s,%s\n"%(emdb_pdb, key, map_quality_result[emdb_pdb]))
 
     csv_writer.close()
+    
+    print("#################################################################################################### \n")
+    print("#################################################################################################### \n")
 
 with open(pickle_output_file, "wb") as result_file:
     pickle.dump(map_quality_result, result_file)
