@@ -35,9 +35,9 @@ def calculate_surface_area(binary_data, spacing, origin):
     
     return surface_area
 
-def calculate_surface_area_at_threshold(emmap, apix_tuple, origin, reference_threshold):
+def calculate_surface_area_at_threshold(emmap, apix, origin, reference_threshold):
     binarised_emmap = (emmap>reference_threshold).astype(np.int_)
-    surface_area = mesh_surface_area(binarised_emmap, reference_threshold, apix_tuple[0])
+    surface_area = mesh_surface_area(binarised_emmap, reference_threshold, apix)
     return surface_area
 
 
@@ -63,18 +63,18 @@ def find_volume_matching_threshold(emmap, reference_volume, apix, num_bins=100):
     
     return matching_threshold
 
-def find_c_scale(sharpest_map, most_blurred_map, reference_volume, apix_tuple, origin):
+def find_c_scale(sharpest_map, most_blurred_map, reference_volume, apix, origin):
     print("Calculating scale factor...")
     
-    reference_threshold_most_blurred = find_volume_matching_threshold(most_blurred_map, reference_volume, apix=apix_tuple)
+    reference_threshold_most_blurred = find_volume_matching_threshold(most_blurred_map, reference_volume, apix=apix)
     print("Reference threshold most blurred: {:.2f}".format(reference_threshold_most_blurred))
     SA_blurred = calculate_surface_area_at_threshold(
-        most_blurred_map, reference_threshold=reference_threshold_most_blurred, apix_tuple=apix_tuple, origin=origin)
+        most_blurred_map, reference_threshold=reference_threshold_most_blurred, apix=apix, origin=origin)
     
-    reference_threshold_sharpest = find_volume_matching_threshold(sharpest_map, reference_volume, apix=apix_tuple)
+    reference_threshold_sharpest = find_volume_matching_threshold(sharpest_map, reference_volume, apix=apix)
     print("Reference threshold most sharpened: {:.2f}".format(reference_threshold_sharpest))
     SA_sharpened = calculate_surface_area_at_threshold(
-        sharpest_map, reference_threshold=reference_threshold_sharpest, apix_tuple=apix_tuple, origin=origin)
+        sharpest_map, reference_threshold=reference_threshold_sharpest, apix=apix, origin=origin)
     
     num_regions_blurred = count_distinct_regions(most_blurred_map, reference_threshold_most_blurred)
     num_regions_sharpened = count_distinct_regions(sharpest_map, reference_threshold_sharpest)
@@ -115,8 +115,8 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
     
     print("Calculating unit surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
-    apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
-    apix = apix_tuple[0]
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
+    apix = apix
     origin = mrcfile.open(emmap_path).header.origin.tolist()
     
     mask = mrcfile.open(mask_path).data
@@ -133,7 +133,7 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=False):
     print("Reference threshold found to be {:.2f}".format(reference_threshold))
     
     surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
-        emmap, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+        emmap, reference_threshold=reference_threshold, apix=apix, origin=origin)
     
     num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
     
@@ -154,8 +154,8 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     
     print("Calculating adjusted surface area for: {} using mask {}".format(emmap_path.split("/")[-1], mask_path.split("/")[-1]))
     emmap = mrcfile.open(emmap_path).data
-    apix_tuple = tuple(mrcfile.open(emmap_path).voxel_size.tolist())
-    apix = apix_tuple[0]
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())[0]
+    apix = apix
     origin = mrcfile.open(emmap_path).header.origin.tolist()
     
     mask = mrcfile.open(mask_path).data
@@ -193,10 +193,10 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     print("Bfactor of blurred map \t: {}".format(bfactor_blurred_map[0]))
     
     scale_factor, asa_blurred, asa_sharpened = find_c_scale(
-        sharpest_map, most_blurred_map, reference_volume=reference_mask_volume, apix_tuple=apix_tuple, origin=origin)
+        sharpest_map, most_blurred_map, reference_volume=reference_mask_volume, apix=apix, origin=origin)
     
     surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
-        emmap, reference_threshold=reference_threshold, apix_tuple=apix_tuple, origin=origin)
+        emmap, reference_threshold=reference_threshold, apix=apix, origin=origin)
     
     num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
     
