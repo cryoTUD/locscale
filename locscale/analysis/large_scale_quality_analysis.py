@@ -105,7 +105,7 @@ for emdb_pdb in EMDB_PDB_ids:
         'sharpened_map_unit_surface_area':sharpened_map_unit_surface_area}
     
     for key in map_quality_result[emdb_pdb]:
-        csv_writer.write("%s,%s,%s\n"%(emdb_pdb, key, map_quality_result[emdb_pdb]))
+        csv_writer.write("%s,%s,%s\n"%(emdb_pdb, key, map_quality_result[emdb_pdb][key]))
 
     csv_writer.close()
     
