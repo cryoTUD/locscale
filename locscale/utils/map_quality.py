@@ -14,15 +14,22 @@ def measure_debye_pwlf(emmap_path, wilson_cutoff, fsc_cutoff, num_segments=3, pl
     import mrcfile
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_through_pwlf, plot_radial_profile
     
+    if fsc_cutoff > 5:
+        print("Resolution too poor to estimate debye slope. Returning zero")
+        return 0
+    
     emmap = mrcfile.open(emmap_path).data
     apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
     rp_emmap = compute_radial_profile(emmap)
     freq = frequency_array(rp_emmap, apix=apix)
     
     bfactor, amp, (fit, z, slope) = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff, num_segments=num_segments)
+
     debye_slope = abs(slope[1]-slope[2])
+
     print("Debye slope is: ",debye_slope)
     print("Breakpoints and slopes: ",1/np.sqrt(z), slope)
+    print("Fit quality", round(fit.r_squared(), 2))
     if plot_profile:
         import matplotlib.pyplot as plt
         rp_predict = np.exp(fit.predict(np.copy(freq**2)))
