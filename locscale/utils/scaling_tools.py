@@ -232,14 +232,21 @@ check_scaling=check_scaling)
         else:
             progress_bar.update(n=1)
         
-    #if mpi:
-    #    comm.barrier()
-    if audit and use_theoretical_profile:
-        import os
-        cwd = os.getcwd()
-        pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
-        with open(pickle_file_output,"wb") as audit:
-            pickle.dump(profiles_audit, audit)
+    if mpi:
+        if audit and use_theoretical_profile and rank==0:
+            import os
+            cwd = os.getcwd()
+            pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
+            with open(pickle_file_output,"wb") as audit:
+                pickle.dump(profiles_audit, audit)
+    else:
+        if audit and use_theoretical_profile:
+            import os
+            cwd = os.getcwd()
+            pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
+            with open(pickle_file_output,"wb") as audit:
+                pickle.dump(profiles_audit, audit)
+                                
         
 
     return np.array(sharpened_vals, dtype=np.float32)
