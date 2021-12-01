@@ -194,43 +194,54 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
     if audit:
         profiles_audit = {}
-    for k, j, i in masked_xyz_locs - wn / 2:
-        
-        k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
-        
-        emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
-        modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
-
-        em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
-        mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
-        
-        check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
-        
-        if check_scaling and use_theoretical_profile:
-            scale_factors,report = compute_scale_factors(em_profile, mod_profile,apix=apix,scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
-check_scaling=check_scaling)
-            profiles_audit[(k,j,i)] = report
-        else:
-            scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
-check_scaling=check_scaling)
-        
-        #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
-        map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
-
-        #if verbose:
-        #    if cnt%1000 == 0:
-        #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
-        
-
-        sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+    
+    try:
+        for k, j, i in masked_xyz_locs - wn / 2:
+            
+            k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
+            
+            emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
+            modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
+    
+            em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
+            mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
+            
+            check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
+            
+            if check_scaling and use_theoretical_profile:
+                scale_factors,report = compute_scale_factors(em_profile, mod_profile,apix=apix,scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
+    check_scaling=check_scaling)
+                profiles_audit[(k,j,i)] = report
+            else:
+                scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
+    check_scaling=check_scaling)
+            
+            #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
+            map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
+    
+            #if verbose:
+            #    if cnt%1000 == 0:
+            #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
+            
+    
+            sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+            
+            if mpi:
+                if rank == 0:
+                    pbar.update(size)
+                
+                    
+            else:
+                progress_bar.update(n=1)
+            
+    except Exception as e:
+        print("Error occured during Locscale \n")
+        print(e)
+        print(e.args)
         
         if mpi:
-            if rank == 0:
-                pbar.update(size)
-            
-                
-        else:
-            progress_bar.update(n=1)
+            print("Error occured at process: {}".format(rank))
+        raise
         
     if mpi:
         if audit and use_theoretical_profile and rank==0:
