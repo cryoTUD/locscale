@@ -113,8 +113,8 @@ def validation_metrics(args, parsed_inputs_dict, locscale_path):
     emmap_kurtosis = map_quality_kurtosis(emmap_path, mask_path)
     locscale_kurtosis = map_quality_kurtosis(locscale_path, mask_path)
     
-    emmap_adjusted_surface_area = calculate_adjusted_surface_area(emmap_path, mask_path, fsc_resolution=fsc_resolution)
-    locscale_adjusted_surface_area = calculate_adjusted_surface_area(locscale_path, mask_path, fsc_resolution=fsc_resolution)
+    emmap_adjusted_surface_area = calculate_adjusted_surface_area(emmap_path, mask_path=mask_path, fsc_resolution=fsc_resolution)
+    locscale_adjusted_surface_area = calculate_adjusted_surface_area(locscale_path, mask_path=mask_path, fsc_resolution=fsc_resolution)
     
     emmap_debye_slope = measure_debye_pwlf(emmap_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
     locscale_debye_slope = measure_debye_pwlf(locscale_path, wilson_cutoff, fsc_resolution, number_of_segments(fsc_resolution))
