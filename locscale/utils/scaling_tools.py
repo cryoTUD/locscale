@@ -82,6 +82,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         num_atoms = ref_profile[0]
         mol_weight = num_atoms * 16  # daltons 
         wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
+        wilson_cutoff_local = np.clip(wilson_cutoff_local, 1/7, 1/4)
 
         reference_profile_tuple = (freq, ref_profile)
         
