@@ -82,7 +82,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         num_atoms = ref_profile[0]
         mol_weight = num_atoms * 16  # daltons 
         wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
-        wilson_cutoff_local = np.clip(wilson_cutoff_local, 4, 7)
+        wilson_cutoff_local = np.clip(wilson_cutoff_local, scale_factor_arguments['fsc_cutoff']*1.5, scale_factor_arguments['wilson'])
 
         reference_profile_tuple = (freq, ref_profile)
         
@@ -195,53 +195,71 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     if audit:
         profiles_audit = {}
     
-    try:
-        for k, j, i in masked_xyz_locs - wn / 2:
-            
+    
+    for k, j, i in masked_xyz_locs - wn / 2:
+        
+        try:
+        
             k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
             
             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
             modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
-    
+        
             em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
             mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
-            
+                
             check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
-            
+                
             if check_scaling and use_theoretical_profile:
                 scale_factors,report = compute_scale_factors(em_profile, mod_profile,apix=apix,scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
-    check_scaling=check_scaling)
+        check_scaling=check_scaling)
                 profiles_audit[(k,j,i)] = report
             else:
                 scale_factors = compute_scale_factors(em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, use_theoretical_profile=use_theoretical_profile,
-    check_scaling=check_scaling)
-            
-            #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
+        check_scaling=check_scaling)
+                
+                #map_b_sharpened = set_radial_profile(emmap_wn, scale_factors, radii)
             map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape);
-    
-            #if verbose:
-            #    if cnt%1000 == 0:
-            #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
-            
-    
+        
+                #if verbose:
+                #    if cnt%1000 == 0:
+                #        print ('  {0} {1:.3} percent complete'.format(process_name, (cnt/total)*100))
+                
+        
             sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+        except Exception as e:
+            print("Rogue voxel detected!  \n")
+            print("Location (kji): {},{},{} \n".format(k,j,i))
+            print("Skipping this voxel for calculation \n")
+            k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
+            
+            emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
+            modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
+        
+            em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
+            mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
+            
+            print(em_profile)
+            print(mod_profile)
+                
+            print(e)
+            print(e.args)
             
             if mpi:
-                if rank == 0:
-                    pbar.update(size)
+                print("Error occured at process: {}".format(rank))
+            
+            raise
+        
+            
+        if mpi:
+            if rank == 0:
+                pbar.update(size)
                 
                     
-            else:
-                progress_bar.update(n=1)
+        else:
+            progress_bar.update(n=1)
             
-    except Exception as e:
-        print("Error occured during Locscale \n")
-        print(e)
-        print(e.args)
-        
-        if mpi:
-            print("Error occured at process: {}".format(rank))
-        raise
+    
         
     if mpi:
         if audit and use_theoretical_profile and rank==0:
