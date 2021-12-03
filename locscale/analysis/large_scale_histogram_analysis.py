@@ -42,36 +42,43 @@ def get_data():
         print("#################################################################################################### \n")
         csv_writer = open(csv_output_file, mode="a")
         print(emdb_pdb)
-        emdb_id = emdb_pdb.split("_")[0]
-        pdb_id = emdb_pdb.split("_")[1]
-
         
-        emdb_filename = "emd_{}_unsharpened.map".format(emdb_id)
-        mask_filename = "emd_{}_confidence.map".format(emdb_id)
-        pdb_filename = "PDB_{}.pdb".format(pdb_id)
-        MD_locscale_filename = "emd_{}_MD_sharpened_refit_10_blur_20.map".format(emdb_id)
-        fsc_resolution_map = fsc_resolution[pdb_id]
-        
-        unsharpened_map_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
-        mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
-        md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
-        
-        
-        _, unsharpened_skew_kurtosis_r2, unsharpened_mean_variance_r2 = local_histogram_analysis(unsharpened_map_path, mask_path, fsc_resolution_map)
-        _, sharpened_skew_kurtosis_r2, sharpened_mean_variance_r2 = local_histogram_analysis(unsharpened_map_path, mask_path, fsc_resolution_map)
-        
-        
-        map_histogram_analysis[emdb_pdb] = {
-            'unsharpened_skew_kurtosis_r2':unsharpened_skew_kurtosis_r2, 
-            'unsharpened_mean_variance_r2':unsharpened_mean_variance_r2, 
-            'sharpened_skew_kurtosis_r2':sharpened_skew_kurtosis_r2, 
-            'sharpened_mean_variance_r2':sharpened_mean_variance_r2, 
-            }
-        
-        for key in map_histogram_analysis[emdb_pdb]:
-            csv_writer.write("%s,%s,%s\n"%(emdb_pdb, key, map_histogram_analysis[emdb_pdb][key]))
+        try:
+            emdb_id = emdb_pdb.split("_")[0]
+            pdb_id = emdb_pdb.split("_")[1]
     
-        csv_writer.close()
+            
+            emdb_filename = "emd_{}_unsharpened.map".format(emdb_id)
+            mask_filename = "emd_{}_confidence.map".format(emdb_id)
+            pdb_filename = "PDB_{}.pdb".format(pdb_id)
+            MD_locscale_filename = "emd_{}_MD_sharpened_refit_10_blur_20.map".format(emdb_id)
+            fsc_resolution_map = fsc_resolution[pdb_id]
+            
+            unsharpened_map_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
+            mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
+            md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
+            
+            
+            _, unsharpened_skew_kurtosis_r2, unsharpened_mean_variance_r2 = local_histogram_analysis(unsharpened_map_path, mask_path, fsc_resolution_map)
+            _, sharpened_skew_kurtosis_r2, sharpened_mean_variance_r2 = local_histogram_analysis(unsharpened_map_path, mask_path, fsc_resolution_map)
+            
+            
+            map_histogram_analysis[emdb_pdb] = {
+                'unsharpened_skew_kurtosis_r2':unsharpened_skew_kurtosis_r2, 
+                'unsharpened_mean_variance_r2':unsharpened_mean_variance_r2, 
+                'sharpened_skew_kurtosis_r2':sharpened_skew_kurtosis_r2, 
+                'sharpened_mean_variance_r2':sharpened_mean_variance_r2, 
+                }
+            
+            for key in map_histogram_analysis[emdb_pdb]:
+                csv_writer.write("%s|%s|%s\n"%(emdb_pdb, key, map_histogram_analysis[emdb_pdb][key]))
+        
+            csv_writer.close()
+        except Exception as e:
+            print("Error occured during {}".format(emdb_pdb))
+            print(e)
+            print(e.args)
+            csv_writer.close()
         
         print("#################################################################################################### \n")
         print("#################################################################################################### \n")
