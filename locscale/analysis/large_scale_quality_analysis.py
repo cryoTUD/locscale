@@ -254,7 +254,8 @@ def analyse_results(result_type="kurtosis"):
     print("Sharpening rate = {}% with N = {}".format(round(sharpening_success_rate,2), len(sharpening_success.keys())))
     
 
-    
+get_data()
+
     
     
     

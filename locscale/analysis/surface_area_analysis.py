@@ -316,3 +316,4 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
     
 
 
+get_data()
