@@ -42,78 +42,85 @@ def get_data():
         print("#################################################################################################### \n")
         csv_writer = open(csv_output_file, mode="a")
         print(emdb_pdb)
-        emdb_id = emdb_pdb.split("_")[0]
-        pdb_id = emdb_pdb.split("_")[1]
         try:
-            fsc_resolution_map = fsc_resolution[pdb_id]
-            print("FSC resolution = {}".format(fsc_resolution_map))
-            calculate_asa = True
-        except:
-            print("Unable to fetch FSC resolution for {}".format(emdb_pdb))
-            calculate_asa = False
-        
-        emdb_filename = "emd_{}_unsharpened.map".format(emdb_id)
-        mask_filename = "emd_{}_confidence.map".format(emdb_id)
-        pdb_filename = "PDB_{}.pdb".format(pdb_id)
-        MD_locscale_filename = "emd_{}_MD_sharpened_refit_10_blur_20.map".format(emdb_id)
-        
-        unsharpened_map_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
-        mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
-        md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
-        pdb_path = os.path.join(parent_folder, emdb_pdb, pdb_path_prefix, pdb_filename)
-        
-        
-        masked_unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=mask_path)
-        unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
-        sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
-        if calculate_asa and fsc_resolution_map < 5:
-            num_segments=number_of_segments(fsc_resolution_map)
-            print("Calculating debye slopes using {} linear segments".format(num_segments))
-            unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                         fsc_cutoff=fsc_resolution_map, num_segments=num_segments )
+            emdb_id = emdb_pdb.split("_")[0]
+            pdb_id = emdb_pdb.split("_")[1]
+            try:
+                fsc_resolution_map = fsc_resolution[pdb_id]
+                print("FSC resolution = {}".format(fsc_resolution_map))
+                calculate_asa = True
+            except:
+                print("Unable to fetch FSC resolution for {}".format(emdb_pdb))
+                calculate_asa = False
             
-            sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
-                                                         fsc_cutoff=fsc_resolution_map, num_segments=num_segments)
+            emdb_filename = "emd_{}_unsharpened.map".format(emdb_id)
+            mask_filename = "emd_{}_confidence.map".format(emdb_id)
+            pdb_filename = "PDB_{}.pdb".format(pdb_id)
+            MD_locscale_filename = "emd_{}_MD_sharpened_refit_10_blur_20.map".format(emdb_id)
             
-        else:
-            unsharp_map_debye_slope = 0
-            sharpened_map_debye_slope = 0
-        pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
-        rscc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['rscc']
-        rscc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['rscc']
+            unsharpened_map_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, emdb_filename)
+            mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
+            md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
+            pdb_path = os.path.join(parent_folder, emdb_pdb, pdb_path_prefix, pdb_filename)
+            
+            
+            masked_unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=mask_path)
+            unsharpened_map_kurtosis = map_quality_kurtosis(unsharpened_map_path, mask_path=None)
+            sharpened_map_kurtosis = map_quality_kurtosis(md_locscale_path)
+            if calculate_asa and fsc_resolution_map < 5:
+                num_segments=number_of_segments(fsc_resolution_map)
+                print("Calculating debye slopes using {} linear segments".format(num_segments))
+                unsharp_map_debye_slope = measure_debye_pwlf(unsharpened_map_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                             fsc_cutoff=fsc_resolution_map, num_segments=num_segments )
+                
+                sharpened_map_debye_slope = measure_debye_pwlf(md_locscale_path, find_wilson_cutoff(mask_path=mask_path), 
+                                                             fsc_cutoff=fsc_resolution_map, num_segments=num_segments)
+                
+            else:
+                unsharp_map_debye_slope = 0
+                sharpened_map_debye_slope = 0
+            pdb_map_metrics = map_quality_pdb_multiple([unsharpened_map_path, md_locscale_path], mask_path=mask_path, pdb_path=pdb_path)
+            rscc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['rscc']
+            rscc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['rscc']
+            
+            average_fsc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['fsc']
+            average_fsc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['fsc']
+            
+            if calculate_asa:
+                adjusted_surface_area_unsharpened_map = calculate_adjusted_surface_area(unsharpened_map_path, fsc_resolution_map, mask_path)
+                adjusted_surface_area_sharpened_map = calculate_adjusted_surface_area(md_locscale_path, fsc_resolution_map, mask_path)
+            else:
+                adjusted_surface_area_unsharpened_map = "unk"
+                adjusted_surface_area_sharpened_map = "unk"
+            
+            unsharpened_map_unit_surface_area = calculate_unit_surface_area(unsharpened_map_path, mask_path)
+            sharpened_map_unit_surface_area = calculate_unit_surface_area(md_locscale_path, mask_path)
+            
+            map_quality_result[emdb_pdb] = {
+                'masked_unsharpened_map_kurtosis':masked_unsharpened_map_kurtosis, 
+                'unsharpened_map_kurtosis':unsharpened_map_kurtosis,
+                'sharpened_map_kurtosis':sharpened_map_kurtosis,
+                'rscc_metric_unsharpened_map':rscc_metric_unsharpened_map,
+                'rscc_metric_sharpened_map':rscc_metric_sharpened_map,
+                'unsharp_map_debye_slope':unsharp_map_debye_slope,
+                'sharpened_map_debye_slope':sharpened_map_debye_slope,
+                'average_fsc_metric_unsharpened_map':average_fsc_metric_unsharpened_map,
+                'average_fsc_metric_sharpened_map':average_fsc_metric_sharpened_map,
+                'adjusted_surface_area_unsharpened_map':adjusted_surface_area_unsharpened_map,
+                'adjusted_surface_area_sharpened_map':adjusted_surface_area_sharpened_map, 
+                'unsharpened_map_unit_surface_area':unsharpened_map_unit_surface_area,
+                'sharpened_map_unit_surface_area':sharpened_map_unit_surface_area}
+            
+            for key in map_quality_result[emdb_pdb]:
+                csv_writer.write("%s|%s|%s\n"%(emdb_pdb, key, map_quality_result[emdb_pdb][key]))
         
-        average_fsc_metric_unsharpened_map = pdb_map_metrics[unsharpened_map_path]['fsc']
-        average_fsc_metric_sharpened_map = pdb_map_metrics[md_locscale_path]['fsc']
-        
-        if calculate_asa:
-            adjusted_surface_area_unsharpened_map = calculate_adjusted_surface_area(unsharpened_map_path, fsc_resolution_map, mask_path)
-            adjusted_surface_area_sharpened_map = calculate_adjusted_surface_area(md_locscale_path, fsc_resolution_map, mask_path)
-        else:
-            adjusted_surface_area_unsharpened_map = "unk"
-            adjusted_surface_area_sharpened_map = "unk"
-        
-        unsharpened_map_unit_surface_area = calculate_unit_surface_area(unsharpened_map_path, mask_path)
-        sharpened_map_unit_surface_area = calculate_unit_surface_area(md_locscale_path, mask_path)
-        
-        map_quality_result[emdb_pdb] = {
-            'masked_unsharpened_map_kurtosis':masked_unsharpened_map_kurtosis, 
-            'unsharpened_map_kurtosis':unsharpened_map_kurtosis,
-            'sharpened_map_kurtosis':sharpened_map_kurtosis,
-            'rscc_metric_unsharpened_map':rscc_metric_unsharpened_map,
-            'rscc_metric_sharpened_map':rscc_metric_sharpened_map,
-            'unsharp_map_debye_slope':unsharp_map_debye_slope,
-            'sharpened_map_debye_slope':sharpened_map_debye_slope,
-            'average_fsc_metric_unsharpened_map':average_fsc_metric_unsharpened_map,
-            'average_fsc_metric_sharpened_map':average_fsc_metric_sharpened_map,
-            'adjusted_surface_area_unsharpened_map':adjusted_surface_area_unsharpened_map,
-            'adjusted_surface_area_sharpened_map':adjusted_surface_area_sharpened_map, 
-            'unsharpened_map_unit_surface_area':unsharpened_map_unit_surface_area,
-            'sharpened_map_unit_surface_area':sharpened_map_unit_surface_area}
-        
-        for key in map_quality_result[emdb_pdb]:
-            csv_writer.write("%s,%s,%s\n"%(emdb_pdb, key, map_quality_result[emdb_pdb][key]))
-    
-        csv_writer.close()
+            csv_writer.close()
+        except Exception as e:
+            print("Error occured during {}".format(emdb_pdb))
+            print(e)
+            print(e.args)
+            csv_writer.close()
+            
         
         print("#################################################################################################### \n")
         print("#################################################################################################### \n")
