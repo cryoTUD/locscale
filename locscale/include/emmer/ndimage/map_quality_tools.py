@@ -276,14 +276,3 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
     return adjusted_surface_area
 
 
-#%%
-
-
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_quality/emd5778"
-
-emmap_path = os.path.join(folder, "loc_scale_oct14.mrc")
-mask_path = os.path.join(folder, "pdb3j5p_mask.mrc")
-fsc_resolution = 3.4
-    
-
-#%%

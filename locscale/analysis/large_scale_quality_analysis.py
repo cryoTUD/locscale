@@ -121,9 +121,22 @@ def get_data():
     with open(pickle_output_file, "wb") as result_file:
         pickle.dump(map_quality_result, result_file)
 
+def r2(y_fit, y_data):
+    y_mean = y_data.mean()
+    residual_squares = (y_data-y_fit)**2
+    variance = (y_data-y_mean)**2
+    
+    residual_sum_of_squares = residual_squares.sum()
+    sum_of_variance = variance.sum()
+    
+    r_squared = 1 - residual_sum_of_squares/sum_of_variance
+    
+    return r_squared
 
 def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
     import matplotlib.pyplot as plt
+    import pandas as pd
+    
     def linear(x,a,b):
         return a * x + b
     from matplotlib.offsetbox import AnchoredText
@@ -135,11 +148,16 @@ def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None,
     x_data = data[x_col]
     y_data = data[y_col]
     
+    y_fit = x_data ## When assuming y=x as ideal equation
+    
+    r_squared = data[x_col].corr(data[y_col], method="spearman")
+    
+    
     
     
     ax.plot(x_data, y_data,'bo')
     ax.plot(x_data, x_data, 'r-')
-    equation = "y = x"
+    equation = "y = x \nCorrelation = {}".format(round(r_squared,2))
     legend_text = equation
     anchored_text=AnchoredText(legend_text, loc=2)
     ax.add_artist(anchored_text)
@@ -159,7 +177,7 @@ def analyse_results(result_type="kurtosis"):
   
     import pandas as pd
     
-    folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
+    folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large/with_proper_masks"
     csvfile_path = os.path.join(folder, "quality_results_csv.csv")
     
     map_quality_temp = {}
