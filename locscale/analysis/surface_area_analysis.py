@@ -139,7 +139,7 @@ def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, 
             mask_path = os.path.join(parent_folder, emdb_pdb, unsharpened_map_path_prefix, mask_filename)
             md_locscale_path = os.path.join(parent_folder, emdb_pdb, sharpened_map_path_prefix, MD_locscale_filename)
                     
-            '''
+    
             unsharpened_map_blob_statistics = calculate_blob_surface_statistics(unsharpened_map_path, mask_path)
             sharpened_blob_statistics = calculate_blob_surface_statistics(md_locscale_path, mask_path)
             
@@ -151,8 +151,7 @@ def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, 
             
             for key in map_blob_statistics[emdb_pdb]:
                 csv_writer.write("%s|%s|%s\n"%(emdb_pdb, key, map_blob_statistics[emdb_pdb][key]))
-            '''
-            csv_writer.write("%s\n"%(emdb_pdb))
+
             csv_writer.close()
         
         except Exception as e:
