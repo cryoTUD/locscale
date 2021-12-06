@@ -13,6 +13,23 @@ import os
 
 from subprocess import run, PIPE
 
+def round_up_proper(x):
+    epsilon = 1e-5  ## To round up in case of rounding to odd
+    return np.round(x+epsilon).astype(int)
+
+def split_sequence_evenly(seq, size):
+    """
+    >>> split_sequence_evenly(list(range(9)), 4)
+    [[0, 1], [2, 3, 4], [5, 6], [7, 8]]
+    >>> split_sequence_evenly(list(range(18)), 4)
+    [[0, 1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17]]
+    """
+    newseq = []
+    splitsize = 1.0 / size * len(seq)
+    for i in range(size):
+        newseq.append(seq[round_up_proper(i * splitsize):round_up_proper((i+1) * splitsize)])
+    return newseq
+
 def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, process_id=None):
    # parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
     pickle_output_file = os.path.join(parent_folder, "{}.pickle".format(output_filename))
