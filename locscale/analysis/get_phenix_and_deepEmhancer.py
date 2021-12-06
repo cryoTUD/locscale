@@ -30,11 +30,9 @@ def split_sequence_evenly(seq, size):
         newseq.append(seq[round_up_proper(i * splitsize):round_up_proper((i+1) * splitsize)])
     return newseq
 
-def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, process_id=None):
+def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list, process_id=None):
    # parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
-    pickle_output_file = os.path.join(parent_folder, "{}.pickle".format(output_filename))
-    csv_output_file = os.path.join(parent_folder, "{}_csv.csv".format(output_filename))
-    
+
    
     
     fsc_resolution = {}
@@ -106,7 +104,7 @@ def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, 
 
 if __name__ == "__main__":
     import multiprocessing
-    from locscale.utils.scaling_tools import split_sequence_evenly
+   # from locscale.utils.scaling_tools import split_sequence_evenly
     
     parent_folder = "/home/abharadwaj1/dev/new_tests_locscale/large_scale_analysis/mapdata_copy/mapdata"
     
