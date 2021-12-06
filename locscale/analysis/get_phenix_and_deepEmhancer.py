@@ -78,13 +78,14 @@ def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list, process_id=None)
             deepEmhancer_output_file_path = os.path.join(parent_folder, emdb_pdb,sharpened_map_path_prefix, emdb_pdb+"_deepEmhancer.mrc")
 
             phenix_output_file_path = os.path.join(parent_folder, emdb_pdb,sharpened_map_path_prefix, emdb_pdb+"_phenix.mrc")
+            output_directory = os.path.join(parent_folder, emdb_pdb,sharpened_map_path_prefix)
             
-            print("DeepEMhancer run ===================== \n")
-            deepEmhancer_args = ['deepemhancer','-i',unsharpened_map_path,'-o',deepEmhancer_output_file_path]
-            run(deepEmhancer_args, stdout=log_file)
-            log_file.close()
-            log_file=open(os.path.join(emdb_folder,"log.txt"),"w+")
-            phenix_command = ['phenix.auto_sharpen',unsharpened_map_path, 'resolution={}'.format(fsc_resolution_map)]
+           # print("DeepEMhancer run ===================== \n")
+           # deepEmhancer_args = ['deepemhancer','-i',unsharpened_map_path,'-o',deepEmhancer_output_file_path]
+           # run(deepEmhancer_args, stdout=log_file)
+            #log_file.close()
+            #log_file=open(os.path.join(emdb_folder,"log.txt"),"w+")
+            phenix_command = ['phenix.auto_sharpen',unsharpened_map_path, 'resolution={}'.format(fsc_resolution_map), 'sharpened_map_file={}+"_phenix.mrc'.format(emdb_pdb), 'output_directory={}'.format(output_directory)]
             if calculate_phenix_map:
                 print("Phenix run ===================== \n")
                 run(phenix_command, stdout=log_file)
