@@ -283,8 +283,15 @@ class Model:
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     from locscale.pseudomodel.pseudomodel_classes import Atom
     import random
+    x1,x2,x3 = mask.shape
+    buffer = 2 ## To ensure no atoms near edge get picked 
+    ones_array = np.ones((x1-2*buffer, x2-2*buffer, x3-2*buffer))
+    padded = np.pad(ones_array, buffer)
     
-    all_inside_mask = np.asarray(np.where(mask>=threshold)).T.tolist()
+    edge_cropped_mask = mask * padded
+    
+    
+    all_inside_mask = np.asarray(np.where(edge_cropped_mask>=threshold)).T.tolist()
     all_inside_set = set([tuple(x) for x in all_inside_mask])
     if ignore_these is not None:
         ignore_set = set([tuple([int(x[0]),int(x[1]),int(x[2])]) for x in ignore_these])
