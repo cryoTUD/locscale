@@ -204,8 +204,8 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
     import statistics
     import pandas as pd
     
-    parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
-    pickle_output_file = os.path.join(parent_folder, "surface_analysis_result.pickle")
+    parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/Test/large_scale_quality_study"
+    pickle_output_file = os.path.join(parent_folder, "surface_analysis_combined.pickle")
     
     with open(pickle_output_file, 'rb') as output_file:
         map_blob_statistics = pickle.load(output_file)
@@ -221,10 +221,12 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
         unsharp_surface_area_to_volume_array = unsharpened_map_blob_stats['surface_area_to_volume_array']
         unsharp_surface_area_array = unsharpened_map_blob_stats['surface_area_array']
         unsharp_volume_array = unsharpened_map_blob_stats['volume_array']
+        unsharp_global_surface_area_to_volume = unsharpened_map_blob_stats['total_surface_area'] / unsharpened_map_blob_stats['total_volume']
 
         sharp_surface_area_to_volume_array = sharpened_map_blob_stats['surface_area_to_volume_array']
         sharp_surface_area_array = sharpened_map_blob_stats['surface_area_array']
         sharp_volume_array = sharpened_map_blob_stats['volume_array']
+        sharp_global_surface_area_to_volume = sharpened_map_blob_stats['total_surface_area'] / sharpened_map_blob_stats['total_volume']
         
      
         stats = {}
@@ -235,7 +237,7 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
         # > 
         
         ### Gather stats for unsharp 
-        
+        stats['unsharp_surface_to_volume_global'] = unsharp_global_surface_area_to_volume
         stats['unsharp_mean_surface_to_volume'] = unsharp_surface_area_to_volume_array.mean()
         stats['unsharp_median_surface_to_volume'] = statistics.median(unsharp_surface_area_to_volume_array)
         stats['unsharp_max_surface_to_volume'] = unsharp_surface_area_to_volume_array.max()
@@ -249,7 +251,7 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
         stats['unsharp_max_volume'] = unsharp_volume_array.max()
         
         ### Gather stats for sharpened map
-        
+        stats['sharp_surface_to_volume_global'] = sharp_global_surface_area_to_volume
         stats['sharp_mean_surface_to_volume'] = sharp_surface_area_to_volume_array.mean()
         stats['sharp_median_surface_to_volume'] = statistics.median(sharp_surface_area_to_volume_array)
         stats['sharp_max_surface_to_volume'] = sharp_surface_area_to_volume_array.max()
@@ -291,6 +293,9 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
     elif result_type == 'max_volume':
         x = 'unsharp_max_volume'
         y = 'sharp_max_volume'
+    elif result_type == "global_surface_to_volume":
+        x = 'unsharp_surface_to_volume_global'
+        y = 'sharp_surface_to_volume_global'
     else:
         print("unknown input, using mean_surface_to_volume as default")
         result_type = 'mean_surface_to_volume'
@@ -312,6 +317,8 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
     
 
 if __name__ == "__main__":
+    
+    '''
     import multiprocessing
     from locscale.utils.scaling_tools import split_sequence_evenly
     
@@ -339,3 +346,4 @@ if __name__ == "__main__":
     
     print("Surface area analysis complete!")
         
+    '''

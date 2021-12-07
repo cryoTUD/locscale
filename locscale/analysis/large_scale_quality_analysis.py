@@ -185,16 +185,17 @@ def analyse_results(result_type="kurtosis"):
   
     import pandas as pd
     
-    folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large/with_proper_masks"
-    csvfile_path = os.path.join(folder, "quality_results_csv.csv")
+    folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/Test/large_scale_quality_study"
+    csvfile_path = os.path.join(folder, "quality_analysis_combined.csv")
     
     map_quality_temp = {}
     metrics_list = []
     emd_list = []
     
     with open(csvfile_path, newline="\n") as csvfile:
-        reader = csv.reader(csvfile, delimiter=",")
+        reader = csv.reader(csvfile, delimiter="|")
         for row in reader:
+            
             emd_id = row[0]
             metric = row[1]
             value = row[2]
@@ -256,6 +257,7 @@ def analyse_results(result_type="kurtosis"):
     
 
 if __name__ == "__main__":
+    '''
     import multiprocessing
     from locscale.utils.scaling_tools import split_sequence_evenly
     
@@ -283,6 +285,6 @@ if __name__ == "__main__":
     
     print("Quality analysis complete!")
 
-    
-    
+    '''
+    analyse_results()
     

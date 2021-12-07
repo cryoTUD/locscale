@@ -25,11 +25,16 @@ def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
     from locscale.pseudomodel.pseudomodel_classes import Vector
     
     [x,y,z] = [int(round(point.position.x)),int(round(point.position.y)),int(round(point.position.z))]
-
     
-    theta_x = gx[z,y,x] 
-    theta_y = gy[z,y,x] 
-    theta_z = gz[z,y,x] 
+    try:
+    
+        theta_x = gx[z,y,x] 
+        theta_y = gy[z,y,x] 
+        theta_z = gz[z,y,x] 
+    except Exception as e:
+        print((x,y,z))
+        print(e)
+        raise
     '''
     
     theta_x = get_gradient(gx,point)
@@ -107,7 +112,20 @@ def get_neighborhood(points,min_dist_in_pixel,fromArray=False,only_neighbors=Fal
             neighborhood[i]=[d[0][1]]
         return neighborhood
         
-
+def atom_lies_near_edge(atom, unitcell_shape):
+    
+    position = atom.position.get()
+    unitcell_shape = np.array(unitcell_shape)
+    buffer = 2
+    
+    smallest_dimension = unitcell_shape.min()
+    check_if_edge = np.any(position<buffer) or np.any(abs(position-smallest_dimension) < buffer)
+    
+    if check_if_edge:
+        return True
+    else:
+        return False
+    
 
 def average_map_value(points):
     map_val = []
@@ -170,6 +188,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     map_values = []
     pseudomodel = model_initial.copy()
     gradient_magnitude = np.sqrt(gx**2+gy**2+gz**2)
+    
+    unitcell_dims = np.array(list(emmap.shape))
     if verbose:
         solver_properties = 'Solver started with the following properties: \n'+'\n Number of atoms = '+str(len(pseudomodel.list))+'\n Map potential: \n'+'\n g = '+str(g)+'\n Max gradient magnitude  = '+str(gradient_magnitude.max())+'\n Map value range  = '+str((emmap.min(),emmap.max()))+'\n Cap magnitude at  = '+str(capmagnitude_map)+'\n LJ Potential: \n'+'\n Equilibrium distance = '+str(min_dist_in_angst)+'\n Voxelsize, in A = '+str(voxelsize)+'\n LJ Factor = '+str(lj_factor)+'\n Epsilon = '+str(epsilon)+'\n Cap magnitude at  = '+str(capmagnitude_lj)+'\n Friction: \n'+ '\n Friction Coefficient = '+str(friction)+'\n Solver properties: \n'+'\n Total Iterations = '+str(total_iterations)+'\n Time step = '+str(dt)
               
@@ -192,6 +212,13 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         
         point_id = 0
         for atom in pseudomodel.list:
+            
+            ## If atom lies near the edge then ignore
+            if atom_lies_near_edge(atom, unitcell_dims):
+                
+                continue
+            
+            
             lj_neighbors = [pseudomodel.list[k] for k in neighborhood[point_id][1]]
             
             gradient_acceleration,map_value = get_acceleration_from_gradient(gx,gy,gz,emmap, g, point=atom, capmagnitude_map=capmagnitude_map)
@@ -213,7 +240,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             except:
                 gradient_list.append(0)
                 lj_list.append(0)
-            lj_list
+            #lj_list
         
         map_values.append(average_map_value(pseudomodel.list))
         
