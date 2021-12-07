@@ -125,8 +125,8 @@ def analyse_pickle_file(result_type='skew_kurtosis'):
     import statistics
     import pandas as pd
     
-    parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
-    pickle_output_file = os.path.join(parent_folder, "histogram_analysis.pickle")
+    parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/Test/large_scale_quality_study"
+    pickle_output_file = os.path.join(parent_folder, "histogram_analysis_combined.pickle")
     
     with open(pickle_output_file, 'rb') as output_file:
         map_histogram_analysis = pickle.load(output_file)
@@ -136,7 +136,8 @@ def analyse_pickle_file(result_type='skew_kurtosis'):
     
     
     for emd_pdb in map_histogram_analysis.keys():
-        emdb_histogram_analysis = map_histogram_analysis[emd_pdb]['unsharpened_map_histogram_analysis']
+        
+        emdb_histogram_analysis = map_histogram_analysis[emd_pdb]
 
         
      
@@ -184,6 +185,7 @@ def analyse_pickle_file(result_type='skew_kurtosis'):
     
 
 if __name__ == "__main__":
+    '''
     import multiprocessing
     from locscale.utils.scaling_tools import split_sequence_evenly
     
@@ -212,3 +214,4 @@ if __name__ == "__main__":
     print("Histogram analysis complete!")
 
 
+    '''
