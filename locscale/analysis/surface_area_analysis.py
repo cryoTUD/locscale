@@ -480,7 +480,7 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
 
 if __name__ == "__main__":
     
-    
+    import os
     import multiprocessing
     from locscale.utils.scaling_tools import split_sequence_evenly
     
@@ -495,9 +495,11 @@ if __name__ == "__main__":
     
     for i in range(processes):
         list_of_sequence_for_this_process = split_sequences[i]
+        output_pdf_folder = "/home/abharadwaj1/dev/locscale/locscale/analysis/threshold"
         output_filename = "threshold_analysis_process_{}.pdf".format(i)
-        process = multiprocessing.Process(target=get_data, args=(parent_folder, list_of_sequence_for_this_process, 
-                                                                 fsc_resolutions_list, output_filename))
+        pdf_filename = os.path.join(output_pdf_folder, output_filename)
+        process = multiprocessing.Process(target=get_threshold_analysis_data, args=(parent_folder, list_of_sequence_for_this_process, 
+                                                                 pdf_filename))
         jobs.append(process)
     
     for job in jobs:
