@@ -12,7 +12,7 @@ import numpy as np
 
 def mesh_surface_area(data, threshold, apix):
     from skimage import measure
-    print(data.min(), data.max())
+    
     verts, faces,_,_ = measure.marching_cubes(data, threshold)
     surface_area = measure.mesh_surface_area(verts, faces) * apix**2
     return surface_area
@@ -35,7 +35,7 @@ def calculate_surface_area(binary_data, spacing, origin):
     
     return surface_area
 
-def calculate_surface_area_at_threshold(emmap, apix, origin, reference_threshold):
+def calculate_surface_area_at_threshold(emmap, apix, reference_threshold):
     binarised_emmap = (emmap>=reference_threshold).astype(np.int_)
     surface_area = mesh_surface_area(binarised_emmap, 0.9999999, apix)
     return surface_area
