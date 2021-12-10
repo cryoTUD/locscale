@@ -241,13 +241,13 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
             sharp_threshold, sharp_plot_xy = plot_threshold_analysis_data(x_sharp, y_sharp, 
                                                                               MD_locscale_filename)
             
-            unsharp_surface_fig = plot_surface(emmap_unsharpened, unsharp_threshold)
-            sharp_surface_fig = plot_surface(emmap_sharpened, sharp_threshold)
+            #unsharp_surface_fig = plot_surface(emmap_unsharpened, unsharp_threshold)
+            #sharp_surface_fig = plot_surface(emmap_sharpened, sharp_threshold)
             
             unsharp_plot_xy.savefig("{}_1_unsharpened_threshold_analysis.png".format(emdb_pdb))
             sharp_plot_xy.savefig("{}_2_sharpened_threshold_analysis.png".format(emdb_pdb))
-            unsharp_surface_fig.savefig("{}_3_unsharpened_surface_plot.png".format(emdb_pdb))
-            sharp_surface_fig.savefig("{}_4_sharpened_surface_plot.png".format(emdb_pdb))
+            #unsharp_surface_fig.savefig("{}_3_unsharpened_surface_plot.png".format(emdb_pdb))
+            #sharp_surface_fig.savefig("{}_4_sharpened_surface_plot.png".format(emdb_pdb))
             print("saved plots for {}".format(emdb_pdb))
             threshold_statistics[emdb_pdb] = {'unsharp_analysis':surface_area_to_volume_ratio_unsharp, 'sharp_analysis':surface_area_to_volume_ratio_sharp}
 
@@ -260,8 +260,8 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
            # ax.add_artist(anchored_text)
             print("Error for {}".format(emdb_pdb))
             print(e)
-        with open(pickle_output_file, "wb") as picklefile:
-            pickle.dump(threshold_statistics, picklefile)
+    with open(pickle_output_file, "wb") as picklefile:
+        pickle.dump(threshold_statistics, picklefile)
            
             
             
