@@ -14,7 +14,7 @@ import os
 
 def mesh_surface_area(data, threshold, apix):
     from skimage import measure
-    print(data.min(), data.max())
+   
     verts, faces,_,_ = measure.marching_cubes(data, threshold)
     surface_area = measure.mesh_surface_area(verts, faces) * apix**2
     return surface_area
@@ -101,6 +101,66 @@ def calculate_blob_surface_statistics(emmap_path, mask_path, mask_emmap=True):
     
     return blob_statistics
 
+def calculate_surface_statistics_threshold(emmap_path):
+    from tqdm import tqdm
+    from skimage.morphology import skeletonize
+    def count_distinct_regions_inner(emmap, reference_threshold):
+        from skimage import measure
+        
+        binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+        labels, num_regions = measure.label(binarised_emmap, background=0, return_num=True)
+        
+        return labels, num_regions
+    
+    import mrcfile
+    print("Calculating surface statistics for: {} at different threshold".format(emmap_path.split("/")[-1]))
+    emmap = mrcfile.open(emmap_path).data
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())[0]
+    apix = apix
+    origin = mrcfile.open(emmap_path).header.origin.tolist()
+    
+    
+    num_bins = 100
+    threshold_bins = np.linspace(0, emmap.max()*0.99, num=num_bins)
+    surface_stats_threshold = {}
+    for reference_threshold in tqdm(threshold_bins):
+        labels, num_regions = count_distinct_regions_inner(emmap, reference_threshold)
+        
+                   
+        
+        binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+        total_surface_area = mesh_surface_area(binarised_emmap, 0.999999, apix)
+        total_volume = binarised_emmap.sum() * apix**3
+        
+        unit_surface_area = total_surface_area / num_regions
+        inverse_compactness = total_surface_area**3 / total_volume**2
+       
+        
+        surface_stat = {
+            'total_surface_area':total_surface_area,
+            'num_regions':num_regions,
+            'total_volume':total_volume,
+            'unit_surface_area':unit_surface_area,
+            'inverse_compactness':inverse_compactness}
+        
+        surface_stats_threshold[reference_threshold] = surface_stat
+    
+    total_surface_area_array = np.array([x['total_surface_area'] for x in surface_stats_threshold.values()]) 
+    num_regions_array = np.array([x['num_regions'] for x in surface_stats_threshold.values()]) 
+    total_volume_array = np.array([x['total_volume'] for x in surface_stats_threshold.values()]) 
+    unit_surface_area_array = np.array([x['unit_surface_area'] for x in surface_stats_threshold.values()]) 
+    inverse_compactness_array = np.array([x['inverse_compactness'] for x in surface_stats_threshold.values()]) 
+    threshold = np.array([x for x in surface_stats_threshold.keys()]) 
+    
+    surface_statistics_compiled = {
+        'total_surface_area_array':total_surface_area_array,
+        'num_regions_array':num_regions_array,
+        'total_volume_array':total_volume_array,
+        'unit_surface_area_array':unit_surface_area_array,
+        'inverse_compactness_array':inverse_compactness_array,
+        'threshold':threshold}
+        
+    return surface_statistics_compiled
 def threshold_analysis(emmap_path):
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_quality_tools import calculate_surface_area_at_threshold, count_distinct_regions
@@ -225,7 +285,7 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
             emmap_sharpened = mrcfile.open(md_locscale_path).data
                     
             surface_area_to_volume_ratio_unsharp = threshold_analysis(unsharpened_map_path)
-            surface_area_to_volume_ratio_sharp = threshold_analysis(unsharpened_map_path)
+            surface_area_to_volume_ratio_sharp = threshold_analysis(md_locscale_path)
             
             x_unsharp  = np.array(list(surface_area_to_volume_ratio_unsharp.keys()))
             y_unsharp = np.array(list(surface_area_to_volume_ratio_unsharp.values()))
@@ -482,6 +542,7 @@ def analyse_pickle_file(result_type='mean_surface_to_volume'):
 
 if __name__ == "__main__":
     
+    '''
     import os
     import multiprocessing
     from locscale.utils.scaling_tools import split_sequence_evenly
@@ -511,5 +572,5 @@ if __name__ == "__main__":
         job.join()
     
     print("Threshold analysis complete!")
-        
+    '''
     
