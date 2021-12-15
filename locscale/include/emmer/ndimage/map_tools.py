@@ -238,6 +238,7 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter
     from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, dilate_mask, save_as_mrc
     import mrcfile
     import os
+    from scipy.ndimage import gaussian_filter
     
     pdb_folder = "".join(pdb_path.split("/")[:-1])
     apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
@@ -270,7 +271,12 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter
         from locscale.include.emmer.ndimage.filter import low_pass_filter
         dilated_mask = low_pass_filter(dilated_mask, cutoff=cutoff_filter, apix=apix)
     
-        
+    min_value = dilated_mask.min()
+    max_value = dilated_mask.max()
+    median_intensity = (min_value + max_value) / 2
+    dilated_mask = (dilated_mask>=median_intensity).astype(np.int_)
+    
+
     if output_filename is None:
         output_filename = os.path.join(pdb_folder, "model_mask.mrc")
             
