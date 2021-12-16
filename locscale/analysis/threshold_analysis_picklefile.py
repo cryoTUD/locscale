@@ -14,7 +14,7 @@ import pickle
 import os
 import matplotlib.pyplot as plt
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/Test/threshold_analysis"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/threshold_analysis"
 pickle_filename = os.path.join(folder, "threshold_analysis_combined.pickle")
 
 def plot_dictionary(dictionary):
@@ -101,8 +101,21 @@ for label in range(1, max_cluster_groups+1):
         plt.plot(plot_curve, 'k', alpha=0.2)
     
     
-
+#%%
+def find_optimal_threshold(curves_dict, emdb_pdb):
+    x = curves_dict[emdb_pdb]['x']
+    y = curves_dict[emdb_pdb]['y']
+    ignore_first = local_minima[emdb_pdb][0][0]
     
+    y_max = y[ignore_first:].max()
+    index = np.where(y==y_max)
+    
+    fig, ax = plt.subplots()
+    ax.plot(x[ignore_first:], y[ignore_first:], 'k.-')
+    threshold = x[index]
+    ax.set_title("Threshold for {} is {}".format(emdb_pdb, threshold))
+    return fig
+
             
 
 
