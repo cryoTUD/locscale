@@ -137,7 +137,7 @@ def calculate_surface_statistics_threshold(emmap_path):
         skeletonised_emmap = skeletonize(binarised_emmap)
         labels_sk, num_regions_sk =  measure.label(skeletonised_emmap, background=0, return_num=True)
         
-        lengths_array, _  = np.histogram(labels_sk.flatten(), bins=labels_sk.max())
+        lengths_array, _  = np.histogram(labels_sk[labels_sk>0].flatten(), bins=labels_sk.max())
         average_length = lengths_array.mean()
         
         detail_connectivity_metric = total_surface_area * average_length / total_volume
@@ -147,10 +147,11 @@ def calculate_surface_statistics_threshold(emmap_path):
         surface_stat = {
             'total_surface_area':total_surface_area,
             'num_regions':num_regions,
+            'num_regions_sk':num_regions_sk,
             'total_volume':total_volume,
             'unit_surface_area':unit_surface_area,
             'inverse_compactness':inverse_compactness,
-            'lengths_array':lengths_array,
+            'lengths_array':lengths_array*apix,
             'detail_connectivity_metric':detail_connectivity_metric}
         
         surface_stats_threshold[reference_threshold] = surface_stat
@@ -162,7 +163,8 @@ def calculate_surface_statistics_threshold(emmap_path):
     total_volume_array = np.array([x['total_volume'] for x in surface_stats_threshold.values()]) 
     unit_surface_area_array = np.array([x['unit_surface_area'] for x in surface_stats_threshold.values()]) 
     inverse_compactness_array = np.array([x['inverse_compactness'] for x in surface_stats_threshold.values()]) 
-    lengths_array = np.array([x['lengths_array'] for x in surface_stats_threshold.values()]) 
+    lengths_array = np.array([x['lengths_array'] for x in surface_stats_threshold.values()])
+    num_regions_sk_array = np.array([x['num_regions_sk'] for x in surface_stats_threshold.values()]) 
     detail_connectivity_metric = np.array([x['detail_connectivity_metric'] for x in surface_stats_threshold.values()]) 
     
     avg_surface_area_low_threshold = total_surface_area_array[0]
@@ -171,8 +173,8 @@ def calculate_surface_statistics_threshold(emmap_path):
     avg_length_high_threshold = lengths_array[-1].mean()
     scale_factor = (avg_surface_area_high_threshold-avg_surface_area_low_threshold) / (avg_length_low_threshold**2 - avg_length_high_threshold**2)
     avg_lengths_array = np.array([x.mean() for x in lengths_array])
-    
     united_surface_area_metric = total_surface_area_array + scale_factor * avg_lengths_array**2
+    
     
     threshold = np.array([x for x in surface_stats_threshold.keys()]) 
     
@@ -181,6 +183,7 @@ def calculate_surface_statistics_threshold(emmap_path):
     surface_statistics_compiled = {
         'total_surface_area_array':total_surface_area_array,
         'num_regions_array':num_regions_array,
+        'num_regions_sk_array':num_regions_sk_array,
         'total_volume_array':total_volume_array,
         'unit_surface_area_array':unit_surface_area_array,
         'inverse_compactness_array':inverse_compactness_array,
@@ -451,7 +454,18 @@ def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None,
         ax.set_ylabel(y_col)
     ax.set_title(title_text)    
 
-        
+def plot_two_yaxis(common_x_axis, yaxis_1, yaxis_2, yaxis_1_label, yaxis_2_label, xlabel):
+    import matplotlib.pyplot as plt
+    
+    fig, ax = plt.subplots()
+    ax.plot(common_x_axis, yaxis_1, 'k.-')
+    ax.set_ylabel(yaxis_1_label)
+    ax.set_xlabel(xlabel)
+    ax2 = ax.twinx()
+    ax2.plot(common_x_axis, yaxis_2, 'b.-')
+    ax2.set_ylabel(yaxis_2_label)
+    plt.show()
+    
 def analyse_pickle_file(result_type='mean_surface_to_volume'):
     import pickle
     import os
