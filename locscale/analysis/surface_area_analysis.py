@@ -104,6 +104,7 @@ def calculate_blob_surface_statistics(emmap_path, mask_path, mask_emmap=True):
 def calculate_surface_statistics_threshold(emmap_path):
     from tqdm import tqdm
     from skimage.morphology import skeletonize
+    from skimage import measure
     def count_distinct_regions_inner(emmap, reference_threshold):
         from skimage import measure
         
@@ -126,14 +127,21 @@ def calculate_surface_statistics_threshold(emmap_path):
     for reference_threshold in tqdm(threshold_bins):
         labels, num_regions = count_distinct_regions_inner(emmap, reference_threshold)
         
-                   
-        
         binarised_emmap = (emmap>reference_threshold).astype(np.int_)
         total_surface_area = mesh_surface_area(binarised_emmap, 0.999999, apix)
         total_volume = binarised_emmap.sum() * apix**3
         
         unit_surface_area = total_surface_area / num_regions
         inverse_compactness = total_surface_area**3 / total_volume**2
+        
+        skeletonised_emmap = skeletonize(binarised_emmap)
+        labels_sk, num_regions_sk =  measure.label(skeletonised_emmap, background=0, return_num=True)
+        
+        lengths_array, _  = np.histogram(labels_sk.flatten(), bins=labels_sk.max())
+        average_length = lengths_array.mean()
+        
+        detail_connectivity_metric = total_surface_area * average_length / total_volume
+        
        
         
         surface_stat = {
@@ -141,16 +149,34 @@ def calculate_surface_statistics_threshold(emmap_path):
             'num_regions':num_regions,
             'total_volume':total_volume,
             'unit_surface_area':unit_surface_area,
-            'inverse_compactness':inverse_compactness}
+            'inverse_compactness':inverse_compactness,
+            'lengths_array':lengths_array,
+            'detail_connectivity_metric':detail_connectivity_metric}
         
         surface_stats_threshold[reference_threshold] = surface_stat
+    
+    
     
     total_surface_area_array = np.array([x['total_surface_area'] for x in surface_stats_threshold.values()]) 
     num_regions_array = np.array([x['num_regions'] for x in surface_stats_threshold.values()]) 
     total_volume_array = np.array([x['total_volume'] for x in surface_stats_threshold.values()]) 
     unit_surface_area_array = np.array([x['unit_surface_area'] for x in surface_stats_threshold.values()]) 
     inverse_compactness_array = np.array([x['inverse_compactness'] for x in surface_stats_threshold.values()]) 
+    lengths_array = np.array([x['lengths_array'] for x in surface_stats_threshold.values()]) 
+    detail_connectivity_metric = np.array([x['detail_connectivity_metric'] for x in surface_stats_threshold.values()]) 
+    
+    avg_surface_area_low_threshold = total_surface_area_array[0]
+    avg_surface_area_high_threshold = total_surface_area_array[-1]
+    avg_length_low_threshold = lengths_array[0].mean()
+    avg_length_high_threshold = lengths_array[-1].mean()
+    scale_factor = (avg_surface_area_high_threshold-avg_surface_area_low_threshold) / (avg_length_low_threshold**2 - avg_length_high_threshold**2)
+    avg_lengths_array = np.array([x.mean() for x in lengths_array])
+    
+    united_surface_area_metric = total_surface_area_array + scale_factor * avg_lengths_array**2
+    
     threshold = np.array([x for x in surface_stats_threshold.keys()]) 
+    
+    
     
     surface_statistics_compiled = {
         'total_surface_area_array':total_surface_area_array,
@@ -158,6 +184,10 @@ def calculate_surface_statistics_threshold(emmap_path):
         'total_volume_array':total_volume_array,
         'unit_surface_area_array':unit_surface_area_array,
         'inverse_compactness_array':inverse_compactness_array,
+        'lengths_array':lengths_array,
+        'detail_connectivity_metric':detail_connectivity_metric,
+        'united_surface_area_metric':united_surface_area_metric,
+        'avg_lengths_array':avg_lengths_array,
         'threshold':threshold}
         
     return surface_statistics_compiled
