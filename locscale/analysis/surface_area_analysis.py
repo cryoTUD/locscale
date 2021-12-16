@@ -317,15 +317,15 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
             emmap_unsharpened = mrcfile.open(unsharpened_map_path).data
             emmap_sharpened = mrcfile.open(md_locscale_path).data
                     
-            surface_area_to_volume_ratio_unsharp = threshold_analysis(unsharpened_map_path)
-            surface_area_to_volume_ratio_sharp = threshold_analysis(md_locscale_path)
+            surface_statistics_unsharp = calculate_surface_statistics_threshold(unsharpened_map_path)
+            surface_statistics_sharp = calculate_surface_statistics_threshold(md_locscale_path)
             
-            x_unsharp  = np.array(list(surface_area_to_volume_ratio_unsharp.keys()))
-            y_unsharp = np.array(list(surface_area_to_volume_ratio_unsharp.values()))
+            x_unsharp  = surface_statistics_unsharp['threshold']
+            y_unsharp = surface_statistics_unsharp['detail_connectivity_metric']
             
       
-            x_sharp = np.array(list(surface_area_to_volume_ratio_sharp.keys()))
-            y_sharp = np.array(list(surface_area_to_volume_ratio_sharp.values()))
+            x_sharp = surface_statistics_sharp['threshold']
+            y_sharp = surface_statistics_sharp['detail_connectivity_metric']
             
             
             unsharp_threshold, unsharp_plot_xy = plot_threshold_analysis_data(x_unsharp, y_unsharp, 
@@ -342,7 +342,7 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
             #unsharp_surface_fig.savefig("{}_3_unsharpened_surface_plot.png".format(emdb_pdb))
             #sharp_surface_fig.savefig("{}_4_sharpened_surface_plot.png".format(emdb_pdb))
             print("saved plots for {}".format(emdb_pdb))
-            threshold_statistics[emdb_pdb] = {'unsharp_analysis':surface_area_to_volume_ratio_unsharp, 'sharp_analysis':surface_area_to_volume_ratio_sharp}
+            threshold_statistics[emdb_pdb] = {'unsharp_analysis':surface_statistics_unsharp, 'sharp_analysis':surface_statistics_sharp}
 
 
         except Exception as e:
