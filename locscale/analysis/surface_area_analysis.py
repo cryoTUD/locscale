@@ -101,7 +101,7 @@ def calculate_blob_surface_statistics(emmap_path, mask_path, mask_emmap=True):
     
     return blob_statistics
 
-def calculate_surface_statistics_threshold(emmap_path):
+def calculate_surface_statistics_threshold(emmap_path, mask_path):
     from tqdm import tqdm
     from skimage.morphology import skeletonize
     from skimage import measure
@@ -120,9 +120,15 @@ def calculate_surface_statistics_threshold(emmap_path):
     apix = apix
     origin = mrcfile.open(emmap_path).header.origin.tolist()
     
+    if mask_path is not None:
+        mask = mrcfile.open(mask_path).data
+        mask = (mask==1).astype(np.int_)
+        emmap = emmap * mask
+    else:
+        emmap[emmap<0] = 0
     
     num_bins = 100
-    threshold_bins = np.linspace(0, emmap.max()*0.99, num=num_bins)
+    threshold_bins = np.linspace(emmap.min(), emmap.max()*0.99, num=num_bins)
     surface_stats_threshold = {}
     for reference_threshold in tqdm(threshold_bins):
         labels, num_regions = count_distinct_regions_inner(emmap, reference_threshold)
@@ -175,6 +181,16 @@ def calculate_surface_statistics_threshold(emmap_path):
     avg_lengths_array = np.array([x.mean() for x in lengths_array])
     united_surface_area_metric = total_surface_area_array + scale_factor * avg_lengths_array**2
     
+    def normalise(x):
+        return x/x.end()
+    
+    norm_detail = normalise(total_surface_area_array/total_volume_array)
+    
+    norm_connect = normalise(avg_lengths_array)
+    
+    norm_dc = norm_connect * norm_detail
+    
+    
     
     threshold = np.array([x for x in surface_stats_threshold.keys()]) 
     
@@ -191,6 +207,8 @@ def calculate_surface_statistics_threshold(emmap_path):
         'detail_connectivity_metric':detail_connectivity_metric,
         'united_surface_area_metric':united_surface_area_metric,
         'avg_lengths_array':avg_lengths_array,
+        'norm_dc':norm_dc,
+        'norm_detail':norm_detail,
         'threshold':threshold}
         
     return surface_statistics_compiled
@@ -226,8 +244,8 @@ def plot_threshold_analysis_data(x,y, emdb_filename, crop_from=4):
     fig, ax1 = plt.subplots(1,1)
     ax1.plot(x[crop_from:], y[crop_from:],'k.-')
     ax1.set_xlabel("Threshold")
-    ax1.set_ylabel("SA$^3$ / V$^2$")
-    ax1.set_title("Surface area to volume threshold for {}".format(emdb_filename))
+    ax1.set_ylabel("SA * $L_{avg}$ / V")
+    ax1.set_title("Detail-Connectivity metric at different threshold for {}".format(emdb_filename))
     text = "Optimal threshold at: {}".format(round(threshold, 4))
     anchored_text=AnchoredText(text, loc=3)
     ax1.add_artist(anchored_text)
@@ -321,11 +339,11 @@ def get_threshold_analysis_data(parent_folder, EMDB_PDB_ids,output_filename, pro
             surface_statistics_sharp = calculate_surface_statistics_threshold(md_locscale_path)
             
             x_unsharp  = surface_statistics_unsharp['threshold']
-            y_unsharp = surface_statistics_unsharp['detail_connectivity_metric']
+            y_unsharp = surface_statistics_unsharp['norm_dc']
             
       
             x_sharp = surface_statistics_sharp['threshold']
-            y_sharp = surface_statistics_sharp['detail_connectivity_metric']
+            y_sharp = surface_statistics_sharp['norm_dc']
             
             
             unsharp_threshold, unsharp_plot_xy = plot_threshold_analysis_data(x_unsharp, y_unsharp, 
