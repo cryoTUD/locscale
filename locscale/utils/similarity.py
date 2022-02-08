@@ -11,11 +11,13 @@ import mrcfile
 
 def similarity_threshold(reference_map, threshold_reference, target_map, num_bins=100):
     from emmer.ndimage.map_tools import compute_real_space_correlation as rsc
-    from emmer.ndimage.map_utils import binarizeMap
     
-    threshold_range_target = np.linspace(target_map.min(), target_map.max(), num_bins)
     
-    binarised_reference = binarizeMap(reference_map, threshold_reference)
+    def binarizeMap(emmap, reference):
+        return (emmap>reference).astype(np.int_)
+    threshold_range_target = np.linspace(0, target_map.max(), num_bins)
+    
+    binarised_reference = binarizeMap(reference_map,threshold_reference)
     rscc = {}
     for threshold in threshold_range_target:
         binarised_target = binarizeMap(target_map, threshold)
@@ -39,7 +41,7 @@ def find_threshold(reference_map_path, reference_threshold, list_of_target_map_p
         if mask_path is not None:
             target_map = target_map * mask
         
-        rsc_curve = similarity_threshold(target_map, threshold_reference=0.12, target_map=reference_map)
+        rsc_curve = similarity_threshold(reference_map, threshold_reference=reference_threshold, target_map=target_map)
         rscc_curve[map_name] = rsc_curve
         target_threshold[map_name] = max(rsc_curve, key=rsc_curve.get)
         plt.plot(rsc_curve.keys(), rsc_curve.values())
@@ -47,5 +49,6 @@ def find_threshold(reference_map_path, reference_threshold, list_of_target_map_p
     plt.legend(legend_name)
     
     print(target_threshold)
+    return target_threshold, rscc_curve
 
     
