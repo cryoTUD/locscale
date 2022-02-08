@@ -182,7 +182,7 @@ def calculate_surface_statistics_threshold(emmap_path, mask_path):
     united_surface_area_metric = total_surface_area_array + scale_factor * avg_lengths_array**2
     
     def normalise(x):
-        return x/x.end()
+        return x/x.max()
     
     norm_detail = normalise(total_surface_area_array/total_volume_array)
     
