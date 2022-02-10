@@ -99,11 +99,11 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         
         ## Using deviations calculated directly from scaled theoretical profile
         deviations_begin = wilson_cutoff_local
-        deviations_end = scale_factor_arguments['nyquist']
+        deviations_end = scale_factor_arguments['fsc_cutoff']
         magnify = scale_factor_arguments['boost_secondary_structure']
         deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(freq, ref_profile, scaled_theoretical_amplitude, 
                                                                        wilson_cutoff=wilson_cutoff_local, 
-                                                                       fsc_cutoff=scale_factor_arguments['nyquist'], 
+                                                                       nyquist_cutoff=scale_factor_arguments['nyquist'], 
 
                                                                        deviation_freq_start=deviations_begin, 
                                                                        deviation_freq_end=deviations_end, 
