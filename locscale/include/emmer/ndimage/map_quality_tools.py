@@ -69,12 +69,12 @@ def find_c_scale(sharpest_map, most_blurred_map, reference_volume, apix, origin)
     reference_threshold_most_blurred = find_volume_matching_threshold(most_blurred_map, reference_volume, apix=apix)
     print("Reference threshold most blurred: {:.2f}".format(reference_threshold_most_blurred))
     SA_blurred = calculate_surface_area_at_threshold(
-        most_blurred_map, reference_threshold=reference_threshold_most_blurred, apix=apix, origin=origin)
+        most_blurred_map, reference_threshold=reference_threshold_most_blurred, apix=apix)
     
     reference_threshold_sharpest = find_volume_matching_threshold(sharpest_map, reference_volume, apix=apix)
     print("Reference threshold most sharpened: {:.2f}".format(reference_threshold_sharpest))
     SA_sharpened = calculate_surface_area_at_threshold(
-        sharpest_map, reference_threshold=reference_threshold_sharpest, apix=apix, origin=origin)
+        sharpest_map, reference_threshold=reference_threshold_sharpest, apix=apix)
     
     num_regions_blurred = count_distinct_regions(most_blurred_map, reference_threshold_most_blurred)
     num_regions_sharpened = count_distinct_regions(sharpest_map, reference_threshold_sharpest)
@@ -194,7 +194,7 @@ def calculate_unit_surface_area(emmap_path, mask_path, mask_emmap=True):
     print("Reference threshold found to be {:.2f}".format(reference_threshold))
     
     surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
-        emmap, reference_threshold=reference_threshold, apix=apix, origin=origin)
+        emmap, reference_threshold=reference_threshold, apix=apix)
     
     num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
     
@@ -260,7 +260,7 @@ def calculate_adjusted_surface_area(emmap_path,  fsc_resolution, mask_path, b_bl
         sharpest_map, most_blurred_map, reference_volume=reference_mask_volume, apix=apix, origin=origin)
     
     surface_area_emmap_at_reference_threshold = calculate_surface_area_at_threshold(
-        emmap, reference_threshold=reference_threshold, apix=apix, origin=origin)
+        emmap, reference_threshold=reference_threshold, apix=apix)
     
     num_distinct_regions_at_reference_threshold = count_distinct_regions(emmap, reference_threshold)
     
