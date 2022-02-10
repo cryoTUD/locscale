@@ -143,7 +143,7 @@ def plot_emmap_section(emmap, title="EMMAP Sections"):
     return fig
     
     
-def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end, magnify=1):
+def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end, magnify=1):
     '''
     Function to add deviations from a reference profile which is assumed to be exponential at high frequencies
 
@@ -167,13 +167,14 @@ def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoreti
 
     '''
     
-    deviations, exponential_fit = calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end)
+    deviations, exponential_fit = calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end)
     if magnify > 1:
-        f = magnification_function(magnify)
-        deviated_reference_profile = reference_profile * f(deviations)
-        #deviated_reference_profile = np.log(reference_profile) + magnify * deviations
+        #f = magnification_function(magnify)
+        #deviated_reference_profile = reference_profile * f(deviations)
+        deviated_reference_profile = reference_profile + magnify * deviations
     else:
-        deviated_reference_profile = np.log(reference_profile) * deviations
+        #deviated_reference_profile = np.log(reference_profile) * deviations
+        deviated_reference_profile = reference_profile + deviations
     
     return deviated_reference_profile, exponential_fit
     
@@ -491,7 +492,7 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
     else:
         return b_factor
 
-def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, fsc_cutoff, deviation_freq_start, deviation_freq_end=None):
+def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end=None):
     '''
     Function to calculate the deviations per frequency from a scaled theoretical profile
 
@@ -510,24 +511,24 @@ def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff
     deviations = scaled_theoretical - exponential_fit
 
     '''
-    bfactor, amp = estimate_bfactor_standard(freq, scaled_theoretical_profile, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, 
+    bfactor, amp = estimate_bfactor_standard(freq, scaled_theoretical_profile, wilson_cutoff=wilson_cutoff, fsc_cutoff=nyquist_cutoff, 
                                              return_amplitude=True)
     
     exponential_fit = amp * np.exp(bfactor * 0.25 * freq**2)
     
-    deviations = scaled_theoretical_profile / exponential_fit
-    #deviations = np.log(scaled_theoretical_profile) - np.log(exponential_fit)
+    #deviations = scaled_theoretical_profile / exponential_fit
+    deviations = scaled_theoretical_profile - exponential_fit
     
     deviation_freq_start_freq = 1/deviation_freq_start
     
     start_index = np.where(freq>=deviation_freq_start_freq)[0][0]
-    deviations[:start_index] = 1
-    #deviations[:start_index] = 0
+    #deviations[:start_index] = 1
+    deviations[:start_index] = 0
     if deviation_freq_end is not None:
         deviation_freq_end_freq = 1/deviation_freq_end
         end_index = np.where(freq>=deviation_freq_end_freq)[0][0]
-        deviations[end_index:] = 1
-        #deviations[end_index:] = 0
+        #deviations[end_index:] = 1
+        deviations[end_index:] = 0
     
     return deviations, exponential_fit
     
