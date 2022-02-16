@@ -396,14 +396,14 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     #quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
     #print("7) validation metrics done")
     #local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
-                                                         title_text="Emmap local analysis: skew and kurtosis")
+    #                                                     title_text="Emmap local analysis: skew and kurtosis")
     #local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
-                                                         title_text="Emmap local analysis: mean and variance")
+    #                                                     title_text="Emmap local analysis: mean and variance")
     
     #local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
-                                                         title_text="Locscale local analysis: skew and kurtosis")
+    #                                                     title_text="Locscale local analysis: skew and kurtosis")
     #local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
-                                                         title_text="Locscale local analysis: mean and variance")
+    #                                                     title_text="Locscale local analysis: mean and variance")
     
     fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map")
     

@@ -28,7 +28,7 @@ end
 eof
 REFMAC_OUTPUT="${NAME}_refmac_refined.pdb"
 #Step 3:
-${CCP4_PATH}/bin/refmac5 xyzin pdbset.pdb hklin starting_map.mtz xyzout $REFMAC_OUTPUT  << eof
+${REFMAC_SCRIPT} xyzin pdbset.pdb hklin starting_map.mtz xyzout $REFMAC_OUTPUT  << eof
 labin FP=Fout0 PHIB=Pout0
 make hydr no
 solvent no
