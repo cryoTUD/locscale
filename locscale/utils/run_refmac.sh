@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 MODEL=$1
 NAME=$2
 MAP=$3

@@ -141,7 +141,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         print(sys.exc_info())
         print("Could not use the FDRUtil python package. Reverting to ccpem version of FDRUtil")
         path_to_ccpem = check_dependencies()['ccpem']
-        path_to_FDR_script = path_to_ccpem+"/lib/py2/FDRcontrol.pyc"
+        path_to_FDR_script = os.path.join(path_to_ccpem,"lib","py2","FDRcontrol.pyc")
         fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
                    
         run(fdr_command_line.split(),stdout=PIPE)
@@ -304,16 +304,16 @@ def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement
     path_to_ccp4 = check_dependencies()['ccp4']
     
     if only_bfactor_refinement:
-        path_to_run_refmac = path_to_locscale+"/locscale/utils/run_refmac.zsh"
+        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
     else:
-        path_to_run_refmac = path_to_locscale+"/locscale/utils/run_refmac_restrained.zsh"
+        path_to_run_refmac = os.path.join(path_to_locscale+"locscale","utils","run_refmac_restrained.sh")
         
     
     model_name = model_path[:-4]
     emmap_mrc = mrcfile.open(map_path)
     map_dims = emmap_mrc.header.cella.tolist()
     
-    refmac_command_line = "zsh "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
+    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
     if verbose:
         print("Running REFMAC to refine the pseudo-atomic model using \n"+
               "Path to run_refmac: "+path_to_run_refmac+"\n"+
@@ -495,7 +495,7 @@ def run_mapmask(emmap_path, return_same_path=False):
     from subprocess import run
     path_to_locscale = check_dependencies()['locscale']
     
-    mapmask_bash_script = path_to_locscale + "/locscale/utils/mapmask.sh"
+    mapmask_bash_script = os.path.join(path_to_locscale , "locscale","utils","mapmask.sh")
     
     if return_same_path:
         xyz_output_map = emmap_path

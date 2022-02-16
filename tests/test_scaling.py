@@ -19,15 +19,20 @@ class test_compute_scaling(unittest.TestCase):
         scale_factor_arguments = {}
         scale_factor_arguments['wilson'] = 9.69
         scale_factor_arguments['high_freq'] = 4.69
-        scale_factor_arguments['fsc_cutoff'] = 2.5
+        scale_factor_arguments['fsc_cutoff'] = 3.4
         scale_factor_arguments['smooth'] = 0.3
+
+        scale_factor_arguments['nyquist'] = 2.6
+    
+        scale_factor_arguments['boost_secondary_structure'] = 1
+        scale_factor_arguments['no_reference'] = False
         self.scale_factor_arguments = scale_factor_arguments
         self.apix = 1.2156
         self.locscale = check_dependencies()['locscale']
-        data_folder = self.locscale + '/tests/test_data/' 
+        data_folder = os.path.join(self.locscale,'tests','test_data') 
         test_data_dict = {}
         for i in [1,2,3]:
-            data_location = data_folder+'test_scaling_data_'+str(i)+'.pickle'
+            data_location = os.path.join(data_folder,'test_scaling_data_'+str(i)+'.pickle')
             with open(data_location,"rb") as f:
                 test_data_dict[i] = pickle.load(f)
         
@@ -63,10 +68,7 @@ class test_compute_scaling(unittest.TestCase):
             
             scaled_map_old_target = self.test_data[i]['scaled_window_old']
             scaled_map_new_target = self.test_data[i]['scaled_window_new']
-            #print("Not using theoretical profile: ",(scaled_map_old_test==scaled_map_old_target).all())
-            #print("Using theoretical profile: ",(scaled_map_new_test==scaled_map_new_target).all())
-            #self.assertTrue((scaled_map_old_test==scaled_map_old_target).all())
-            #self.assertTrue((scaled_map_new_test==scaled_map_new_target).all())
+
     
     def test_scaling_random(self):
         from locscale.utils.scaling_tools import compute_radial_profile, compute_scale_factors, set_radial_profile
@@ -75,8 +77,8 @@ class test_compute_scaling(unittest.TestCase):
         import mrcfile
         import random
         
-        emmap_path = self.locscale + "/tests/test_data/emd5778_map.mrc"
-        modmap_path = self.locscale + "/tests/test_data/model_reference.mrc"
+        emmap_path = os.path.join(self.locscale,"tests","test_data","emd5778_map.mrc")
+        modmap_path = os.path.join(self.locscale,"tests","test_data","model_reference.mrc")
         print("Testing random windows within the maps 100 times")
         for i in range(100):
             emmap = mrcfile.open(emmap_path).data

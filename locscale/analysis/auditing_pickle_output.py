@@ -15,7 +15,7 @@ import os
 def get_box(big_volume,center,size):
     return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
 
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_sharpening/Milan_APO/processing_files"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/map_sharpening/Milan_APO/using_deviations_addition"
 
 '''
 What's inside the pickle output? For 1% of windows following results are saved:
