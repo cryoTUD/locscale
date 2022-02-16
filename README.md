@@ -21,7 +21,9 @@ conda create -n locscale python=3.8 numpy
 conda activate locscale
 ```
 
-Install using pip:
+1) Install packages using pip:
+
+The setup.py file contains the list of packages and their versions which are used in this program. Use pip version 21.3 to ensure all packages and their version requirements are met. 
 
 ```bash
 pip install locscale
@@ -39,7 +41,12 @@ sudo apt-get update
 sudo apt-get upgrade
 ```
 
+2) The script uses a custom built wrapped for running REFMAC refinement of atomic models. Do install CCPEM and CCP4, and ensure the environment variables "CCPEM" and "CCP4" exist.
 
+3) Run the setup_locscale.sh to add a new environment variable "LOCSCALE_PATH" to your .bashrc file. If you do not wish to add the new variable then run the following command before using locscale: 
+```
+export LOCSCALE_PATH="/home/path/to/locscale/"
+```
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 <br> 
