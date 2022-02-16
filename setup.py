@@ -1,10 +1,10 @@
 import setuptools
 from setuptools import setup
 #from numpy.distutils.core import setup, Extension
-import locscale
+
 
 setup(name='locscale',
-    version=locscale.__version__,
+    version='0.2',
     author='Alok Bharadwaj and Arjen J. Jakobi',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     description= 'Reference-based density scaling (sharpening) of cryo-EM maps',

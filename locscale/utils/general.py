@@ -387,22 +387,22 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     
     locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
     print("3) Plotted map sections")
-    stats_table = gather_statistics(parsed_input)
-    print("4) Gathered statistics")
+    #stats_table = gather_statistics(parsed_input)
+    #print("4) Gathered statistics")
     input_table = print_input_arguments(args)
-    print("5) Printed input arguments")
-    map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
-    print("6) Printed locscale quality metrics")
-    quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
-    print("7) validation metrics done")
-    local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+    print("4) Printed input arguments")
+    #map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
+    #print("6) Printed locscale quality metrics")
+    #quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
+    #print("7) validation metrics done")
+    #local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
                                                          title_text="Emmap local analysis: skew and kurtosis")
-    local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    #local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
                                                          title_text="Emmap local analysis: mean and variance")
     
-    local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+    #local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
                                                          title_text="Locscale local analysis: skew and kurtosis")
-    local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    #local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
                                                          title_text="Locscale local analysis: mean and variance")
     
     fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map")
@@ -413,24 +413,24 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     pdf.savefig(fsc_figure)
     pdf.savefig(emmap_section_fig)
     pdf.savefig(locscale_section_fig)
-    pdf.savefig(map_quality_table)
-    pdf.savefig(stats_table)
+  #  pdf.savefig(map_quality_table)
+  #  pdf.savefig(stats_table)
  #   pdf.savefig(local_histogram_analysis_skew_kurt_emmap_fig)
  #   pdf.savefig(local_histogram_analysis_skew_kurt_locscale_fig)
  #   pdf.savefig(local_histogram_analysis_mean_var_emmap_fig)
  #   pdf.savefig(local_histogram_analysis_mean_var_locscale_fig)
     
-    if parsed_input['use_theoretical']:
-        pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
-        pdf.savefig(pickle_output_sample_fig)
+ #   if parsed_input['use_theoretical']:
+ #       pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
+ #       pdf.savefig(pickle_output_sample_fig)
         
     
     pdf.close()
     
-    cwd = os.getcwd()
-    save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
-    csvfile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_quality_metrics.csv"])
-    print("Saving quality metrics: \n {}".format(csvfile))
+  #  cwd = os.getcwd()
+  #  save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
+  #  csvfile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_quality_metrics.csv"])
+  #  print("Saving quality metrics: \n {}".format(csvfile))
     
     import csv
     
