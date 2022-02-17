@@ -44,6 +44,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
+    from locscale.include.emmer.ndimage.filter import apply_filter_to_map
     import mrcfile
     
     emmap_mrc = mrcfile.open(emmap_path)
@@ -66,7 +67,10 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
         
     
     output_filename = emmap_path[:-4] +"_global_sharpened.mrc"
+    output_filename_filtered_map = emmap_path[:-4] +"_global_sharpened_filtered.mrc"
+    
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
+    apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
     
     if return_processed_files:
         print("Returning: sharpend_map_path, [rp_unsharp, rp_sharp, bfactor]")
