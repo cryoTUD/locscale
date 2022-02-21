@@ -107,7 +107,7 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
         
 
     '''    
-    
+    from locscale.include.emmer.ndimage.map_tools import save_as_mrc
         
     emmap_mrc = mrcfile.open(emmap_path)
     voxel_size_record = emmap_mrc.voxel_size
@@ -121,7 +121,8 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
     
     if output_filename is None:
         output_filename = emmap_path[:-4]+"_filtered_"+str(dmin)+"_A.mrc"
-    locscale.include.emmer.ndimage.map_tools.save_as_mrc(filtered_emmap, voxel_size_record=voxel_size_record, outfilename=output_filename)
+    
+    save_as_mrc(filtered_emmap, voxel_size_record=voxel_size_record, outfilename=output_filename)
     
     return output_filename
 
@@ -142,7 +143,8 @@ def window3D(w):
 def get_cosine_mask(mask,length_cosine_mask_1d):
     cosine_window_1d = signal.cosine(length_cosine_mask_1d)
     cosine_window_3d = window3D(cosine_window_1d)
-    cosine_mask = signal.fftconvolve(mask,cosine_window_3d,mode='same')
+    cosine_mask = signal.convolve(mask,cosine_window_3d,mode='same')
+    cosine_mask = cosine_mask/cosine_mask.max()
     return cosine_mask
 
 def get_spherical_mask(mask_shape, radius_index):
