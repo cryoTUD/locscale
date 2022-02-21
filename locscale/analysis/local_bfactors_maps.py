@@ -11,12 +11,12 @@ import os
 import numpy as np
 import random
 from tqdm import tqdm
-emdid = "5778"
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/emd5778"
-pseudomap_path = os.path.join(folder,"using_pseudoatomic_model.mrc")
-atomic_map_path = os.path.join(folder,"using_atomic_model.mrc")
-resmap_path = os.path.join(folder,"emd5778_map_resmap.mrc")
-mask_path = os.path.join(folder,"pdb3j5p_mask.mrc")
+emdid = "3061"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/bfactor_correlation/emd5778"
+pseudomap_path = os.path.join(folder,"pdb3j5p_refined_cropped_shifted_refmac_refined_4locscale.mrc")
+atomic_map_path = os.path.join(folder,"xyz_emd5778_tutorial_global_sharpened.mrc")
+resmap_path = os.path.join(folder,"emd5778_tutorial.mrc")
+mask_path = os.path.join(folder,"emd5778_tutorial_confidenceMap.mrc")
 
 pseudomap = mrcfile.open(pseudomap_path).data
 modmap = mrcfile.open(atomic_map_path).data
@@ -31,7 +31,7 @@ resolution_limits = (2,8)
 apix = mrcfile.open(mask_path).voxel_size.x
 
 ## Get the following from the report generated
-high_frequency_cutoff = 10
+high_frequency_cutoff = 9.3
 fsc_cutoff = 3.4
 boxsize = 22
 
