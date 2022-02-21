@@ -134,3 +134,55 @@ for map_name in emmaps.keys():
     sns.kdeplot(df[map_name])
 
 plt.legend(list(emmaps.keys()))
+
+def get_map_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000):
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+    from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    
+    def get_box(big_volume,center,size):
+        return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
+
+    emmap = mrcfile.open(emmap_path).data
+    mask = mrcfile.open(mask_path).data
+    
+    apix = mrcfile.open(mask_path).voxel_size.x
+    global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+    fsc_cutoff = fsc_resolution
+    if boxsize is None:
+        boxsize = 25 / apix
+    
+    z,y,x = np.where(mask == 1)
+    all_points = list(zip(x,y,z))
+    random_centers = random.sample(all_points,15000)
+    
+    bfactor_distributions = {}
+    
+    for center in random_centers:
+        try:
+            emmap_window = get_box(emmap, center, boxsize)
+            mask_window = get_box(mask, center, boxsize)
+        
+            num_atoms, _  = measure_mask_parameters(mask=mask_window, apix=apix)
+            
+            local_wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
+            local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
+            
+            rp_local = compute_radial_profile(emmap_window)
+            freq = frequency_array(rp_local, apix)
+            
+            bfactor = estimate_bfactor_standard(freq, rp_local, local_wilson_cutoff, fsc_cutoff)
+            
+            bfactor_distributions[center] = bfactor
+        except:
+            print("Error at {}".format(center))
+        
+    
+    return bfactor_distributions
+    
+        
+        
+    
+    
+    

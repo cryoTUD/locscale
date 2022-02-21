@@ -135,7 +135,7 @@ def find_radius_of_gyration(model_path=None, input_gemmi_st=None):
     
     return Rg
 
-def find_wilson_cutoff(model_path=None, input_gemmi_st=None, mask_path=None, mask = None, apix=None, method='Singer', return_as_frequency=False):
+def find_wilson_cutoff(model_path=None, input_gemmi_st=None, mask_path=None, mask = None, apix=None, num_atoms=None, method='Singer', return_as_frequency=False):
     '''
     Function to find the cutoff frequency above which Wilson statistics hold true. If a PDB file is passed either as a gemmi structure as a PDB path, then radius of gyration is found rigorously by the mean distance to center of mass of protein. If a mask is passed, however, then radius of gyration is estimated from the num_atoms calculated from the mask volume. 
     
@@ -192,7 +192,11 @@ Reference:
         Rg = R_constant * num_atoms**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
-        
+    elif num_atoms is not None:
+         mol_weight = num_atoms * 16  # daltons 
+         wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
+         return wilson_cutoff_local
+    
     else:
         print("Input error!")
         return 0
@@ -215,6 +219,7 @@ Reference:
         return f_cutoff
     else:
         return d_cutoff
+
 
 
 
