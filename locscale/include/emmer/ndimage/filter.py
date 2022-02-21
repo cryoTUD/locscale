@@ -108,13 +108,13 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
 
     '''    
     from locscale.include.emmer.ndimage.map_tools import save_as_mrc
+    from locscale.include.emmer.ndimage.filter import low_pass_filter
         
     emmap_mrc = mrcfile.open(emmap_path)
-    voxel_size_record = emmap_mrc.voxel_size
+    apix = emmap_mrc.voxel_size.tolist()[0]
     origin = emmap_mrc.header.origin
     emmap = emmap_mrc.data
     
-    apix = (voxel_size_record.x + voxel_size_record.y + voxel_size_record.z)/3
     
     # Takes the average of pixelsize in three axes for calculating filter cutoff
     filtered_emmap = low_pass_filter(emmap, dmin, apix)
@@ -122,7 +122,7 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
     if output_filename is None:
         output_filename = emmap_path[:-4]+"_filtered_"+str(dmin)+"_A.mrc"
     
-    save_as_mrc(filtered_emmap, voxel_size_record=voxel_size_record, outfilename=output_filename)
+    save_as_mrc(filtered_emmap,output_filename=output_filename,apix=apix )
     
     return output_filename
 
