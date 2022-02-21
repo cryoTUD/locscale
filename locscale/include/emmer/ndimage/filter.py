@@ -107,7 +107,7 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
         
 
     '''    
-    from locscale.include.emmer.ndimage.map_tools import save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.include.emmer.ndimage.filter import low_pass_filter
         
     emmap_mrc = mrcfile.open(emmap_path)
