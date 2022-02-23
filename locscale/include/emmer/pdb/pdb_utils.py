@@ -117,7 +117,7 @@ def split_model_based_on_nucleotides(gemmi_st):
 
     return dna_st, rna_st    
 
-def shake_pdb(input_pdb, rmsd):
+def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     '''
     Function to generate a new pdb by shaking an old PDB
 
@@ -136,17 +136,37 @@ def shake_pdb(input_pdb, rmsd):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     input_gemmi_st = detect_pdb_input(input_pdb)
     
+    assert magnitude > 0
+    
     for model in input_gemmi_st:
         for chain in model:
             for res in chain:
                 for atom in res:
                     current_pos = np.array(atom.pos.tolist())
-                    shake_vector = np.random.normal(loc=0, scale=rmsd)
+                    if randomisation == "normal":
+                        if mean is not None:
+                            r = abs(np.random.normal(loc=mean, scale=magnitude))  ## r will be a normally distributed, positive definite variable
+                            theta = np.random.uniform(0, np.pi*2)
+                            phi = np.random.uniform(0, np.pi*2)
+                        else:
+                            r = abs(np.random.normal(loc=0, scale=magnitude))  ## r will be a normally distributed, positive definite variable
+                            theta = np.random.uniform(0, np.pi*2)
+                            phi = np.random.uniform(0, np.pi*2)
+                                        
+                    elif randomisation == "uniform":
+                        r = np.random.uniform(low=0, high=magnitude)
+                        theta = np.random.uniform(0, np.pi*2)
+                        phi = np.random.uniform(0, np.pi*2)
+                        
+                    else:
+                        raise ValueError("The variable randomisation has only two inputs: normal or uniform")
+                        
+                    shake_vector = convert_polar_to_cartesian(r, phi, theta)
+                    
                     new_pos = current_pos + shake_vector
                     atom.pos = gemmi.Position(new_pos[0], new_pos[1], new_pos[2])
     
     return input_gemmi_st
-                    
 
 def get_bfactors(in_model_path, return_as_list=True):
     """

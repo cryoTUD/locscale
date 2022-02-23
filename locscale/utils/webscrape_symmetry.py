@@ -7,6 +7,41 @@ Created on Wed Oct  6 17:56:23 2021
 
 """
 
+def extract_threshold(emdid):
+    from selenium import webdriver
+    from selenium.webdriver.firefox.options import Options
+    from bs4 import BeautifulSoup as soup
+    import pandas as pd
+    
+    ## Open browser in headless 
+    opts = Options()
+    opts.add_argument("--headless")
+    driver = webdriver.Firefox(options=opts)
+    
+    ## Script to web scrap and get symmetry information
+    
+    emdb_url = "https://www.emdataresource.org/EMD-"+str(emdid)
+    
+    driver.get(emdb_url)
+    page_html = driver.page_source
+    driver.close()
+    
+    ## Parse using pandas
+    
+    dataframes = pd.read_html(page_html)
+    
+    col_name = "Recommended Contour Level"
+
+    for df in dataframes:
+        if 0 in list(df.keys()):
+            if col_name in df[0].values:
+                col = df[0]
+                threshold = df[col==col_name][1].values[0]
+                threshold = threshold.split()[0]
+                print("Found threshold is: "+threshold)
+    
+    return threshold
+
 def extract_symmetry(emdid):
     from selenium import webdriver
     from selenium.webdriver.firefox.options import Options
