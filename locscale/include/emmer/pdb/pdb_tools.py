@@ -222,6 +222,35 @@ Reference:
 
 
 
+def get_all_atomic_positions(gemmi_structure):
+    '''
+    Extract atom positions
+
+    Parameters
+    ----------
+    gemmi_structure : gemmi.Structure()
+        input gemmi structure
+    chain_name : str
+        
+    res_range : list
+        res_range = [start_res, end_res] (both incl)
+
+    Returns
+    -------
+    pdb_positions : list
+    
+    pdb_positions = [[x1, y1, z1], [x2, y2, z3]...] (values in Angstorm)
+    '''
+    gemmi_model = gemmi_structure[0]
+
+    pdb_positions = []
+    for chain in gemmi_model:
+        for res in chain:
+            for atom in res:
+                pdb_positions.append(atom.pos.tolist())
+                        
+    
+    return pdb_positions
 
 def get_atomic_positions_between_residues(gemmi_structure, chain_name, res_range = None):
     '''

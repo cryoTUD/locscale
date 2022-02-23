@@ -198,11 +198,14 @@ def average_voxel_size(voxel_size_record):
     
     return average_apix
 
-def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True):
+def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True, folder = None):
     from locscale.include.confidenceMapUtil.confidenceMapMain import calculateConfidenceMap
     import os, shutil, time
     
-    current_cwd = os.getcwd()
+    if folder is None:
+        current_cwd = os.getcwd()
+    else:
+        current_cwd = folder
     timestamp =  str(time.time())
     temp_dir = current_cwd + '/fdr_output_temp_'+timestamp
     os.mkdir(temp_dir)
