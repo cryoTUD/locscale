@@ -306,8 +306,9 @@ def prepare_mask_and_maps_for_scaling(args):
             print("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
 
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
+    apix_old = apix
+    
     if window_bleed_and_pad:
-        apix_old = apix
         emmap_shape_old = np.array(list(xyz_emmap.shape))
         pad_int_emmap = compute_padding_average(xyz_emmap, xyz_mask)
         pad_int_modmap = compute_padding_average(xyz_modmap, xyz_mask)
