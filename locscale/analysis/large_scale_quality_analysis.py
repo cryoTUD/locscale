@@ -88,7 +88,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
             symmetry = symmetry_dictionary[str(emdb_id)]
             
             print("Now running Locscale on Halfmap 1")
-            locscale_1_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap1_path, "-ma",mask_path,"-res",fsc_resolution_map,"--symmetry",symmetry,"-o",
+            locscale_1_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap1_path, "-ma",mask_path,"-res",str(fsc_resolution_map),"--symmetry",symmetry,"-o",
                                   halfmap_1_scaled_path,"-op",processing_files_1_path,"-pm_it","1","-ref_it","1","--verbose","--mpi"]
             
             
@@ -96,7 +96,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
             run(locscale_1_command)
             
             print("Now running Locscale on Halfmap 2")
-            locscale_2_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap2_path, "-ma",mask_path,"-res",fsc_resolution_map,"--symmetry",symmetry,"-o",
+            locscale_2_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap2_path, "-ma",mask_path,"-res",str(fsc_resolution_map),"--symmetry",symmetry,"-o",
                                   halfmap_2_scaled_path,"-op",processing_files_2_path,"-pm_it","1","-ref_it","1","--verbose","--mpi"]
             print(" ".join(locscale_2_command))
             run(locscale_2_command)
