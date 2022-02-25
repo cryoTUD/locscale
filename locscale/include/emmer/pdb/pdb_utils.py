@@ -117,6 +117,65 @@ def split_model_based_on_nucleotides(gemmi_st):
 
     return dna_st, rna_st    
 
+def convert_polar_to_cartesian(r, phi, theta):
+    '''
+    Convert polar to cartesian.. Blindly following the formula mentioned here: 
+        https://math.libretexts.org/Bookshelves/Calculus/Book%3A_Calculus_(OpenStax)/12%3A_Vectors_in_Space/12.7%3A_Cylindrical_and_Spherical_Coordinates#:~:text=To%20convert%20a%20point%20from,and%20z%3D%CF%81cos%CF%86.
+        (accessed: 23-2-2022) 
+    
+    
+
+    Parameters
+    ----------
+    r : float
+        
+    phi : float 
+        first angle in radians
+    theta : float
+        second angle in radians
+
+    Returns
+    -------
+    cartesian : numpy.ndarray [1x3]
+        (x,y,z)
+
+    '''
+    x = r * np.sin(phi) * np.cos(theta)
+    y = r * np.sin(phi) * np.sin(theta)
+    z = r * np.cos(phi)
+    
+    cartesian = np.array([x,y,z])
+    
+    return cartesian
+
+def convert_cartesian_to_polar(x,y,z):
+    '''
+    Same as above
+
+    Parameters
+    ----------
+    x : TYPE
+        DESCRIPTION.
+    y : TYPE
+        DESCRIPTION.
+    z : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    Polar : numpy.ndarray
+
+    '''
+    
+    r = np.sqrt(np.power(x,2)+np.power(y,2)+np.power(z,2))
+    theta = np.arctan(y/x)
+    phi = np.arccos(z / r)
+    
+    polar = np.array([r, theta, phi])
+    
+    return polar
+
+
 def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     '''
     Function to generate a new pdb by shaking an old PDB
