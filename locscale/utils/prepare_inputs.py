@@ -306,7 +306,7 @@ def prepare_mask_and_maps_for_scaling(args):
             print("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
 
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
-    apix_old = apix
+    
     
     if window_bleed_and_pad:
         emmap_shape_old = np.array(list(xyz_emmap.shape))
@@ -317,7 +317,7 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_modmap = pad_or_crop_volume(xyz_modmap, map_shape, pad_int_modmap)
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
         emmap_shape_new = np.array(list(xyz_emmap.shape))
-        apix = apix_old * np.mean(emmap_shape_old / emmap_shape_new)
+        
     
 
     ## Next few lines of code characterizes radial profile of 
@@ -382,7 +382,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask'] = xyz_mask
     parsed_inputs_dict['wn'] = wn
     parsed_inputs_dict['apix'] = apix
-    parsed_inputs_dict['apix_old'] = apix_old
+ 
     parsed_inputs_dict['use_theoretical'] = scale_using_theoretical_profile
     parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
     parsed_inputs_dict['verbose'] = verbose
