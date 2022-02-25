@@ -84,7 +84,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
             processing_files_2_path = os.path.join(output_folder, "processing_files_2_{}".format(emdb_id))
             
             
-            symmetry = symmetry_dictionary[emdb_id]
+            symmetry = symmetry_dictionary[str(emdb_id)]
             
             locscale_1_command = ["python",locscale_script,"-em",halfmap1_path, "-ma",mask_path,"-res",fsc_resolution,"--symmetry",symmetry,"-o",
                                   halfmap_1_scaled_name,"-op",processing_files_1_path,"-pm_it","1","-ref_it",1,"--verbose"]
@@ -109,7 +109,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
         print("#################################################################################################### \n")
     
 
-def get_data(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, process_id=None):
+def get_data_old(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output_filename, process_id=None):
    # parent_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/LocScale/tests/test_quality_metrics_large"
     pickle_output_file = os.path.join(parent_folder, "{}.pickle".format(output_filename))
     csv_output_file = os.path.join(parent_folder, "{}_csv.csv".format(output_filename))
@@ -493,5 +493,5 @@ if __name__ == "__main__":
     print("Quality analysis complete!")
 
     '''
-    run_locscale_script()
+    run_locscale_script(None,None,None,None)
     
