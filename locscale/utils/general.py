@@ -37,8 +37,12 @@ def change_directory(args, folder_name):
     import os    
     from locscale.utils.general import copy_file_to_folder
     
-    current_directory = os.getcwd()
-    new_directory = "/".join(current_directory.split("/")+[folder_name])
+    if folder_name == "processing_files":
+        current_directory = os.getcwd()
+        new_directory = "/".join(current_directory.split("/")+[folder_name])
+    else:
+        new_directory = folder_name
+    
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
     
