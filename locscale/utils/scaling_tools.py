@@ -421,7 +421,7 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     
     wn = parsed_inputs_dict['wn']
     window_bleed_and_pad =parsed_inputs_dict['win_bleed_pad']
-    apix = parsed_inputs_dict['apix']
+    apix = parsed_inputs_dict['apix_old']
         
     if window_bleed_and_pad:
         #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
