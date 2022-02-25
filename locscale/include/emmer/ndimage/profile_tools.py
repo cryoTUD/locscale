@@ -43,7 +43,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True):
+def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True, alpha=0.5):
     import matplotlib.pyplot as plt
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
@@ -94,16 +94,33 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         
         ax1.legend(legends,fontsize=font)
         ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
-        ax1.set_ylabel('log(|F|)',fontsize=font)
+        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
         
     else:
+        profile_list = np.array(list_of_profiles)
+        average_profile = np.einsum("ij->j", profile_list) / len(profile_list)
+        
+        variation = []
+        for col_index in range(profile_list.shape[1]):
+            col_extract = profile_list[:,col_index]
+            variation.append(col_extract.std())
+
+        variation = np.array(variation)
+        
+        y_max = average_profile + variation
+        y_min = average_profile - variation
+
         fig = plt.figure()
+        
         ax1 = fig.add_subplot(111)
         ax1.grid(True)
         ax2 = ax1.twiny()
-        for profile in list_of_profiles:
-            ax1.plot(freq**2,np.log(profile),'k')
+        
+        ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
+        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=alpha)
+        ax1.legend(["N={}".format(len(profile_list))])
+        
             
         ax2.set_xticks(ax1.get_xticks())
         ax2.set_xbound(ax1.get_xbound())
@@ -111,7 +128,7 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         
 
         ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
-        ax1.set_ylabel('log(|F|)',fontsize=font)
+        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
     
     return fig
