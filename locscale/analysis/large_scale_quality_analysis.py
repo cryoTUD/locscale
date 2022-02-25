@@ -47,6 +47,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
         fsc_resolution[pdb_id] = resolution
         
     halfmap_prefix = "EMDBmaps/halfmaps"
+    mask_prefix = "EMDBmaps/"
         
     for emdb_pdb in EMDB_PDB_ids:
         print("#################################################################################################### \n")
@@ -72,7 +73,7 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
             
             halfmap1_path = os.path.join(parent_folder, emdb_pdb, halfmap_prefix, halfmap1_name)
             halfmap2_path = os.path.join(parent_folder, emdb_pdb, halfmap_prefix, halfmap2_name)
-            mask_path = os.path.join(parent_folder, emdb_pdb, halfmap_prefix, mask_filename)
+            mask_path = os.path.join(parent_folder, emdb_pdb, mask_prefix, mask_filename)
             
             halfmap_1_scaled_name = "locscale_{}_halfmap_1.mrc".format(emdb_id)
             halfmap_2_scaled_name = "locscale_{}_halfmap_2.mrc".format(emdb_id)
@@ -88,14 +89,16 @@ def run_locscale_script(parent_folder, EMDB_PDB_ids, fsc_resolutions_list,output
             
             print("Now running Locscale on Halfmap 1")
             locscale_1_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap1_path, "-ma",mask_path,"-res",fsc_resolution_map,"--symmetry",symmetry,"-o",
-                                  halfmap_1_scaled_name,"-op",processing_files_1_path,"-pm_it","1","-ref_it",1,"--verbose","--mpi"]
+                                  halfmap_1_scaled_path,"-op",processing_files_1_path,"-pm_it","1","-ref_it","1","--verbose","--mpi"]
+            
+            
+            print(" ".join(locscale_1_command))
+            run(locscale_1_command)
             
             print("Now running Locscale on Halfmap 2")
             locscale_2_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap2_path, "-ma",mask_path,"-res",fsc_resolution_map,"--symmetry",symmetry,"-o",
-                                  halfmap_2_scaled_name,"-op",processing_files_2_path,"-pm_it","1","-ref_it",1,"--verbose","--mpi"]
-            
-            run(locscale_1_command)
-            
+                                  halfmap_2_scaled_path,"-op",processing_files_2_path,"-pm_it","1","-ref_it","1","--verbose","--mpi"]
+            print(" ".join(locscale_2_command))
             run(locscale_2_command)
             
             
