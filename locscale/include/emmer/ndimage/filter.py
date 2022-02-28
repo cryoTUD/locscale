@@ -1,4 +1,6 @@
-from locscale.include.emmer.headers import *
+import numpy as np
+
+import mrcfile
 
 def calculate_fourier_frequencies(im, apix):
     """Return the image frequency for every voxel in Fourierspace
@@ -129,6 +131,7 @@ def apply_filter_to_map(emmap_path,dmin,output_filename=None):
 def window3D(w):
     # Convert a 1D filtering kernel to 3D
     # eg, window3D(numpy.hanning(5))
+    
     L=w.shape[0]
     m1=np.outer(np.ravel(w), np.ravel(w))
     win1=np.tile(m1,np.hstack([L,1,1]))
@@ -141,6 +144,7 @@ def window3D(w):
 
 
 def get_cosine_mask(mask,length_cosine_mask_1d):
+    from scipy import signal
     cosine_window_1d = signal.cosine(length_cosine_mask_1d)
     cosine_window_3d = window3D(cosine_window_1d)
     cosine_mask = signal.convolve(mask,cosine_window_3d,mode='same')
@@ -173,12 +177,16 @@ def resolution_cutoff(emmap_vol,cutoff_resolution,apix):
     
 
 def butter_lowpass(cutoff, nyq_freq, order=4):
+    from scipy import signal
+
     normal_cutoff = float(cutoff) / nyq_freq
     b, a = signal.butter(order, normal_cutoff, btype='lowpass')
     return b, a
 
 def butter_lowpass_filter(data, cutoff_freq, nyq_freq, order=4):
     # Source: https://github.com/guillaume-chevalier/filtering-stft-and-laplace-transform
+    from scipy import signal
+
     b, a = butter_lowpass(cutoff_freq, nyq_freq, order=order)
     y = signal.filtfilt(b, a, data)
     return y
