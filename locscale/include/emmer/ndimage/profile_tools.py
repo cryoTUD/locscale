@@ -43,7 +43,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True, alpha=0.5):
+def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True, alpha=0.05, variation=None):
     import matplotlib.pyplot as plt
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
@@ -97,7 +97,7 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
         
-    else:
+    elif variation is None:
         profile_list = np.array(list_of_profiles)
         average_profile = np.einsum("ij->j", profile_list) / len(profile_list)
         
@@ -118,7 +118,7 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         ax2 = ax1.twiny()
         
         ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
-        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=alpha)
+        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
         ax1.legend(["N={}".format(len(profile_list))])
         
             
@@ -131,8 +131,40 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
     
-    return fig
+    else:
+        if variation is None:
+            raise UserWarning("Include a variation variable to plot radial profile with variance")
+        
+        if len(list_of_profiles) > 1:
+            raise UserWarning("Multiple profiles given as average profile..")
+            
+        average_profile = list_of_profiles[0]
+        
+        y_max = average_profile + variation
+        y_min = average_profile - variation
 
+        fig = plt.figure()
+        
+        ax1 = fig.add_subplot(111)
+        ax1.grid(True)
+        ax2 = ax1.twiny()
+        
+        ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
+        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
+        ax1.legend(["N={}".format(len(profile_list))])
+        
+            
+        ax2.set_xticks(ax1.get_xticks())
+        ax2.set_xbound(ax1.get_xbound())
+        ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
+        
+
+        ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
+        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
+        ax2.set_xlabel('$d [\AA]$',fontsize=font)
+        
+        
+    return fig
 def plot_emmap_section(emmap, title="EMMAP Sections"):
     import matplotlib.pyplot as plt
     
