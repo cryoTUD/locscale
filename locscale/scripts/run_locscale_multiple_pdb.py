@@ -14,8 +14,8 @@ from subprocess import Popen, run,  PIPE
 
 ## Input folder contains unsharpened half maps and all perturbed PDB
 
-input_folder = ""
-output_folder = ""
+input_folder = "/home/abharadwaj1/dev/faraday_tests/input_folder"
+output_folder = "/home/abharadwaj1/dev/faraday_tests/output_folder"
 
 halfmap_1_path = os.path.join(input_folder, "emd_10692_half_map_1.map")
 halfmap_2_path = os.path.join(input_folder, "emd_10692_half_map_2.map")
@@ -57,7 +57,7 @@ for perturb in perturb_magnitudes:
 print("\n############### START ###################\n")
 
 for perturb in perturb_magnitudes:
-    return_command = run(locscale_run_scripts[perturb], stdout=PIPE, check=True)
+    return_command = run(locscale_run_scripts[perturb], check=True)
     
     print("===========Locscale run finished for perturb {} A ====== ".format(perturb))
     print("Exit code: ",return_command.returncode)
