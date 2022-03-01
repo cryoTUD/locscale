@@ -27,7 +27,7 @@ locscale_paths = {}
 processing_files_folder = {}
 
 for perturb in perturb_magnitudes:    
-    pdb_paths[perturb] = os.path.join(output_folder,"pdb6y5a_perturbed_{}_A.pdb".format(perturb))
+    pdb_paths[perturb] = os.path.join(input_folder,"pdb6y5a_perturbed_{}_A.pdb".format(perturb))
     locscale_paths[perturb] = os.path.join(output_folder,"locscale_perturbed_pdb_{}A".format(perturb))
     processing_files_folder[perturb] = os.path.join(output_folder, "processing_files_{}A".format(perturb))
     
