@@ -309,14 +309,14 @@ def prepare_mask_and_maps_for_scaling(args):
     
     
     if window_bleed_and_pad:
-        emmap_shape_old = np.array(list(xyz_emmap.shape))
+
         pad_int_emmap = compute_padding_average(xyz_emmap, xyz_mask)
         pad_int_modmap = compute_padding_average(xyz_modmap, xyz_mask)
         map_shape = [(xyz_emmap.shape[0] + wn), (xyz_emmap.shape[1] + wn), (xyz_emmap.shape[2] + wn)]
         xyz_emmap = pad_or_crop_volume(xyz_emmap, map_shape, pad_int_emmap)
         xyz_modmap = pad_or_crop_volume(xyz_modmap, map_shape, pad_int_modmap)
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
-        emmap_shape_new = np.array(list(xyz_emmap.shape))
+
         
     
 

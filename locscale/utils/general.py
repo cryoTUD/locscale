@@ -352,6 +352,27 @@ def print_input_arguments(args):
     table.scale(1,2)
     return fig
    
+def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path, mask_path, fsc_resolution):
+    from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
+    fig, ax =plt.subplots(figsize=(8,8))
+    
+    unsharped_emmap_dist = get_bfactor_distribution(unsharpened_emmap_path, mask_path, fsc_resolution)
+   
+    locscale_dist = get_bfactor_distribution(locscale_map_path, mask_path, fsc_resolution)
+    
+    unsharpened_array = np.array(list(unsharped_emmap_dist.values()))
+   
+    locscale_array = np.array(list(locscale_dist.values()))
+    
+    sns.kdeplot(unsharpened_array)
+   
+    sns.kdeplot(locscale_array)
+    
+    plt.legend(["unsharpened map","Locscale map"])
+    return fig
 
 def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad, report_output_filename=None, statistic_output_filename=None):
     from locscale.include.emmer.ndimage.profile_tools import plot_emmap_section
@@ -376,25 +397,26 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     else:
         emmap = parsed_input['emmap']
         modmap = parsed_input['modmap']
-    print("1) Padded and cropped")        
-    print(parsed_input['apix'])
-    print(emmap.shape, modmap.shape, locscale_map.shape)
+  
     rp_emmap = compute_radial_profile(emmap)
     rp_modmap = compute_radial_profile(modmap)
     rp_locscale = compute_radial_profile(locscale_map)
     freq = frequency_array(rp_emmap, apix=parsed_input['apix'])
-    print("2) Calculated radial profiles")
+
     radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],
                                              legends=['input_emmap', 'model_map','locscale_map'])
     
     emmap_section_fig = plot_emmap_section(parsed_input['emmap'], title="Input")
     
     locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
-    print("3) Plotted map sections")
+
     #stats_table = gather_statistics(parsed_input)
     #print("4) Gathered statistics")
+    bfactor_kde_fig = plot_bfactor_distribution_standard(unsharpened_emmap_path=parsed_input['emmap_path'],
+                                                 mask_path=parsed_input['mask_path'], locscale_map_path=locscale_path, fsc_resolution=parsed_input['fsc_resolution'])
+    
     input_table = print_input_arguments(args)
-    print("4) Printed input arguments")
+
     #map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
     #print("6) Printed locscale quality metrics")
     #quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
@@ -417,33 +439,19 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     pdf.savefig(fsc_figure)
     pdf.savefig(emmap_section_fig)
     pdf.savefig(locscale_section_fig)
-  #  pdf.savefig(map_quality_table)
-  #  pdf.savefig(stats_table)
- #   pdf.savefig(local_histogram_analysis_skew_kurt_emmap_fig)
- #   pdf.savefig(local_histogram_analysis_skew_kurt_locscale_fig)
- #   pdf.savefig(local_histogram_analysis_mean_var_emmap_fig)
- #   pdf.savefig(local_histogram_analysis_mean_var_locscale_fig)
+    pdf.savefig(bfactor_kde_fig)
+
     
- #   if parsed_input['use_theoretical']:
- #       pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
- #       pdf.savefig(pickle_output_sample_fig)
+    if parsed_input['use_theoretical']:
+        pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
+        pdf.savefig(pickle_output_sample_fig)
         
     
     pdf.close()
     
-  #  cwd = os.getcwd()
-  #  save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
-  #  csvfile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_quality_metrics.csv"])
-  #  print("Saving quality metrics: \n {}".format(csvfile))
-    
-    import csv
-    
-    with open(csvfile, "w") as output:
-        writer = csv.writer(output)
-        for key in quality_metrics.keys():
-            writer.writerow([key, quality_metrics[key]])
+
+
         
-   
 
 def plot_pickle_output(folder):
     import pickle
