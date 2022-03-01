@@ -482,7 +482,7 @@ def measure_debye(freqs,amplitudes):
     
     return debye_effect,freq_step,filtered_amplitudes,exponential_fit_amplitudes
 
-def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return_amplitude=False):
+def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return_amplitude=False, return_fit_quality=False, standard_notation=False):
     '''
     From a given radial profile, estimate the b_factor from the high frequency cutoff
 
@@ -508,6 +508,7 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
 
     '''
     from scipy.optimize import curve_fit
+    from sklearn.metrics import r2_score
     
     def linear_fit(xdata,slope,const):
         ydata = const + slope*xdata
@@ -531,15 +532,26 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
     
     param, _ = curve_fit(linear_fit,xdata,ydata)
     
-    b_factor = param[0] * 4
+    if standard_notation:
+        b_factor = -1 * param[0] * 4   ## Inverse of slope
+    else:
+        b_factor = param[0] * 4
+    
     exp_fit_amplitude = np.exp(param[1])
     
     #print("B factor: "+str(round(param[0]*4,2)))
-    
+    y_pred = linear_fit(xdata, slope=param[0], const=param[1])
+    r2 = r2_score(y_true=ydata, y_pred=y_pred)
     if return_amplitude:
-        return b_factor,exp_fit_amplitude
+        if return_fit_quality:
+            return b_factor,exp_fit_amplitude, r2
+        else:
+            return b_factor,exp_fit_amplitude
     else:
-        return b_factor
+        if return_fit_quality:
+            return b_factor, r2
+        else:
+            return b_factor
 
 def calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end=None):
     '''
@@ -615,7 +627,7 @@ def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, 
     freq_scale = scale_profile_tuple[0]
     scale_amplitude = scale_profile_tuple[1]
  
-    bfactor_reference, fit_amp_reference = estimate_bfactor_standard(freq, reference_amplitude, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, return_amplitude=True)
+    bfactor_reference, fit_amp_reference, quality_of_fit = estimate_bfactor_standard(freq, reference_amplitude, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, return_amplitude=True,return_fit_quality=True)
     bfactor_scale, fit_amp_scale = estimate_bfactor_standard(freq_scale, scale_amplitude, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, return_amplitude=True)
     
     bfactor_diff = bfactor_reference-bfactor_scale
@@ -626,7 +638,7 @@ def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, 
     
     
     if return_bfactor_properties:
-        return (freq,amplitude_scaled), (bfactor_reference, fit_amp_reference)
+        return (freq,amplitude_scaled), (bfactor_reference, fit_amp_reference, quality_of_fit)
     else:
         return (freq, amplitude_scaled)
     
