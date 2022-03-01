@@ -310,7 +310,7 @@ def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement
     if only_bfactor_refinement:
         path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
     else:
-        path_to_run_refmac = os.path.join(path_to_locscale+"locscale","utils","run_refmac_restrained.sh")
+        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac_restrained.sh")
         
     
     model_name = model_path[:-4]
