@@ -148,7 +148,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         path_to_FDR_script = os.path.join(path_to_ccpem,"lib","py2","FDRcontrol.pyc")
         fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
                    
-        run(fdr_command_line.split(),stdout=PIPE)
+        run(fdr_command_line.split())
         emmap_name = emmap_path[:-4]
         mask_path = emmap_name+"_confidenceMap.mrc"
         if os.path.exists(mask_path):
@@ -323,7 +323,7 @@ def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement
               "Path to run_refmac: "+path_to_run_refmac+"\n"+
               "Command line: \n"+refmac_command_line)
         
-    refmac_output = run(refmac_command_line.split(),stdout=PIPE)
+    refmac_output = run(refmac_command_line.split())
     refined_model_path = model_name+"_refmac_refined.pdb"
     bfactors = get_bfactors(in_model_path=refined_model_path)
     

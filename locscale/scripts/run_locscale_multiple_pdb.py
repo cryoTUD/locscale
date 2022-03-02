@@ -47,7 +47,7 @@ print("Running the following scripts: \n")
 locscale_run_scripts = {}
 for perturb in perturb_magnitudes:
     print("\n################\n")
-    script = ["mpirun","-np","4","python",locscale_script,"--half_map1",halfmap_1_path, "--half_map2",halfmap_2_path,"--mask_path",mask_path,
+    script = ["mpirun","-np","4","python",locscale_script,"--half_map1",halfmap_1_path, "--half_map2",halfmap_2_path,"--mask",mask_path,
               "--ref_resolution",resolution, "--model_resolution",model_resolution,"--verbose","--mpi",
               "--model_coordinates",pdb_paths[perturb],"--outfile",locscale_paths[perturb],
               "--output_processing_files",processing_files_folder[perturb]]
@@ -58,7 +58,7 @@ for perturb in perturb_magnitudes:
 print("\n############### START ###################\n")
 
 for perturb in perturb_magnitudes:
-    return_command = run(locscale_run_scripts[perturb], check=True)
+    return_command = run(locscale_run_scripts[perturb])
 
     print("===========Locscale run finished for perturb {} A ====== ".format(perturb))
     print("Exit code: ",return_command.returncode)
