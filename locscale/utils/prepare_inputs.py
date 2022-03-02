@@ -152,6 +152,7 @@ def prepare_mask_and_maps_for_scaling(args):
     '''
 
     print("Preparing your inputs for LocScale")
+    import os
     from locscale.pseudomodel.pipeline import get_modmap
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
     from locscale.utils.general import round_up_to_even, round_up_to_odd, get_emmap_path_from_args
@@ -360,7 +361,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("To merge reference and theoretical profiles: \n")
         print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
         
-    
+    processing_files_folder = os.path.dirname(xyz_emmap_path)
     
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
@@ -370,6 +371,7 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments['smooth'] = smooth_factor
     scale_factor_arguments['boost_secondary_structure'] = boost_secondary_structure
     scale_factor_arguments['no_reference'] = args.no_reference
+    scale_factor_arguments['processing_files_folder'] = processing_files_folder
     
     if verbose:
         
@@ -392,6 +394,8 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['PWLF_fit'] = pwlf_fit_quality
     parsed_inputs_dict['emmap_path'] = xyz_emmap_path
     parsed_inputs_dict['mask_path'] = xyz_mask_path
+    parsed_inputs_dict['processing_files_folder'] = processing_files_folder
+    
     
     ## all maps should have same shape
     assert xyz_emmap.shape == xyz_modmap.shape == xyz_mask.shape, "The input maps and mask do not have the same shape"
