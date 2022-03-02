@@ -212,6 +212,70 @@ def calculate_surface_statistics_threshold(emmap_path, mask_path):
         'threshold':threshold}
         
     return surface_statistics_compiled
+
+def plot_threshold_connectivity_graph(emmap_path, num_bins=100, min_threshold=None, max_threshold=None, ignore_first_bins=0):
+    from matplotlib.offsetbox import AnchoredText
+    from tqdm import tqdm
+    from skimage.morphology import skeletonize
+    from skimage import measure
+    import matplotlib.pyplot as plt
+    import os 
+    
+    emdb_filename = os.path.basename(emmap_path)
+    def count_distinct_regions_inner(emmap, reference_threshold):
+        from skimage import measure
+        
+        binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+        labels, num_regions = measure.label(binarised_emmap, background=0, return_num=True)
+        
+        return labels, num_regions
+    
+    import mrcfile
+    print("Calculating surface statistics for: {} at different threshold".format(emmap_path.split("/")[-1]))
+    emmap = mrcfile.open(emmap_path).data
+    apix = tuple(mrcfile.open(emmap_path).voxel_size.tolist())[0]
+    apix = apix
+    origin = mrcfile.open(emmap_path).header.origin.tolist()
+    
+    if min_threshold is None:
+        min_threshold = 0
+    
+    if max_threshold is None:
+        max_threshold = emmap.max() * 0.99
+        
+    threshold_bins = np.linspace(min_threshold, min_threshold, num=num_bins)
+    threshold_connectivity_graph = {}
+    for reference_threshold in tqdm(threshold_bins):        
+        binarised_emmap = (emmap>reference_threshold).astype(np.int_)
+
+        skeletonised_emmap = skeletonize(binarised_emmap)
+        labels_sk, num_regions_sk =  measure.label(skeletonised_emmap, background=0, return_num=True)
+        
+        lengths_array, _  = np.histogram(labels_sk[labels_sk>0].flatten(), bins=labels_sk.max())
+        average_length = lengths_array.mean()
+        
+        threshold_connectivity_graph[reference_threshold] = average_length
+    
+    y = np.array(list(threshold_connectivity_graph.values()))
+    x = np.array(list(threshold_connectivity_graph.keys()))
+    
+                 
+                 
+    max_connection = y[ignore_first_bins:].max()  ## Excluding first few threshold due to noise
+    threshold = x[np.where(y==max_connection)[0][0]]
+            
+    fig, ax1 = plt.subplots(1,1)
+    ax1.plot(x[ignore_first_bins:], y[ignore_first_bins:],'k.-')
+    ax1.set_xlabel("Threshold")
+    ax1.set_ylabel("Average segment length")
+    ax1.set_title("Threshold-Connectivity graph at different threshold for {}".format(emdb_filename))
+    text = "Optimal threshold at: {}".format(round(threshold, 4))
+    anchored_text=AnchoredText(text, loc=3)
+    ax1.add_artist(anchored_text)
+    
+    return threshold_connectivity_graph, threshold, fig
+    
+    
 def threshold_analysis(emmap_path):
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_quality_tools import calculate_surface_area_at_threshold, count_distinct_regions

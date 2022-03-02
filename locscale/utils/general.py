@@ -25,10 +25,11 @@ def true_percent_probability(n):
 
 def copy_file_to_folder(full_path_to_file, new_folder):
     import shutil
+    import os
     
     source = full_path_to_file
-    file_name = source.split("/")[-1]
-    destination = "/".join(new_folder.split("/")+[file_name])
+    file_name = os.path.basename(source)
+    destination = os.path.join(new_folder, file_name)
     shutil.copyfile(source, destination)
     
     return destination
@@ -39,7 +40,7 @@ def change_directory(args, folder_name):
     
     if folder_name == "processing_files":
         current_directory = os.getcwd()
-        new_directory = "/".join(current_directory.split("/")+[folder_name])
+        new_directory = os.path.join(current_directory, folder_name)
     else:
         new_directory = folder_name
     
@@ -385,9 +386,10 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     ## Input-Output characteristics
     locscale_map = mrcfile.open(locscale_path).data
     
-    cwd = os.getcwd()
-    save_file_in_folder = "/".join(cwd.split("/")+[args.output_processing_files])
-    pdffile = "/".join(save_file_in_folder.split("/")+[args.report_filename+"_general.pdf"])
+    
+    processing_files_folder = parsed_input['processing_files_folder']
+    pdffile = os.path.join(processing_files_folder, args.report_filename+"_general.pdf")
+    
     print("Preparing LocScale report: \n {}".format(pdffile))
     
     if window_bleed_and_pad:
@@ -443,7 +445,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
 
     
     if parsed_input['use_theoretical']:
-        pickle_output_sample_fig = plot_pickle_output(save_file_in_folder)
+        pickle_output_sample_fig = plot_pickle_output(processing_files_folder)
         pdf.savefig(pickle_output_sample_fig)
         
     
@@ -457,8 +459,9 @@ def plot_pickle_output(folder):
     import pickle
     import random
     from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile
+    import os
     
-    pickle_output = "/".join(folder.split("/")+["profiles_audit.pickle"])
+    pickle_output = os.path.join(folder, "profiles_audit.pickle")
     with open(pickle_output,"rb") as audit_file:
         audit_scaling = pickle.load(audit_file)
     

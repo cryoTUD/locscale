@@ -191,6 +191,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     sharpened_vals = []
     qfit_voxels = []
     bfactor_voxels = []
+    temp_folder = scale_factor_arguments["processing_files_folder"]
     
     central_pix = round_up_proper(wn / 2.0)
     total = (masked_xyz_locs - wn / 2).shape[0]
@@ -290,15 +291,15 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
     if mpi:
         if audit and use_theoretical_profile and rank==0:
             import os
-            cwd = os.getcwd()
-            pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
+            
+            pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
             with open(pickle_file_output,"wb") as audit:
                 pickle.dump(profiles_audit, audit)
     else:
         if audit and use_theoretical_profile:
             import os
-            cwd = os.getcwd()
-            pickle_file_output = "/".join(cwd.split("/")+["profiles_audit.pickle"])
+            
+            pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
             with open(pickle_file_output,"wb") as audit:
                 pickle.dump(profiles_audit, audit)
                                 
@@ -336,7 +337,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
     apix = parsed_inputs_dict['apix']
     verbose=parsed_inputs_dict['verbose']
-    
+    processing_files_folder=parsed_inputs_dict['processing_files_folder']
     from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
@@ -348,9 +349,9 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     
 
     ## Save temporary files 
-    cwd = os.getcwd()
-    bfactor_path = os.path.join(cwd, "bfactor_map.mrc")
-    qfit_path = os.path.join(cwd, "qfit_map.mrc")
+    
+    bfactor_path = os.path.join(processing_files_folder, "bfactor_map.mrc")
+    qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
 
         
     save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
@@ -406,6 +407,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
     apix = parsed_inputs_dict['apix']
     verbose=parsed_inputs_dict['verbose']
+    processing_files_folder=parsed_inputs_dict['processing_files_folder']
     
     from mpi4py import MPI
     from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
@@ -451,9 +453,9 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
         
         print("Saving bfactor and qfist maps in here: {}".format(os.getcwd()))
             
-        cwd = os.getcwd()
-        bfactor_path = os.path.join(cwd, "bfactor_map.mrc")
-        qfit_path = os.path.join(cwd, "qfit_map.mrc")
+        
+        bfactor_path = os.path.join(processing_files_folder, "bfactor_map.mrc")
+        qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
             
         save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
         save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
