@@ -318,6 +318,8 @@ def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement
     map_dims = emmap_mrc.header.cella.tolist()
     
     refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
+    
+    
     if verbose:
         print("Running REFMAC to refine the pseudo-atomic model using \n"+
               "Path to run_refmac: "+path_to_run_refmac+"\n"+
