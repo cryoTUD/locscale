@@ -28,7 +28,7 @@ locscale_paths = {}
 processing_files_folder = {}
 
 for perturb in perturb_magnitudes:    
-    pdb_paths[perturb] = os.path.join(input_folder,"pdb6y5a_perturbed_{}_A.pdb".format(perturb))
+    pdb_paths[perturb] = os.path.join(input_folder,"pdb6y5a_rmsd_{}_A.pdb".format(perturb))
     locscale_paths[perturb] = os.path.join(output_folder,"locscale_perturbed_pdb_{}A.mrc".format(perturb))
     processing_files_folder[perturb] = os.path.join(output_folder, "processing_files_{}A".format(perturb))
     
@@ -50,7 +50,7 @@ for perturb in perturb_magnitudes:
     script = ["mpirun","-np","4","python",locscale_script,"--half_map1",halfmap_1_path, "--half_map2",halfmap_2_path,"--mask",mask_path,
               "--ref_resolution",resolution, "--model_resolution",model_resolution,"--verbose","--mpi",
               "--model_coordinates",pdb_paths[perturb],"--outfile",locscale_paths[perturb],
-              "--output_processing_files",processing_files_folder[perturb]]
+              "--output_processing_files",processing_files_folder[perturb],"--skip_refine"]
     
     print(" ".join(script))
     locscale_run_scripts[perturb] = script
