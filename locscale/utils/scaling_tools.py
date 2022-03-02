@@ -496,7 +496,9 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         output_filename = output_filename[:-4]+"_symmetrised.mrc"
 
         save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
-   # make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
+    
+    if args.output_report:
+        make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
     
     return LocScaleVol
 

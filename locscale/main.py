@@ -59,6 +59,8 @@ cmdl_parser.add_argument('-v', '--verbose', action='store_true', default=False,
                          help='Verbose output')
 cmdl_parser.add_argument('--dev_mode', action='store_true', default=False,
                          help='If true, this will force locscale to use the theoretical profile even if model map present and will not check for user input consistency')
+cmdl_parser.add_argument('--output_report', action='store_true', default=False,
+                         help='Print a PDF copy of the report')
 cmdl_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
 cmdl_parser.add_argument('--no_reference', action='store_true', default=False,
                          help='Run locscale without using any reference information')
