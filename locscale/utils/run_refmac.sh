@@ -1,15 +1,14 @@
 #!/bin/bash
-MODEL=$1
-NAME=$2
-MAP=$3
-RES=$4
-CCPEM_PATH=$5
-CCP4_PATH=$6
-H=$7
-W=$8
-L=$9
-NUM_ITER=$10
-echo $1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "$10
+MODEL=${1}
+NAME=${2}
+MAP=${3}
+RES=${4}
+CCPEM_PATH=${5}
+CCP4_PATH=${6}
+H=${7}
+W=${8}
+L=${9}
+NUM_ITER=${10}
 #Step 1: 
 REFMAC_SCRIPT=${CCP4_PATH}"/bin/refmac5"
 echo ${CCP4_PATH}
