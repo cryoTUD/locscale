@@ -268,6 +268,67 @@ def plot_fscs(freq, list_of_fsc, colors=['r','g','b','k','y','m'], legends=None,
     ax1.set_ylabel('FSC',fontsize=font)
     ax2.set_xlabel('$d [\AA]$',fontsize=font)
 
+def plot_multiple_fsc(list_of_halfmap_tuple, common_mask_path, softening_parameter=5, apix=None, legend=None, title=None, font=16):
+    import matplotlib.pyplot as plt
+    from scipy.interpolate import interp1d
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
+    import mrcfile
+    
+    mask = parse_input(common_mask_path)
+    if apix is not None:
+        apix = apix
+    else:
+        apix = mrcfile.open(common_mask_path).voxel_size.tolist()[0]
+    
+    softmask = get_cosine_mask(mask, length_cosine_mask_1d=softening_parameter)
+    
+    fsc_curves = {}
+    
+    for i,halfmap_tuple in enumerate(list_of_halfmap_tuple):
+        
+        halfmap1 = parse_input(halfmap_tuple[0])
+        halfmap2 = parse_input(halfmap_tuple[1])
+        
+        masked_halfmap1 = softmask * halfmap1
+        masked_halfmap2 = softmask * halfmap2
+        
+        fsc_curve = calculate_fsc_maps(input_map_1=masked_halfmap1, input_map_2=masked_halfmap2)
+        
+        freq = frequency_array(fsc_curve, apix=apix)
+        
+        fsc_curves[i] = [freq, fsc_curve]
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(True)
+    ax2 = ax1.twiny()
+    
+    for fsc_profile in fsc_curves.values():
+        freq = fsc_profile[0]
+        fsc_curve = fsc_profile[1]
+        
+        ax1.plot(freq,fsc_curve)
+    ax1.plot(freq,np.ones(len(fsc_curve))*0.143,'k--')  
+
+        
+    if title is not None:
+        ax1.set_title(title)
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+    if legend is None:
+        legend = ['FSC curve','FSC=0.143','FSC=0.5']
+        
+    ax1.legend(legend,fontsize=font)
+    ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
+    ax1.set_ylabel('FSC',fontsize=font)
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
+    
+    return fsc_curves
+               
+    
 
 def plot_fsc_maps(input_map_1, input_map_2, apix, input_mask=None, calc_fsc=None,font=16, legend=None, title=None):
 

@@ -36,7 +36,10 @@ def parse_input(input_map, allow_any_dims=True):
     
     
             
-        
+def get_all_voxels_inside_mask(mask_input, mask_threshold=1):
+    mask = parse_input(mask_input)
+    all_inside_mask = np.asarray(np.where(mask>=mask_threshold)).T.tolist()
+    return all_inside_mask
     
     
 def read_gemmi_map(map_path, return_grid=False):
