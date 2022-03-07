@@ -66,7 +66,6 @@ def calculate_fsc(ps1,ps2,radii,map_shape):
     list_fsc = []
     list_radii = []
     list_nsf = []
-    ps1_phase = np.angle(ps1)
     for r in np.unique(radii)[0:map_shape[0]//2]:
         idx = radii == r
         fsc = calculate_shell_correlation(ps1[idx],ps2[idx])

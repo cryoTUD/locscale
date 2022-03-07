@@ -35,7 +35,7 @@ folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/Resolution_testing/local_
 
 unsharpened_map_path = os.path.join(folder, "emd3061_unsharpened_halfmaps_fullmap.mrc")
 mask_path = os.path.join(folder, "emd_3061_confidence_final.mrc")
-
+deepEmhancer_localRes_path = os.path.join(folder, "deepemhancer_halfmap_1_localResolutions.mrc")
 unsharpened_localRes_path = os.path.join(folder, "emd3061_unsharpened_localresolutions.mrc")
 locscale_localRes_path = os.path.join(folder, "emd3061_locscale_sharpened_localresolutions.mrc")
 nn_localRes_path = os.path.join(folder, "emd3061_nn_pred_localresolution.mrc")
@@ -50,9 +50,10 @@ binarised_mask_no_lipid = (emmap>no_lipid_threshold).astype(np.int_)
 unsharp_locres_array = get_local_resolution_data(unsharpened_localRes_path, binarised_mask_no_lipid, mask_threshold=1)
 locscale_sharp_locres_array = get_local_resolution_data(locscale_localRes_path, binarised_mask_no_lipid, mask_threshold=1)
 nn_pred_locres_array = get_local_resolution_data(nn_localRes_path, binarised_mask_no_lipid, mask_threshold=1)
+deepEmhancer_locres_array = get_local_resolution_data(deepEmhancer_localRes_path, binarised_mask_no_lipid, mask_threshold=1)
 
-sns.kdeplot(unsharp_locres_array), sns.kdeplot(locscale_sharp_locres_array), sns.kdeplot(nn_pred_locres_array)
-plt.legend(["Unsharpened halfmaps", "Locscale sharpened halfmaps", "NN predicted halfmaps"])
+sns.kdeplot(unsharp_locres_array), sns.kdeplot(locscale_sharp_locres_array), sns.kdeplot(nn_pred_locres_array), sns.kdeplot(deepEmhancer_locres_array)
+plt.legend(["Unsharpened halfmaps", "Locscale sharpened halfmaps", "Emmernet halfmaps","DeepEmhancer halfmaps"])
 plt.xlabel("Local resolution ($\AA$)")
 
 

@@ -243,7 +243,7 @@ def plot_threshold_connectivity_graph(emmap_path, num_bins=100, min_threshold=No
     if max_threshold is None:
         max_threshold = emmap.max() * 0.99
         
-    threshold_bins = np.linspace(min_threshold, min_threshold, num=num_bins)
+    threshold_bins = np.linspace(min_threshold, max_threshold, num=num_bins)
     threshold_connectivity_graph = {}
     for reference_threshold in tqdm(threshold_bins):        
         binarised_emmap = (emmap>reference_threshold).astype(np.int_)
@@ -287,7 +287,7 @@ def threshold_analysis(emmap_path):
     threshold_bins = np.linspace(0, emmap.max(), num=num_bins)
     
     surface_area_to_volume_threshold = {}
-    for threshold in threshold_bins:
+    for threshold in tqdm(threshold_bins):
         binarised_map = (emmap>=threshold).astype(np.int_)
         sum_of_voxels = binarised_map.sum()
         surface_area_per_threshold = calculate_surface_area_at_threshold(emmap, apix, threshold)

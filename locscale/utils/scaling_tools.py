@@ -10,7 +10,7 @@ def get_theoretical_profile(length,apix):
     
     
     path_to_locscale = check_dependencies()['locscale']
-    location_of_theoretical_profiles = path_to_locscale + "/locscale/utils/theoretical_profiles.pickle"
+    location_of_theoretical_profiles = os.path.join(path_to_locscale, "locscale","utils","theoretical_profiles.pickle")
     
     with open(location_of_theoretical_profiles,'rb') as f:
         profiles = pickle.load(f)
@@ -150,6 +150,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         
         
     np.seterr(divide='ignore', invalid='ignore');
+    
+    em_profile = em_profile + np.ones(len(em_profile))
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
