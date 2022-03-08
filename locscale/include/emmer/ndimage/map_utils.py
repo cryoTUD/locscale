@@ -546,5 +546,46 @@ def convert_to_tuple_2(input_variable, num_dims=3):
         output_list = [input_variable for temporary_index in range(num_dims)]
         output_tuple = tuple(output_list)
         return output_tuple  
+
+def get_model_mask(input_pdb, mask_shape, apix, threshold_factor=5, bfactor=100, smoothen=5, tight=0.9):
+    '''
+    Simulates a map from an atomic model at a high bfactor and binarises it to result in a mask
+
+    Parameters
+    ----------
+    input_pdb : TYPE
+        DESCRIPTION.
+    mask_threshold : TYPE, optional
+        DESCRIPTION. The default is None.
+
+    Returns
+    -------
+    mask : numpy.ndarray
+
+    '''
+    
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input, pdb2map
+    from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
+    from scipy.signal import fftconvolve
+    
+    gemmi_st = detect_pdb_input(input_pdb)
+    
+    gemmi_st_bfactor = set_atomic_bfactors(input_gemmi_st=gemmi_st, b_iso=bfactor)
+    
+    simmap = pdb2map(input_pdb=gemmi_st_bfactor, apix=apix, size=mask_shape, set_refmac_blur=True, verbose=True)
+    
+    simmap_array = simmap.flatten()
+    nonzero_array = simmap_array[simmap_array>0]
+    threshold = np.percentile(nonzero_array, threshold_factor)
+    binarised_map = (simmap>=threshold).astype(np.int_)
+    
+    kernel = np.ones((smoothen,smoothen, smoothen))
+    smoothened_map = fftconvolve(in1=binarised_map, in2=kernel, mode="same")
+    smoothened_map = smoothened_map/smoothened_map.max()
+    
+    binarised_map = (smoothened_map>=tight).astype(np.int_)
+    
+    return binarised_map
     
     

@@ -172,9 +172,9 @@ def get_map_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=
             rp_local = compute_radial_profile(emmap_window)
             freq = frequency_array(rp_local, apix)
             
-            bfactor = estimate_bfactor_standard(freq, rp_local, local_wilson_cutoff, fsc_cutoff)
+            bfactor, qfit = estimate_bfactor_standard(freq, rp_local, local_wilson_cutoff, fsc_cutoff, return_fit_quality=True)
             
-            bfactor_distributions[center] = bfactor
+            bfactor_distributions[center] = tuple([bfactor, qfit])
         except:
             print("Error at {}".format(center))
         
