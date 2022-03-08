@@ -88,8 +88,8 @@ def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resoluti
             processing_files_1_path = os.path.join(output_folder, "processing_files_1_{}".format(emdb_id))
             processing_files_2_path = os.path.join(output_folder, "processing_files_2_{}".format(emdb_id))
             
-            output_script_1 = open(os.path.join(processing_files_1_path,"locscale_output.txt"))
-            output_script_2 = open(os.path.join(processing_files_2_path,"locscale_output.txt"))
+            output_script_1 = open(os.path.join (output_folder,"locscale_output_{}.txt".format(emdb_pdb)),"w")
+            output_script_2 = open(os.path.join(output_folder,"locscale_output_{}.txt".format(emdb_pdb)),"w")
             symmetry = symmetry_dictionary[str(emdb_id)]
             
             print("Now running Locscale on Halfmap 1")
