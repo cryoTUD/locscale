@@ -21,7 +21,7 @@ from locscale.utils.webscrape_symmetry import extract_symmetry
 
 def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resolutions_list, process_id=None):
     
-
+    
     locscale_script = os.path.join(os.environ["LOCSCALE_PATH"], "locscale","main.py")
     
     symmetry_dictionary = {
@@ -56,6 +56,8 @@ def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resoluti
             emdb_id = emdb_pdb.split("_")[0]
             pdb_id = emdb_pdb.split("_")[1]
             
+            
+            
             ## Skip items not in the symmetry dictionary
             if str(emdb_id) not in list(symmetry_dictionary.keys()):
                 continue
@@ -86,7 +88,8 @@ def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resoluti
             processing_files_1_path = os.path.join(output_folder, "processing_files_1_{}".format(emdb_id))
             processing_files_2_path = os.path.join(output_folder, "processing_files_2_{}".format(emdb_id))
             
-            
+            output_script_1 = open(os.path.join(processing_files_1_path,"locscale_output.txt"))
+            output_script_2 = open(os.path.join(processing_files_2_path,"locscale_output.txt"))
             symmetry = symmetry_dictionary[str(emdb_id)]
             
             print("Now running Locscale on Halfmap 1")
@@ -95,14 +98,17 @@ def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resoluti
             
             
             print(" ".join(locscale_1_command))
-            run(locscale_1_command)
+            run(locscale_1_command, stdout=output_script_1)
             
             print("Now running Locscale on Halfmap 2")
             locscale_2_command = ["mpirun","-np","4","python",locscale_script,"-em",halfmap2_path, "-ma",mask_path,"-res",str(fsc_resolution_map),"--symmetry",symmetry,"-o",
                                   halfmap_2_scaled_path,"-op",processing_files_2_path,"--verbose","--mpi"]
             print(" ".join(locscale_2_command))
-            run(locscale_2_command)
+            run(locscale_2_command, stdout=output_script_2)
             
+            
+            output_script_1.close()
+            output_script_2.close()
             
            
         except Exception as e:
@@ -110,6 +116,8 @@ def run_locscale_script(parent_folder, output_folder, EMDB_PDB_ids, fsc_resoluti
             print(e)
             print(e.args)
         
+            output_script_1.close()
+            output_script_2.close()
             
         
         print("#################################################################################################### \n")
