@@ -151,7 +151,6 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         
     np.seterr(divide='ignore', invalid='ignore');
     
-    em_profile = em_profile + np.ones(len(em_profile))
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
     
