@@ -214,7 +214,7 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     return cropped_map
 
-def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter=None, output_filename=None):
+def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_parameter=5, output_filename=None):
     '''
     Function to extract map intensities around atoms between a given residue range
 
@@ -238,9 +238,10 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter
     from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, dilate_mask, save_as_mrc
     import mrcfile
     import os
-    from scipy.ndimage import gaussian_filter
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
     
-    pdb_folder = "".join(pdb_path.split("/")[:-1])
+    pdb_folder = os.path.dirname(pdb_path)
+    pdb_name = os.path.basename(pdb_path)
     apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
     emmap = mrcfile.open(emmap_path).data
     map_shape = emmap.shape
@@ -267,20 +268,13 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, cutoff_filter
     dilation_radius_int = round(dilation_radius / apix)
     dilated_mask = dilate_mask(mask, radius=dilation_radius_int)
     
-    if cutoff_filter is not None:
-        from locscale.include.emmer.ndimage.filter import low_pass_filter
-        dilated_mask = low_pass_filter(dilated_mask, cutoff=cutoff_filter, apix=apix)
-    
-    min_value = dilated_mask.min()
-    max_value = dilated_mask.max()
-    median_intensity = (min_value + max_value) / 2
-    dilated_mask = (dilated_mask>=median_intensity).astype(np.int_)
+    softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
     
 
     if output_filename is None:
-        output_filename = os.path.join(pdb_folder, "model_mask.mrc")
+        output_filename = os.path.join(pdb_folder, pdb_name[:-4]+"_model_mask.mrc")
             
-    save_as_mrc(dilated_mask, output_filename=output_filename, apix=apix)
+    save_as_mrc(softened_mask, output_filename=output_filename, apix=apix)
         
     return output_filename
     

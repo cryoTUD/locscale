@@ -248,7 +248,8 @@ def shake_pdb_within_mask(input_pdb, input_mask, magnitude, apix=None):
     
     atomic_positions_inside_mask = shaken_mrc_position.intersection(voxels_inside_mask)
     
-    atomic_positions_outside_mask = list(shaken_mrc_position - voxels_inside_mask)
+    atomic_positions_outside_mask = np.array(list(shaken_mrc_position - voxels_inside_mask))
+    indices = np.where(shaken_atomic_position=atomic_positions_outside_mask)
     new_atomic_positions_to_add = set(tuple(random.sample(voxels_inside_mask, len(atomic_positions_outside_mask))))
     
     final_atomic_positions = list(atomic_positions_inside_mask.union(new_atomic_positions_to_add))
