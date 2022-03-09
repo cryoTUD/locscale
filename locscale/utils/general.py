@@ -60,10 +60,10 @@ def change_directory(args, folder_name):
     
     return args
 
-def gather_statistics(parsed_inputs_dict):
+def gather_statistics(parsed_inputs_dict, figsize=(12,12), font=12):
     import matplotlib.pyplot as plt
     
-    fig, ax =plt.subplots(figsize=(16,16))
+    fig, ax =plt.subplots(figsize=figsize)
     
     ax.axis('off')
     
@@ -76,7 +76,6 @@ def gather_statistics(parsed_inputs_dict):
     required_stats['WilsonCutoff'] = round(parsed_inputs_dict['scale_factor_args']['wilson'],2)
     required_stats['HighFreqCutoff'] = round(parsed_inputs_dict['scale_factor_args']['high_freq'],2)
     required_stats['FSC'] = round(parsed_inputs_dict['scale_factor_args']['fsc_cutoff'],2)
-    required_stats['Smooth'] = parsed_inputs_dict['scale_factor_args']['smooth']
     required_stats['Bfactor'] = parsed_inputs_dict['bfactor_info'][0]
     required_stats['Breakpoints'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][1]]
     required_stats['Slopes'] = [round(x,1) for x in parsed_inputs_dict['bfactor_info'][2]]
@@ -90,7 +89,7 @@ def gather_statistics(parsed_inputs_dict):
     
     table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
     table.auto_set_font_size(False)
-    table.set_fontsize(16)
+    table.set_fontsize(font)
     table.scale(1,4)
     return fig
 
@@ -389,6 +388,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     
     processing_files_folder = parsed_input['processing_files_folder']
     pdffile = os.path.join(processing_files_folder, args.report_filename+"_general.pdf")
+    pdf = PdfPages(pdffile)
     
     print("Preparing LocScale report: \n {}".format(pdffile))
     
@@ -404,50 +404,75 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     rp_modmap = compute_radial_profile(modmap)
     rp_locscale = compute_radial_profile(locscale_map)
     freq = frequency_array(rp_emmap, apix=parsed_input['apix'])
+    
+    
+    #1  Input Table
+    try:
+        input_table = print_input_arguments(args)
+        pdf.savefig(input_table)
+    except Exception as e:
+        print("Could not print input table ! \n")
+        print(e)
+    
+    #2 Radial Profiles
 
-    radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],
-                                             legends=['input_emmap', 'model_map','locscale_map'])
-    
-    emmap_section_fig = plot_emmap_section(parsed_input['emmap'], title="Input")
-    
-    locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
-
-    #stats_table = gather_statistics(parsed_input)
-    #print("4) Gathered statistics")
-    bfactor_kde_fig = plot_bfactor_distribution_standard(unsharpened_emmap_path=parsed_input['emmap_path'],
-                                                 mask_path=parsed_input['mask_path'], locscale_map_path=locscale_path, fsc_resolution=parsed_input['fsc_resolution'])
-    
-    input_table = print_input_arguments(args)
-
-    #map_quality_table = print_locscale_quality_metrics(parsed_input, locscale_map)
-    #print("6) Printed locscale quality metrics")
-    #quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
-    #print("7) validation metrics done")
-    #local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
-    #                                                     title_text="Emmap local analysis: skew and kurtosis")
-    #local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
-    #                                                     title_text="Emmap local analysis: mean and variance")
-    
-    #local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
-    #                                                     title_text="Locscale local analysis: skew and kurtosis")
-    #local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
-    #                                                     title_text="Locscale local analysis: mean and variance")
-    
-    fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map")
-    
-    pdf = PdfPages(pdffile)
-    pdf.savefig(input_table)
-    pdf.savefig(radial_profile_fig)
-    pdf.savefig(fsc_figure)
-    pdf.savefig(emmap_section_fig)
-    pdf.savefig(locscale_section_fig)
-    pdf.savefig(bfactor_kde_fig)
-
-    
-    if parsed_input['use_theoretical']:
-        pickle_output_sample_fig = plot_pickle_output(processing_files_folder)
-        pdf.savefig(pickle_output_sample_fig)
+    try:
+        radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],legends=['input_emmap', 'model_map','locscale_map'])
+        pdf.savefig(radial_profile_fig)
+    except Exception as e:
+        print("Could not print radial profiles")
+        print(e)
         
+    #3 Sections
+    
+    try:
+        emmap_section_fig = plot_emmap_section(parsed_input['emmap'], title="Input")
+        pdf.savefig(emmap_section_fig)
+    except Exception as e:
+        print("Could not print Emmap section")
+        print(e)
+    
+    try:
+        locscale_section_fig = plot_emmap_section(locscale_map, title="LocScale Output")
+        pdf.savefig(locscale_section_fig)
+    except Exception as e:
+        print("Could not print Locscale map section")
+        print(e)
+        
+    #4 FSC curves
+    
+        
+    try:
+        fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map", font=12)
+        pdf.savefig(fsc_figure)
+    except Exception as e:
+        print("Could not print fsc_figure")
+        print(e)
+    
+    #5 Bfactor distributions
+    try:
+        bfactor_kde_fig = plot_bfactor_distribution_standard(unsharpened_emmap_path=parsed_input['emmap_path'],
+                                                 mask_path=parsed_input['mask_path'], locscale_map_path=locscale_path, fsc_resolution=parsed_input['fsc_resolution'])
+        pdf.savefig(bfactor_kde_fig)
+    except Exception as e:
+        print("Could not print bfactor_kde_fig")
+        print(e)
+        
+    try:
+        stats_table = gather_statistics(parsed_input)
+        pdf.savefig(stats_table)
+    except Exception as e:
+        print("Could not print stats_table")
+        print(e)
+  
+    try:      
+        if parsed_input['use_theoretical']:
+            pickle_output_sample_fig = plot_pickle_output(processing_files_folder)
+            pdf.savefig(pickle_output_sample_fig)
+    except Exception as e:
+        print("Could not print pickle_output_sample_fig")
+        print(e)
+                
     
     pdf.close()
     
@@ -682,5 +707,20 @@ def check_user_input(args):
     
 
         
+############################################################### 
+################ CODE HELL ####################################
+
+    #print("6) Printed locscale quality metrics")
+    #quality_metrics, emmap_local_df, locscale_local_df = validation_metrics(args, parsed_input, locscale_path)
+    #print("7) validation metrics done")
+    #local_histogram_analysis_skew_kurt_emmap_fig = plot_regression(emmap_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+    #                                                     title_text="Emmap local analysis: skew and kurtosis")
+    #local_histogram_analysis_mean_var_emmap_fig = plot_linear_regression(emmap_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    #                                                     title_text="Emmap local analysis: mean and variance")
     
+    #local_histogram_analysis_skew_kurt_locscale_fig = plot_regression(locscale_local_df, x_col="skew_emmap", y_col="kurtosis_emmap", 
+    #                                                     title_text="Locscale local analysis: skew and kurtosis")
+    #local_histogram_analysis_mean_var_locscale_fig = plot_linear_regression(locscale_local_df, x_col="mean_emmap", y_col="variance_emmap", 
+    #                                                     title_text="Locscale local analysis: mean and variance")
+        
     

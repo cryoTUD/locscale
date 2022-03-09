@@ -335,7 +335,7 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
             rp_local = compute_radial_profile(emmap_window)
             freq = frequency_array(rp_local, apix)
                        
-            local_wilson_cutoff = find_wilson_cutoff(num_atoms=rp_local[0])
+            local_wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
             #local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
             
             
