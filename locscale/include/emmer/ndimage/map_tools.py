@@ -305,51 +305,54 @@ def apply_radial_profile(emmap, reference_map):
 def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True):
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
-    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.utils.general import round_up_to_even
     import random
     import mrcfile
     from tqdm import tqdm
-    
-    def get_box(big_volume,center,size):
-        return big_volume[center[2]-size//2:center[2]+size//2,center[1]-size//2:center[1]+size//2,center[0]-size//2:center[0]+size//2]
 
     emmap = mrcfile.open(emmap_path).data
     mask = mrcfile.open(mask_path).data
     
-    apix = mrcfile.open(mask_path).voxel_size.x
+    apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
     global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
     fsc_cutoff = fsc_resolution
     if boxsize is None:
         boxsize = round_up_to_even(25 / apix)
     else:
         boxsize = round_up_to_even(boxsize)
-    
-    z,y,x = np.where(mask == 1)
-    all_points = list(zip(x,y,z))
-    random_centers = random.sample(all_points,15000)
+    print(boxsize)
+    all_points = get_all_voxels_inside_mask(mask_input=mask, mask_threshold=1)
+    random_centers = random.sample(all_points,num_centers)
     
     bfactor_distributions = {}
     
     for center in tqdm(random_centers, desc="Analysing local bfactors distribution"):
         try:
-            emmap_window = get_box(emmap, center, boxsize)
-            mask_window = get_box(mask, center, boxsize)
+            
+            emmap_window = extract_window(emmap, center, boxsize)
+            mask_window = extract_window(mask, center, boxsize)
         
             num_atoms, _  = measure_mask_parameters(mask=mask_window, apix=apix, verbose=False)
             
-            local_wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
-            local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
+
             
             rp_local = compute_radial_profile(emmap_window)
             freq = frequency_array(rp_local, apix)
+                       
+            local_wilson_cutoff = find_wilson_cutoff(num_atoms=rp_local[0])
+            #local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
+            
             
             bfactor,qfit = estimate_bfactor_standard(freq, rp_local, local_wilson_cutoff, fsc_cutoff, standard_notation=standard_notation, return_fit_quality=True)
             
-            bfactor_distributions[center] = tuple([bfactor, qfit])
-        except:
+            bfactor_distributions[tuple(center)] = tuple([bfactor, qfit])
+        except Exception as e:
             print("Error at {}".format(center))
+            print(e)
+            raise
+            
         
     
     return bfactor_distributions
