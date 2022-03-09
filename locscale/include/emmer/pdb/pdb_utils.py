@@ -117,7 +117,7 @@ def split_model_based_on_nucleotides(gemmi_st):
 
     return dna_st, rna_st    
 
-def convert_polar_to_cartesian(r, phi, theta):
+def convert_polar_to_cartesian(polar_vector, multiple=False):
     '''
     Convert polar to cartesian.. Blindly following the formula mentioned here: 
         https://math.libretexts.org/Bookshelves/Calculus/Book%3A_Calculus_(OpenStax)/12%3A_Vectors_in_Space/12.7%3A_Cylindrical_and_Spherical_Coordinates#:~:text=To%20convert%20a%20point%20from,and%20z%3D%CF%81cos%CF%86.
@@ -140,15 +140,26 @@ def convert_polar_to_cartesian(r, phi, theta):
         (x,y,z)
 
     '''
-    x = r * np.sin(phi) * np.cos(theta)
-    y = r * np.sin(phi) * np.sin(theta)
-    z = r * np.cos(phi)
+    if multiple:
+        cartesians = []
+        for vector in polar_vector:
+            r, phi, theta = vector
+            x = r * np.sin(phi) * np.cos(theta)
+            y = r * np.sin(phi) * np.sin(theta)
+            z = r * np.cos(phi)
+            cartesians.append(np.array([x,y,z]))
+        return np.array(cartesians)
+    else:
+        r, phi, theta = polar_vector
+        x = r * np.sin(phi) * np.cos(theta)
+        y = r * np.sin(phi) * np.sin(theta)
+        z = r * np.cos(phi)
     
-    cartesian = np.array([x,y,z])
+        cartesian = np.array([x,y,z])
     
-    return cartesian
+        return cartesian
 
-def convert_cartesian_to_polar(x,y,z):
+def convert_cartesian_to_polar(cartesian):
     '''
     Same as above
 
@@ -166,7 +177,7 @@ def convert_cartesian_to_polar(x,y,z):
     Polar : numpy.ndarray
 
     '''
-    
+    x, y, z = cartesian
     r = np.sqrt(np.power(x,2)+np.power(y,2)+np.power(z,2))
     theta = np.arctan(y/x)
     phi = np.arccos(z / r)
@@ -175,6 +186,77 @@ def convert_cartesian_to_polar(x,y,z):
     
     return polar
 
+def get_random_polar_vector(magnitude, randomisation="uniform", mean=None):
+    if randomisation == "normal":
+        if mean is not None:
+            r = abs(np.random.normal(loc=mean, scale=magnitude))  ## r will be a normally distributed, positive definite variable
+            theta = np.random.uniform(0, np.pi*2)
+            phi = np.random.uniform(0, np.pi*2)
+        else:
+            r = abs(np.random.normal(loc=0, scale=magnitude))  ## r will be a normally distributed, positive definite variable
+            theta = np.random.uniform(0, np.pi*2)
+            phi = np.random.uniform(0, np.pi*2)
+                                        
+    elif randomisation == "uniform":
+        r = np.random.uniform(low=0, high=magnitude)
+        theta = np.random.uniform(0, np.pi*2)
+        phi = np.random.uniform(0, np.pi*2)
+    else:
+        raise ValueError("The variable randomisation has only two inputs: normal or uniform")
+    
+    return np.array([r, phi, theta])
+
+def check_position_inside_mask(position, mask_data):
+    value_at_position = mask_data[position[2],position[1], position[0]]
+    if value_at_position > 0.9:
+        return True
+    else:
+        return False
+    
+def shake_pdb_within_mask(input_pdb, input_mask, magnitude, apix=None):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask
+    import os
+    import mrcfile
+    import random
+    
+    st = detect_pdb_input(input_pdb)
+    mask = parse_input(input_mask)
+    voxels_inside_mask = set(tuple(get_all_voxels_inside_mask(mask_input=mask, mask_threshold=0.99)))
+    if os.path.exists(str(input_mask)):
+        apix = mrcfile.open(input_mask).voxel_size.tolist()[0]
+    else:
+        if apix is None:
+            raise UserWarning("Please provide apix")
+        else:
+            apix = float(apix)
+            
+    
+    atomic_positions = get_all_atomic_positions(st)
+    
+    
+    shake_radii = np.random.uniform(0, magnitude, size=len(atomic_positions))
+    shake_phis = np.random.uniform(-np.pi, np.pi, size=len(atomic_positions))
+    shake_thetas = np.random.uniform(-np.pi, np.pi, size=len(atomic_positions))
+    
+    shake_vectors_polar = np.column_stack((shake_radii, shake_phis, shake_thetas))
+    
+    shaken_atomic_position = atomic_positions + convert_polar_to_cartesian(shake_vectors_polar, multiple=True)
+    shaken_mrc_position = set(tuple(convert_pdb_to_mrc_position(shaken_atomic_position, apix)))
+    
+    atomic_positions_inside_mask = shaken_mrc_position.intersection(voxels_inside_mask)
+    
+    atomic_positions_outside_mask = list(shaken_mrc_position - voxels_inside_mask)
+    new_atomic_positions_to_add = set(tuple(random.sample(voxels_inside_mask, len(atomic_positions_outside_mask))))
+    
+    final_atomic_positions = list(atomic_positions_inside_mask.union(new_atomic_positions_to_add))
+    
+    
+    
+    
+    
 
 def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     '''
@@ -193,7 +275,9 @@ def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
 
     '''
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    
     input_gemmi_st = detect_pdb_input(input_pdb)
+    
     
     assert magnitude > 0
     
@@ -202,27 +286,12 @@ def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
             for res in chain:
                 for atom in res:
                     current_pos = np.array(atom.pos.tolist())
-                    if randomisation == "normal":
-                        if mean is not None:
-                            r = abs(np.random.normal(loc=mean, scale=magnitude))  ## r will be a normally distributed, positive definite variable
-                            theta = np.random.uniform(0, np.pi*2)
-                            phi = np.random.uniform(0, np.pi*2)
-                        else:
-                            r = abs(np.random.normal(loc=0, scale=magnitude))  ## r will be a normally distributed, positive definite variable
-                            theta = np.random.uniform(0, np.pi*2)
-                            phi = np.random.uniform(0, np.pi*2)
-                                        
-                    elif randomisation == "uniform":
-                        r = np.random.uniform(low=0, high=magnitude)
-                        theta = np.random.uniform(0, np.pi*2)
-                        phi = np.random.uniform(0, np.pi*2)
+ 
+                    shake_vector_polar = get_random_polar_vector(magnitude=magnitude, randomisation=randomisation)
+                    shake_vector_cartesian = convert_polar_to_cartesian(shake_vector_polar)
                         
-                    else:
-                        raise ValueError("The variable randomisation has only two inputs: normal or uniform")
+                    new_pos = current_pos + shake_vector_cartesian
                         
-                    shake_vector = convert_polar_to_cartesian(r, phi, theta)
-                    
-                    new_pos = current_pos + shake_vector
                     atom.pos = gemmi.Position(new_pos[0], new_pos[1], new_pos[2])
     
     return input_gemmi_st
