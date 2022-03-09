@@ -250,7 +250,7 @@ def get_all_atomic_positions(gemmi_structure):
                 pdb_positions.append(atom.pos.tolist())
                         
     
-    return pdb_positions
+    return np.array(pdb_positions)
 
 
 def get_atomic_positions_between_residues(gemmi_structure, chain_name, res_range = None):

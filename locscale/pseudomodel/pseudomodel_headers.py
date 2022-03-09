@@ -73,10 +73,11 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
     apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
     
     if return_processed_files:
-        print("Returning: sharpend_map_path, [rp_unsharp, rp_sharp, bfactor]")
-        return output_filename, fit
+        print("Returning: sharpend_map_path (filtered at FSC), [rp_unsharp, rp_sharp, bfactor]")
+        return output_filename_filtered_map, fit
     else:
-        return output_filename
+        print("Returning Globally Sharpened map (filtered at FSC)")
+        return output_filename_filtered_map
 
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
