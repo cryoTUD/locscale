@@ -363,9 +363,10 @@ def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path
    
     locscale_dist = get_bfactor_distribution(locscale_map_path, mask_path, fsc_resolution)
     
-    unsharpened_array = np.array(list(unsharped_emmap_dist.values()))
+    unsharpened_array = np.array([x[0] for x in unsharped_emmap_dist.values()])
+    locscale_array = np.array([x[0] for x in locscale_dist.values()])
    
-    locscale_array = np.array(list(locscale_dist.values()))
+    
     
     sns.kdeplot(unsharpened_array)
    
