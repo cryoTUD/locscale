@@ -124,6 +124,8 @@ def convert_polar_to_cartesian(polar_vector, multiple=False):
         (accessed: 23-2-2022) 
     
     
+    polar_vector: (r, theta, phi) !!
+    Theta is the angle in the XY plane
 
     Parameters
     ----------
@@ -143,14 +145,14 @@ def convert_polar_to_cartesian(polar_vector, multiple=False):
     if multiple:
         cartesians = []
         for vector in polar_vector:
-            r, phi, theta = vector
+            r, theta, phi = vector
             x = r * np.sin(phi) * np.cos(theta)
             y = r * np.sin(phi) * np.sin(theta)
             z = r * np.cos(phi)
             cartesians.append(np.array([x,y,z]))
         return np.array(cartesians)
     else:
-        r, phi, theta = polar_vector
+        r, theta, phi = polar_vector
         x = r * np.sin(phi) * np.cos(theta)
         y = r * np.sin(phi) * np.sin(theta)
         z = r * np.cos(phi)
@@ -186,25 +188,25 @@ def convert_cartesian_to_polar(cartesian):
     
     return polar
 
-def get_random_polar_vector(magnitude, randomisation="uniform", mean=None):
+def get_random_polar_vector(rmsd_magnitude, randomisation="uniform", mean=None):
     if randomisation == "normal":
         if mean is not None:
-            r = abs(np.random.normal(loc=mean, scale=magnitude))  ## r will be a normally distributed, positive definite variable
-            theta = np.random.uniform(0, np.pi*2)
-            phi = np.random.uniform(0, np.pi*2)
+            r = abs(np.random.normal(loc=mean, scale=rmsd_magnitude))  ## r will be a normally distributed, positive definite variable
+            theta = np.random.uniform(0, 2*np.pi)
+            phi = np.random.uniform(0, np.pi)
         else:
-            r = abs(np.random.normal(loc=0, scale=magnitude))  ## r will be a normally distributed, positive definite variable
-            theta = np.random.uniform(0, np.pi*2)
-            phi = np.random.uniform(0, np.pi*2)
+            r = abs(np.random.normal(loc=0, scale=rmsd_magnitude))  ## r will be a normally distributed, positive definite variable
+            theta = np.random.uniform(0, 2*np.pi)
+            phi = np.random.uniform(0, np.pi)
                                         
     elif randomisation == "uniform":
-        r = np.random.uniform(low=0, high=magnitude)
-        theta = np.random.uniform(0, np.pi*2)
-        phi = np.random.uniform(0, np.pi*2)
+        r = np.random.uniform(low=0, high=rmsd_magnitude*2)
+        theta = np.random.uniform(0, 2*np.pi)
+        phi = np.random.uniform(0, np.pi)
     else:
         raise ValueError("The variable randomisation has only two inputs: normal or uniform")
     
-    return np.array([r, phi, theta])
+    return np.array([r, theta, phi])
 
 def check_position_inside_mask(position, mask_data):
     value_at_position = mask_data[position[2],position[1], position[0]]
@@ -212,53 +214,215 @@ def check_position_inside_mask(position, mask_data):
         return True
     else:
         return False
+
+def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from scipy.spatial import distance
+    from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
     
-def shake_pdb_within_mask(input_pdb, input_mask, magnitude, apix=None):
+    if use_gemmi_structure:
+        st_1 = detect_pdb_input(input_pdb_1)
+        st_2 = detect_pdb_input(input_pdb_2)
+        
+        num_atoms_1 = st_1[0].count_atom_sites()
+        num_atoms_2 = st_2[0].count_atom_sites()
+        
+        positions_1 = get_all_atomic_positions(st_1)
+        positions_2 = get_all_atomic_positions(st_2)
+        
+        assert num_atoms_1 == num_atoms_2
+    
+    else:
+        positions_1 = input_pdb_1
+        positions_2 = input_pdb_2
+        
+        assert len(positions_1) == len(positions_2)
+        
+    
+    atomic_distance = []
+    for index in range(len(positions_1)):
+        dist = distance.euclidean(positions_1[index], positions_2[index])
+        atomic_distance.append(dist)
+    
+    atomic_distance = np.array(atomic_distance)
+    
+    return np.percentile(atomic_distance,50)
+
+def check_mrc_indexing(input_mask, threshold=0.9):
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import get_all_voxels_inside_mask
+
+    mask_data = parse_input(input_mask)
+    
+    binary_mask = (mask_data>=threshold).astype(np.int_)
+    
+    zero_data = np.zeros(mask_data.shape)
+    voxels_inside_mask = set([tuple(x) for x in get_all_voxels_inside_mask(mask_input=mask_data, mask_threshold=threshold)])  ## ZYX format
+    
+    for voxel in voxels_inside_mask:
+        zero_data[voxel[0],voxel[1],voxel[2]] = 1
+    
+    new_binary_mask = zero_data - binary_mask
+    
+    assert new_binary_mask.any() == 0 
+    
+    print("================== OK =========================")
+    
+    
+    
+def test_coordinate_functions(rmsd_magnitude=15):
+    from locscale.include.emmer.pdb.pdb_utils import convert_polar_to_cartesian, convert_cartesian_to_polar
+    from locscale.include.emmer.ndimage.map_utils import convert_mrc_to_pdb_position, convert_pdb_to_mrc_position
+    from scipy.spatial import distance
+    
+    for trial in range(1000):
+        pos = np.random.uniform(0,500,size=3)
+        r = np.random.uniform(0, rmsd_magnitude*2)
+        shake_thetas = np.random.uniform(0, 2*np.pi)
+        shake_phis = np.random.uniform(0, np.pi)
+        shake_vector = np.column_stack((r, shake_thetas, shake_phis))
+        shake_v = shake_vector[0]
+        new_pos = pos+convert_polar_to_cartesian(shake_v)
+        d = distance.euclidean(new_pos, pos)
+        if abs(d-r) > 0.01:
+            raise UserWarning("Problem with convert polar to cartesian coordinate")
+        
+    
+    
+    for i in range(1000):
+        apix = np.random.uniform(0.1,2)
+        pos = np.random.uniform(0,500,size=3)
+        mrcpos = convert_pdb_to_mrc_position([pos],apix)[0]
+        pdbpos = convert_mrc_to_pdb_position([mrcpos],apix)[0]
+        d = distance.euclidean(pdbpos, pos)
+        if d > apix:
+            raise UserWarning("Problem with converting mrc to pdb positions! Getting maximum distance: {} when apix was {}".format(round(d,2), round(apix,2)))
+    
+    
+    print("================== OK =========================")
+    
+def get_atomic_point_map(mrc_positions, mask_shape):
+    zero_map = np.zeros(mask_shape)
+    for mrc in mrc_positions:
+        zero_map[mrc[0],mrc[1],mrc[2]] = 1
+    
+    return zero_map
+def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     from locscale.include.emmer.ndimage.map_utils import parse_input
-    from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
-    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask
-    import os
+    from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions, set_all_atomic_positions
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
+    from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
+    from tqdm import tqdm
     import mrcfile
     import random
     
-    st = detect_pdb_input(input_pdb)
-    mask = parse_input(input_mask)
-    voxels_inside_mask = set(tuple(get_all_voxels_inside_mask(mask_input=mask, mask_threshold=0.99)))
-    if os.path.exists(str(input_mask)):
-        apix = mrcfile.open(input_mask).voxel_size.tolist()[0]
+    ## Inputs
+    st = detect_pdb_input(pdb_path)
+    
+    # If required, use PDB mask with the same shape and apix as a supplied mask_path
+    if use_pdb_mask:
+        mask = parse_input(get_atomic_model_mask(emmap_path=mask_path, pdb_path=pdb_path, dilation_radius=3))
     else:
-        if apix is None:
-            raise UserWarning("Please provide apix")
-        else:
-            apix = float(apix)
-            
+        mask = parse_input(mask_path)
     
-    atomic_positions = get_all_atomic_positions(st)
-    
-    
-    shake_radii = np.random.uniform(0, magnitude, size=len(atomic_positions))
-    shake_phis = np.random.uniform(-np.pi, np.pi, size=len(atomic_positions))
-    shake_thetas = np.random.uniform(-np.pi, np.pi, size=len(atomic_positions))
-    
-    shake_vectors_polar = np.column_stack((shake_radii, shake_phis, shake_thetas))
-    
-    shaken_atomic_position = atomic_positions + convert_polar_to_cartesian(shake_vectors_polar, multiple=True)
-    shaken_mrc_position = set(tuple(convert_pdb_to_mrc_position(shaken_atomic_position, apix)))
-    
-    atomic_positions_inside_mask = shaken_mrc_position.intersection(voxels_inside_mask)
-    
-    atomic_positions_outside_mask = np.array(list(shaken_mrc_position - voxels_inside_mask))
-    indices = np.where(shaken_atomic_position=atomic_positions_outside_mask)
-    new_atomic_positions_to_add = set(tuple(random.sample(voxels_inside_mask, len(atomic_positions_outside_mask))))
-    
-    final_atomic_positions = list(atomic_positions_inside_mask.union(new_atomic_positions_to_add))
+    outside_mask = np.logical_not(mask>=0.5)
+    apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
     
     
     
+    ## Get all voxels indices inside mask
+    voxels_inside_mask = [tuple(x) for x in get_all_voxels_inside_mask(mask_input=mask, mask_threshold=0.5)]  ## ZYX format
+    
+    ## Get all atomic positions, in real units (XYZ)
+    atomic_positions_values = get_all_atomic_positions(st)  ## XYZ
+    # Get shake vector     
+    print("Shaking the input structure with input RMSD of {}...".format(rmsd_magnitude))
+    shake_radii = np.random.uniform(0, rmsd_magnitude*2, size=len(atomic_positions_values))
+    shake_thetas = np.random.uniform(0, 2*np.pi, size=len(atomic_positions_values))
+    shake_phis = np.random.uniform(0, np.pi, size=len(atomic_positions_values))
+    
+    shake_vectors_polar = np.column_stack((shake_radii, shake_thetas, shake_phis))
+    print("Shake radii",shake_radii.mean())
+    # Get shaken positions in both real units (XYZ) and MRC units (ZYX)
+    print("Checking for atoms outside the mask...")
+    shaken_atomic_position_native = list(atomic_positions_values + convert_polar_to_cartesian(shake_vectors_polar, multiple=True))
+    rmsd_native = compute_rmsd_two_pdb(shaken_atomic_position_native, atomic_positions_values, use_gemmi_structure=False)
+    
+    shaken_atomic_position= shaken_atomic_position_native.copy()
+    
+    shaken_mrc_position_list = [tuple(x) for x in convert_pdb_to_mrc_position(shaken_atomic_position, apix)]  ## ZYX
+    
+    binarised_mask = (mask>=0.99).astype(np.int_)
+    mrc_point_map = get_atomic_point_map(shaken_mrc_position_list, binarised_mask.shape)
+    available_voxels = get_all_voxels_inside_mask(binarised_mask - mrc_point_map, 1)  
+       
+    
+    random_sample_mrc = random.sample(available_voxels, len(shaken_mrc_position_list))
+    random_sample_pdb = convert_mrc_to_pdb_position(random_sample_mrc, apix)
+    
+    ## Find MRC positions outside the mask
+#    mrc_positions_inside_mask = shaken_mrc_position.intersection(voxels_inside_mask)
+    
+    num_atoms_outside = 0
+    for i,mrc_pos in enumerate(shaken_mrc_position_list):
+        if outside_mask[mrc_pos[0],mrc_pos[1],mrc_pos[2]]:
+            shaken_atomic_position[i] = random_sample_pdb[i]  
+            num_atoms_outside += 1
+        
+    print("{} atoms found outside the mask! Randomly placing them inside the mask:".format(num_atoms_outside))
+           
+        ## For every mrc position in the like mrc_positions_outside_mask, find the corresponding index and replace it with a value from random_voxels
+    ## Convert the list into a dictionary
+    
+    print("Done... Now converting into PDB")
+    shaken_atomic_positions_dictionary = {}
+    for i,atomic_position in enumerate(shaken_atomic_position):
+        shaken_atomic_positions_dictionary[i] = atomic_position
+    
+    
+    shaken_structure = set_all_atomic_positions(st, shaken_atomic_positions_dictionary)
     
     
 
+    
+    rmsd = compute_rmsd_two_pdb(st, shaken_structure)
+    print("median RMSD between input structure and native shaken structure: {} A".format(round(rmsd_native,2)))
+    print("median RMSD between the input and output structure is: {} A".format(round(rmsd,2)))
+    
+    return shaken_structure
+
+def test_pdb_within_mask(input_pdb, mask_path, mask_threshold):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
+    from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
+    import mrcfile
+
+    st = detect_pdb_input(input_pdb)
+    mask_data = mrcfile.open(mask_path).data
+    apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
+        
+    binarised_mask = (mask_data>=mask_threshold).astype(np.int_)
+    
+    pdb_positions = get_all_atomic_positions(st)
+    mrc_positions = convert_pdb_to_mrc_position(pdb_positions, apix)
+    
+    count = 0
+    for mrc in mrc_positions:
+        count += binarised_mask[mrc[0],mrc[1],mrc[2]]
+    
+    num_atoms = len(pdb_positions)
+    
+    percentage_capture = count / num_atoms * 100
+    
+    print("Percentage capture of PDB within mask at given threshold is {}".format(round(percentage_capture,2)))
+    
+    return percentage_capture
+
+    
+    
+
+    
 def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     '''
     Function to generate a new pdb by shaking an old PDB
