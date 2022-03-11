@@ -460,6 +460,33 @@ def convert_pdb_to_mrc_position(pdb_position, apix):
         
     return mrc_position
 
+def convert_mrc_to_pdb_position(mrc_position_list, apix):
+    '''
+    Convert the real units of positions into indices for the emmap. 
+    Note: returns in (Z,Y,X) format
+    
+    Parameters
+    ----------
+    mrc_position_list : list
+        list of xyz positions (Angstorm)
+    apix : float
+        Pixel size 
+
+    Returns
+    -------
+    pdb_position_list : list
+        List of XYZ positions (index positions)
+
+    '''
+    pdb_position_list = []
+    
+    for pos in mrc_position_list:
+        [nz,ny,nx] = pos
+        z, y, x  = nz*apix, ny*apix, nx*apix
+        pdb_position_list.append([x, y, z])
+        
+    return pdb_position_list
+
 def dilate_mask(mask, radius, iterations=1):
     '''
     Dilate mask with spherical structures

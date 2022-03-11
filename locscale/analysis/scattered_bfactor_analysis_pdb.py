@@ -25,7 +25,7 @@ import random
 from tqdm import tqdm
 from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
 from locscale.include.emmer.pdb.pdb_to_map import pdb2map
-from locscale.include.emmer.pdb.pdb_utils import shake_pdb
+from locscale.include.emmer.pdb.pdb_utils import shake_pdb_within_mask
 from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions, get_atomic_bfactor_window
 from locscale.include.emmer.ndimage.map_utils import extract_window, convert_pdb_to_mrc_position, resample_image, save_as_mrc
 from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_standard
@@ -36,18 +36,18 @@ import matplotlib.pyplot as plt
 
 
 #%% Inputs
-folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/faraday_paper/map_sharpening/scatter_bfactors"
+folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/faraday_paper/Figures/get_perturbed_inputs"
 refined_atomic_model_path = os.path.join(folder, "pdb6y5a_morphed_refined.pdb")
-
+sample_mask_path = os.path.join(folder,"emd_10692_confidenceMap.mrc")
 refined_model_gemmi_structure = gemmi.read_structure(refined_atomic_model_path)
 
-rmsd_perturbation = np.array([ 1, 5, 10, 15,20])   ## in angstoerms
-perturbed_magnitudes = rmsd_perturbation*2   ## perturbed magnitudes is twice the RMSD values because for uniform distribution average is max/2
+rmsd_magnitudes = np.array([0.1, 0.5, 1, 2, 5, 10, 15,20])   ## in angstoerms
+
 
 ## Simulation parameters
 
-apix = 0.8319   # angstoerm per pixel
-map_shape = (320,320,320)   ## (voxels, voxels, voxels)
+apix = mrcfile.open(sample_mask_path).voxel_size.tolist()[0]   # angstoerm per pixel
+map_shape = mrcfile.open(sample_mask_path).data.shape   ## (voxels, voxels, voxels)
 boxsize_real_length = 25 ## angstoerm
 
 boxsize = int(round(boxsize_real_length / apix))
@@ -60,11 +60,12 @@ print("Calculating a reference model map")
 refined_model_map = pdb2map(input_pdb=refined_model_gemmi_structure, apix=apix, size=map_shape, set_refmac_blur=True)
 
 # Get several shaken gemmi structures
-print("perturbed reference model with following magnitudes: {} ".format(perturbed_magnitudes))
+print("perturbed reference model with following magnitudes: {} ".format(rmsd_magnitudes))
 shaken_structures = {}
 
-for perturbed_magnitude in perturbed_magnitudes:
-    shaken_structures[perturbed_magnitude] = shake_pdb(refined_model_gemmi_structure, magnitude=perturbed_magnitude, randomisation="uniform")   ## Randomisation is chosen to be uniform rather than normal because of simplicity. Normal mode has two parameters, mean and it could lead to some bias. Uniform mode has only one. A random number between 0 and X is chosen with equal probability. 
+for rmsd_magnitude in rmsd_magnitudes:
+    shaken_structures[rmsd_magnitude] = shake_pdb_within_mask(refined_atomic_model_path, sample_mask_path, rmsd_magnitude=rmsd_magnitude,use_pdb_mask=True)
+    shaken_structures[rmsd_magnitude].write_pdb(os.path.join(folder, "pdb6y5a_rmsd_{}_pm_perturbed_using_mask.pdb".format(int(rmsd_magnitude*100))))
 
 
 
@@ -76,11 +77,11 @@ wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
 shaken_maps = {}
 
 print("Calculating simulated maps from the shaken models")
-for perturbed_magnitude in perturbed_magnitudes:
-    shaken_maps[perturbed_magnitude] = pdb2map(input_pdb=shaken_structures[perturbed_magnitude], apix=apix, size=map_shape, set_refmac_blur=True)
+for rmsd_magnitude in rmsd_magnitudes:
+    shaken_maps[rmsd_magnitude] = pdb2map(input_pdb=shaken_structures[rmsd_magnitude], apix=apix, size=map_shape, set_refmac_blur=True)
 
-#for perturbed_magnitude in perturbed_magnitudes:
-#    save_as_mrc(shaken_maps[perturbed_magnitude], output_filename=os.path.join(folder, "perturbed_map_{}.mrc".format(int(perturbed_magnitude/2))), apix=apix)
+for rmsd_magnitude in rmsd_magnitudes:
+    save_as_mrc(shaken_maps[rmsd_magnitude], output_filename=os.path.join(folder, "perturbed_map_rmsd_{}_pm.mrc".format(int(rmsd_magnitude*100))), apix=apix)
 
 #%%
 # Find atomic positions from main structure
@@ -121,10 +122,10 @@ for center in tqdm(center_int, desc="Calculating local bfactors from maps"):
     shaken_window_bfactor = {}
     shaken_window_bfactor[0] = bfactor_main_window
     quality_of_fit[0] = r2_main
-    for perturbed_magnitude in perturbed_magnitudes:
-        shaken_windows[perturbed_magnitude] = extract_window(shaken_maps[perturbed_magnitude], center, boxsize)
-        shaken_radial_profile[perturbed_magnitude] = compute_radial_profile(shaken_windows[perturbed_magnitude])
-        shaken_window_bfactor[perturbed_magnitude], quality_of_fit[perturbed_magnitude] = estimate_bfactor_standard(freq, shaken_radial_profile[perturbed_magnitude], 
+    for rmsd_magnitude in rmsd_magnitudes:
+        shaken_windows[rmsd_magnitude] = extract_window(shaken_maps[rmsd_magnitude], center, boxsize)
+        shaken_radial_profile[rmsd_magnitude] = compute_radial_profile(shaken_windows[rmsd_magnitude])
+        shaken_window_bfactor[rmsd_magnitude], quality_of_fit[rmsd_magnitude] = estimate_bfactor_standard(freq, shaken_radial_profile[rmsd_magnitude], 
                                                                              wilson_cutoff=local_wilson_cutoff, fsc_cutoff=nyquist_freq, return_fit_quality=True, standard_notation=True)
         
     
@@ -136,8 +137,8 @@ for atomic_position in tqdm(random_centers_real_unit, desc="Calculating local bf
     
     shaken_bfactor_model[0] = get_atomic_bfactor_window(refined_model_gemmi_structure, atomic_position, boxsize_real_length)
     
-    for perturbed_magnitude in perturbed_magnitudes:
-        shaken_bfactor_model[perturbed_magnitude] = get_atomic_bfactor_window(shaken_structures[perturbed_magnitude], atomic_position, boxsize_real_length)
+    for rmsd_magnitude in rmsd_magnitudes:
+        shaken_bfactor_model[rmsd_magnitude] = get_atomic_bfactor_window(shaken_structures[rmsd_magnitude], atomic_position, boxsize_real_length)
     
     bfactor_using_model[tuple(atomic_position)] = shaken_bfactor_model
 
@@ -148,7 +149,7 @@ df = pd.DataFrame()
 for center in center_int:
     
     rmsd = [0]
-    for r in perturbed_magnitudes:
+    for r in rmsd_magnitude:
         rmsd.append(r)
     
     temp_list = []
@@ -177,7 +178,7 @@ df.index = columns
 df = df.T
 
 plt.figure(1)
-for i in [0]+perturbed_magnitudes:
+for i in [0]+rmsd_magnitude:
     avg_qfit = df['quality_fit_{}_A'.format(i)].mean()
     plt.plot(i, avg_qfit, 'ko')
     plt.xlabel("RMSD (A)")
@@ -187,7 +188,7 @@ for i in [0]+perturbed_magnitudes:
 plt.figure(2)
 
 correlations = []
-for i in perturbed_magnitudes:
+for i in rmsd_magnitude:
     correlation = df['shaken_map_{}_A'.format(i)].corr(df["shaken_map_0_A"])
     #plt.plot(i, abs(correlation), 'ko')
     #plt.xlabel("RMSD (A)")
@@ -211,7 +212,7 @@ plt.tight_layout()
         
 #%%
 
-sns.lineplot(x=perturbed_magnitudes/2, y=correlations, marker="o", linewidth=3, markersize=12)
+sns.lineplot(x=rmsd_magnitude, y=correlations, marker="o", linewidth=3, markersize=12)
 plt.xlabel("RMSD ($\AA$)")
 plt.ylabel("Correlation Coefficient")
 plt.tight_layout()
@@ -220,9 +221,9 @@ plt.tight_layout()
 #%%
 
 # Save maps and pdbs
-for rmsd in rmsd_perturbation:
-    st = shaken_structures[rmsd*2]
-    simmap = shaken_maps[rmsd*2]
+for rmsd in rmsd_magnitude:
+    st = shaken_structures[rmsd]
+    simmap = shaken_maps[rmsd]
     st.write_pdb(os.path.join(folder, "pdb6y5a_rmsd_{}_A.pdb".format(rmsd)))
     
     save_as_mrc(simmap, output_filename=os.path.join(folder, "perturbed_map_rmsd_{}_A.mrc".format(rmsd)), apix=apix)
