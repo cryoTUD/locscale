@@ -69,6 +69,44 @@ def get_gemmi_st_from_id(pdb_id):
         os.remove("cif_file.cif")
         return cif_struc
 
+def replace_pdb_column_with_arrays(input_pdb, replace_column, replace_array):
+    '''
+    Replace a column in the PDB (either bfactor or occupancy) with values from an array where the array index position correspods to atom location in the cra generator
+
+    Parameters
+    ----------
+    input_pdb : TYPE
+        DESCRIPTION.
+    replace_column : TYPE
+        DESCRIPTION.
+    replace_array : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    
+    st = detect_pdb_input(input_pdb)
+    
+    replace_array = np.clip(replace_array, 0, 999)  ## PDB array only allows a maximum of three digits
+    for i,cra_gen in enumerate(st[0].all()):
+        if replace_column=="bfactor":
+            cra_gen.atom.b_iso = replace_array[i]
+        elif replace_column=="occ":
+            cra_gen.atom.occ = replace_array[i]
+        else:
+            raise UserWarning("Please input either bfactor or occ for the replace_column variable")
+        
+    
+    return st
+
+        
+    
+
 def shift_coordinates(in_model_path=None, out_model_path=None,\
                       trans_matrix=[0,0,0], remove_charges=False,\
                       input_structure=None):
@@ -215,7 +253,7 @@ def check_position_inside_mask(position, mask_data):
     else:
         return False
 
-def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True):
+def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True, return_array=False):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     from scipy.spatial import distance
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
@@ -246,7 +284,10 @@ def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True):
     
     atomic_distance = np.array(atomic_distance)
     
-    return np.percentile(atomic_distance,50)
+    if return_array:
+        return atomic_distance
+    else:
+        return np.percentile(atomic_distance,50)
 
 def check_mrc_indexing(input_mask, threshold=0.9):
     from locscale.include.emmer.ndimage.map_utils import parse_input
