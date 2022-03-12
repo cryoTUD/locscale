@@ -77,11 +77,11 @@ wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
 shaken_maps = {}
 
 print("Calculating simulated maps from the shaken models")
-for rmsd_magnitude in rmsd_magnitudes:
-    shaken_maps[rmsd_magnitude] = pdb2map(input_pdb=shaken_structures[rmsd_magnitude], apix=apix, size=map_shape, set_refmac_blur=True)
+#for rmsd_magnitude in rmsd_magnitudes:
+#    shaken_maps[rmsd_magnitude] = pdb2map(input_pdb=shaken_structures[rmsd_magnitude], apix=apix, size=map_shape, set_refmac_blur=True)
 
-for rmsd_magnitude in rmsd_magnitudes:
-    save_as_mrc(shaken_maps[rmsd_magnitude], output_filename=os.path.join(folder, "perturbed_map_rmsd_{}_pm.mrc".format(int(rmsd_magnitude*100))), apix=apix)
+#for rmsd_magnitude in rmsd_magnitudes:
+#    save_as_mrc(shaken_maps[rmsd_magnitude], output_filename=os.path.join(folder, "perturbed_map_rmsd_{}_pm.mrc".format(int(rmsd_magnitude*100))), apix=apix)
 
 #%%
 # Find atomic positions from main structure

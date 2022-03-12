@@ -35,16 +35,16 @@ def crop_data_to_map(input_data_map, mask, mask_threshold, skip_zeros=True):
     
     return nonzero_array
 
-def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True):
+def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
     import seaborn as sns
     import os
     import matplotlib.pyplot as plt
     from scipy import stats
     import pandas as pd
-    
+    fig = plt.figure(1)
     sns.set_theme(context="paper", font="Helvetica", font_scale=1.5)
     sns.set_style("white")
-    kwargs = dict(linestyle="--", marker="o", linewidth=3, markersize=12)
+    kwargs = dict(linestyle="--", marker="o", linewidth=3, markersize=12, alpha=alpha)
 
 
     
@@ -60,7 +60,7 @@ def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, ti
         def annotate(data, **kws):
             r, p = stats.pearsonr(data[x_label], data[y_label])
             ax = plt.gca()
-            ax.text(.05, .8, 'R$^2$={:.2f}, p={:.2g}'.format(r, p),
+            ax.text(.05, .8, 'R$^2$={:.2f}'.format(r),
                     transform=ax.transAxes)
         g = sns.lmplot(data=data, x=x_label, y=y_label)
         g.map_dataframe(annotate)
@@ -87,6 +87,8 @@ def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, ti
     
         output_filename = os.path.join(figure_output_folder, filename)
         plt.savefig(output_filename, dpi=600)
+    else:
+        return fig
         
     
 
