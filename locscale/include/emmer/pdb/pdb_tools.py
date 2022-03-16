@@ -135,7 +135,7 @@ def find_radius_of_gyration(model_path=None, input_gemmi_st=None):
     
     return Rg
 
-def find_wilson_cutoff(model_path=None, input_gemmi_st=None, mask_path=None, mask = None, apix=None, num_atoms=None, method='Singer', return_as_frequency=False):
+def find_wilson_cutoff(model_path=None, input_gemmi_st=None, mask_path=None, mask = None, apix=None, num_atoms=None, method='Singer', return_as_frequency=False, verbose=True):
     '''
     Function to find the cutoff frequency above which Wilson statistics hold true. If a PDB file is passed either as a gemmi structure as a PDB path, then radius of gyration is found rigorously by the mean distance to center of mass of protein. If a mask is passed, however, then radius of gyration is estimated from the num_atoms calculated from the mask volume. 
     
@@ -178,14 +178,14 @@ Reference:
         Rg = find_radius_of_gyration(input_gemmi_st=gemmi_st)
         molecular_weight = gemmi_st[0].calculate_mass()
     elif mask_path is not None:
-        mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask_path=mask_path, detailed_report=True)
+        mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask_path=mask_path, detailed_report=True, verbose=False)
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
         Rg = R_constant * num_atoms**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
     elif mask is not None and apix is not None and mask_path is None:
-        mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask=mask, apix=apix, detailed_report=True)
+        mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask=mask, apix=apix, detailed_report=True, verbose=False)
         
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
@@ -201,9 +201,10 @@ Reference:
         print("Input error!")
         return 0
     
-    
-    print("Number of atoms: {} \nRadius of Gyration: {:.2f}\n".format(num_atoms,Rg))
-    print("Molecular weight estimated to be {} kDa\n".format(round(molecular_weight/1000,1)))
+    if verbose:
+        print("Number of atoms: {} \nRadius of Gyration: {:.2f}\n".format(num_atoms,Rg))
+        print("Molecular weight estimated to be {} kDa\n".format(round(molecular_weight/1000,1)))
+        
     if method.lower() == 'rosenthal_henderson':
         d_cutoff = 2*np.pi*Rg
         f_cutoff = 1/d_cutoff
@@ -212,7 +213,8 @@ Reference:
         f_cutoff = 0.309 * np.power(molecular_weight, -1/12)  ## From Singer, 2021
         d_cutoff = 1/f_cutoff
     
-    print("Frequency cutoff: {:.2f}  (= {:.2f} A resolution)\n".format(f_cutoff, d_cutoff))
+    if verbose:
+        print("Frequency cutoff: {:.2f}  (= {:.2f} A resolution)\n".format(f_cutoff, d_cutoff))
     #print("Frequency cutoff: {:.2f} (in A) \n ".format(d_cutoff))
     
     if return_as_frequency:

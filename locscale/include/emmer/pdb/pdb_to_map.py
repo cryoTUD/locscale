@@ -50,7 +50,7 @@ def detect_pdb_input(input_pdb):
     
               
 def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=False, verbose=False, 
-            mdlidx=0,align_output=True,set_refmac_blur=False,set_unblur=True, blur=0):
+            mdlidx=0,align_output=True,set_refmac_blur=True,set_unblur=True, blur=0):
     '''
     Cleaner function to convert a gemmi_structure to EM map. Make sure the input structure, or the pdb in the 
     path you input are correct. Common check include: 
@@ -155,7 +155,7 @@ def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=Fal
         return 0
     model = pdb_structure[mdlidx]
     dencalc = gemmi.DensityCalculatorE()
-    dencalc.d_min = 2
+    dencalc.d_min = apix_gemmi[0]*2
     dencalc.rate = 1
     if blur > 0:
         dencalc.blur=blur
