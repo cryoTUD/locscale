@@ -143,7 +143,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
         wilson_cutoff_local = np.clip(wilson_cutoff_local, scale_factor_arguments['fsc_cutoff']*1.5, scale_factor_arguments['wilson'])
 
-        bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=10, 
+        bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_local, 
                                                        fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True, return_fit_quality=True, standard_notation=True)
         
         reference_profile_for_scaling = ref_profile

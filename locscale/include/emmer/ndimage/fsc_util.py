@@ -97,7 +97,32 @@ def calculate_phase_correlation(ps1,ps2,radii,map_shape):
         list_fsc.append(fsc)
         list_radii.append(float(r)/(map_shape[0]))
         num_nonzero_avg = \
-                min(np.count_nonzero(ps1[idx]),np.count_nonzero(ps2[idx]))
+                min(np.count_nonzero(ps1_phase[idx]),np.count_nonzero(ps2_phase[idx]))
+        list_nsf.append(num_nonzero_avg)
+    #return resolution @ FSC 0.5
+    if list_fsc[0] == -1.:
+        list_fsc[0] = 1.
+    list_fsc[0] = max(0.,list_fsc[0])
+    #sorted tuples
+    listfreq, listfsc, listnsf = zip(*sorted(zip(list_radii, list_fsc, list_nsf))) 
+    return listfreq,listfsc,listnsf
+
+def calculate_amplitude_correlation(ps1,ps2,radii,map_shape):
+    '''
+    Calculate FSC curve given two FTmaps
+    '''
+    list_fsc = []
+    list_radii = []
+    list_nsf = []
+    ps1_abs = np.abs(ps1)
+    ps2_abs = np.abs(ps2)
+    for r in np.unique(radii)[0:map_shape[0]//2]:
+        idx = radii == r
+        fsc = calculate_shell_correlation(ps1_abs[idx],ps2_abs[idx])
+        list_fsc.append(fsc)
+        list_radii.append(float(r)/(map_shape[0]))
+        num_nonzero_avg = \
+                min(np.count_nonzero(ps1_abs[idx]),np.count_nonzero(ps2_abs[idx]))
         list_nsf.append(num_nonzero_avg)
     #return resolution @ FSC 0.5
     if list_fsc[0] == -1.:
@@ -235,6 +260,41 @@ def calculate_phase_correlation_maps(input_map_1, input_map_2):
     _, fsc, _ = calculate_phase_correlation(fft_1, fft_2, radii, map_shape)
     fsc = np.array(fsc)
     return np.array(fsc)
+
+def calculate_amplitude_correlation_maps(input_map_1, input_map_2):
+    '''
+    Wrapper to calculate FSC curve from the above functions
+
+    Parameters
+    ----------
+    input_map_1 : TYPE
+        DESCRIPTION.
+    input_map_2 : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    
+    emmap_1 = parse_input(input_map_1)
+    emmap_2 = parse_input(input_map_2)
+    
+    fft_1 = np.fft.rfftn(emmap_1)
+    fft_2 = np.fft.rfftn(emmap_2)
+    
+    _, radii = compute_radial_profile(emmap_1, return_indices=True)
+    
+    map_shape = emmap_1.shape
+    
+    _, fsc, _ = calculate_amplitude_correlation(fft_1, fft_2, radii, map_shape)
+    fsc = np.array(fsc)
+    return np.array(fsc)
+
 
 def plot_fscs(freq, list_of_fsc, colors=['r','g','b','k','y','m'], legends=None, font=12,showlegend=True, showPoints=True):
     import matplotlib.pyplot as plt
@@ -422,9 +482,49 @@ def plot_phase_correlation_maps(input_map_1, input_map_2, apix, input_mask=None,
     ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
     ax1.set_ylabel('$\Delta\phi$ ($1/d$)',fontsize=font)
     ax2.set_xlabel('$d [\AA]$',fontsize=font)
+
+    return fig
+
+def plot_amplitude_correlation_maps(input_map_1, input_map_2, apix, input_mask=None, calc_fsc=None,font=16, legend=None, title=None):
+
+    import matplotlib.pyplot as plt
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array
     
+    emmap_1 = parse_input(input_map_1)
+    emmap_2 = parse_input(input_map_2)
     
-        
+    if input_mask is not None:
+        mask = parse_input(input_mask)
+        masked_emmap_1 = mask*emmap_1
+        masked_emmap_2 = mask*emmap_2
+        fsc = calculate_amplitude_correlation_maps(masked_emmap_1, masked_emmap_2)
+    else:
+        fsc = calculate_amplitude_correlation_maps(emmap_1, emmap_2)
+    freq = frequency_array(fsc, apix=apix)
+    
+
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(True)
+    ax2 = ax1.twiny()
+    
+    ax1.plot(freq,fsc, 'b')
+
+    
+    if title is not None:
+        ax1.set_title(title)
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+    if legend is None:
+        legend = ['Amplitude correlation curve']
+    
+    ax1.legend(legend,fontsize=font)
+    ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
+    ax1.set_ylabel('Amplitude',fontsize=font)
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
 
     return fig
     

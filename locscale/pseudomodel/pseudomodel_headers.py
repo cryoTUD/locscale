@@ -56,7 +56,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
     print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor, (1/np.sqrt(z)).round(2),slopes))
     if add_blur != 0:
         bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
-        print("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
+    print("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
         
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     

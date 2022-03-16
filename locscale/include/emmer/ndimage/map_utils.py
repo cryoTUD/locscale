@@ -187,10 +187,8 @@ def extract_window(im, center, size):
     return window
 
 def binarizeMap(emmap, threshold):
-	binary_map = np.array(emmap);
-	binary_map[binary_map < threshold] = 0;
-	binary_map[binary_map >= threshold] = 1;
-	return binary_map;
+    binary_map = (emmap>=threshold).astype(np.int_)
+    return binary_map
 
 def average_voxel_size(voxel_size_record):
     apix_x = voxel_size_record.x
@@ -316,7 +314,7 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     real_image =np.fft.ifftn(ft).real
     return real_image
 
-def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=1,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
+def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=0.99,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
     import mrcfile
     import numpy as np
     from scipy.constants import Avogadro
@@ -357,9 +355,8 @@ def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=1
     
     ang_to_cm = 1e-8
     
-    mask.setflags(write=1)
-    mask[mask<edge_threshold] = 0
-    mask[mask>=edge_threshold] = 1
+    mask = (mask>=edge_threshold).astype(np.int_)
+    
     mask_vol = mask.sum()*(voxelsize*ang_to_cm)**3
     mask_vol_A3 = mask.sum()*voxelsize**3
     #print("\n Volume of the mask generated is: "+str(mask.sum())+" A$^3$ \n")

@@ -43,8 +43,9 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],legends=None, font=12,showlegend=True, showPoints=True, alpha=0.05, variation=None):
+def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True):
     import matplotlib.pyplot as plt
+    from matplotlib.pyplot import cm
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
 
@@ -69,35 +70,62 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
     None.
 
     '''
-    if len(list_of_profiles) > 6:
-        print("Enter maximum of 6 profiles only if you want to see colors")
+    plt.rc('font',size=font)
         
     i = 0
+    colors = cm.rainbow(np.linspace(0,1,len(list_of_profiles)))
     
-    if showPoints:
-        colors = [x+".-" for x in colors]
-    
-    if len(list_of_profiles) <= 6:
+   # if showPoints:
+   #     colors = [x+".-" for x in colors]
+   # else:
+   #     colors = [x+"-" for x in colors]
+    if legends is None:
+        legends = ["profile_"+str(i) for i in range(len(list_of_profiles))]
+    if len(list_of_profiles) <= 50:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1.grid(True)
+        ax1.grid(False)
         ax2 = ax1.twiny()
-        for profile in list_of_profiles:
-            ax1.plot(freq**2,np.log(profile),colors[i])
-            i += 1
+        #plt.xticks(fontsize=font)
+        #plt.yticks(fontsize=font)
+        if logScale:
+            for profile in list_of_profiles:
+                
+                ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=2)
+                i += 1
+            
+            ax2.set_xticks(ax1.get_xticks())
+            ax2.set_xbound(ax1.get_xbound())
+            ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
+           
+            ax1.legend(legends)
+            ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$')
+            ax1.set_ylabel('$ln\mid F \mid $')
+            ax2.set_xlabel('$d [\AA]$')
+        else:
+            for profile in list_of_profiles:
+                
+                ax1.plot(freq,profile,c=colors[i], linewidth=2)
+                i += 1
+            
+            
+            
+            ax1.legend(legends)
         
-        ax2.set_xticks(ax1.get_xticks())
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-        if legends is None:
-            legends = ["profile_"+str(i) for i in range(len(list_of_profiles))]
+                
+            ax2.set_xticks(ax1.get_xticks())
+            ax2.set_xbound(ax1.get_xbound())
+            ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+            
+    
+            ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
+            ax1.set_ylabel(r'Normalised $ \langle F \rangle $',fontsize=font)
+            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+            
         
-        ax1.legend(legends,fontsize=font)
-        ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
-        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
-        ax2.set_xlabel('$d [\AA]$',fontsize=font)
         
     elif variation is None:
+        
         profile_list = np.array(list_of_profiles)
         average_profile = np.einsum("ij->j", profile_list) / len(profile_list)
         
@@ -114,23 +142,40 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         fig = plt.figure()
         
         ax1 = fig.add_subplot(111)
-        ax1.grid(True)
+        ax1.grid(False)
         ax2 = ax1.twiny()
         
-        ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
-        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
-        ax1.legend(["N={}".format(len(profile_list))])
+        if logScale:
+            ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
+            ax1.fill_between(freq**2,np.log(y_max), np.log(y_min), color="grey", alpha=0.5)
+            
+            ax1.legend(["N={}".format(len(profile_list))])
         
             
-        ax2.set_xticks(ax1.get_xticks())
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-        
-
-        ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
-        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
-        ax2.set_xlabel('$d [\AA]$',fontsize=font)
+            ax2.set_xticks(ax1.get_xticks())
+            ax2.set_xbound(ax1.get_xbound())
+            ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
+            
     
+            ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
+            ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
+            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+        else:
+            ax1.plot(freq, average_profile, 'k',alpha=1)
+            ax1.fill_between(freq,y_max, y_min,color="grey", alpha=0.5)
+            
+            ax1.legend(["N={}".format(len(profile_list))])
+        
+                
+            ax2.set_xticks(ax1.get_xticks())
+            ax2.set_xbound(ax1.get_xbound())
+            ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+            
+    
+            ax1.set_xlabel('$1/d [\AA^{-1}]$',fontsize=font)
+            ax1.set_ylabel('normalised $\mid F \mid $',fontsize=font)
+            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+        
     else:
         if variation is None:
             raise UserWarning("Include a variation variable to plot radial profile with variance")
@@ -153,17 +198,20 @@ def plot_radial_profile(freq,list_of_profiles,colors=['r','g','b','k','y','m'],l
         ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
         ax1.legend(["N={}".format(len(profile_list))])
         
-            
+        ax1.tick_params(axis='both',which='major',labelsize=font)
+        ax2.tick_params(axis='both',which='major',labelsize=font)
         ax2.set_xticks(ax1.get_xticks())
         ax2.set_xbound(ax1.get_xbound())
         ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
         
 
-        ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
+        ax1.set_xlabel(r'$1/d^2  [\AA^{-2}]$',fontsize=font)
         ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
-        
-        
+
+    
+    
+    plt.tight_layout()
     return fig
 def plot_emmap_section(emmap, title="EMMAP Sections"):
     import matplotlib.pyplot as plt
@@ -368,7 +416,7 @@ def offset_radial_profile(vol, offset, radii):
 
     return np.fft.irfftn(ps, s=vol.shape)
     
-def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
+def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False):
     '''
     Given a list of mrc paths, this function will extract volume data and plots a radial profile for each map. The legend by default will be the filename of the MRC map. Max six maps will be used as inputs (limit from plot_radial_profiles function)
 
@@ -406,6 +454,7 @@ def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
         k += 1
     for key in keys:
         radial_profiles[key] = compute_radial_profile(emmaps[key])
+        radial_profiles[key] = radial_profiles[key]/radial_profiles[key].max()
         
     k = 0
     for key in keys:
@@ -415,11 +464,12 @@ def compute_radial_profile_from_mrcs(mrc_paths,keys=None):
         k += 1 
     
     
-    plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys)
+    fig=plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys, logScale=logScale, showPoints=False)
     
     for key in keys:
         radial_profiles[key] = tuple([freq,radial_profiles[key]])
-    return radial_profiles, emmaps
+        
+    return fig
             
 
 def measure_debye(freqs,amplitudes):
@@ -802,6 +852,48 @@ def number_of_segments(fsc_resolution):
     else:
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
         return 1
+
+def plot_pwlf_fit(emmap_path, mask_path, fsc_resolution):
+    '''
+    Function to plot PWLF fit for a given input map
+
+    Parameters
+    ----------
+    emmap_path : TYPE
+        DESCRIPTION.
+    mask_path : TYPE
+        DESCRIPTION.
+    fsc_resolution : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''    
+    import mrcfile
+    import os
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    
+    emmap_name = os.path.basename(emmap_path)
+    
+    emmap = mrcfile.open(emmap_path).data
+    apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
+    rp_emmap = compute_radial_profile(emmap)
+    
+    freq = frequency_array(rp_emmap, apix=apix)
+    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+    
+    bfactor, amplitude_zero_freq, (piecewise_linfit, z, slopes) = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff=fsc_resolution, return_all=True)
+    
+    rp_fit = np.exp(piecewise_linfit.predict(freq**2))  ## Fit was trained using log scale data
+    
+    fig = plot_radial_profile(freq, [rp_emmap, rp_fit], legends=[emmap_name, "PWLF prediction"])
+    print("Breakpoints at: {}".format((1/np.sqrt(z)).round(2)))
+    
+    return fig
+    
     
     
 def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=None):
