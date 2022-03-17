@@ -894,7 +894,25 @@ def plot_pwlf_fit(emmap_path, mask_path, fsc_resolution):
     
     return fig
     
+
+def crop_profile_between_frequency(freq, amplitude, start_cutoff, end_cutoff):
+    start_freq = 1 / start_cutoff
+    end_freq = 1/end_cutoff
+        
+    if freq[0] >= start_freq:
+        start_index = 0
+    else:
+        start_index = np.where(freq>=start_freq)[0][0]
+        
+    if freq[-1] <= end_freq:
+        end_index = len(freq)
+    else:
+        end_index = np.where(freq>=end_freq)[0][0]
     
+    crop_freq = freq[start_index:end_index]
+    crop_amplitude = amplitude[start_index:end_index]
+    
+    return crop_freq, crop_amplitude
     
 def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=None):
     '''

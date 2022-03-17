@@ -532,19 +532,19 @@ def plot_amplitude_correlation_maps(input_map_1, input_map_2, apix, input_mask=N
     
 
 
-def get_fsc_filter(input_map_1, input_map_2, input_mask, apix):
+def get_fsc_filter(input_map_1, input_map_2):
     fsc_curve = calculate_fsc_maps(input_map_1, input_map_2)
     C_ref = 2*fsc_curve / (1+fsc_curve)
     
     return C_ref
     
-def apply_fsc_filter(emmap, apix, fsc_curve=None, halfmap_1=None, halfmap_2=None, input_mask=None):
+def apply_fsc_filter(emmap, apix, fsc_curve=None, halfmap_1=None, halfmap_2=None):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
     from locscale.include.emmer.ndimage.map_tools import compute_scale_factors, set_radial_profile
     if fsc_curve is not None:
         C_ref = 2*fsc_curve / (1+fsc_curve)
-    elif halfmap_1 is not None and halfmap_2 is not None and input_mask is not None:
-        C_ref = get_fsc_filter(halfmap_1, halfmap_2, input_mask, apix)
+    elif halfmap_1 is not None and halfmap_2 is not None:
+        C_ref = get_fsc_filter(halfmap_1, halfmap_2)
     
     
     rp_emmap, radii = compute_radial_profile(emmap, return_indices=True)
