@@ -59,9 +59,9 @@ class test_compute_scaling(unittest.TestCase):
             #self.assertEqual(rp_emmap_test[:-1], rp_emmap_target, msg="Radial profiles of emmap matched target")
             #self.assertEqual(rp_modmap_test[:-1],rp_modmap_target, msg="Radial profiles of modmap matched target")
             
-            scale_factors_old = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=False)
+            scale_factors_old,bfactors,qfit = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=False)
 
-            scale_factors_new, report = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=True, check_scaling=True)
+            scale_factors_new, bfactor,qfit,report = compute_scale_factors(rp_emmap_test, rp_modmap_test, apix=self.apix, scale_factor_arguments=self.scale_factor_arguments, use_theoretical_profile=True, check_scaling=True)
             
             scaled_map_old_test = set_radial_profile(emmap_window, scale_factors_old, frequencies_map, self.frequency_map_window, emmap_window.shape)
             scaled_map_new_test = set_radial_profile(emmap_window, scale_factors_new, frequencies_map, self.frequency_map_window, emmap_window.shape)
@@ -95,11 +95,11 @@ class test_compute_scaling(unittest.TestCase):
             
             rp_modmap_window, frequencies_map = compute_radial_profile(modmap_window, self.frequency_map_window)
             
-            sf_old = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
+            sf_old,bfactor,qfit = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
                                            scale_factor_arguments=self.scale_factor_arguments,
                                            check_scaling=False, use_theoretical_profile=False)
             
-            sf_new, report = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
+            sf_new,bfactor,qfit, report = compute_scale_factors(rp_emmap_window, rp_modmap_window, apix=self.apix, 
                                            scale_factor_arguments=self.scale_factor_arguments,
                                            check_scaling=True, use_theoretical_profile=True)
             

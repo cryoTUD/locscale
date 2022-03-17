@@ -296,7 +296,36 @@ def is_pseudomodel(input_pdb_path):
         print("Number of dummy atoms {} not equal to total number of atoms {}.\nProceeding with default workflow for {}".format(num_waters, num_atoms, input_pdb_path))
         return False
     
-
+def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
+    import os
+    from subprocess import run, PIPE
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
+    import mrcfile
+    
+    print("Running Servalcat... \n")
+    path_to_locscale = check_dependencies()['locscale']
+    path_to_ccpem = check_dependencies()['ccpem']
+    path_to_ccp4 = check_dependencies()['ccp4']
+    
+    output_prefix = model_path[:-4]+"_servalcat_refined.pdb"
+    servalcat_command = ["servalcat","refine_spa","--model",model_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
+    if only_bfactor_refinement:
+        servalcat_command + ["--keywords","refi bonly","refi type unre"]
+           
+        
+    refmac_output = run(servalcat_command)
+    refined_model_path = output_prefix+".pdb"
+    bfactors = get_bfactors(in_model_path=refined_model_path)
+    
+    if os.path.exists(refined_model_path):
+        if verbose: 
+            print("The refined PDB model is: "+refined_model_path+"\n\n")    
+            print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+            
+        return refined_model_path
+    else:
+        print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        return None
 
 def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
     import os
