@@ -27,9 +27,9 @@ locscale_paths = {}
 processing_files_folder = {}
 
 for rmsd in rmsd_magnitudes:    
-    pdb_paths[rmsd] = os.path.join(input_folder,"pdb6y5a_rmsd_{}_pm_perturbed_using_mask.pdb".format(rmsd*100))
-    locscale_paths[rmsd] = os.path.join(output_folder,"locscale_additional_map_rmsd_{}_A.mrc".format(rmsd))
-    processing_files_folder[rmsd] = os.path.join(output_folder, "processing_files_additional_map__rmsd_{}_A".format(rmsd))
+    pdb_paths[rmsd] = os.path.join(input_folder,"blurred100","pdb6y5a_refined_blurred100_perturbed_rmsd_{}_pm.pdb".format(rmsd*100))
+    locscale_paths[rmsd] = os.path.join(output_folder,"locscale_refined_blurred100_pdb_perturbed_rmsd_{}_A.mrc".format(rmsd))
+    processing_files_folder[rmsd] = os.path.join(output_folder, "processing_files_refined_blurred100_pdb_perturbed_rmsd_{}_A".format(rmsd))
     
 
 print("output locscale maps: \n")

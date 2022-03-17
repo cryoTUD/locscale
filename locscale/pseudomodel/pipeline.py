@@ -49,7 +49,7 @@ def get_modmap(modmap_args):
     if verbose:
         print("Model map arguments: \n")
         print(modmap_args)
-    from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac, run_refmap, prepare_sharpen_map, is_pseudomodel
+    from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac,run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile
@@ -101,7 +101,7 @@ def get_modmap(modmap_args):
             print("Skipping REFMAC refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
-        refined_model_path = run_refmac(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
+        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
         if refined_model_path is None:
             print("Problem running REFMAC. Returning None")
             return None
