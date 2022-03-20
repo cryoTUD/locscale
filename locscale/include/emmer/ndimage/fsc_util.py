@@ -327,13 +327,15 @@ def plot_fscs(freq, list_of_fsc, colors=['r','g','b','k','y','m'], legends=None,
     ax1.set_ylabel('FSC',fontsize=font)
     ax2.set_xlabel('$d [\AA]$',fontsize=font)
 
-def plot_multiple_fsc(list_of_halfmap_tuple, common_mask_path, softening_parameter=5, apix=None, legend=None, title=None, font=16):
+def plot_multiple_fsc(list_of_halfmap_tuple, common_mask_path, softening_parameter=5, apix=None, legend=None, title=None, font=16, colors=None):
     import matplotlib.pyplot as plt
+    from matplotlib.pyplot import cm
     from scipy.interpolate import interp1d
     from locscale.include.emmer.ndimage.map_utils import parse_input
     from locscale.include.emmer.ndimage.profile_tools import frequency_array
     from locscale.include.emmer.ndimage.filter import get_cosine_mask
     import mrcfile
+    from tqdm import tqdm
     
     mask = parse_input(common_mask_path)
     if apix is not None:
@@ -345,7 +347,7 @@ def plot_multiple_fsc(list_of_halfmap_tuple, common_mask_path, softening_paramet
     
     fsc_curves = {}
     
-    for i,halfmap_tuple in enumerate(list_of_halfmap_tuple):
+    for i,halfmap_tuple in enumerate(tqdm(list_of_halfmap_tuple,desc="Computing FSCs")):
         
         halfmap1 = parse_input(halfmap_tuple[0])
         halfmap2 = parse_input(halfmap_tuple[1])
@@ -363,12 +365,14 @@ def plot_multiple_fsc(list_of_halfmap_tuple, common_mask_path, softening_paramet
     ax1 = fig.add_subplot(111)
     ax1.grid(True)
     ax2 = ax1.twiny()
-    
-    for fsc_profile in fsc_curves.values():
+    if colors is None:
+        colors = cm.rainbow(np.linspace(0,1,len(fsc_curves)))
+        
+    for i,fsc_profile in enumerate(fsc_curves.values()):
         freq = fsc_profile[0]
         fsc_curve = fsc_profile[1]
         
-        ax1.plot(freq,fsc_curve)
+        ax1.plot(freq,fsc_curve, c=colors[i])
     ax1.plot(freq,np.ones(len(fsc_curve))*0.143,'k--')  
 
         

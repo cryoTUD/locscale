@@ -35,7 +35,7 @@ def crop_data_to_map(input_data_map, mask, mask_threshold, skip_zeros=True):
     
     return nonzero_array
 
-def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
+def plot_correlations(x_array, y_array, scatter=False, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
     import seaborn as sns
     import os
     import matplotlib.pyplot as plt
@@ -62,7 +62,7 @@ def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, ti
             ax = plt.gca()
             ax.text(.05, .8, 'R$^2$={:.2f}'.format(r),
                     transform=ax.transAxes)
-        g = sns.lmplot(data=data, x=x_label, y=y_label)
+        g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter, ci=95)
         g.map_dataframe(annotate)
         plt.tight_layout()
         #plt.show()
@@ -90,6 +90,67 @@ def plot_correlations(x_array, y_array, hue=None, x_label=None, y_label=None, ti
     else:
         return fig
         
+def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
+    import seaborn as sns
+    import os
+    import matplotlib.pyplot as plt
+    from scipy import stats
+    import pandas as pd
+    fig = plt.figure(figsize=(18,12))
+    sns.set_theme(context="paper", font="Helvetica", font_scale=1.5)
+    sns.set_style("white")
+    kwargs = dict(linestyle="--", marker="o", linewidth=3, markersize=12, alpha=alpha)
+    
+
+    if x_label is None:
+        x_label = "x"
+    
+    if y_label is None:
+        y_label = "y"
+    
+    data_dictionary={}
+    all_stacks = []
+    for xy in xy_tuple:
+        x_array, y_array, category_label = xy
+        category_array = np.repeat(category_label, len(x_array))
+        stack = np.vstack((x_array,y_array,category_array)).T
+        all_stacks.append(stack)
+    
+    stack_arrays = np.concatenate(tuple([x for x in all_stacks]))
+    
+    data = pd.DataFrame(data=stack_arrays, columns=[x_label,y_label, "Category"])
+    data[x_label] = data[x_label].astype(np.float32)
+    data[y_label] = data[y_label].astype(np.float32)
+    data["Category"] = data["Category"].astype(str)
+
+        
+
+    def annotate(data, **kws):
+        r, p = stats.pearsonr(data[x_label], data[y_label])
+        ax = plt.gca(figsize=(16,8))
+        ax.text('R$^2$={:.2f}'.format(r),
+                        transform=ax.transAxes)
+    g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter, hue="Category", ci=95, legend=False)
+    
+    plt.legend(loc="lower right")   
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    
+    
+        
+    plt.tight_layout()
+    if filename is not None:
+        if output_folder is None:
+            figure_output_folder = os.getcwd()
+        else:
+            figure_output_folder = output_folder
+    
+    
+        output_filename = os.path.join(figure_output_folder, filename)
+        plt.savefig(output_filename, dpi=600,bbox_inches='tight')
+    else:
+        return fig
     
 
 def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):

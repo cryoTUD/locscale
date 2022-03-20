@@ -296,7 +296,7 @@ def apply_radial_profile(emmap, reference_map):
     
     return scaled_map
 
-def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True):
+def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="singer"):
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
@@ -326,17 +326,16 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
         try:
             
             emmap_window = extract_window(emmap, center, boxsize)
-            mask_window = extract_window(mask, center, boxsize)
-        
-            num_atoms, _  = measure_mask_parameters(mask=mask_window, apix=apix, verbose=False)
-            
-
             
             rp_local = compute_radial_profile(emmap_window)
             freq = frequency_array(rp_local, apix)
-                       
-            local_wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
-            #local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
+            if wilson_cutoff == "singer":                       
+                mask_window = extract_window(mask, center, boxsize)
+                num_atoms, _  = measure_mask_parameters(mask=mask_window, apix=apix, verbose=False)
+                local_wilson_cutoff = find_wilson_cutoff(num_atoms=num_atoms)
+                local_wilson_cutoff = np.clip(local_wilson_cutoff, fsc_cutoff*1.5, global_wilson_cutoff)
+            else:
+                local_wilson_cutoff = 10
             
             
             bfactor,qfit = estimate_bfactor_standard(freq, rp_local, local_wilson_cutoff, fsc_cutoff, standard_notation=standard_notation, return_fit_quality=True)
