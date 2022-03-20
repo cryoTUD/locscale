@@ -43,9 +43,10 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True):
+def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
+    from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
 
@@ -70,6 +71,7 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
     None.
 
     '''
+    
     plt.rc('font',size=font)
         
     i = 0
@@ -90,18 +92,19 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
         #plt.yticks(fontsize=font)
         if logScale:
             for profile in list_of_profiles:
-                
+                if crop_freq is not None:
+                    freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
                 ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=2)
                 i += 1
             
             ax2.set_xticks(ax1.get_xticks())
             ax2.set_xbound(ax1.get_xbound())
             ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-           
-            ax1.legend(legends)
-            ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$')
-            ax1.set_ylabel('$ln\mid F \mid $')
-            ax2.set_xlabel('$d [\AA]$')
+            if showlegend:
+                ax1.legend(legends)
+            ax1.set_xlabel(r'$d^{-2} (\AA^{-2})$')
+            ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
+            ax2.set_xlabel(r'$d (\AA)$')
         else:
             for profile in list_of_profiles:
                 
@@ -109,8 +112,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
                 i += 1
             
             
-            
-            ax1.legend(legends)
+            if showlegend:
+                ax1.legend(legends)
         
                 
             ax2.set_xticks(ax1.get_xticks())
@@ -146,10 +149,15 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
         ax2 = ax1.twiny()
         
         if logScale:
+            if crop_freq is not None:
+                freq, average_profile = crop_profile_between_frequency(freq, average_profile, crop_freq[0], crop_freq[1])
+                freq, y_max = crop_profile_between_frequency(freq, y_max, crop_freq[0], crop_freq[1])
+                freq, y_min = crop_profile_between_frequency(freq, y_min, crop_freq[0], crop_freq[1])
+            
             ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
             ax1.fill_between(freq**2,np.log(y_max), np.log(y_min), color="grey", alpha=0.5)
-            
-            ax1.legend(["N={}".format(len(profile_list))])
+            if showlegend:
+                ax1.legend(["N={}".format(len(profile_list))])
         
             
             ax2.set_xticks(ax1.get_xticks())
@@ -164,7 +172,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
             ax1.plot(freq, average_profile, 'k',alpha=1)
             ax1.fill_between(freq,y_max, y_min,color="grey", alpha=0.5)
             
-            ax1.legend(["N={}".format(len(profile_list))])
+            if showlegend:
+                ax1.legend(["N={}".format(len(profile_list))])
         
                 
             ax2.set_xticks(ax1.get_xticks())
@@ -173,7 +182,7 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
             
     
             ax1.set_xlabel('$1/d [\AA^{-1}]$',fontsize=font)
-            ax1.set_ylabel('normalised $\mid F \mid $',fontsize=font)
+            ax1.set_ylabel('normalised $ \langle F \rangle $',fontsize=font)
             ax2.set_xlabel('$d [\AA]$',fontsize=font)
         
     else:
@@ -210,7 +219,10 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
         ax2.set_xlabel('$d [\AA]$',fontsize=font)
 
     
-    
+    if ylims is not None:
+        plt.ylim(ylims)
+    if xlims is not None:
+        plt.xlim(xlims)
     plt.tight_layout()
     return fig
 def plot_emmap_section(emmap, title="EMMAP Sections"):
