@@ -43,7 +43,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
+def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
@@ -107,7 +107,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
             ax2.set_xlabel(r'$d (\AA)$')
         else:
             for profile in list_of_profiles:
-                
+                if crop_freq is not None:
+                    freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
                 ax1.plot(freq,profile,c=colors[i], linewidth=2)
                 i += 1
             
@@ -121,9 +122,9 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
             ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'$1/d [\AA^{-1}]$',fontsize=font)
-            ax1.set_ylabel(r'Normalised $ \langle F \rangle $',fontsize=font)
-            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+            ax1.set_xlabel(r'$1/d [\AA^{-1}]$')
+            ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
+            ax2.set_xlabel('$d [\AA]$')
             
         
         
@@ -207,8 +208,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
         ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
         ax1.legend(["N={}".format(len(profile_list))])
         
-        ax1.tick_params(axis='both',which='major',labelsize=font)
-        ax2.tick_params(axis='both',which='major',labelsize=font)
+        ax1.tick_params(axis='both',which='major')
+        ax2.tick_params(axis='both',which='major')
         ax2.set_xticks(ax1.get_xticks())
         ax2.set_xbound(ax1.get_xbound())
         ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
@@ -223,6 +224,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=22,showlegend=T
         plt.ylim(ylims)
     if xlims is not None:
         plt.xlim(xlims)
+    plt.yticks([0, 0.01])
+    
     plt.tight_layout()
     return fig
 def plot_emmap_section(emmap, title="EMMAP Sections"):
@@ -428,7 +431,7 @@ def offset_radial_profile(vol, offset, radii):
 
     return np.fft.irfftn(ps, s=vol.shape)
     
-def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False):
+def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False, ylims=None, xlims=None, crop_freq=None):
     '''
     Given a list of mrc paths, this function will extract volume data and plots a radial profile for each map. The legend by default will be the filename of the MRC map. Max six maps will be used as inputs (limit from plot_radial_profiles function)
 
@@ -476,7 +479,7 @@ def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False):
         k += 1 
     
     
-    fig=plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys, logScale=logScale, showPoints=False)
+    fig=plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys, logScale=logScale, showPoints=False, ylims=ylims, crop_freq=crop_freq,  xlims=xlims)
     
     for key in keys:
         radial_profiles[key] = tuple([freq,radial_profiles[key]])
