@@ -57,6 +57,7 @@ def plot_correlations(x_array, y_array, scatter=False, hue=None, x_label=None, y
     
     if find_correlation:
         data = pd.DataFrame(data=[x_array,y_array], index=[x_label,y_label]).T
+      
         def annotate(data, **kws):
             r, p = stats.pearsonr(data[x_label], data[y_label])
             ax = plt.gca()
@@ -90,7 +91,7 @@ def plot_correlations(x_array, y_array, scatter=False, hue=None, x_label=None, y
     else:
         return fig
         
-def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
+def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
     import seaborn as sns
     import os
     import matplotlib.pyplot as plt
@@ -130,7 +131,7 @@ def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, 
         ax = plt.gca(figsize=(16,8))
         ax.text('R$^2$={:.2f}'.format(r),
                         transform=ax.transAxes)
-    g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter, hue="Category", ci=95, legend=False)
+    g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter, hue="Category", ci=ci, legend=False)
     
     plt.legend(loc="lower right")   
 
