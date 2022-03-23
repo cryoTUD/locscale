@@ -39,7 +39,7 @@ rmsd_magnitudes = [0,200,2000]
 model_map_paths = {}
 model_maps = {}
 for rmsd in rmsd_magnitudes:
-    model_map_paths[rmsd] = os.path.join(folder, "pdb6y5a_rmsd_{}_pm_perturbed_using_mask_shifted_4locscale.mrc".format(rmsd))
+    model_map_paths[rmsd] = os.path.join(folder, "pdb6y5a_perturbed_{}_pm.mrc".format(rmsd))
     model_maps[rmsd] = mrcfile.open(model_map_paths[rmsd]).data
 
 mask_path = os.path.join(folder, "pdb6y5a_refmac_refined_emd_additional_model_mask.mrc")  ### Ensure that mask doesnt' have unmodelled regions
@@ -152,7 +152,7 @@ def plot_list_radial_profile(freq,list_of_list_of_profiles,legends=None, font=22
     return fig
 
 #%%
-plot_list_radial_profile(freq, list_of_list_of_profiles=[list(bfactor_profiles[x].values()) for x in [0,200]], logScale=False, alpha=0.1)
+plot_list_radial_profile(freq, list_of_list_of_profiles=[list(bfactor_profiles[x].values()) for x in [2000]], logScale=True, alpha=0.1)
 
 
 #%%
@@ -210,7 +210,10 @@ def get_amplitude_histogram_correlation_curve(rmsd1, rmsd2):
 amplitude_histogram_correlation = get_amplitude_histogram_correlation_curve(0,2000)
 plt.plot(amplitude_histogram_correlation.keys(), amplitude_histogram_correlation.values(),'k--.')
 
-    
+
+#%%
+freq_index = -2
+sns.kdeplot(amplitudes_frequency_bins_rmsd[0][freq[freq_index]]),sns.kdeplot(amplitudes_frequency_bins_rmsd[200][freq[freq_index]]),sns.kdeplot(amplitudes_frequency_bins_rmsd[2000][freq[freq_index]]), plt.legend(["0A","2A","20A"]), plt.title("Freq = {}".format(round(1/freq[freq_index],1)))
         
     
     

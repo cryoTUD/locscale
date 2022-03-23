@@ -94,7 +94,7 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=2)
+                ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
                 i += 1
             
             ax2.set_xticks(ax1.get_xticks())
@@ -102,14 +102,14 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
             if showlegend:
                 ax1.legend(legends)
-            ax1.set_xlabel(r'$d^{-2} (\AA^{-2})$')
+            ax1.set_xlabel(r'Spatial Frequency, $d^{-2} (\AA^{-2})$')
             ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
             ax2.set_xlabel(r'$d (\AA)$')
         else:
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                ax1.plot(freq,profile,c=colors[i], linewidth=2)
+                ax1.plot(freq,profile,c=colors[i], linewidth=1)
                 i += 1
             
             
@@ -122,7 +122,7 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'$1/d [\AA^{-1}]$')
+            ax1.set_xlabel(r'Spatial Frequency, $1/d [\AA^{-1}]$')
             ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
             ax2.set_xlabel('$d [\AA]$')
             
@@ -166,9 +166,9 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'$1/d^2 [\AA^{-2}]$',fontsize=font)
-            ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
-            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+            ax1.set_xlabel(r'Spatial Frequency $1/d^2 [\AA^{-2}]$',fontsize=font)
+            ax1.set_ylabel(r'$ln\mid F \mid $',fontsize=font)
+            ax2.set_xlabel(r'$d [\AA]$',fontsize=font)
         else:
             ax1.plot(freq, average_profile, 'k',alpha=1)
             ax1.fill_between(freq,y_max, y_min,color="grey", alpha=0.5)
@@ -182,9 +182,9 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel('$1/d [\AA^{-1}]$',fontsize=font)
-            ax1.set_ylabel('normalised $ \langle F \rangle $',fontsize=font)
-            ax2.set_xlabel('$d [\AA]$',fontsize=font)
+            ax1.set_xlabel(r'Spatial Frequency $1/d [\AA^{-1}]$',fontsize=font)
+            ax1.set_ylabel(r'normalised $ \langle F \rangle $',fontsize=font)
+            ax2.set_xlabel(r'$d [\AA]$',fontsize=font)
         
     else:
         if variation is None:
@@ -222,9 +222,10 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
     
     if ylims is not None:
         plt.ylim(ylims)
+        plt.yticks([-10,-5, 0])
     if xlims is not None:
         plt.xlim(xlims)
-    plt.yticks([0, 0.01])
+    
     
     plt.tight_layout()
     return fig
@@ -594,6 +595,7 @@ def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return
     
     xdata = freq[start_index:end_index]**2
     ydata = np.log(amplitude[start_index:end_index])
+    
     
     param, _ = curve_fit(linear_fit,xdata,ydata)
     
@@ -998,8 +1000,42 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
         return bfactor, amplitude_zero_freq, (piecewise_linfit, z, slopes)
     else:
         return bfactor
+
+def get_theoretical_profile(length,apix, profile_type='helix'):
+    import pickle
+    from locscale.include.emmer.ndimage.profile_tools import resample_1d
+    from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+    import os
+    
+    path_to_locscale = check_dependencies()['locscale']
+    location_of_theoretical_profiles = os.path.join(path_to_locscale, "locscale","utils","theoretical_profiles.pickle")
+    
+    with open(location_of_theoretical_profiles,'rb') as f:
+        profiles = pickle.load(f)
+    
+    frequency_limits = (float(1/(apix*length)),float(1/(apix*2)))
+    helix_profile = profiles[profile_type]
+    resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
+    return resampled_helix_profile
     
     
     
+
+def generate_no_debye_profile(freq, amplitudes, wilson_cutoff=10, smooth=1):
+    from locscale.include.emmer.ndimage.profile_tools import merge_two_profiles, estimate_bfactor_standard
     
+    bfactor, amp = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff=10, fsc_cutoff=1/freq[-1], return_amplitude=True, standard_notation=True)
     
+    exponential_fit = amp * np.exp(-0.25 * bfactor * freq**2)
+
+    y_data = np.log(amplitudes)
+    x_data = freq**2
+    y_fit = np.log(exponential_fit)
+    
+    #merged_profile = np.concatenate((ydata[:start_index],y_data_wilson))
+    merged_profile = merge_two_profiles(y_data, y_fit, freq, d_cutoff=wilson_cutoff, smooth=smooth)
+    
+    new_amplitudes = np.exp(merged_profile)
+    
+    return new_amplitudes
+

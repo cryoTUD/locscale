@@ -123,13 +123,66 @@ def compute_scale_factors(em_profile, ref_profile):
     scale_factor = np.sqrt(ref_profile**2/em_profile**2)
     return scale_factor
 
+
+def compute_radial_profile_proper(vol, frequency_map):
+
+    vol_fft = np.fft.rfftn(vol, norm='ortho');
+    dim = vol_fft.shape;
+    ps = np.real(np.abs(vol_fft));
+    frequencies = np.fft.rfftfreq(dim[0]);
+    bins = np.digitize(frequency_map, frequencies);
+    bins = bins - 1;
+    radial_profile = np.bincount(bins.ravel(), ps.ravel()) / np.bincount(bins.ravel())
+
+    return radial_profile, frequencies;
+
+def compute_radial_profile_simple(vol, return_frequencies=False):
+    from locscale.include.confidenceMapUtil import FDRutil
+    frequency_map = FDRutil.calculate_frequency_map(np.zeros(vol.shape))
+    
+    em_profile, frequencies_map = compute_radial_profile_proper(vol, frequency_map)
+    
+    if return_frequencies:
+        return em_profile, frequencies_map
+    else:
+        return em_profile
+
+def set_radial_profile_simple(vol, scale_factors, frequencies):
+    from locscale.include.confidenceMapUtil import FDRutil
+    frequency_map = FDRutil.calculate_frequency_map(np.zeros(vol.shape))
+    
+    map_shape = vol.shape
+    map_b_sharpened, _ = set_radial_profile_proper(vol, scale_factors, frequencies, frequency_map, map_shape);
+    
+    return map_b_sharpened
+    
+    
+
+def set_radial_profile_proper(vol, scale_factors, frequencies, frequency_map, shape):
+    vol_fft = np.fft.rfftn(np.copy(vol), norm='ortho');
+    scaling_map = np.interp(frequency_map, frequencies, scale_factors);
+    scaled_map_fft = scaling_map * vol_fft;
+    scaled_map = np.real(np.fft.irfftn(scaled_map_fft, shape, norm='ortho'));
+
+    return scaled_map, scaled_map_fft;
+
 def set_radial_profile(vol, scale_factor, radii):
     ps = np.fft.rfftn(vol)
     for j,r in enumerate(np.unique(radii)[0:vol.shape[0]//2]):
             idx = radii == r
             ps[idx] *= scale_factor[j]
 
-    return np.fft.irfftn(ps, s=vol.shape)    
+    return np.fft.irfftn(ps, s=vol.shape)  
+
+def set_radial_profile_to_volume(emmap, ref_profile):
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
+    em_profile,frequencies = compute_radial_profile_simple(emmap, return_frequencies=True)
+    scale_factors = compute_scale_factors(em_profile, ref_profile)
+    scaled_map = set_radial_profile_simple(emmap, scale_factors, frequencies)
+    
+    return scaled_map
+
+    
 
 def sharpen_maps(vol, apix, global_bfactor=0):
     '''
