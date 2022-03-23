@@ -63,8 +63,8 @@ def plot_correlations(x_array, y_array, scatter=False, hue=None, x_label=None, y
             ax = plt.gca()
             ax.text(.05, .8, 'R$^2$={:.2f}'.format(r),
                     transform=ax.transAxes)
-        g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter, ci=95)
-        g.map_dataframe(annotate)
+        g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter)
+        #g.map_dataframe(annotate)
         plt.tight_layout()
         #plt.show()
     

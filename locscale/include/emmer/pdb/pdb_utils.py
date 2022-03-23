@@ -493,7 +493,7 @@ def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
                 for atom in res:
                     current_pos = np.array(atom.pos.tolist())
  
-                    shake_vector_polar = get_random_polar_vector(magnitude=magnitude, randomisation=randomisation)
+                    shake_vector_polar = get_random_polar_vector(rmsd_magnitude=magnitude, randomisation=randomisation)
                     shake_vector_cartesian = convert_polar_to_cartesian(shake_vector_polar)
                         
                     new_pos = current_pos + shake_vector_cartesian
