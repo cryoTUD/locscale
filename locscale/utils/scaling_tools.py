@@ -32,6 +32,22 @@ def compute_radial_profile(vol, frequency_map):
 
     return radial_profile, frequencies;
 
+def compute_radial_profile_proper(vol, frequency_map):
+
+    vol_fft = np.fft.rfftn(vol, norm="ortho");
+    dim = vol_fft.shape;
+    ps = np.real(np.abs(vol_fft));
+    frequencies = np.fft.rfftfreq(dim[0]);
+    #bins = np.digitize(frequency_map, frequencies);
+    #bins = bins - 1;
+    x, y, z = np.indices(ps.shape)
+    radii = np.sqrt(x**2 + y**2 + z**2)
+    radii = radii.astype(np.int)
+    radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
+    radial_profile = radial_profile[0:int(ps.shape[0]/2)+1]
+
+    return radial_profile, frequencies;
+
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
                           use_theoretical_profile=True, check_scaling=False):
     
@@ -231,8 +247,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
             modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
         
-            em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
-            mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
+            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window);
+            mod_profile, _ = compute_radial_profile_proper(modmap_wn, frequency_map_window);
                 
             check_scaling=true_percent_probability(1) # Checks scaling operation for 1% of all voxels. 
                 
@@ -265,8 +281,8 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
             modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
         
-            em_profile, frequencies_map = compute_radial_profile(emmap_wn, frequency_map_window);
-            mod_profile, _ = compute_radial_profile(modmap_wn, frequency_map_window);
+            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window);
+            mod_profile, _ = compute_radial_profile_proper(modmap_wn, frequency_map_window);
             
             print(em_profile)
             print(mod_profile)

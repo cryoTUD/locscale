@@ -156,9 +156,9 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.pseudomodel.pipeline import get_modmap
     from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
     from locscale.utils.general import round_up_to_even, round_up_to_odd, get_emmap_path_from_args
-    from locscale.include.emmer.ndimage.map_tools import add_half_maps
+    from locscale.include.emmer.ndimage.map_tools import add_half_maps, compute_radial_profile_simple
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
-    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     
@@ -338,7 +338,7 @@ def prepare_mask_and_maps_for_scaling(args):
         bfactor_info = [0,np.array([0,0,0]),np.array([0,0,0])]
         pwlf_fit_quality = 0
     else:
-        rp_emmap = compute_radial_profile(xyz_emmap)
+        rp_emmap = compute_radial_profile_simple(xyz_emmap)
         freq = frequency_array(amplitudes=rp_emmap, apix=apix)
         num_segments = number_of_segments(fsc_resolution)
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution,num_segments=num_segments)
