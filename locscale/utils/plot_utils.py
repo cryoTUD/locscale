@@ -91,7 +91,7 @@ def plot_correlations(x_array, y_array, scatter=False, hue=None, x_label=None, y
     else:
         return fig
         
-def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
+def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, ylims=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
     import seaborn as sns
     import os
     import matplotlib.pyplot as plt
@@ -138,6 +138,8 @@ def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, 
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     
+    if ylims is not None:
+        plt.ylim(ylims)
     
         
     plt.tight_layout()
@@ -208,7 +210,48 @@ def plot_vector_graphics(plot_data, filepath, plot_specification):
     xlabel = plot_data['x_label']
     ylabel = plot_data['y_label']
     title = plot_data['title']
+
+def plot_radial_profile_seaborn(freq, list_of_profiles, font=16, ylims=None, crop_first=10, crop_end=1, legends=None):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
     
+    freq = freq[crop_first:-crop_end]
+    
+    sns.set_theme(context="paper", font="Helvetica", font_scale=1.5)
+    sns.set_style("white")
+    kwargs = dict(linewidth=3)
+
+    profile_list = np.array(list_of_profiles)
+    average_profile = np.einsum("ij->j", profile_list) / len(profile_list)
+
+    variation = []
+    for col_index in range(profile_list.shape[1]):
+        col_extract = profile_list[:,col_index]
+        variation.append(col_extract.std())
+
+    variation = np.array(variation)
+        
+    y_max = average_profile + variation
+    y_min = average_profile - variation
+    
+    fig, ax = plt.subplots()
+    ax = sns.lineplot(x=freq, y=average_profile[crop_first:-crop_end], **kwargs)
+    ax.fill_between(freq, y_min[crop_first:-crop_end], y_max[crop_first:-crop_end], alpha=0.3)
+    ax.set_xlabel('Spatial Frequency $1/d [\AA^{-1}]$',fontsize=font)
+    ax.set_ylabel('$\mid F \mid $',fontsize=font)
+    if legends is not None:
+        ax.legend(legends)
+    ax2 = ax.twiny()
+    ax2.set_xticks(ax.get_xticks())
+    ax2.set_xbound(ax.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax.get_xticks()])
+    ax2.set_xlabel('$d [\AA]$',fontsize=font)
+    if ylims is not None:
+        plt.ylim(ylims)
+    plt.tight_layout()
+    plt.show()
+    
+    return fig
     
     
     

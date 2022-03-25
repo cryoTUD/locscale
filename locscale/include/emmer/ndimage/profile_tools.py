@@ -43,7 +43,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
 
-def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
+def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
@@ -94,7 +94,10 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
+                if showPoints:
+                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1, marker="o")
+                else:
+                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
                 i += 1
             
             ax2.set_xticks(ax1.get_xticks())
@@ -109,7 +112,10 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                ax1.plot(freq,profile,c=colors[i], linewidth=1)
+                if showPoints:
+                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1, marker="o")
+                else:
+                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
                 i += 1
             
             
@@ -222,7 +228,8 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
     
     if ylims is not None:
         plt.ylim(ylims)
-        plt.yticks([-10,-5, 0])
+    if yticks is not None:
+        plt.yticks(yticks)
     if xlims is not None:
         plt.xlim(xlims)
     
