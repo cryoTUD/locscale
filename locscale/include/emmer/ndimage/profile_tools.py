@@ -113,9 +113,9 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
                 if crop_freq is not None:
                     freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
                 if showPoints:
-                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1, marker="o")
+                    ax1.plot(freq,profile,c=colors[i], linewidth=1, marker="o")
                 else:
-                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
+                    ax1.plot(freq,profile,c=colors[i], linewidth=1)
                 i += 1
             
             

@@ -287,7 +287,7 @@ def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True, ret
     if return_array:
         return atomic_distance
     else:
-        return np.percentile(atomic_distance,50)
+        return np.mean(atomic_distance)
 
 def check_mrc_indexing(input_mask, threshold=0.9):
     from locscale.include.emmer.ndimage.map_utils import parse_input
@@ -348,7 +348,57 @@ def get_atomic_point_map(mrc_positions, mask_shape):
         zero_map[mrc[0],mrc[1],mrc[2]] = 1
     
     return zero_map
-def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True):
+
+def pick_random_point_within_sphere_of_influence(center_atom, binarised_mask_full, radius_of_influence, apix):
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, convert_mrc_to_pdb_position, dilate_mask
+    import random
+    
+    mrc_position = convert_pdb_to_mrc_position([center_atom], apix)[0]
+    single_atomic_point_map = get_atomic_point_map([mrc_position], binarised_mask_full.shape)
+    
+    radius_of_influence_int = int(round(radius_of_influence/apix))
+    sphere_of_influence = dilate_mask(binarised_mask_full, radius_of_influence_int, iterations=1)
+    
+    ## ensure only 0 and 1 exists in the masks
+    
+    sphere_of_influence = (sphere_of_influence==1).astype(np.int_)
+    binarised_mask_full = (binarised_mask_full==1).astype(np.int_)
+    
+    ## Get intersection space
+    
+    space_of_influece = sphere_of_influence * binarised_mask_full
+    random_mrc_position = random.choice(np.argwhere(space_of_influece==1))
+    
+    random_pdb_position = convert_mrc_to_pdb_position([random_mrc_position], apix)[0]
+    
+    return random_pdb_position
+
+def pick_random_point_within_range_kdtree(center_atom, list_of_points_in_mask, range_distance):
+    '''
+    Pick one point within a distance from a set of points
+
+    Parameters
+    ----------
+    center_atom : TYPE
+        DESCRIPTION.
+    list_of_points_in_mask : TYPE
+        DESCRIPTION.
+    range_distance : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    '''
+    from sklearn.neighbors import KDTree
+    tree = KDTree(list_of_points_in_mask)
+    
+    
+    
+    
+    
+def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True, masking="strict", threshold=0.5):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     from locscale.include.emmer.ndimage.map_utils import parse_input
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions, set_all_atomic_positions
@@ -367,14 +417,14 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     else:
         mask = parse_input(mask_path)
     
-    outside_mask = np.logical_not(mask>=0.5)
+    outside_mask = np.logical_not(mask>=threshold)
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
     
     
+    voxel_positions_mask = get_all_voxels_inside_mask(mask, mask_threshold=0.5)
+    pdb_positions_mask = convert_mrc_to_pdb_position(voxel_positions_mask, apix)
     
-    ## Get all voxels indices inside mask
-    voxels_inside_mask = [tuple(x) for x in get_all_voxels_inside_mask(mask_input=mask, mask_threshold=0.5)]  ## ZYX format
-    
+       
     ## Get all atomic positions, in real units (XYZ)
     atomic_positions_values = get_all_atomic_positions(st)  ## XYZ
     # Get shake vector     
@@ -394,7 +444,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     
     shaken_mrc_position_list = [tuple(x) for x in convert_pdb_to_mrc_position(shaken_atomic_position, apix)]  ## ZYX
     
-    binarised_mask = (mask>=0.99).astype(np.int_)
+    binarised_mask = (mask>=threshold).astype(np.int_)
     mrc_point_map = get_atomic_point_map(shaken_mrc_position_list, binarised_mask.shape)
     available_voxels = get_all_voxels_inside_mask(binarised_mask - mrc_point_map, 1)  
        
@@ -404,11 +454,33 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     
     ## Find MRC positions outside the mask
 #    mrc_positions_inside_mask = shaken_mrc_position.intersection(voxels_inside_mask)
+    np_array_mask_pdb = np.array(pdb_positions_mask)
+    
     
     num_atoms_outside = 0
-    for i,mrc_pos in enumerate(shaken_mrc_position_list):
+    if masking == "strict":
+        from sklearn.neighbors import KDTree
+        tree = KDTree(np_array_mask_pdb)
+    
+    for i,mrc_pos in enumerate(tqdm(shaken_mrc_position_list, "Validating positions")):
         if outside_mask[mrc_pos[0],mrc_pos[1],mrc_pos[2]]:
-            shaken_atomic_position[i] = random_sample_pdb[i]  
+            if masking == "strict":
+                
+                #random_point_in_available_space = pick_random_point_within_sphere_of_influence(center_atom=atomic_positions_values[i],
+                #                                                                                   binarised_mask_full=binarised_mask,
+                #                                                                                   radius_of_influence=rmsd_magnitude*2,
+                #                                                                                   apix=apix)
+                
+                
+                neighborhood_indices_list = tree.query_radius(shaken_atomic_position[i:i+1], r=rmsd_magnitude*2)
+                
+                random_index = random.choice(list(neighborhood_indices_list)[0])
+                random_position = np_array_mask_pdb[random_index] + np.random.uniform(0,apix/2,3)
+                
+                shaken_atomic_position[i] = random_position
+            else:
+                shaken_atomic_position[i] = random_sample_pdb[i]  
+            
             num_atoms_outside += 1
         
     print("{} atoms found outside the mask! Randomly placing them inside the mask:".format(num_atoms_outside))
@@ -428,8 +500,8 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
 
     
     rmsd = compute_rmsd_two_pdb(st, shaken_structure)
-    print("median RMSD between input structure and native shaken structure: {} A".format(round(rmsd_native,2)))
-    print("median RMSD between the input and output structure is: {} A".format(round(rmsd,2)))
+    print("RMSD between input structure and native shaken structure: {} A".format(round(rmsd_native,2)))
+    print("RMSD between the input and output structure is: {} A".format(round(rmsd,2)))
     
     return shaken_structure
 
