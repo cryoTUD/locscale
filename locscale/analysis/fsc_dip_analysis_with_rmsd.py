@@ -36,23 +36,27 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 #%%% Inputs
-input_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/faraday_discussions/Tests/test_effect_of_blurring/blurred"
-output_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/faraday_discussions/Tests/test_effect_of_blurring/blurred"
+input_folder = "/mnt/c/Users/abharadwaj1/Downloads/ForUbuntu/faraday_discussions/Calculations/fsc_dip_analysis"
+output_folder = input_folder
 
-pdb_path = os.path.join(input_folder, "pdb6y5a_rmsd_0_pm_perturbed_using_mask.pdb")
-sample_map = os.path.join(input_folder, "locscale_additional_map_rmsd_0_A.mrc")
+pdb_path = os.path.join(input_folder, "pdb6y5a_additional_refined.pdb")
+sample_map = os.path.join(input_folder, "refined","locscale_additional_refined_perturbed_strict_masking_no_overlap_rmsd_0_A.mrc")
 apix = mrcfile.open(sample_map).voxel_size.tolist()[0]
 
 rmsd_magnitudes = [0,1,2,5,10,15,20]
-atomic_model_mask_path = get_atomic_model_mask(emmap_path=sample_map, pdb_path=pdb_path)
+atomic_model_mask_path = get_atomic_model_mask(emmap_path=sample_map, pdb_path=pdb_path, 
+                                               dilation_radius=3, softening_parameter=5)
 atomic_model_mask = mrcfile.open(atomic_model_mask_path).data
 
 locscale_blurred_maps = {}
 locscale_normal_maps = {}
 
+locscale_prefix_blur = "locscale_additional_refined_perturbed_strict_masking_blurred200_no_overlap_rmsd_{}_A.mrc"
+locscale_prefix_refined = "locscale_additional_refined_perturbed_strict_masking_no_overlap_rmsd_{}_A.mrc"
+
 for rmsd in rmsd_magnitudes:
-    locscale_blurred_maps[rmsd] = mrcfile.open(os.path.join(input_folder, "locscale_refined_blurred100_pdb_perturbed_rmsd_{}_A.mrc".format(rmsd))).data
-    locscale_normal_maps[rmsd] = mrcfile.open(os.path.join(input_folder, "locscale_additional_map_rmsd_{}_A.mrc".format(rmsd))).data
+    locscale_blurred_maps[rmsd] = mrcfile.open(os.path.join(input_folder, "blur200", locscale_prefix_blur.format(rmsd))).data
+    locscale_normal_maps[rmsd] = mrcfile.open(os.path.join(input_folder, "refined", locscale_prefix_refined.format(rmsd))).data
     
 
 
@@ -84,11 +88,18 @@ from matplotlib.pyplot import cm
 map_pair_tuples = [(locscale_blurred_maps[0], locscale_blurred_maps[rmsd]) for rmsd in rmsd_magnitudes]
 map_pair_tuples += [(locscale_normal_maps[0], locscale_normal_maps[rmsd]) for rmsd in rmsd_magnitudes]
 
-legends = ["Blurred: RMSD 0 and {}A".format(rmsd) for rmsd in rmsd_magnitudes]
+legends = ["Blurred: RMSD 0 and {}A".format(rmsd) for rmsd in [0]]
 legends += ["Normal: RMSD 0 and {}A".format(rmsd) for rmsd in rmsd_magnitudes]
 color_blur = cm.Blues(np.linspace(0,1,len(rmsd_magnitudes)))
 color_normal = cm.Reds(np.linspace(0,1,len(rmsd_magnitudes)))
 colors = np.concatenate((color_blur, color_normal), axis=0)
 plot_multiple_fsc(map_pair_tuples, common_mask_path=atomic_model_mask_path, legend=legends, colors=colors)
+
+#%%
+from locscale.utils.plot_utils import pretty_lineplot_multiple_fsc_curves
+
+fsc_dip_blurred = os.path.join(output_folder, "fsc_curves_dip_blurred200_nolegend.svg")
+legends=["{} $\AA$".format(rmsd) for rmsd in rmsd_magnitudes]
+pretty_lineplot_multiple_fsc_curves(fsc_arrays_blurred, filename=fsc_dip_blurred, fontscale=3, linewidth=2, legends=None)
 
 
