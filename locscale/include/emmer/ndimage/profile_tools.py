@@ -47,6 +47,10 @@ def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=T
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
+    
+
+    import matplotlib as mpl
+    mpl.rcParams['pdf.fonttype'] = 42
     '''
     Given a list of amplitudes, plot them against a common frequency axis.
 
