@@ -243,6 +243,7 @@ class Model:
          atom.pos = gemmi.Position(position[0],position[1],position[2])
          atom.b_iso = pseudoAtom.bfactor
          atom.occ = pseudoAtom.occ
+         atom.name = "O"
          
          model[chain_num][res_num].add_atom(atom,atom_num)
          

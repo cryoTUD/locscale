@@ -299,7 +299,7 @@ def is_pseudomodel(input_pdb_path):
 def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
     import os
     from subprocess import run, PIPE
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
     import mrcfile
     
     print("Running Servalcat... \n")
@@ -307,12 +307,17 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
     path_to_ccpem = check_dependencies()['ccpem']
     path_to_ccp4 = check_dependencies()['ccp4']
     
-    output_prefix = model_path[:-4]+"_servalcat_refined.pdb"
-    servalcat_command = ["servalcat","refine_spa","--model",model_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
+    model_name = os.path.basename(model_path)
+    servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+    set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
+    
+    output_prefix = model_name[:-4]+"_servalcat_refined"
+    servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
     if only_bfactor_refinement:
-        servalcat_command + ["--keywords","refi bonly","refi type unre"]
+        servalcat_command += ["--keywords","refi bonly","refi type unre"]
            
-        
+    print("Command line for servalcat: \n")    
+    print(" ".join(servalcat_command))
     refmac_output = run(servalcat_command)
     refined_model_path = output_prefix+".pdb"
     bfactors = get_bfactors(in_model_path=refined_model_path)

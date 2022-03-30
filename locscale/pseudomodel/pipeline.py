@@ -101,7 +101,7 @@ def get_modmap(modmap_args):
             print("Skipping REFMAC refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
-        refined_model_path = run_refmac(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
+        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
         if refined_model_path is None:
             print("Problem running REFMAC. Returning None")
             return None
