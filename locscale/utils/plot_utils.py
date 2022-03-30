@@ -278,7 +278,7 @@ def pretty_lineplot_XY(xdata, ydata, xlabel, ylabel, filename=None,figsize=(14,8
     plt.tight_layout()
     plt.savefig(filename, dpi=600, bbox_inches="tight", transparency=True)
 
-def pretty_lineplot_multiple_fsc_curves(fsc_arrays_perturb, filename=None,figsize=(14,8),fontscale=2.5,font="Helvetica",linewidth=2,legends=None):
+def pretty_lineplot_multiple_fsc_curves(fsc_arrays_perturb, two_xaxis=True, filename=None,figsize=(14,8),fontscale=2.5,font="Helvetica",linewidth=2,legends=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     import seaborn as sns    
@@ -292,14 +292,39 @@ def pretty_lineplot_multiple_fsc_curves(fsc_arrays_perturb, filename=None,figsiz
     sns.set_style("white")
     fsc_filename = filename
     colors_rainbow = cm.rainbow(np.linspace(0,1,len(fsc_arrays_perturb.keys())))
-    for i,rmsd in enumerate(fsc_arrays_perturb.keys()):
-        sns.lineplot(x=fsc_arrays_perturb[rmsd][0],y=fsc_arrays_perturb[rmsd][1], linewidth=linewidth, color=colors_rainbow[i])
-        plt.xlabel(r" Spatial Frequency, $d^{-1}(\AA^{-1}$)")
-        plt.ylabel("FSC")
-
-    if legends is not None:        
+    
+    if two_xaxis:
+        # print(';)
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.grid(False)
+        
+        
+        for i,rmsd in enumerate(fsc_arrays_perturb.keys()):
+            sns.lineplot(x=fsc_arrays_perturb[rmsd][0],y=fsc_arrays_perturb[rmsd][1], linewidth=linewidth, color=colors_rainbow[i], ax=ax1)
+            ax1.set_xlabel(r" Spatial Frequency, $d^{-1}(\AA^{-1}$)")
+            ax1.set_ylabel("FSC")
+        
+        if legends is not None:        
+            ax1.legend(legends)
+        
+        ax2 = ax1.twiny()
+        ax2.set_xticks(ax1.get_xticks())
+        ax2.set_xbound(ax1.get_xbound())        
+        ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])            
+        ax2.set_xlabel(r'Resolution, $d (\AA)$')
+        
+        if legends is not None:   
+            print("Legends print")
         plt.legend(legends)
-    plt.tight_layout()
+    else:
+        for i,rmsd in enumerate(fsc_arrays_perturb.keys()):
+            sns.lineplot(x=fsc_arrays_perturb[rmsd][0],y=fsc_arrays_perturb[rmsd][1], linewidth=linewidth, color=colors_rainbow[i])
+            plt.xlabel(r" Spatial Frequency, $d^{-1}(\AA^{-1}$)")
+            plt.ylabel("FSC")
+    
+
+    #plt.tight_layout()
     fig.savefig(fsc_filename, dpi=600, bbox_inches="tight", transparency=True)
 
 def pretty_violinplots(list_of_series, xticks, ylabel,xlabel=None, figsize=(14,8),fontscale=3,font="Helvetica",linewidth=2, filename=None):
@@ -396,7 +421,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
                 ax1.legend(legends)
             ax1.set_xlabel(r'Spatial Frequency, $d^{-2} (\AA^{-2})$')
             ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
-            ax2.set_xlabel(r'$d (\AA)$')
+            ax2.set_xlabel(r'Resolution, $d (\AA)$')
         else:
             for profile in list_of_profiles:
                 if crop_freq is not None:
@@ -419,7 +444,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
     
             ax1.set_xlabel(r'Spatial Frequency, $d^{-1} [\AA^{-1}]$')
             ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
-            ax2.set_xlabel('$d [\AA]$')
+            ax2.set_xlabel(r'Resolution, $d (\AA)$')
 
     else:
         
@@ -461,7 +486,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
     
             ax1.set_xlabel(r'Spatial Frequency, $d^{-2} [\AA^{-2}]$')
             ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
-            ax2.set_xlabel(r'$d [\AA]$')
+            ax2.set_xlabel(r'Resolution, $d (\AA)$')
         else:
             if crop_freq is not None:
                 frequency, average_profile = crop_profile_between_frequency(freq, average_profile, crop_freq[0], crop_freq[1])
@@ -480,8 +505,8 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             
     
             ax1.set_xlabel(r'Spatial Frequency, $d^{-1} [\AA^{-1}]$')
-            ax1.set_ylabel(r'normalised $ \langle F \rangle $')
-            ax2.set_xlabel(r'$d [\AA]$')
+            ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
+            ax2.set_xlabel(r'Resolution, $d (\AA)$')
 
     if ylims is not None:
         plt.ylim(ylims)
