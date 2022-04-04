@@ -98,7 +98,7 @@ plot_multiple_fsc(map_pair_tuples, common_mask_path=atomic_model_mask_path, lege
 #%%
 from locscale.utils.plot_utils import pretty_lineplot_multiple_fsc_curves
 
-fsc_dip_blurred = os.path.join(output_folder, "fsc_curves_dip_blurred200_nolegend.svg")
+fsc_dip_blurred = os.path.join(output_folder, "fsc_curves_dip_blurred200_nolegend_with_top_x.svg")
 legends=["{} $\AA$".format(rmsd) for rmsd in rmsd_magnitudes]
 pretty_lineplot_multiple_fsc_curves(fsc_arrays_blurred, filename=fsc_dip_blurred, fontscale=3, linewidth=2, legends=None)
 
