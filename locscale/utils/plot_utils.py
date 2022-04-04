@@ -316,7 +316,7 @@ def pretty_lineplot_multiple_fsc_curves(fsc_arrays_perturb, two_xaxis=True, file
         
         if legends is not None:   
             print("Legends print")
-        plt.legend(legends)
+            plt.legend(legends)
     else:
         for i,rmsd in enumerate(fsc_arrays_perturb.keys()):
             sns.lineplot(x=fsc_arrays_perturb[rmsd][0],y=fsc_arrays_perturb[rmsd][1], linewidth=linewidth, color=colors_rainbow[i])
@@ -411,7 +411,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
                 if showPoints:
                     ax1.plot(frequency**2,np.log(profile),c=colors[i], linewidth=linewidth, marker=marker)
                 else:
-                    ax1.plot(frequency**2,np.log(profile),c=colors[i], linewidth=linewidth)
+                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=linewidth)
                 i += 1
             
             ax2.set_xticks(ax1.get_xticks())
@@ -429,7 +429,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
                 if showPoints:
                     ax1.plot(frequency,profile,c=colors[i], linewidth=linewidth, marker="o")
                 else:
-                    ax1.plot(frequency,profile,c=colors[i], linewidth=linewidth)
+                    ax1.plot(freq,profile,c=colors[i], linewidth=linewidth)
                 i += 1
             
             
