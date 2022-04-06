@@ -373,7 +373,7 @@ def pretty_boxplots(list_of_series, xticks, ylabel,xlabel=None, figsize=(14,8),f
         plt.savefig(filename, dpi=600, bbox_inches="tight", transparency=True)
     
     
-def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, discrete=True, legends=None,figsize=(14,8),fontsize=28, linewidth=1, marker="o", font="Helvetica",fontscale=2.5, showlegend=True, showPoints=False, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
+def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, squared_amplitudes=True, discrete=True, legends=None,figsize=(14,8),fontsize=28, linewidth=1, marker="o", font="Helvetica",fontscale=2.5, showlegend=True, showPoints=False, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
@@ -397,7 +397,14 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
 
     i = 0
     colors = cm.rainbow(np.linspace(0,1,len(list_of_profiles)))
-    
+    xlabel_bottom_log = r'Spatial Frequency, $d^{-2} (\AA^{-2})$'
+    xlabel_bottom_norm = r'Spatial Frequency, $d^{-1} (\AA^{-1})$'
+    xlabel_top = r'Resolution, $d (\AA)$'
+    if squared_amplitudes:
+        ylabel_log = r'$ln  \langle \mid F \mid ^{2} \rangle $ '
+    else:
+        ylabel_log = r'$ln  \langle \mid F \mid \rangle $ '
+    ylabel_norm = r'Normalised $ \langle \mid F \mid \rangle $'
     if discrete:
         fig = plt.figure()
         ax1 = fig.add_subplot(111)
@@ -408,10 +415,25 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     frequency, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                if showPoints:
-                    ax1.plot(frequency**2,np.log(profile),c=colors[i], linewidth=linewidth, marker=marker)
+                    if showPoints:
+                        if squared_amplitudes:
+                            ax1.plot(frequency**2,np.log(profile**2),c=colors[i], linewidth=linewidth, marker=marker)
+                        else:
+                            ax1.plot(frequency**2,np.log(profile),c=colors[i], linewidth=linewidth, marker=marker)
+                    else:
+                        if squared_amplitudes:
+                            ax1.plot(frequency**2,np.log(profile**2),c=colors[i], linewidth=linewidth)
+                        else:
+                            ax1.plot(frequency**2,np.log(profile),c=colors[i], linewidth=linewidth)
+                    
                 else:
-                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=linewidth)
+                    print("crop_freq is None")
+                    print("Squared amp",squared_amplitudes)
+                    if squared_amplitudes:
+                        ax1.plot(freq**2,np.log(profile**2),c=colors[i], linewidth=linewidth)
+                    else:
+                        print("this line here")
+                        ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=linewidth)
                 i += 1
             
             ax2.set_xticks(ax1.get_xticks())
@@ -419,15 +441,17 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
             if showlegend:
                 ax1.legend(legends)
-            ax1.set_xlabel(r'Spatial Frequency, $d^{-2} (\AA^{-2})$')
-            ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
-            ax2.set_xlabel(r'Resolution, $d (\AA)$')
+            ax1.set_xlabel(xlabel_bottom_log)
+            ax1.set_ylabel(ylabel_log)
+            ax2.set_xlabel(xlabel_top)
         else:
             for profile in list_of_profiles:
                 if crop_freq is not None:
                     frequency, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                if showPoints:
-                    ax1.plot(frequency,profile,c=colors[i], linewidth=linewidth, marker="o")
+                    if showPoints:
+                        ax1.plot(frequency,profile,c=colors[i], linewidth=linewidth, marker=marker)
+                    else:
+                        ax1.plot(frequency,profile,c=colors[i], linewidth=linewidth)
                 else:
                     ax1.plot(freq,profile,c=colors[i], linewidth=linewidth)
                 i += 1
@@ -442,9 +466,9 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'Spatial Frequency, $d^{-1} [\AA^{-1}]$')
-            ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
-            ax2.set_xlabel(r'Resolution, $d (\AA)$')
+            ax1.set_xlabel(xlabel_bottom_norm)
+            ax1.set_ylabel(ylabel_norm)
+            ax2.set_xlabel(xlabel_top)
 
     else:
         
@@ -484,9 +508,9 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'Spatial Frequency, $d^{-2} [\AA^{-2}]$')
-            ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
-            ax2.set_xlabel(r'Resolution, $d (\AA)$')
+            ax1.set_xlabel(xlabel_bottom_log)
+            ax1.set_ylabel(ylabel_log)
+            ax2.set_xlabel(xlabel_top)
         else:
             if crop_freq is not None:
                 frequency, average_profile = crop_profile_between_frequency(freq, average_profile, crop_freq[0], crop_freq[1])
@@ -504,9 +528,9 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, disc
             ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
             
     
-            ax1.set_xlabel(r'Spatial Frequency, $d^{-1} [\AA^{-1}]$')
-            ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
-            ax2.set_xlabel(r'Resolution, $d (\AA)$')
+            ax1.set_xlabel(xlabel_bottom_norm)
+            ax1.set_ylabel(ylabel_norm)
+            ax2.set_xlabel(xlabel_top)
 
     if ylims is not None:
         plt.ylim(ylims)
