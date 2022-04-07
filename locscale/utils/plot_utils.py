@@ -37,7 +37,7 @@ def crop_data_to_map(input_data_map, mask, mask_threshold, skip_zeros=True):
     
     return nonzero_array
 
-def plot_correlations(x_array, y_array, scatter=False, figsize=(14,8),font="Helvetica",fontscale=4,hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
+def plot_correlations(x_array, y_array, scatter=False, figsize=(14,8),font="Helvetica",fontscale=3,hue=None, x_label=None, y_label=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3):
     
     import matplotlib as mpl
     import seaborn as sns
@@ -70,7 +70,7 @@ def plot_correlations(x_array, y_array, scatter=False, figsize=(14,8),font="Helv
             ax.text(.05, .8, 'R$^2$={:.2f}'.format(r),
                     transform=ax.transAxes)
         g = sns.lmplot(data=data, x=x_label, y=y_label, scatter=scatter)
-        #g.map_dataframe(annotate)
+        g.map_dataframe(annotate)
         plt.tight_layout()
         #plt.show()
     
