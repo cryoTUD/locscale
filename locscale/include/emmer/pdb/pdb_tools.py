@@ -329,6 +329,25 @@ def get_atomic_positions_between_residues(gemmi_structure, chain_name, res_range
     
     return pdb_positions
 
+def find_number_of_neighbors(input_pdb, atomic_position, window_size_A):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    import gemmi
+    
+    
+    gemmi_structure = detect_pdb_input(input_pdb)
+    
+    # Neighbor Search initialize
+    
+    ns = gemmi.NeighborSearch(gemmi_structure[0], gemmi_structure.cell, window_size_A).populate()
+    
+    gemmi_position = gemmi.Position(atomic_position[0], atomic_position[1], atomic_position[2])
+    
+    neighbors = ns.find_atoms(gemmi_position, '\0', radius=window_size_A)
+    atoms = [gemmi_structure[0][x.chain_idx][x.residue_idx][x.atom_idx] for x in neighbors]
+    number_of_neighbors = len(atoms)
+    
+    
+    return number_of_neighbors
 
 def get_atomic_bfactor_window(input_pdb, atomic_position, window_size_A, min_dist=0.1):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
