@@ -94,8 +94,8 @@ def plot_correlations(x_array, y_array, scatter=False, figsize=(14,8),font="Helv
         plt.savefig(output_filename, dpi=600, bbox_inches="tight",transparency=True)
     else:
         return fig
-        
-def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, y_label=None, ylims=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
+
+def plot_correlations_multiple_single_plot(list_of_xy_tuple, scatter=False, hue=None, figsize=(14,8),fontscale=3, x_label=None, y_label=None, ylims=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
     import seaborn as sns
     import os
     import matplotlib.pyplot as plt
@@ -104,10 +104,86 @@ def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, x_label=None, 
     import matplotlib as mpl
     mpl.rcParams['pdf.fonttype'] = 42
     
-    fig = plt.figure(figsize=(18,12))
-    sns.set_theme(context="paper", font="Helvetica", font_scale=1.5)
+    sns.set(rc={'figure.figsize':figsize})
+    sns.set_theme(context="paper", font="Helvetica", font_scale=fontscale)
     sns.set_style("white")
-    kwargs = dict(linestyle="--", marker="o", linewidth=3, markersize=12, alpha=alpha)
+    
+    fig, ax = plt.subplots(1,len(list_of_xy_tuple), sharex=True, sharey=True)   
+
+    if x_label is None:
+        x_label = "x"
+    
+    if y_label is None:
+        y_label = "y"
+    
+
+    for i,xy_tuple in enumerate(list_of_xy_tuple):
+        data_dictionary={}
+        all_stacks = []
+        for xy in xy_tuple:
+            x_array, y_array, category_label = xy
+            category_array = np.repeat(category_label, len(x_array))
+            stack = np.vstack((x_array,y_array,category_array)).T
+            all_stacks.append(stack)
+        
+        stack_arrays = np.concatenate(tuple([x for x in all_stacks]))
+        
+        data = pd.DataFrame(data=stack_arrays, columns=[x_label,y_label, "Category"])
+        data[x_label] = data[x_label].astype(np.float32)
+        data[y_label] = data[y_label].astype(np.float32)
+        data["Category"] = data["Category"].astype(str)
+    
+        
+   
+        g = sns.scatterplot(data=data, x=x_label, y=y_label,legend=False,ax=ax[i], s=2)
+        g.set(xlabel=None)
+        g.set(ylabel=None)
+        g.set(title=category_label)
+        plt.legend(loc="lower right")   
+    
+        if i==0:
+            continue
+            #ax[i].get_yaxis().set_visible(False)
+            #ax[i].get_xaxis().set_visible(False)
+        else:
+            continue
+            #ax[i].get_yaxis().set_visible(False)
+            #ax[i].get_xaxis().set_visible(False)
+        
+    
+    if ylims is not None:
+        plt.ylim(ylims)
+    
+    fig.add_subplot(1, 1, 1, frame_on=False)
+    plt.tick_params(labelcolor="none", bottom=False, left=False)
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    
+    plt.tight_layout()
+    if filename is not None:
+        if output_folder is None:
+            figure_output_folder = os.getcwd()
+        else:
+            figure_output_folder = output_folder
+    
+    
+        output_filename = os.path.join(figure_output_folder, filename)
+        plt.savefig(output_filename, dpi=600,bbox_inches='tight')
+    else:
+        return fig        
+    
+def plot_correlations_multiple(xy_tuple, scatter=False, hue=None, figsize=(14,8),fontscale=3, x_label=None, y_label=None, ylims=None, title_text=None, output_folder=None, filename=None, find_correlation=True, alpha=0.3, ci=95):
+    import seaborn as sns
+    import os
+    import matplotlib.pyplot as plt
+    from scipy import stats
+    import pandas as pd
+    import matplotlib as mpl
+    mpl.rcParams['pdf.fonttype'] = 42
+    
+    sns.set(rc={'figure.figsize':figsize})
+    sns.set_theme(context="paper", font="Helvetica", font_scale=fontscale)
+    sns.set_style("white")
     
 
     if x_label is None:
@@ -271,7 +347,7 @@ def pretty_lineplot_XY(xdata, ydata, xlabel, ylabel, filename=None,figsize=(14,8
 
     sns.lineplot(x=xdata,y=ydata,linewidth=linewidth,marker=marker,markersize=markersize)
     plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.ylabel(ylabel, rotation=90, ha="center")
 
     if legends is not None:        
         plt.legend(legends)
@@ -373,7 +449,7 @@ def pretty_boxplots(list_of_series, xticks, ylabel,xlabel=None, figsize=(14,8),f
         plt.savefig(filename, dpi=600, bbox_inches="tight", transparency=True)
     
     
-def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, squared_amplitudes=True, discrete=True, legends=None,figsize=(14,8),fontsize=28, linewidth=1, marker="o", font="Helvetica",fontscale=2.5, showlegend=True, showPoints=False, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
+def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, squared_amplitudes=True, discrete=True, legends=None,figsize=(14,8), fontsize=14,linewidth=1, marker="o", font="Helvetica",fontscale=1, showlegend=True, showPoints=False, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
@@ -540,6 +616,6 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native,normalise=True, squa
         plt.xlim(xlims)
     
     
-    plt.tight_layout()
+    #plt.tight_layout()
     return fig
     
