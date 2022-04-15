@@ -340,7 +340,7 @@ def pretty_lineplot_XY(xdata, ydata, xlabel, ylabel, filename=None,figsize=(14,8
     import matplotlib as mpl
     ## Function not generic
     mpl.rcParams['pdf.fonttype'] = 42
-    
+    plt.figure(1)
     sns.set(rc={'figure.figsize':figsize})
     sns.set_theme(context="paper", font=font, font_scale=fontscale)
     sns.set_style("white")
