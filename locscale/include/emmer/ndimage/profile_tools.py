@@ -42,230 +42,7 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
         
     freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
     return freq
-
-def plot_radial_profile(freq,list_of_profiles,legends=None, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
-    import matplotlib.pyplot as plt
-    from matplotlib.pyplot import cm
-    from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
-    
-
-    import matplotlib as mpl
-    mpl.rcParams['pdf.fonttype'] = 42
-    '''
-    Given a list of amplitudes, plot them against a common frequency axis.
-
-    Parameters
-    ----------
-    freq : np.ndarray
-        Common frequency axis. Same size as the profiles in list of profiles
-    list_of_profiles : list 
-        List of amplitude profiles all having same size.
-        list_of_profiles = [profile_1(type=np.ndarray), profile_2(type=np.ndarray), ...]
-    colors : list, optional
-        Custom color list. Max 6 entries. The default is ['r','g','b','k','y','m'].
-    legends : lsit of string, optional
-        Attach a legend corresponding to each profile in the list of profile. 
-    font : int, optional
-        fontsize for the plots. The default is 12.
-    showlegend : bool, optional
-        If you need to hide the legends, set this parameter to False
-
-    Returns
-    -------
-    None.
-
-    '''
-    
-    plt.rc('font',size=font)
-        
-    i = 0
-    colors = cm.rainbow(np.linspace(0,1,len(list_of_profiles)))
-    
-   # if showPoints:
-   #     colors = [x+".-" for x in colors]
-   # else:
-   #     colors = [x+"-" for x in colors]
-    if legends is None:
-        legends = ["profile_"+str(i) for i in range(len(list_of_profiles))]
-    if len(list_of_profiles) <= 50:
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.grid(False)
-        ax2 = ax1.twiny()
-        #plt.xticks(fontsize=font)
-        #plt.yticks(fontsize=font)
-        if logScale:
-            for profile in list_of_profiles:
-                if crop_freq is not None:
-                    freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                if showPoints:
-                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1, marker="o")
-                else:
-                    ax1.plot(freq**2,np.log(profile),c=colors[i], linewidth=1)
-                i += 1
-            
-            ax2.set_xticks(ax1.get_xticks())
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-            if showlegend:
-                ax1.legend(legends)
-            ax1.set_xlabel(r'Spatial Frequency, $d^{-2} (\AA^{-2})$')
-            ax1.set_ylabel(r'$ln  \langle \mid F \mid \rangle $ ')
-            ax2.set_xlabel(r'$d (\AA)$')
-        else:
-            for profile in list_of_profiles:
-                if crop_freq is not None:
-                    freq, profile = crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])
-                if showPoints:
-                    ax1.plot(freq,profile,c=colors[i], linewidth=1, marker="o")
-                else:
-                    ax1.plot(freq,profile,c=colors[i], linewidth=1)
-                i += 1
-            
-            
-            if showlegend:
-                ax1.legend(legends)
-        
-                
-            ax2.set_xticks(ax1.get_xticks())
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
-            
-    
-            ax1.set_xlabel(r'Spatial Frequency, $1/d [\AA^{-1}]$')
-            ax1.set_ylabel(r'Normalised $ \langle F \rangle $')
-            ax2.set_xlabel('$d [\AA]$')
-            
-        
-        
-    elif variation is None:
-        
-        profile_list = np.array(list_of_profiles)
-        average_profile = np.einsum("ij->j", profile_list) / len(profile_list)
-        
-        variation = []
-        for col_index in range(profile_list.shape[1]):
-            col_extract = profile_list[:,col_index]
-            variation.append(col_extract.std())
-
-        variation = np.array(variation)
-        
-        y_max = average_profile + variation
-        y_min = average_profile - variation
-
-        fig = plt.figure()
-        
-        ax1 = fig.add_subplot(111)
-        ax1.grid(False)
-        ax2 = ax1.twiny()
-        
-        if logScale:
-            if crop_freq is not None:
-                freq, average_profile = crop_profile_between_frequency(freq, average_profile, crop_freq[0], crop_freq[1])
-                freq, y_max = crop_profile_between_frequency(freq, y_max, crop_freq[0], crop_freq[1])
-                freq, y_min = crop_profile_between_frequency(freq, y_min, crop_freq[0], crop_freq[1])
-            
-            ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
-            ax1.fill_between(freq**2,np.log(y_max), np.log(y_min), color="grey", alpha=0.5)
-            if showlegend:
-                ax1.legend(["N={}".format(len(profile_list))])
-        
-            
-            ax2.set_xticks(ax1.get_xticks())
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-            
-    
-            ax1.set_xlabel(r'Spatial Frequency $1/d^2 [\AA^{-2}]$',fontsize=font)
-            ax1.set_ylabel(r'$ln\mid F \mid $',fontsize=font)
-            ax2.set_xlabel(r'$d [\AA]$',fontsize=font)
-        else:
-            ax1.plot(freq, average_profile, 'k',alpha=1)
-            ax1.fill_between(freq,y_max, y_min,color="grey", alpha=0.5)
-            
-            if showlegend:
-                ax1.legend(["N={}".format(len(profile_list))])
-        
-                
-            ax2.set_xticks(ax1.get_xticks())
-            ax2.set_xbound(ax1.get_xbound())
-            ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
-            
-    
-            ax1.set_xlabel(r'Spatial Frequency $1/d [\AA^{-1}]$',fontsize=font)
-            ax1.set_ylabel(r'normalised $ \langle F \rangle $',fontsize=font)
-            ax2.set_xlabel(r'$d [\AA]$',fontsize=font)
-        
-    else:
-        if variation is None:
-            raise UserWarning("Include a variation variable to plot radial profile with variance")
-        
-        if len(list_of_profiles) > 1:
-            raise UserWarning("Multiple profiles given as average profile..")
-            
-        average_profile = list_of_profiles[0]
-        
-        y_max = average_profile + variation
-        y_min = average_profile - variation
-
-        fig = plt.figure()
-        
-        ax1 = fig.add_subplot(111)
-        ax1.grid(True)
-        ax2 = ax1.twiny()
-        
-        ax1.plot(freq**2, np.log(average_profile), 'k',alpha=1)
-        ax1.fill_between(freq**2,np.log(y_max), np.log(y_min),color="grey", alpha=0.5)
-        ax1.legend(["N={}".format(len(profile_list))])
-        
-        ax1.tick_params(axis='both',which='major')
-        ax2.tick_params(axis='both',which='major')
-        ax2.set_xticks(ax1.get_xticks())
-        ax2.set_xbound(ax1.get_xbound())
-        ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
-        
-
-        ax1.set_xlabel(r'$1/d^2  [\AA^{-2}]$',fontsize=font)
-        ax1.set_ylabel('$ln\mid F \mid $',fontsize=font)
-        ax2.set_xlabel('$d [\AA]$',fontsize=font)
-
-    
-    if ylims is not None:
-        plt.ylim(ylims)
-    if yticks is not None:
-        plt.yticks(yticks)
-    if xlims is not None:
-        plt.xlim(xlims)
-    
-    
-    plt.tight_layout()
-    return fig
-def plot_emmap_section(emmap, title="EMMAP Sections"):
-    import matplotlib.pyplot as plt
-    
-    fig = plt.figure()
-    plt.title(title)
-    plt.axis("off")
-    zn, yn, xn = emmap.shape
-    
-    ax1 = fig.add_subplot(131)
-    plt.title("XY plane")
-    plt.imshow(emmap[zn//2,:,:])
-    
-    ax2 = fig.add_subplot(132)
-    plt.title("YZ plane")
-    plt.imshow(emmap[:,:,xn//2])
-    ax2.yaxis.set_major_locator(plt.NullLocator())
-
-    
-    ax3 = fig.add_subplot(133)
-    plt.title("XZ plane")
-    plt.imshow(emmap[:,yn//2,:])
-    ax3.yaxis.set_major_locator(plt.NullLocator())
-
-    
-    return fig
-    
+   
     
 def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end, magnify=1):
     '''
@@ -293,11 +70,8 @@ def add_deviations_to_reference_profile(freq, reference_profile, scaled_theoreti
     
     deviations, exponential_fit = calculate_required_deviation(freq, scaled_theoretical_profile, wilson_cutoff, nyquist_cutoff, deviation_freq_start, deviation_freq_end)
     if magnify > 1:
-        #f = magnification_function(magnify)
-        #deviated_reference_profile = reference_profile * f(deviations)
         deviated_reference_profile = reference_profile + magnify * deviations
     else:
-        #deviated_reference_profile = np.log(reference_profile) * deviations
         deviated_reference_profile = reference_profile + deviations
     
     return deviated_reference_profile, exponential_fit
@@ -442,62 +216,7 @@ def offset_radial_profile(vol, offset, radii):
             ps[idx] += offset
 
     return np.fft.irfftn(ps, s=vol.shape)
-    
-def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False, ylims=None, xlims=None, crop_freq=None):
-    '''
-    Given a list of mrc paths, this function will extract volume data and plots a radial profile for each map. The legend by default will be the filename of the MRC map. Max six maps will be used as inputs (limit from plot_radial_profiles function)
-
-    Parameters
-    ----------
-    mrc_paths : list of strings
-        ["path/to/map1.mrc", "path/to/map2.mrc",..]
-    keys : list of strings, optional
-        ["map A", "map B",..]. The default is None.
-
-    Returns
-    -------
-    radial_profiles : dict 
-        Dictionary of radial profiles for each map.
-    emmaps : dict
-        Dictionary of emmap volumes for each map.
-
-    '''
-    import mrcfile
-    
-    if keys is None:
-        keys = [path.split('/')[-1] for path in mrc_paths]
-
-    mrcs = []
-    for mrc in mrc_paths:
-        mrcs.append(mrcfile.open(mrc))
-    
-    k = 0
-    emmaps = {}
-    radial_profiles = {}
-    freq={}
-    
-    for mrc in mrcs:
-        emmaps[keys[k]] = mrc.data
-        k += 1
-    for key in keys:
-        radial_profiles[key] = compute_radial_profile(emmaps[key])
-        radial_profiles[key] = radial_profiles[key]/radial_profiles[key].max()
-        
-    k = 0
-    for key in keys:
-        shapes = radial_profiles[key].shape[0]
-        apix = mrcs[k].voxel_size.x
-        freq[key] = np.linspace(1./(float(apix)*shapes), 1./(float(apix)*2), shapes,endpoint=True)
-        k += 1 
-    
-    
-    fig=plot_radial_profile(freq[keys[0]], list(radial_profiles.values()),legends=keys, logScale=logScale, showPoints=False, ylims=ylims, crop_freq=crop_freq,  xlims=xlims)
-    
-    for key in keys:
-        radial_profiles[key] = tuple([freq,radial_profiles[key]])
-        
-    return fig
-            
+               
 
 def measure_debye(freqs,amplitudes):
     '''
@@ -526,39 +245,77 @@ def measure_debye(freqs,amplitudes):
     from scipy import signal
     from emmer.ndimage.filter import butter_lowpass_filter
     
-    # First filter the amplitude profile using Butterworth filter at nyq/2 and order =1
-    n = len(amplitudes)
-    freq_step = (freqs[-1]-freqs[0])/n
+    ## TBC
+def amplitude_from_resolution(freq, amplitudes, probe_resolution, logScale = True):
+    from scipy.interpolate import interp1d
     
-    nyq_freq = 1/(freq_step * 2)
+    if probe_resolution < 0:
+        raise UserWarning("Enter probe resolution > 0A")
+    if logScale:
+        xdata = freq**2
+        ydata = np.log(amplitudes)
+        f = interp1d(xdata, ydata)
+        probe_freq = 1/probe_resolution
+        x_probe = probe_freq**2
+        y_probe = f(x_probe)
+        
+        amplitude_probe = np.exp(y_probe)
+        
+        return amplitude_probe
+        
+    else:
+        xdata = freq
+        ydata = amplitudes
+        f = interp1d(xdata, ydata)
+        probe_freq = 1/probe_resolution
+        x_probe = probe_freq
+        y_probe = f(x_probe)
+        amplitude_probe = y_probe
+        
+        return amplitude_probe
+        
+def resolution_from_amplitude(freq, amplitudes, probe_amplitude, logScale = True, suppress_warning=False):
+    from scipy.interpolate import interp1d
     
-    filtered_amplitudes = butter_lowpass_filter(amplitudes, nyq_freq/2, nyq_freq,order=1)
+    if probe_amplitude < 0:
+        raise UserWarning("Enter probe amplitude > 0A")
+        
+    if logScale:
+        xdata = np.log(amplitudes)
+        ydata = freq**2
+        g = interp1d(xdata, ydata)
+        x_probe = np.log(probe_amplitude)
+        if x_probe < xdata.min():
+            return 1/freq[-1]
+        if x_probe > xdata.max():
+            return 1/freq[0]
+        y_probe = g(x_probe)
+        
+        freq_probe = np.sqrt(y_probe)
+        if freq_probe < freq[-1]:
+            probe_resolution = 1/freq_probe
+            return probe_resolution
+        else:
+            if not suppress_warning:
+                print("Warning: estimated resolution outside interpolation range. Returning Nyquist {:.2f}".format(1/freq_probe))
+            return 1/freq[-1]
+    else:
+        xdata = amplitudes
+        ydata = freq
+        g = interp1d(xdata, ydata)
+        
+        x_probe = probe_amplitude
+        y_probe = g(x_probe)
+        freq_probe = y_probe
+        if freq_probe < freq[-1]:
+            probe_resolution = 1/freq_probe
+            return probe_resolution  
+        else:
+            if not suppress_warning:
+                print("Warning: estimated resolution outside interpolation range. Returning Nyquist")
+            return 1/freq[-1]
+        
     
-    debye_peaks = signal.find_peaks(filtered_amplitudes)[0]
-    
-    #debye_freqs = debye_peaks * freq_step
-    
-    
-    ## Find the amplitude of the spectrum at debye frequency
-    
-    # First get a best match exponential fit
-    
-    def exponential(x,a,b):
-        return a*np.exp(x*b)
-    
-    optimised_parameters,covariance = curve_fit(exponential,freqs,filtered_amplitudes)
-    fit_a, fit_b = optimised_parameters
-    #print(optimised_parameters)
-    exponential_fit_amplitudes = exponential(freqs, fit_a, fit_b)
-    debye_effect = {}
-    for peak_index in debye_peaks:
-        if peak_index*freq_step < 0.4:
-            exponential_amplitude_at_debye_freq = exponential_fit_amplitudes[peak_index]
-            filtered_amplitude_at_debye_freq = filtered_amplitudes[peak_index]
-            debye_effect[peak_index] = filtered_amplitude_at_debye_freq - exponential_amplitude_at_debye_freq
-    
-    return debye_effect,freq_step,filtered_amplitudes,exponential_fit_amplitudes
-
 def estimate_bfactor_standard(freq, amplitude, wilson_cutoff, fsc_cutoff, return_amplitude=False, return_fit_quality=False, standard_notation=False):
     '''
     From a given radial profile, estimate the b_factor from the high frequency cutoff
@@ -720,61 +477,7 @@ def scale_profiles(reference_profile_tuple, scale_profile_tuple, wilson_cutoff, 
     else:
         return (freq, amplitude_scaled)
     
-def get_debye_statistics(radial_profiles_using_pdb): 
-    import sys
-    
-    helix_freqs = []
-    sheet_freqs = []
-    missed = 0
-    min_debye_effect_mag = 0.005
-    max_debye_effect_mag = 0.01
-    
-    min_debye_freq = 0.1
-    max_debye_freq = 0.3
-    helix_profile_info = {}
-    sheet_profile_info = {}
-       
-    for pdb in radial_profiles_using_pdb.keys():
-        
-        try:
-            #apix = float(radial_profiles_using_pdb[pdb]['apix'])
-            #factor = 0.25/apix
-            
-            #freq = np.array(radial_profiles_using_pdb[pdb]['freq'])
-            #print(freq[0],freq[-1],len(freq))
-            
-            helix_amplitude=np.array(radial_profiles_using_pdb[pdb]['helix']) / max(radial_profiles_using_pdb[pdb]['helix'])
-            sheet_amplitude=np.array(radial_profiles_using_pdb[pdb]['sheet']) / max(radial_profiles_using_pdb[pdb]['sheet'])
-            
-            ## This for new data format in radial_profiles_using_pdb starting from March 2021 
-            apix_array = radial_profiles_using_pdb[pdb]['apix'][0]
-            #print(apix_array.x)
-            if apix_array.x == apix_array.y and apix_array.x == apix_array.z:
-                #print("Same")
-                apix = apix_array.x
-            else:
-                print("different for "+pdb)
-            n = len(helix_amplitude)
-            freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
-            
-            
-            debye_effect_helix,freq_step_helix,_,_ = measure_debye(freq,helix_amplitude)
-            debye_effect_sheet,freq_step_sheet,_,_ = measure_debye(freq,sheet_amplitude)
-            
-            for possible_debye_freq in debye_effect_helix.keys():
-                if min_debye_freq <= possible_debye_freq*freq_step_helix <= max_debye_freq and min_debye_effect_mag <= debye_effect_helix[possible_debye_freq] <= max_debye_effect_mag and helix_amplitude[possible_debye_freq] < 0.02:
-                    helix_freqs.append(possible_debye_freq*freq_step_helix)
-                    helix_profile_info[pdb] = tuple([[freq,radial_profiles_using_pdb[pdb]['helix']],debye_effect_helix])
-            for possible_debye_freq in debye_effect_sheet.keys():
-                if min_debye_freq <= possible_debye_freq*freq_step_sheet <= max_debye_freq and min_debye_effect_mag <= debye_effect_sheet[possible_debye_freq] <= max_debye_effect_mag and sheet_amplitude[possible_debye_freq] < 0.02:
-                    sheet_freqs.append(possible_debye_freq*freq_step_sheet)        
-                    sheet_profile_info[pdb] = tuple([[freq,radial_profiles_using_pdb[pdb]['sheet']],debye_effect_sheet])
-        except:
-            missed += 1
-            print(pdb,sys.exc_info())
-            pass
-            
-    return [helix_freqs,sheet_freqs,helix_profile_info,sheet_profile_info,missed]
+
         
 def resample_1d(x_old,y_old,num,xlims=None):
     '''
@@ -881,46 +584,7 @@ def number_of_segments(fsc_resolution):
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
         return 1
 
-def plot_pwlf_fit(emmap_path, mask_path, fsc_resolution):
-    '''
-    Function to plot PWLF fit for a given input map
 
-    Parameters
-    ----------
-    emmap_path : TYPE
-        DESCRIPTION.
-    mask_path : TYPE
-        DESCRIPTION.
-    fsc_resolution : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
-    '''    
-    import mrcfile
-    import os
-    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, plot_radial_profile
-    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
-    
-    emmap_name = os.path.basename(emmap_path)
-    
-    emmap = mrcfile.open(emmap_path).data
-    apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
-    rp_emmap = compute_radial_profile(emmap)
-    
-    freq = frequency_array(rp_emmap, apix=apix)
-    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
-    
-    bfactor, amplitude_zero_freq, (piecewise_linfit, z, slopes) = estimate_bfactor_through_pwlf(freq, rp_emmap, wilson_cutoff, fsc_cutoff=fsc_resolution, return_all=True)
-    
-    rp_fit = np.exp(piecewise_linfit.predict(freq**2))  ## Fit was trained using log scale data
-    
-    fig = plot_radial_profile(freq, [rp_emmap, rp_fit], legends=[emmap_name, "PWLF prediction"])
-    print("Breakpoints at: {}".format((1/np.sqrt(z)).round(2)))
-    
-    return fig
     
 
 def crop_profile_between_frequency(freq, amplitude, start_cutoff, end_cutoff):
