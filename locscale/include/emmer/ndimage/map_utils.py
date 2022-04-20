@@ -1,5 +1,15 @@
 import numpy as np
 
+def load_map(map_path, return_apix = True):
+    import mrcfile
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size
+    emmap = mrcfile.open(map_path).data
+    apix = average_voxel_size(mrcfile.open(map_path).voxel_size)
+    
+    if return_apix:
+        return emmap, apix
+    else:
+        return emmap
 def parse_input(input_map, allow_any_dims=True):
     '''
     Function to detect type of input and return a emmap numpy array
