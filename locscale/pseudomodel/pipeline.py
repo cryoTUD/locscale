@@ -49,7 +49,7 @@ def get_modmap(modmap_args):
     if verbose:
         print("Model map arguments: \n")
         print(modmap_args)
-    from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac,run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
+    from locscale.pseudomodel.pseudomodel_headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     import mrcfile

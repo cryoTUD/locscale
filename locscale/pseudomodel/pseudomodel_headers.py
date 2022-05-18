@@ -12,21 +12,14 @@ import numpy as np
 def check_dependencies():
     import os
     dependency = {}
-    path_to_ccpem = os.environ['CCPEM']
-    path_to_ccp4 = os.environ['CCP4']
-    path_to_locscale = os.environ['LOCSCALE_PATH']
-    dependency['ccpem'] = path_to_ccpem
-    dependency['ccp4'] = path_to_ccp4
-    dependency['locscale'] = path_to_locscale
-    
+    try:
+        import locscale
+        dependency['locscale'] = os.path.dirname(locscale.__path__[0])
 
-    if path_to_ccp4 is None or path_to_ccpem is None or path_to_locscale is None:
-        print("Required dependencies not found! ")
-        print("CCPEM Location at: ",path_to_ccpem)
-        print("CCP4 Location at: ",path_to_ccp4)
-        print("LocScale Location at: ",path_to_locscale)
             
-    return dependency
+        return dependency
+    except ImportError:
+        raise ImportError("Dependencies not met")
     
 def number_of_segments(fsc_resolution):
     if fsc_resolution < 3:
@@ -112,54 +105,33 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
                  "Window size: "+str(window_size)+"\n"
                  "Filter cutoff: "+str(filter_cutoff))
     
-                    
-    try:
-        ## First attempt to use Emmer package to compute FDR map
-        from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
-        emmap = mrcfile.open(emmap_path).data
-        voxel_size_record = mrcfile.open(emmap_path).voxel_size
-        apix = average_voxel_size(voxel_size_record)
-        fdr = fdr
-        fdr_mask, fdr_threshold = compute_FDR_confidenceMap_easy(
-            emmap, apix=apix, fdr=fdr, window_size=window_size, 
-            lowPassFilter_resolution=filter_cutoff, remove_temp_files=False)
         
-        print("FDR threshold found to be: \t", fdr_threshold)
-        emmap_path_without_ext = emmap_path[:-4]
-        mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
-        
-        save_as_mrc(fdr_mask, output_filename=mask_path, 
-                    apix=voxel_size_record.tolist(), origin=0)
-        
-        if os.path.exists(mask_path):
-            if verbose:
-                print("FDR Procedure completed. \n"+
-                      "Mask path: "+mask_path+"\n")
-            
-            return mask_path
-        else:
-            print("FDR process failed. Returning none")
-            return None
-        
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+    emmap = mrcfile.open(emmap_path).data
+    voxel_size_record = mrcfile.open(emmap_path).voxel_size
+    apix = average_voxel_size(voxel_size_record)
+    fdr = fdr
+    fdr_mask, fdr_threshold = compute_FDR_confidenceMap_easy(
+        emmap, apix=apix, fdr=fdr, window_size=window_size, 
+        lowPassFilter_resolution=filter_cutoff, remove_temp_files=False)
     
-    except:    
-        print(sys.exc_info())
-        print("Could not use the FDRUtil python package. Reverting to ccpem version of FDRUtil")
-        path_to_ccpem = check_dependencies()['ccpem']
-        path_to_FDR_script = os.path.join(path_to_ccpem,"lib","py2","FDRcontrol.pyc")
-        fdr_command_line = "ccpem-python "+path_to_FDR_script+" --em_map "+emmap_path+" -method BY --testProc rightSided --window_size "+str(window_size)
-                   
-        run(fdr_command_line.split())
-        emmap_name = emmap_path[:-4]
-        mask_path = emmap_name+"_confidenceMap.mrc"
-        if os.path.exists(mask_path):
-            if verbose:
-                print("FDR Procedure successful! \n"+
-                      "Mask Path: "+mask_path)
-            return mask_path 
-        else:
-            print("FDR procedure unsuccessful. Returning None")
-            return None
+    print("FDR threshold found to be: \t", fdr_threshold)
+    emmap_path_without_ext = emmap_path[:-4]
+    mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
+    
+    save_as_mrc(fdr_mask, output_filename=mask_path, 
+                apix=voxel_size_record.tolist(), origin=0)
+    
+    if os.path.exists(mask_path):
+        if verbose:
+            print("FDR Procedure completed. \n"+
+                    "Mask path: "+mask_path+"\n")
+        
+        return mask_path
+    else:
+        print("FDR process failed. Returning none")
+        return None
+
             
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             g=None,friction=None,scale_map=None,scale_lj=None,total_iterations=100,verbose=True):
@@ -303,10 +275,7 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
     import mrcfile
     
     print("Running Servalcat... \n")
-    path_to_locscale = check_dependencies()['locscale']
-    path_to_ccpem = check_dependencies()['ccpem']
-    path_to_ccp4 = check_dependencies()['ccp4']
-    
+   
     model_name = os.path.basename(model_path)
     servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
     set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
@@ -332,48 +301,7 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
         print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
-def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
-    import os
-    from subprocess import run, PIPE
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
-    import mrcfile
-    
-    path_to_locscale = check_dependencies()['locscale']
-    path_to_ccpem = check_dependencies()['ccpem']
-    path_to_ccp4 = check_dependencies()['ccp4']
-    
-    if only_bfactor_refinement:
-        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
-    else:
-        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac_restrained.sh")
-        
-    
-    model_name = model_path[:-4]
-    emmap_mrc = mrcfile.open(map_path)
-    map_dims = emmap_mrc.header.cella.tolist()
-    
-    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
-    
-    
-    if verbose:
-        print("Running REFMAC to refine the pseudo-atomic model using \n"+
-              "Path to run_refmac: "+path_to_run_refmac+"\n"+
-              "Command line: \n"+refmac_command_line)
-        
-    refmac_output = run(refmac_command_line.split())
-    refined_model_path = model_name+"_refmac_refined.pdb"
-    bfactors = get_bfactors(in_model_path=refined_model_path)
-    
-    if os.path.exists(refined_model_path):
-        if verbose: 
-            print("The refined PDB model is: "+refined_model_path+"\n\n")    
-            print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
-            
-        return refined_model_path
-    else:
-        print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
-        return None
-    
+
 def normalise_intensity_levels(from_emmap, to_levels=[0,1]):
     normalise_between_zero_one = (from_emmap - from_emmap.min()) / (from_emmap.max() - from_emmap.min())
     to_levels = np.array(to_levels)
@@ -533,7 +461,7 @@ def run_mapmask(emmap_path, return_same_path=False):
 
     '''
     import os
-    from subprocess import run
+    from subprocess import run, PIPE
     path_to_locscale = check_dependencies()['locscale']
     
     mapmask_bash_script = os.path.join(path_to_locscale , "locscale","utils","mapmask.sh")
@@ -542,7 +470,53 @@ def run_mapmask(emmap_path, return_same_path=False):
         xyz_output_map = emmap_path
     else:
         xyz_output_map = "/".join(emmap_path.split('/')[:-1]+   ["xyz_"+emmap_path.split(sep='/')[-1]])
-    run([mapmask_bash_script,emmap_path,xyz_output_map])
+    run([mapmask_bash_script,emmap_path,xyz_output_map], stdout=PIPE)
     
     return xyz_output_map
     
+
+
+############# CODE HELL #############
+
+""" def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
+    import os
+    from subprocess import run, PIPE
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
+    import mrcfile
+    
+    path_to_locscale = check_dependencies()['locscale']
+    path_to_ccpem = check_dependencies()['ccpem']
+    path_to_ccp4 = check_dependencies()['ccp4']
+    
+    if only_bfactor_refinement:
+        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
+    else:
+        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac_restrained.sh")
+        
+    
+    model_name = model_path[:-4]
+    emmap_mrc = mrcfile.open(map_path)
+    map_dims = emmap_mrc.header.cella.tolist()
+    
+    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
+    
+    
+    if verbose:
+        print("Running REFMAC to refine the pseudo-atomic model using \n"+
+              "Path to run_refmac: "+path_to_run_refmac+"\n"+
+              "Command line: \n"+refmac_command_line)
+        
+    refmac_output = run(refmac_command_line.split())
+    refined_model_path = model_name+"_refmac_refined.pdb"
+    bfactors = get_bfactors(in_model_path=refined_model_path)
+    
+    if os.path.exists(refined_model_path):
+        if verbose: 
+            print("The refined PDB model is: "+refined_model_path+"\n\n")    
+            print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+            
+        return refined_model_path
+    else:
+        print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        return None
+     """
