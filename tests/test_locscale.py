@@ -54,8 +54,9 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"--em_map",temp_emmap_path, "--model_coordinates",temp_model_path,
-                                "--mask",temp_mask_path, "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
+            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
+                temp_emmap_path, "--model_coordinates",temp_model_path,"--mask",temp_mask_path, \
+                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
             
             locscale_test_run = run(locscale_command)
             
@@ -88,7 +89,8 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "locscale_MF_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"--em_map",temp_emmap_path, "--mask",temp_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose"]
+            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",temp_emmap_path, \
+                "--mask",temp_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose"]
                         
             locscale_test_run = run(locscale_command)
             
