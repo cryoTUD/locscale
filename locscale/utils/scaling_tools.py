@@ -328,6 +328,7 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
     return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
 
+
 def put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape):
     map_scaled = np.zeros(np.prod(map_shape))
     map_scaled[masked_indices] = sharpened_vals
@@ -376,6 +377,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
 
     return map_scaled
+
 
 def split_sequence_evenly(seq, size):
     """
@@ -484,6 +486,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     comm.barrier()
 
     return map_scaled, rank
+
 
 def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
     from locscale.utils.prepare_inputs import pad_or_crop_volume
