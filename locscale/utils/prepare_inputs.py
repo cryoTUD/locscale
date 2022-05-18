@@ -207,13 +207,13 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_mask_path = run_mapmask(mask_path)
         
         if xyz_mask_path is not None:
-            xyz_mask = (mrcfile.open(xyz_mask_path).data == 1).astype(np.int8)
+            xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
         else:
             xyz_mask = get_spherical_mask(xyz_emmap.shape)
     else:
         mask_path = args.mask
         xyz_mask_path = run_mapmask(mask_path)
-        xyz_mask = (mrcfile.open(xyz_mask_path).data == 1).astype(np.int8)
+        xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
     
     
     ## Use the mask and emmap to generate a model map using pseudo-atomic model
@@ -362,6 +362,9 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
         
     processing_files_folder = os.path.dirname(xyz_emmap_path)
+
+    ## number of processes
+    number_processes = args.number_processes
     
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
@@ -395,6 +398,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['emmap_path'] = xyz_emmap_path
     parsed_inputs_dict['mask_path'] = xyz_mask_path
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
+    parsed_inputs_dict['number_processes'] = number_processes
     
     
     ## all maps should have same shape
@@ -403,10 +407,5 @@ def prepare_mask_and_maps_for_scaling(args):
     assert abs(xyz_emmap.sum()) > 0 and abs(xyz_modmap.sum()) > 0, "Emmap and Modmap should not be zeros!"
     ## No element of the mask should be negative
     assert (xyz_mask>=0).any(), "Negative numbers found in mask"
-    
-    
-    
-    
-    
     
     return parsed_inputs_dict

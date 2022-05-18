@@ -47,15 +47,18 @@ def change_directory(args, folder_name):
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
     
+    if args.verbose:
+        print("Copying files to {}\n".format(new_directory))
+
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
             if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files":
-                print("Copying {} to a new directory: \n{}".format(value, new_directory))
                 new_location=copy_file_to_folder(value, new_directory)
-                print("file saved at: {}".format(new_location))
                 setattr(args, arg, new_location)
     
+    if args.verbose:
+        print("Changing active directory to: {}\n".format(new_directory))
     os.chdir(new_directory)
     
     return args
@@ -334,7 +337,7 @@ def print_input_arguments(args):
     ax.axis('off')
     
     text = []
-    path_arguments = [x for x in vars(args) if x in ["em_map","half_map1","half_map2","model_map",
+    path_arguments = [x for x in vars(args) if x in ["emmap_path","half_map1","half_map2","model_map",
                                                   "mask","model_coordinates","outfile"]]
     for arg in vars(args):
         val = getattr(args, arg)
@@ -556,14 +559,12 @@ def shift_map_to_zero_origin(emmap_path):
     voxel_size = np.array(mrcfile.open(emmap_path).voxel_size.tolist())
     current_origin = np.array(mrcfile.open(emmap_path).header.origin.tolist()) 
     
-    print("Current origin: ", current_origin)
     emmap_data = mrcfile.open(emmap_path).data
     
     output_file = emmap_path
     save_as_mrc(map_data=emmap_data, output_filename=emmap_path, apix=voxel_size, origin=0)
     
     shift_vector = target_origin - current_origin
-    print("Shift vector: {} ".format(shift_vector.round(2)))
     return shift_vector
 
 
@@ -575,14 +576,19 @@ def get_emmap_path_from_args(args):
     from locscale.utils.prepare_inputs import generate_filename_from_halfmap_path
     from locscale.include.emmer.ndimage.map_tools import add_half_maps
     
-    if args.em_map is not None:    
-        emmap_path = args.em_map
-        shift_vector=shift_map_to_zero_origin(args.em_map)
-    elif args.half_map1 is not None and args.half_map2 is not None:
+    if args.emmap_path is not None:    
+        emmap_path = args.emmap_path
+        shift_vector=shift_map_to_zero_origin(emmap_path)
+    elif args.halfmap_paths is not None:
         print("Adding the two half maps provided to generate a full map \n")
-        new_file_path = generate_filename_from_halfmap_path(args.half_map1)
-        emmap_path = add_half_maps(args.half_map1, args.half_map2,new_file_path)
-        shift_vector=shift_map_to_zero_origin(args.half_map1)
+        halfmap_paths = args.halfmap_paths
+        assert len(halfmap_paths) == 2, "Please provide two half maps"
+
+        halfmap1_path = halfmap_paths[0]
+        halfmap2_path = halfmap_paths[1]
+        new_file_path = generate_filename_from_halfmap_path(halfmap1_path)
+        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path)
+        shift_vector=shift_map_to_zero_origin(halfmap1_path)
     
     return emmap_path, shift_vector
         
@@ -602,6 +608,7 @@ def check_user_input(args):
     None.
 
     '''
+    return 
     if args.dev_mode:
         print("Warning: You are in Dev mode. Not checking user input! Results maybe unreliable")
         return 
@@ -610,8 +617,8 @@ def check_user_input(args):
     print("ignore profiles default", args.ignore_profiles)
     ## Check input files
     emmap_absent = True
-    if args.em_map is not None:
-        if is_input_path_valid([args.em_map]):
+    if args.emmap_path is not None:
+        if is_input_path_valid([args.emmap_path]):
             emmap_absent = False
     
     half_maps_absent = True
@@ -682,8 +689,8 @@ def check_user_input(args):
         if args.apix is not None:
             apix = float(args.apix)
         else:
-            if args.em_map is not None:
-                apix = mrcfile.open(args.em_map).voxel_size.x
+            if args.emmap_path is not None:
+                apix = mrcfile.open(args.emmap_path).voxel_size.x
             elif args.half_map1 is not None:
                 apix = mrcfile.open(args.half_map1).voxel_size.x
         
