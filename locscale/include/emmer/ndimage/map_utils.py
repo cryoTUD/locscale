@@ -324,6 +324,44 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     real_image =np.fft.ifftn(ft).real
     return real_image
 
+def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1):
+    '''
+    Function to resample an emmap in real space using linear interpolation 
+
+    Parameters
+    ----------
+    emmap : numpy.ndimage
+        
+    emmap_size_new : tuple 
+        
+    apix : float
+        
+    apix_new : float
+        
+
+    Returns
+    -------
+    resampled_emmap
+
+    '''
+    from scipy.ndimage import zoom
+    if emmap_size_new is None:
+        if apix is not None and apix_new is not None:
+            resample_factor = apix/apix_new
+        else:
+            raise UserWarning("Provide either (1) current pixel size and new pixel size or (2) new emmap size")
+    
+    else:
+        try:
+            resample_factor = emmap_size_new[0] / emmap.shape[0]
+        except:
+            raise UserWarning("Please provide proper input: emmap_size_new must be a tuple")
+    
+    resampled_image = zoom(emmap, resample_factor, order=order)
+    
+    return resampled_image
+
+
 def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=0.99,protein_density=1.35,average_atomic_weight=13.14,verbose=True,detailed_report=False):
     import mrcfile
     import numpy as np
