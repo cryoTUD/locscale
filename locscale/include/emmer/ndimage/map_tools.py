@@ -134,7 +134,7 @@ def compute_radial_profile_proper(vol, frequency_map):
     #bins = bins - 1;
     x, y, z = np.indices(ps.shape)
     radii = np.sqrt(x**2 + y**2 + z**2)
-    radii = radii.astype(np.int)
+    radii = radii.astype(int)
     radial_profile = np.bincount(radii.ravel(), ps.ravel()) / np.bincount(radii.ravel())
     radial_profile = radial_profile[0:int(ps.shape[0]/2)+1]
 
