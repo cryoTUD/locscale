@@ -8,31 +8,6 @@ Created on Mon Aug 17 11:31:51 2020
 
 import numpy as np
 
-
-def check_dependencies():
-    import os
-    dependency = {}
-    try:
-        import locscale
-        dependency['locscale'] = os.path.dirname(locscale.__path__[0])
-
-            
-        return dependency
-    except ImportError:
-        raise ImportError("Dependencies not met")
-    
-def number_of_segments(fsc_resolution):
-    if fsc_resolution < 3:
-        return 4
-    elif fsc_resolution >= 3 and fsc_resolution < 5:
-        return 3
-    elif fsc_resolution >= 5 and fsc_resolution < 6:
-        return 2
-    else:
-        print("Warning: resolution too low to estimate cutoffs. Returning 1")
-        return 1
-    
-
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
@@ -131,8 +106,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     else:
         print("FDR process failed. Returning none")
         return None
-
-            
+         
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             g=None,friction=None,scale_map=None,scale_lj=None,total_iterations=100,verbose=True):
     '''
@@ -183,8 +157,8 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     import os
     import mrcfile
     import gemmi
-    from locscale.pseudomodel.pseudomodel_solvers import main_solver3D, main_solver_kick
-    from locscale.pseudomodel.pseudomodel_classes import extract_model_from_mask
+    from locscale.preprocessing.pseudomodel_solvers import main_solver3D, main_solver_kick
+    from locscale.preprocessing.pseudomodel_classes import extract_model_from_mask
     
     mrc = mrcfile.open(emmap_path)
     emmap = mrc.data
@@ -302,52 +276,6 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
         return None
 
 
-def normalise_intensity_levels(from_emmap, to_levels=[0,1]):
-    normalise_between_zero_one = (from_emmap - from_emmap.min()) / (from_emmap.max() - from_emmap.min())
-    to_levels = np.array(to_levels)
-    
-    min_value = to_levels.min()
-    max_value = to_levels.max()
-    scale_factor = max_value-min_value
-    
-    normalised = min_value + normalise_between_zero_one * scale_factor
-    
-    return normalised    
-
-def shift_radial_profile(from_emmap, to_emmap):
-    '''
-    To shift the radial profile of one emmap so that DC power matches another emmap
-
-    Parameters
-    ----------
-    from_emmap : numpy.ndarray
-        DESCRIPTION.
-    to_emmap : numpy.ndarray
-        DESCRIPTION.
-
-    Returns
-    -------
-    emmap_shifted_rp : numpy.ndarray
-
-    '''
-    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, plot_radial_profile, frequency_array
-    from locscale.include.emmer.ndimage.map_tools import set_radial_profile, compute_scale_factors
-    
-    rp_from_emmap = compute_radial_profile(from_emmap)
-    rp_to_emmap, radii = compute_radial_profile(to_emmap, return_indices=True)
-    
-    DC_power_diff = rp_to_emmap.max() - rp_from_emmap.max()
-    print((DC_power_diff))
-    new_rp_from_emmap = rp_from_emmap * 20
-    scale_factors = compute_scale_factors(rp_from_emmap, new_rp_from_emmap)
-    emmap_shifted_rp = set_radial_profile(from_emmap, scale_factors, radii)
-    rp_after_shifted = compute_radial_profile(emmap_shifted_rp)
-    freq = frequency_array(rp_from_emmap, 1.2156)
-    plot_radial_profile(freq,[rp_from_emmap, rp_to_emmap, new_rp_from_emmap,rp_after_shifted])
-    
-    
-    return emmap_shifted_rp
-    
 def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbose=True):
     '''
     Function to obtain reference map using structure factors determined by atomic model.
@@ -401,11 +329,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
                                           return_grid=True, align_output=True, verbose=True, set_refmac_blur=True, blur=add_blur)
     
-    ## Normalise intensity levels of refmap_data
-    '''
-    refmap_data_normalised = normalise_intensity_levels(
-        from_emmap=refmap_data, to_levels=[emmap_data.min(),emmap_data.max()])
-    '''
+
     refmap_data_normalised = refmap_data
     
     
@@ -462,7 +386,8 @@ def run_mapmask(emmap_path, return_same_path=False):
     '''
     import os
     from subprocess import run, PIPE
-    path_to_locscale = check_dependencies()['locscale']
+    from locscale.utils.file_tools import get_locscale_path
+    path_to_locscale = get_locscale_path()
     
     mapmask_bash_script = os.path.join(path_to_locscale , "locscale","utils","mapmask.sh")
     
@@ -484,9 +409,9 @@ def run_mapmask(emmap_path, return_same_path=False):
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     import mrcfile
     
-    path_to_locscale = check_dependencies()['locscale']
-    path_to_ccpem = check_dependencies()['ccpem']
-    path_to_ccp4 = check_dependencies()['ccp4']
+    path_to_locscale = get_locscale_path()
+    path_to_ccpem = get_locscale_path()['ccpem']
+    path_to_ccp4 = get_locscale_path()['ccp4']
     
     if only_bfactor_refinement:
         path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
