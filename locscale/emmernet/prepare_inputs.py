@@ -3,8 +3,8 @@ import os
 
 def prepare_inputs(args):
     from locscale.emmernet.utils import check_emmernet_dependencies
-    from locscale.utils.general import get_emmap_path_from_args
-    from locscale.pseudomodel.pseudomodel_headers import run_mapmask
+    from locscale.utils.file_tools import get_emmap_path_from_args
+    from locscale.preprocessing.headers import run_mapmask
     print("."*80)
     check_emmernet_dependencies(verbose=True)
 

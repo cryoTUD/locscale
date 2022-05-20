@@ -12,11 +12,11 @@ import os
 
 class test_locscale(unittest.TestCase):
     def setUp(self):
-        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.utils.file_tools import get_locscale_path
         import pickle
         from locscale.include.confidenceMapUtil import FDRutil
 
-        self.locscale = check_dependencies()['locscale']
+        self.locscale = get_locscale_path()
         data_folder = os.path.join(self.locscale,'tests','test_data') 
         self.emmap_path = os.path.join(data_folder, "emd5778_map_chainA.mrc")
         self.mask_path = os.path.join(data_folder, "emd5778_mask_chainA.mrc")
@@ -30,7 +30,7 @@ class test_locscale(unittest.TestCase):
     def test_run_model_based_locscale(self):
         from tempfile import TemporaryDirectory
         
-        print("Testing: run_refmac refinement")
+        print("Testing: Model Based LocScale")
         with TemporaryDirectory() as tempDir: 
             from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
             import os
@@ -69,7 +69,7 @@ class test_locscale(unittest.TestCase):
     def test_run_model_free_locscale(self):
         from tempfile import TemporaryDirectory
         
-        print("Testing: run_refmac refinement")
+        print("Testing: Model Free LocScale")
         with TemporaryDirectory() as tempDir: 
             from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
             import os

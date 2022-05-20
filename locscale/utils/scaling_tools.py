@@ -3,35 +3,6 @@ import os
 #import gemmi
 
 
-def get_theoretical_profile(length,apix):
-    import pickle
-    from locscale.include.emmer.ndimage.profile_tools import resample_1d
-    from locscale.pseudomodel.pseudomodel_headers import check_dependencies
-    
-    
-    path_to_locscale = check_dependencies()['locscale']
-    location_of_theoretical_profiles = os.path.join(path_to_locscale, "locscale","utils","theoretical_profiles.pickle")
-    
-    with open(location_of_theoretical_profiles,'rb') as f:
-        profiles = pickle.load(f)
-    
-    frequency_limits = (float(1/(apix*length)),float(1/(apix*2)))
-    helix_profile = profiles['helix']
-    resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
-    return resampled_helix_profile
-
-def compute_radial_profile(vol, frequency_map):
-
-    vol_fft = np.fft.rfftn(vol, norm='ortho');
-    dim = vol_fft.shape;
-    ps = np.real(np.abs(vol_fft));
-    frequencies = np.fft.rfftfreq(dim[0]);
-    bins = np.digitize(frequency_map, frequencies);
-    bins = bins - 1;
-    radial_profile = np.bincount(bins.ravel(), ps.ravel()) / np.bincount(bins.ravel())
-
-    return radial_profile, frequencies;
-
 def compute_radial_profile_proper(vol, frequency_map):
 
     vol_fft = np.fft.rfftn(vol, norm="ortho");
@@ -51,7 +22,9 @@ def compute_radial_profile_proper(vol, frequency_map):
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
                           use_theoretical_profile=True, check_scaling=False):
     
-    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, add_deviations_to_reference_profile, frequency_array, estimate_bfactor_standard
+    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, \
+        add_deviations_to_reference_profile, frequency_array, estimate_bfactor_standard, get_theoretical_profile
+
     
     #print("checkScaling", check_scaling)
     #print("useTheoretical", use_theoretical_profile)
@@ -176,8 +149,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         temporary_dictionary['scale_factor'] = scale_factor
         return scale_factor, bfactor, qfit, temporary_dictionary
     else:
-        return scale_factor, bfactor, qfit
-        
+        return scale_factor, bfactor, qfit  
 
 def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
     vol_fft = np.fft.rfftn(np.copy(vol), norm='ortho');
@@ -187,21 +159,13 @@ def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
 
     return scaled_map, scaled_map_fft;
 
-def round_up_proper(x):
-    epsilon = 1e-5  ## To round up in case of rounding to odd
-    return np.round(x+epsilon).astype(int)
-
-def save_list_as_map(values_list, masked_indices, map_shape, map_path, apix):
-    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-    value_map = put_scaled_voxels_back_in_original_volume_including_padding(values_list, masked_indices, map_shape)
-    save_as_mrc(value_map, output_filename=map_path, apix=apix)
-    
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,scale_factor_arguments, verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
-    from locscale.utils.general import true_percent_probability
+    from locscale.utils.math_tools import true_percent_probability
     from locscale.include.confidenceMapUtil import FDRutil
     import pickle
+    from locscale.utils.math_tools import round_up_proper
     
     #if use_theoretical_profile:
     #    print("Using theoretical profiles for Local Scaling with the following parameters: \n")
@@ -227,8 +191,6 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
         if rank == 0:
             description = "LocScale"
             pbar = tqdm(total=len(masked_xyz_locs)*size,desc=description)
-        
-                
     else:
         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
@@ -328,14 +290,6 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
 
     return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
 
-
-def put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape):
-    map_scaled = np.zeros(np.prod(map_shape))
-    map_scaled[masked_indices] = sharpened_vals
-    map_scaled = map_scaled.reshape(map_shape)
-
-    return map_scaled
-
 def run_window_function_including_scaling(parsed_inputs_dict):
     """
     >>> emmap, modmap, mask = setup_test_data()
@@ -357,7 +311,8 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     apix = parsed_inputs_dict['apix']
     verbose=parsed_inputs_dict['verbose']
     processing_files_folder=parsed_inputs_dict['processing_files_folder']
-    from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from locscale.utils.general import save_list_as_map, put_scaled_voxels_back_in_original_volume_including_padding
     
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
 
@@ -377,32 +332,6 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
 
     return map_scaled
-
-
-def split_sequence_evenly(seq, size):
-    """
-    >>> split_sequence_evenly(list(range(9)), 4)
-    [[0, 1], [2, 3, 4], [5, 6], [7, 8]]
-    >>> split_sequence_evenly(list(range(18)), 4)
-    [[0, 1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12, 13], [14, 15, 16, 17]]
-    """
-    newseq = []
-    splitsize = 1.0 / size * len(seq)
-    for i in range(size):
-        newseq.append(seq[round_up_proper(i * splitsize):round_up_proper((i+1) * splitsize)])
-    return newseq
-
-def merge_sequence_of_sequences(seq):
-    """
-    >>> merge_sequence_of_sequences([list(range(9)), list(range(3))])
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2]
-    >>> merge_sequence_of_sequences([list(range(9)), [], list(range(3))])
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2]
-    """
-    newseq = [number for sequence in seq for number in sequence]
-
-    return newseq
-
 
 def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     """
@@ -431,6 +360,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     
     from mpi4py import MPI
     from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from locscale.utils.general import save_list_as_map, merge_sequence_of_sequences, split_sequence_evenly, put_scaled_voxels_back_in_original_volume_including_padding
     
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -488,40 +418,5 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     return map_scaled, rank
 
 
-def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
-    from locscale.utils.prepare_inputs import pad_or_crop_volume
-    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-    from locscale.utils.general import make_locscale_report
-    import mrcfile
-    
-    input_map = mrcfile.open(parsed_inputs_dict['emmap_path']).data
-    
-    wn = parsed_inputs_dict['wn']
-    window_bleed_and_pad =parsed_inputs_dict['win_bleed_pad']
-    apix = parsed_inputs_dict['apix']
-        
-    if window_bleed_and_pad:
-        #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
-        map_shape = input_map.shape
-        LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
-    output_filename = args.outfile
-    if args.dev_mode:
-        output_filename = output_filename[:-4]+"_devmode.mrc"
-    save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
-    
-    if args.symmetry != "C1":
-        resolution = parsed_inputs_dict['fsc_resolution']
-        print("Imposing a symmetry condition of {}".format(args.symmetry))
-        import emda.emda_methods as em
-        
-        LocScaleVol_sym = em.symmetry_average([output_filename],[resolution],pglist=[args.symmetry])
 
-        output_filename = output_filename[:-4]+"_symmetrised.mrc"
-
-        save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
-    
-    if args.output_report:
-        make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
-    
-    return LocScaleVol
 

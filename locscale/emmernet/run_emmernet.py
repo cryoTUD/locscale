@@ -13,7 +13,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def run_emmernet(input_dictionary):
     import tensorflow as tf
     from tensorflow.keras.models import load_model
-    from locscale.utils.scaling_tools import merge_sequence_of_sequences
+    from locscale.utils.general import merge_sequence_of_sequences
     EMMERNET_CUBE_SIZE=32
     
     ## Get the input map path

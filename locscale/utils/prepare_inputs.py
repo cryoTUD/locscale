@@ -2,140 +2,6 @@ import numpy as np
 import mrcfile
 import locscale.include.emmer as emmer
 
-
-def pad_or_crop_volume(vol, dim_pad=None, pad_value = None, crop_volume=False):
-    if (dim_pad == None):
-        return vol
-    else:
-        dim_pad = np.round(np.array(dim_pad)).astype('int')
-        #print(dim_pad)
-
-        if pad_value == None:
-            pad_value = 0
-
-        if (dim_pad[0] <= vol.shape[0] or dim_pad[1] <= vol.shape[1] or dim_pad[2] <= vol.shape[2]):
-            crop_volume = True
-
-        if crop_volume:
-            k_start = round_up_proper(vol.shape[0]/2-dim_pad[0]/2)
-            k_end = round_up_proper(vol.shape[0]/2+dim_pad[0]/2)
-            j_start = round_up_proper(vol.shape[1]/2-dim_pad[1]/2)
-            j_end = round_up_proper(vol.shape[1]/2+dim_pad[1]/2)
-            i_start = round_up_proper(vol.shape[2]/2-dim_pad[2]/2)
-            i_end = round_up_proper(vol.shape[2]/2+dim_pad[2]/2)
-            crop_vol = vol[k_start:k_end, :, :]
-            crop_vol = crop_vol[:, j_start:j_end, :]
-            crop_vol = crop_vol[:, :, i_start:i_end]
-
-            return crop_vol
-
-        else:
-            k_start = round_up_proper(dim_pad[0]/2-vol.shape[0]/2)
-            k_end = round_up_proper(dim_pad[0]/2-vol.shape[0]/2)
-            j_start = round_up_proper(dim_pad[1]/2-vol.shape[1]/2)
-            j_end = round_up_proper(dim_pad[1]/2-vol.shape[1]/2)
-            i_start = round_up_proper(dim_pad[2]/2-vol.shape[2]/2)
-            i_end = round_up_proper(dim_pad[2]/2-vol.shape[2]/2)
-            
-            pad_vol = np.pad(vol, ((k_start, k_end ), (0,0), (0,0) ), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (j_start, j_end ), (0,0)), 'constant', constant_values=(pad_value,))
-            pad_vol = np.pad(pad_vol, ((0,0), (0,0), (i_start, i_end )), 'constant', constant_values=(pad_value,))
-            
-            if pad_vol.shape[0] != dim_pad[0] or pad_vol.shape[1] != dim_pad[1] or pad_vol.shape[2] != dim_pad[2]:
-                print("Requested pad volume shape {} not equal to the shape of the padded volume returned{}. Input map shape might be an odd sized map.".format(dim_pad, pad_vol.shape))
-                
-
-            return pad_vol
-
-def round_up_proper(x):
-    epsilon = 1e-5  ## To round up in case of rounding to odd
-    return np.round(x+epsilon).astype(int)
-
-def compute_padding_average(vol, mask):
-    mask = (mask == 1).astype(np.int8)
-    #inverted_mask = np.logical_not(mask)
-    average_padding_intensity = np.mean(np.ma.masked_array(vol, mask))
-    return average_padding_intensity
-
-def get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn):
-    mask = np.copy(mask)
-    nk, nj, ni = mask.shape
-
-    kk, jj, ii = np.indices((mask.shape))
-    kk_flat = kk.ravel()
-    jj_flat = jj.ravel()
-    ii_flat = ii.ravel()
-
-    mask_bin = np.array(mask.ravel(), dtype=np.bool)
-    indices = np.arange(mask.size)
-    masked_indices = indices[mask_bin]
-    cropped_indices = indices[(wn / 2 <= kk_flat) & (kk_flat < (nk - wn / 2)) &
-                              (wn / 2 <= jj_flat) & (jj_flat < (nj - wn / 2)) &
-                              (wn / 2 <= ii_flat) & (ii_flat < (ni - wn / 2))]
-
-    cropp_n_mask_ind = np.intersect1d(masked_indices, cropped_indices)
-
-    xyz_locs = np.column_stack((kk_flat[cropp_n_mask_ind], jj_flat[cropp_n_mask_ind], ii_flat[cropp_n_mask_ind]))
-
-    return xyz_locs, cropp_n_mask_ind, mask.shape
-
-def check_for_window_bleeding(mask,wn):
-    #print(mask.shape)
-    masked_xyz_locs, masked_indices, mask_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, 0)
-
-    zs, ys, xs = masked_xyz_locs.T
-    nk, nj, ni = mask_shape
-    #print(xs.shape, ys.shape, zs.shape)
-    #print(nk,nj,ni)
-    #print(wn)
-
-    if xs.min() < wn / 2 or xs.max() > (ni - wn / 2) or \
-    ys.min() < wn / 2 or ys.max() > (nj - wn / 2) or \
-    zs.min() < wn / 2 or zs.max() > (nk - wn / 2):
-        window_bleed = True
-    else:
-        window_bleed = False
-
-    return window_bleed
-
-
-def get_spherical_mask(emmap):
-    
-    mask = np.zeros(emmap.shape)
-
-    if mask.shape[0] == mask.shape[1] and mask.shape[0] == mask.shape[2] and mask.shape[1] == mask.shape[2]:
-        rad = mask.shape[0] // 2
-        z,y,x = np.ogrid[-rad: rad+1, -rad: rad+1, -rad: rad+1]
-        mask = (x**2+y**2+z**2 <= rad**2).astype(np.int_).astype(np.int8)
-        mask = pad_or_crop_volume(mask,emmap.shape)
-        mask = (mask==1).astype(np.int8)
-    else:
-        mask += 1
-        mask = mask[0:mask.shape[0]-1, 0:mask.shape[1]-1, 0:mask.shape[2]-1]
-        mask = pad_or_crop_volume(emmap, (emmap.shape), pad_value=0)
-    
-    return mask
-
-
-def generate_filename_from_halfmap_path(in_path):
-    ## find filename in the path    
-    filename = in_path.split("/")[-1]
-    
-    ## find EMDB ID in filename
-    
-    possible_emdb_id = [filename[x:x+4] for x in range(len(filename)-3) if filename[x:x+4].isnumeric()]
-    if len(possible_emdb_id) == 1:
-        emdb_id = possible_emdb_id[0]
-        newfilename = ["EMD_"+emdb_id+"_unfiltered.mrc"]
-    else:
-        newfilename = ["emdb_map_unfiltered.mrc"]
-    
-    
-    new_path = "/".join(in_path.split("/")[:-1]+newfilename)
-    
-    return new_path
-    
-    
 def prepare_mask_and_maps_for_scaling(args):
     '''
     Parse the command line arguments and return inputs for computing local amplitude scaling 
@@ -153,17 +19,25 @@ def prepare_mask_and_maps_for_scaling(args):
 
     print("Preparing your inputs for LocScale")
     import os
-    from locscale.pseudomodel.pipeline import get_modmap
-    from locscale.pseudomodel.pseudomodel_headers import number_of_segments, run_FDR, run_mapmask, check_dependencies
-    from locscale.utils.general import round_up_to_even, round_up_to_odd, get_emmap_path_from_args
+    from locscale.preprocessing.pipeline import get_modmap
+    from locscale.preprocessing.headers import run_FDR, run_mapmask
+    from locscale.utils.math_tools import round_up_to_even, round_up_to_odd
+    from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies
+    from locscale.utils.general import get_spherical_mask, check_for_window_bleeding, compute_padding_average, pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_tools import add_half_maps, compute_radial_profile_simple
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, number_of_segments
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     
-    print("Check relevant paths for LocScale \n")
-    print(check_dependencies())
+    ## Check dependencies
+    dependency_check = check_dependencies()
+    
+    if isinstance(dependency_check, list):
+        print("The following dependencies are missing. The program may not work as expected. \n")
+        print("\t".join(dependency_check))
+    else:
+        print("All dependencies are satisfied. \n")
     
     scale_using_theoretical_profile = not(args.ignore_profiles)
     
@@ -308,7 +182,6 @@ def prepare_mask_and_maps_for_scaling(args):
 
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
     
-    
     if window_bleed_and_pad:
 
         pad_int_emmap = compute_padding_average(xyz_emmap, xyz_mask)
@@ -318,8 +191,6 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_modmap = pad_or_crop_volume(xyz_modmap, map_shape, pad_int_modmap)
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
 
-        
-    
 
     ## Next few lines of code characterizes radial profile of 
     ## input emmap : 
