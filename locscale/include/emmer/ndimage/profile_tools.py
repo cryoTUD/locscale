@@ -573,6 +573,7 @@ def find_xmin_xmax(profiles):
                 xmax = profile[0][-1]
     return xmin,xmax    
     
+
 def number_of_segments(fsc_resolution):
     if fsc_resolution < 3:
         return 4
@@ -583,9 +584,7 @@ def number_of_segments(fsc_resolution):
     else:
         print("Warning: resolution too low to estimate cutoffs. Returning 1")
         return 1
-
-
-    
+        
 
 def crop_profile_between_frequency(freq, amplitude, start_cutoff, end_cutoff):
     start_freq = 1 / start_cutoff
@@ -631,7 +630,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
 
     '''
     import pwlf
-    from locscale.pseudomodel.pseudomodel_headers import number_of_segments
+    from locscale.include.emmer.ndimage.profile_tools import number_of_segments
     
     if num_segments is None:
             num_segments = number_of_segments(fsc_cutoff)
@@ -679,10 +678,10 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
 def get_theoretical_profile(length,apix, profile_type='helix'):
     import pickle
     from locscale.include.emmer.ndimage.profile_tools import resample_1d
-    from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+    from locscale.utils.file_tools import get_locscale_path
     import os
     
-    path_to_locscale = check_dependencies()['locscale']
+    path_to_locscale = get_locscale_path()
     location_of_theoretical_profiles = os.path.join(path_to_locscale, "locscale","utils","theoretical_profiles.pickle")
     
     with open(location_of_theoretical_profiles,'rb') as f:

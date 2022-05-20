@@ -13,9 +13,9 @@ import unittest
 class TestSymmetry(unittest.TestCase):
     
     def setUp(self):
-        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.utils.file_tools import get_locscale_path
         
-        self.locscale_path = check_dependencies()['locscale']
+        self.locscale_path = get_locscale_path()
         lPath = self.locscale_path
         self.emmap_path = lPath+"/tests/test_data/emd5778_map.mrc"
         self.model_path = lPath+"/tests/test_data/pdb3j5p_refined.pdb"

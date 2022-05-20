@@ -9,17 +9,20 @@ progname = os.path.basename(sys.argv[0])
 author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Carsten Sachse (EMBL),  Alok Bharadwaj (TU Delft) and Reinier de Bruin (TU Delft)\n\n'
 version = progname + '  0.2'
 
-description = "*** A comprehensive software to optimise amplitude contrast in cryo-EM density map using both sharpening and machine learning prediction *** \n "
 
-
+sample_run_locscale = "python /path/to/locscale/main.py run_locscale --emmap_path path/to/emmap.mrc -res 3.4 -o locscale.mrc --verbose"
+sample_run_emmernet = "python /path/to/locscale/main.py run_emmernet --emmap_path path/to/emmap.mrc --verbose"
+description = ["*** A comprehensive software to optimise amplitude contrast in cryo-EM density map using both sharpening and machine learning prediction ***\n",\
+    "Command line arguments: \n",\
+        "LocScale: \n",\
+        "{}\n".format(sample_run_locscale),\
+        "EMmerNet: \n",\
+        "{}".format(sample_run_emmernet)]
 
 main_parser = argparse.ArgumentParser(
-description=description )
+description="".join(description)) 
 
-## Add verbose argument to main parser
-main_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
-main_parser.add_argument('-o', '--outfile', help='Output filename')
-
+## Add subparsers
 sub_parser = main_parser.add_subparsers(dest='command')
 locscale_parser = sub_parser.add_parser('run_locscale', help='Run LocScale')
 emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMMERNET')
@@ -125,11 +128,12 @@ def print_start_banner(start_time, text="Map Sharpening"):
     time_now = start_time.strftime("%H:%M:%S")
 
     ## Author credits
-    author_list = ["Arjen J. Jakobi (TU Delft)", "Carsten Sachse (EMBL)",  "Alok Bharadwaj (TU Delft)", "Reinier de Bruin (TU Delft)"]
-
+    
     if text == "LocScale":
+        author_list = ["Arjen J. Jakobi (TU Delft)", "Carsten Sachse (EMBL)",  "Alok Bharadwaj (TU Delft)"]
         version = "2.0"
     elif text == "EMmerNet":
+        author_list = ["Arjen J. Jakobi (TU Delft)",  "Alok Bharadwaj (TU Delft)", "Reinier de Bruin (TU Delft)"]
         version = "1.0"
     else:
         version = "x"
@@ -172,7 +176,7 @@ def print_end_banner(time_now, start_time):
 
 def launch_emmernet(args):
     from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
-    from locscale.utils.general import change_directory
+    from locscale.utils.file_tools import change_directory
     from locscale.emmernet.prepare_inputs import prepare_inputs
     from locscale.emmernet.run_emmernet import run_emmernet
     
@@ -201,83 +205,72 @@ def launch_emmernet(args):
 
 
 def launch_amplitude_scaling(args):
-    
-    from locscale.utils.general import check_user_input
-    
-    
-    #******************************************************************************************************************#
-    
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
-    from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi, write_out_final_volume_window_back_if_required
-    from locscale.utils.general import change_directory
+    from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
+    from locscale.utils.general import write_out_final_volume_window_back_if_required
+    from locscale.utils.file_tools import change_directory, check_user_input
     import os 
+
+    ## Print start
+    start_time = datetime.now()
+    print_start_banner(start_time, "LocScale")
     
     current_directory = os.getcwd()
     
     if not args.mpi:
-        check_user_input(args)   ## Check user inputs
-        start_time = datetime.now()
-        print_start_banner(start_time, "LocScale")
+        ## Check input
+        check_user_input(args)   ## Check user inputs    
         if args.verbose:
             print_arguments(args)
-        copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
-            
-        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         
+        ## Change to output directory
+        copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+        ## Prepare inputs
+        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
+        ## Run LocScale non-MPI 
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
+        ## Change to current directory and save output
         os.chdir(current_directory)
         write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
-        
-        print("You can find the scaled map here: {}".format(args.outfile))
+        ## Print end
         print_end_banner(datetime.now(), start_time=start_time)
 
     elif args.mpi:
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
-        
+        ## If rank is 0, check and prepare inputs
         try:
             if rank==0:
                 check_user_input(args)   ## Check user inputs
-                start_time = datetime.now()
-                print_start_banner(start_time)
                 if args.verbose:
                     print_arguments(args)
                     copied_args = change_directory(args, args.output_processing_files)
-                
                 parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
-            
             else:
                 parsed_inputs_dict = None
             
+            ## Wait for inputs to be prepared by rank 0
             comm.barrier()
-            
-            parsed_inputs_dict = comm.bcast(parsed_inputs_dict, root=0)
-        
-            #input_to_scaling = parsed_arguments[:-1]
-            
+            ## Broadcast inputs to all ranks
+            parsed_inputs_dict = comm.bcast(parsed_inputs_dict, root=0)           
+            ## Run LocScale MPI
             LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
-            
+            ## Change to current directory and save output 
             if rank == 0:
                 os.chdir(current_directory)
                 write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
-        
-                print("You can find the scaled map here: {}\n".format(args.outfile))
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
             print(e)
-
-        
-        
+               
 def main():
     main_args = main_parser.parse_args()
-    
     launch_command = main_args.command
 
     if launch_command == 'run_emmernet':
         launch_emmernet(main_args)
     elif launch_command == 'run_locscale':
-        
         launch_amplitude_scaling(main_args)
     
 

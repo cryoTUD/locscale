@@ -358,7 +358,7 @@ def get_local_bfactor_emmap(emmap_path, center, fsc_resolution, boxsize=None, st
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale.utils.general import round_up_to_even
+    from locscale.utils.math_tools import round_up_to_even
     import random
     import mrcfile
     from tqdm import tqdm
@@ -403,7 +403,7 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale.utils.general import round_up_to_even
+    from locscale.utils.math_tools import round_up_to_even
     import random
     import mrcfile
     from tqdm import tqdm
@@ -457,7 +457,7 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
-    from locscale.utils.general import round_up_to_even
+    from locscale.utils.math_tools import round_up_to_even
     import random
     import mrcfile
     from tqdm import tqdm

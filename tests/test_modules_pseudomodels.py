@@ -15,10 +15,10 @@ import os
 class TestPseudomodelHeaders(unittest.TestCase):
     
     def setUp(self):
-        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.utils.file_tools import get_locscale_path
         import os
         
-        self.locscale_path = check_dependencies()['locscale']
+        self.locscale_path = get_locscale_path()
         
         self.emmap_path_full = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
         self.model_path_full = os.path.join(self.locscale_path,"tests","test_data","pdb3j5p_refined.pdb")
@@ -42,7 +42,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
                 
         
     def test_sharpen_maps(self):
-        from locscale.pseudomodel.pseudomodel_headers import prepare_sharpen_map
+        from locscale.preprocessing.headers import prepare_sharpen_map
         from tempfile import TemporaryDirectory
         print("Testing: prepare_sharpen_map \n")
         
@@ -71,7 +71,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
             
         
     def test_run_FDR(self):
-        from locscale.pseudomodel.pseudomodel_headers import run_FDR
+        from locscale.preprocessing.headers import run_FDR
         from tempfile import TemporaryDirectory
         print("Testing: run_FDR")
         import mrcfile
@@ -87,7 +87,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
             
         
     def test_run_pam(self):
-        from locscale.pseudomodel.pseudomodel_headers import run_pam
+        from locscale.preprocessing.headers import run_pam
         import gemmi
         from tempfile import TemporaryDirectory
     
@@ -132,7 +132,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
            
         
     def test_run_servalcat(self):
-        from locscale.pseudomodel.pseudomodel_headers import run_refmac_servalcat
+        from locscale.preprocessing.headers import run_refmac_servalcat
         from tempfile import TemporaryDirectory
         
         print("Testing: run_refmac refinement")
@@ -153,7 +153,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
         
     
     def test_run_refmap(self):
-        from locscale.pseudomodel.pseudomodel_headers import run_refmap
+        from locscale.preprocessing.headers import run_refmap
         from tempfile import TemporaryDirectory
         print("Testing: run_refmap")
         with TemporaryDirectory() as tempDir: 

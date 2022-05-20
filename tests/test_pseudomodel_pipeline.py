@@ -12,9 +12,9 @@ import os
 class TestPseudomodelPipeline(unittest.TestCase):
     
     def setUp(self):
-        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.utils.file_tools import get_locscale_path
         
-        self.locscale_path = check_dependencies()['locscale']
+        self.locscale_path = get_locscale_path()
         locscale_path = self.locscale_path
         self.emmap_path = os.path.join(locscale_path,"tests","test_data","emd5778_map.mrc")
         self.model_path = os.path.join(locscale_path,"tests","test_data","pdb3j5p_refined.pdb")
@@ -25,7 +25,7 @@ class TestPseudomodelPipeline(unittest.TestCase):
         self.kick_model = os.path.join(locscale_path,"tests","test_data","pseudomodel.pdb")
     
     def test_pseudomodel_pipeline(self):
-        from locscale.pseudomodel.pipeline import get_modmap
+        from locscale.preprocessing.pipeline import get_modmap
         from tempfile import TemporaryDirectory
         
         print("Integration test: Pseudomodel building pipeline")

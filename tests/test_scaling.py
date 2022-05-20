@@ -12,7 +12,7 @@ import os
 
 class test_compute_scaling(unittest.TestCase):
     def setUp(self):
-        from locscale.pseudomodel.pseudomodel_headers import check_dependencies
+        from locscale.utils.file_tools import get_locscale_path
         import pickle
         from locscale.include.confidenceMapUtil import FDRutil
         self.frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((40, 40, 40)));
@@ -28,7 +28,7 @@ class test_compute_scaling(unittest.TestCase):
         scale_factor_arguments['no_reference'] = False
         self.scale_factor_arguments = scale_factor_arguments
         self.apix = 1.2156
-        self.locscale = check_dependencies()['locscale']
+        self.locscale = get_locscale_path()
         data_folder = os.path.join(self.locscale,'tests','test_data') 
         test_data_dict = {}
         for i in [1,2,3]:

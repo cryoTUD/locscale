@@ -8,8 +8,8 @@ Created on Sun Sep 12 19:02:01 2021
 
 import mrcfile
 import gemmi
-from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, plot_radial_profile
-from locscale.pseudomodel.pseudomodel_headers import number_of_segments, check_dependencies
+from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, plot_radial_profile, number_of_segments
+from locscale.utils.file_tools import get_locscale_path
 from locscale.utils.scaling_tools import compute_scale_factors, set_radial_profile, compute_radial_profile_proper
 from locscale.include.emmer.ndimage.map_utils import get_all_voxels_inside_mask, extract_window
 from locscale.include.emmer.ndimage.map_tools import compute_radial_profile_simple, set_radial_profile_to_volume
@@ -20,7 +20,7 @@ import random
 import numpy as np
 import pickle
 
-locscale_path = check_dependencies()["locscale"]
+locscale_path = get_locscale_path()["locscale"]
 
 emmap_path = os.path.join(locscale_path, "tests","test_data","emd5778_map_chainA.mrc")
 pdb_path = os.path.join(locscale_path, "tests","test_data","pdb3j5p_refined_chainA.pdb")
