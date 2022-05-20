@@ -125,7 +125,7 @@ class Model:
     
     def calculate_nearest_neighbor_dist_for_each_point(self,voxelsize):
         ''' get_neighborhood works only on pixel distance. So use only pixel distance '''
-        from locscale.pseudomodel.pseudomodel_solvers import get_neighborhood
+        from locscale.preprocessing.pseudomodel_solvers import get_neighborhood
         
         neighborhood = get_neighborhood(self.list,min_dist_in_pixel=3,only_neighbors=True)
         for i,point in enumerate(self.list):
@@ -133,7 +133,7 @@ class Model:
     
     def calculate_relative_acceleration_magnitude(self,emmap,min_dist_in_pixels,g,capmagnitude_map,epsilon,capmagnitude_lj):
         
-        from locscale.pseudomodel.pseudomodel_solvers import get_neighborhood, get_acceleration_from_gradient, get_acceleration_from_lj_potential
+        from locscale.preprocessing.pseudomodel_solvers import get_neighborhood, get_acceleration_from_gradient, get_acceleration_from_lj_potential
         
         neighborhood = get_neighborhood(self.list,min_dist_in_pixels)
         gz,gy,gx = np.gradient(emmap)
@@ -282,7 +282,7 @@ class Model:
               atom.pdb_position = atom.position.scale(voxelsize)
 
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
-    from locscale.pseudomodel.pseudomodel_classes import Atom
+    from locscale.preprocessing.pseudomodel_classes import Atom
     import random
     x1,x2,x3 = mask.shape
     buffer = 2 ## To ensure no atoms near edge get picked 

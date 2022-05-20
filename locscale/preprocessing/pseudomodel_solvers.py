@@ -22,7 +22,7 @@ def get_gradient(g,point):
 
         
 def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
-    from locscale.pseudomodel.pseudomodel_classes import Vector
+    from locscale.preprocessing.pseudomodel_classes import Vector
     
     [x,y,z] = [int(round(point.position.x)),int(round(point.position.y)),int(round(point.position.z))]
     
@@ -55,7 +55,7 @@ def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
 
 
 def get_acceleration_from_lj_potential(targetpoint,lj_neighbors,epsilon,min_dist_in_pixel,lj_factor,capmagnitude_lj):
-    from locscale.pseudomodel.pseudomodel_classes import Vector
+    from locscale.preprocessing.pseudomodel_classes import Vector
 
     lj_neighbors_points = [x.position.get() for x in lj_neighbors]
     distance_vector = targetpoint.position.get() - lj_neighbors_points
@@ -169,7 +169,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
     from locscale.include.emmer.pdb.modify_pdb import set_pdb_cell_based_on_gradient
-    from locscale.pseudomodel.pseudomodel_classes import Vector, add_Vector
+    from locscale.preprocessing.pseudomodel_classes import Vector, add_Vector
     
     peak_bond_length_list = []
     map_values = []
@@ -348,7 +348,7 @@ def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iteratio
         Is a custom built class which has the coordinate information of all atoms after satisfying minimum distance criteria 
 
     '''
-    from locscale.pseudomodel.pseudomodel_classes import Model, Atom
+    from locscale.preprocessing.pseudomodel_classes import Model, Atom
     points_array = np.array([x.position.get() for x in model_initial.list])
     number_of_contacts = []
     if verbose:
