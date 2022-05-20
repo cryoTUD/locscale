@@ -154,7 +154,7 @@ def get_cosine_mask(mask,length_cosine_mask_1d):
 def get_spherical_mask(mask_shape, radius_index):
     n = mask_shape[0]
     z,y,x = np.ogrid[-n//2:n//2,-n//2:n//2,-n//2:n//2]
-    mask = (x**2+y**2+z**2 <= radius_index**2).astype(np.int)
+    mask = (x**2+y**2+z**2 <= radius_index**2).astype(int)
     return mask
 
    
