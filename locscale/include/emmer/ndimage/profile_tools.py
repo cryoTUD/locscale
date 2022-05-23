@@ -630,6 +630,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
 
     '''
     import pwlf
+    import warnings
     from locscale.include.emmer.ndimage.profile_tools import number_of_segments
     
     if num_segments is None:
@@ -659,14 +660,15 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
         
         x_data = freq[start_index:end_index]**2
         y_data = np.log(amplitudes[start_index:end_index])
-        
-        piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
-        
-        z = piecewise_linfit.fit(n_segments=num_segments)
-        
-        slopes = piecewise_linfit.calc_slopes()
+        ## Ignore RunTimeWarning: invalid value encountered in log
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            piecewise_linfit = pwlf.PiecewiseLinFit(x_data, y_data)
+            z = piecewise_linfit.fit(n_segments=num_segments, disp=False)
+            slopes = piecewise_linfit.calc_slopes()
         
         bfactor = slopes[-1] * 4
+        
         
         amplitude_zero_freq = piecewise_linfit.predict(0)
     
@@ -691,9 +693,7 @@ def get_theoretical_profile(length,apix, profile_type='helix'):
     helix_profile = profiles[profile_type]
     resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
     return resampled_helix_profile
-    
-    
-    
+      
 
 def generate_no_debye_profile(freq, amplitudes, wilson_cutoff=10, smooth=1):
     from locscale.include.emmer.ndimage.profile_tools import merge_two_profiles, estimate_bfactor_standard
