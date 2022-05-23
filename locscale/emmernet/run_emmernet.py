@@ -11,8 +11,13 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def run_emmernet(input_dictionary):
-    import tensorflow as tf
-    from tensorflow.keras.models import load_model
+    ## Ignore DeprecationWarning
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        import tensorflow as tf
+        from tensorflow.keras.models import load_model
+    
     from locscale.utils.general import merge_sequence_of_sequences
     EMMERNET_CUBE_SIZE=32
     
@@ -88,8 +93,13 @@ def run_emmernet(input_dictionary):
 
 def load_emmernet_model(emmernet_type):
     import os
-    from tensorflow.keras.models import load_model
-    from tensorflow_addons.layers import GroupNormalization
+    ## Ignore DeprecationWarning
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)    
+        from tensorflow.keras.models import load_model
+        from tensorflow_addons.layers import GroupNormalization
+
     import locscale
     locscale_path = locscale.__path__[0]
     emmernet_folder_path = os.path.join(locscale_path, "emmernet","emmernet_models")
@@ -109,9 +119,13 @@ def load_emmernet_model(emmernet_type):
 
 def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size):
     ## Run the model on the cube
-    import tensorflow_datasets as tfds
+    ## Ignore DeprecationWarning
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        import tensorflow_datasets as tfds
+        import atexit
     from tqdm import tqdm
-    import atexit
     import os
     
 
