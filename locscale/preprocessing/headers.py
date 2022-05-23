@@ -7,44 +7,66 @@ Created on Mon Aug 17 11:31:51 2020
 """
 
 import numpy as np
+from locscale.utils.plot_tools import tab_print
 
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None):
+tabbed_print = tab_print(3)
+tprint = tabbed_print.tprint
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None,verbose=True):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
     from locscale.include.emmer.ndimage.filter import apply_filter_to_map
     import mrcfile
-    
+    import warnings
+
     emmap_mrc = mrcfile.open(emmap_path)
     emmap_unsharpened = emmap_mrc.data
     apix=average_voxel_size(emmap_mrc.voxel_size)
     
-    bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    if verbose:
+        tprint("Estimating global B-factor using breakpoints\n")
     
-    print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor, (1/np.sqrt(z)).round(2),slopes))
+    
+    
+    bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix,
+                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    
+    if verbose:
+        tprint("Global bfactor: {:.3f}\n".format(bfactor))
+        tprint("Breakpoints: {}".format(1/np.sqrt(z)))
+        tprint("Slopes: {}".format(slopes))
+    
+    if verbose:
+        tprint("Calculating final b-factor of target map")
     if add_blur != 0:
         bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
-    print("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
+    if verbose:
+        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
         
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
     
-    bfactor_final, z_final, slopes_final, _ = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    ## Ignore RunTimeWarnings for this function
     
-    print("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
-    print("bfactor: {:.3f}, breakpoints: {} and slopes: {}".format(bfactor_final, (1/np.sqrt(z_final)).round(2),slopes_final))
+    bfactor_final, z_final, slopes_final, fit_final = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, 
+                                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    
+    if verbose:
+        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
+        tprint("Breakpoints: {}".format(1/np.sqrt(z_final)))
+        tprint("Slopes: {}".format(slopes_final))
         
     
     output_filename = emmap_path[:-4] +"_global_sharpened.mrc"
     output_filename_filtered_map = emmap_path[:-4] +"_global_sharpened_filtered.mrc"
     
-    save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix, origin=0)
+    save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix)
     apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
     
     if return_processed_files:
-        print("Returning: sharpend_map_path (filtered at FSC), [rp_unsharp, rp_sharp, bfactor]")
+        if verbose:
+            tprint("Returning: sharpend_map_path (filtered at FSC), [rp_unsharp, rp_sharp, bfactor]")
         return output_filename_filtered_map, fit
-    else:
-        print("Returning Globally Sharpened map (filtered at FSC)")
+    else:                    
         return output_filename_filtered_map
 
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
@@ -76,7 +98,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     # Apply filter if filter_cutoff is not None
 
     if verbose:
-        print("Now starting FDR procedure using the following parameters: \n"
+        tprint("Now starting FDR procedure using the following parameters: \n"
                  "Window size: "+str(window_size)+"\n"
                  "Filter cutoff: "+str(filter_cutoff))
     
@@ -90,7 +112,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         emmap, apix=apix, fdr=fdr, window_size=window_size, 
         lowPassFilter_resolution=filter_cutoff, remove_temp_files=False)
     
-    print("FDR threshold found to be: \t", fdr_threshold)
+    
     emmap_path_without_ext = emmap_path[:-4]
     mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
     
@@ -99,12 +121,12 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     
     if os.path.exists(mask_path):
         if verbose:
-            print("FDR Procedure completed. \n"+
+            tprint("FDR Procedure completed. \n"+
                     "Mask path: "+mask_path+"\n")
         
         return mask_path
     else:
-        print("FDR process failed. Returning none")
+        tprint("FDR process failed. Returning none")
         return None
          
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
@@ -170,8 +192,11 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     emmap_shape = emmap.shape
     unitcell = gemmi.UnitCell(emmap_shape[0]*voxelsize,emmap_shape[1]*voxelsize,emmap_shape[2]*voxelsize,90,90,90)
     
+    outputlogfilepath = os.path.join(os.path.dirname(emmap_path),"pseudomodel_log.txt")
+    output_file = open(outputlogfilepath,"w")
+
     if verbose:
-        print("Running pseudoatomic model generator to add "+str(num_atoms)+" atoms inside the volume using the method: "+method)
+        tprint("Running pseudoatomic model generator to add "+str(num_atoms)+" atoms inside the volume using the method: "+method)
     if method=='gradient':
         gz,gy,gx = np.gradient(emmap)
         masked_grad_magnitude = mask * np.sqrt(gx**2 + gy**2 + gz**2)
@@ -187,15 +212,18 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             
         
         arranged_points = main_solver3D(
-            emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,
-            capmagnitude_map=100,scale_map=scale_map,total_iterations=total_iterations, compute_map=None,emmap_path=None,mask_path=None,returnPointsOnly=True,
-            integration='verlet',verbose=verbose)
+            emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,
+            capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,capmagnitude_map=100,scale_map=scale_map,
+            total_iterations=total_iterations, compute_map=None,emmap_path=None,mask_path=None,
+            returnPointsOnly=True,integration='verlet',verbose=False, myoutput=output_file)
+
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
 
     elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
-                pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=total_iterations,returnPointsOnly=True,verbose=verbose)
+                pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=total_iterations,
+                returnPointsOnly=True,verbose=False, myoutput=output_file)
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
     
@@ -203,10 +231,11 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     
     
     if os.path.exists(pseudomodel_path):    
-        print("The location of the pseudomodel generated is: "+pseudomodel_path+'\n\n')
+        if verbose:
+            tprint("The location of the pseudomodel generated is: "+pseudomodel_path+'\n\n')
         return pseudomodel_path
     else:
-        print("uhhu, something wrong with the pseudomodel generator! Returning None")        
+        tprint("uhhu, something wrong with the pseudomodel generator! Returning None")        
         return None
     
 def is_pseudomodel(input_pdb_path):
@@ -237,19 +266,19 @@ def is_pseudomodel(input_pdb_path):
                         num_waters += 1
     
     if num_waters == num_atoms:
-        print("Number of dummy atoms {} equal to total number of atoms {}. \nProceeding with pseudo-atomic model workflow for {}".format(num_waters, num_atoms, input_pdb_path))
         return True
-        print("Number of dummy atoms {} not equal to total number of atoms {}.\nProceeding with default workflow for {}".format(num_waters, num_atoms, input_pdb_path))
+    else:
         return False
+    
+        
     
 def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
     import os
-    from subprocess import run, PIPE
+    from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
     import mrcfile
     
-    print("Running Servalcat... \n")
-   
+    
     model_name = os.path.basename(model_path)
     servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
     set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
@@ -258,21 +287,27 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
     servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
     if only_bfactor_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
-           
-    print("Command line for servalcat: \n")    
-    print(" ".join(servalcat_command))
-    refmac_output = run(servalcat_command)
+
+    if verbose:       
+        tprint("Command line for servalcat: \n")    
+        tprint(" ".join(servalcat_command))
+    
+    ## Create log file for servalcat
+    servalcat_log_path = os.path.join(os.path.dirname(model_path),"servalcat_log.txt")
+    servalcat_log_file = open(servalcat_log_path,"w")
+    
+    refmac_output = run(servalcat_command, stdout=servalcat_log_file)
     refined_model_path = output_prefix+".pdb"
     bfactors = get_bfactors(in_model_path=refined_model_path)
     
     if os.path.exists(refined_model_path):
         if verbose: 
-            print("The refined PDB model is: "+refined_model_path+"\n\n")    
-            print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+            tprint("The refined PDB model is: "+refined_model_path+"\n\n")    
+            tprint("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
             
         return refined_model_path
     else:
-        print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
 
@@ -311,7 +346,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     
     
     if verbose: 
-        print("Now simulating Reference Map using Refined Atomic Model")
+        tprint("Now simulating Reference Map using Refined Atomic Model")
     
     # Read inputs from filesystem
     
@@ -327,7 +362,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     ## Simulate a reference map from the input atomic model in the pdb_structure variable
     
     refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
-                                          return_grid=True, align_output=True, verbose=True, set_refmac_blur=True, blur=add_blur)
+                                          return_grid=True, align_output=True, verbose=False, set_refmac_blur=True, blur=add_blur)
     
 
     refmap_data_normalised = refmap_data
@@ -361,18 +396,17 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     ## Add checkpoint: center of mass of pseudo-model, simulated map and original map, (2) correlation (3) Axis order
     if os.path.exists(reference_map_path):
         if verbose: 
-            
-            print("The reference map is at: "+reference_map_path+"\n\n")
-            pprint.pprint(reporter)
-            
+            tprint("The reference map is at: "+reference_map_path+"\n\n")
+            for key, value in reporter.items():
+                tprint(key+":\t"+str(value))
         return reference_map_path
     else:
-        print("Reference map was not generated. Returning none")
+        tprint("Reference map was not generated. Returning none")
         return None
     
 def run_mapmask(emmap_path, return_same_path=False):
     '''
-    Function to generate a XYZ corrected output using CCPEM-Mapmask tool
+    Function to generate a XYZ corrected output using CCP4-Mapmask tool
 
     Parameters
     ----------
@@ -398,6 +432,42 @@ def run_mapmask(emmap_path, return_same_path=False):
     run([mapmask_bash_script,emmap_path,xyz_output_map], stdout=PIPE)
     
     return xyz_output_map
+
+def check_axis_order(emmap_path, return_same_path=False):
+    '''
+    Function to generate a XYZ corrected output using Gemmi
+
+    Parameters
+    ----------
+    emmap_path : str
+        
+
+    Returns
+    -------
+    mapmasked_path : str
+
+    '''
+    import os
+    from subprocess import run, PIPE
+    from locscale.include.emmer.ndimage.map_utils import read_gemmi_map, ZYX_to_XYZ, save_as_mrc
+           
+    emmap, grid = read_gemmi_map(emmap_path, return_grid=True)
+
+    ## Check if the map is in the right order
+    if grid.axis_order.name == "XYZ":
+        xyz_emmap_path = emmap_path
+    elif grid.axis_order.name == "ZYX":
+        ## Flip and rotate the map
+        xyz_emmap = ZYX_to_XYZ(emmap)
+        xyz_emmap_path = os.path.join(os.path.dirname(emmap_path), "xyz_"+os.path.basename(emmap_path))
+        save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
+    else:
+        print("### Warning: Map is not in the right order. Please check the axis order of the map")
+        print("Axis order of the map: "+grid.axis_order.name)
+        print("Using the same map as input")
+        xyz_emmap_path = emmap_path
+    
+    return xyz_emmap_path
     
 
 

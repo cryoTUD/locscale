@@ -30,6 +30,14 @@ def get_modmap(modmap_args):
         path/to/modmap.mrc
 
     '''
+    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.utils.plot_tools import tab_print
+    import mrcfile
+    
+    tabbed_print = tab_print(2)
+    
     emmap_path = modmap_args['emmap_path']
     mask_path = modmap_args['mask_path']
     pdb_path = modmap_args['pdb_path']
@@ -47,12 +55,17 @@ def get_modmap(modmap_args):
     verbose = modmap_args['verbose']
 
     if verbose:
-        print("Model map arguments: \n")
-        print(modmap_args)
-    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
-    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
-    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
-    import mrcfile
+        print("."*80)
+        print("Running model-map generation pipeline \n")
+
+
+    if verbose:
+        tabbed_print.tprint("Model map arguments: \n")
+        ## Print keys and values of dictionary in a nice format
+        for key, value in modmap_args.items():
+            tabbed_print.tprint("{:<20} : {}".format(key, value))
+
+    ################### START PIPELINE ###################
     
     emmap_mrc = mrcfile.open(emmap_path)
     apix = average_voxel_size(emmap_mrc.voxel_size)
@@ -64,7 +77,7 @@ def get_modmap(modmap_args):
     verbose = verbose
     
     if molecular_weight is None:
-        num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=verbose)
+        num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=False)
     else:
         avg_mass_per_atom = 13.14  #amu
         num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
@@ -74,17 +87,22 @@ def get_modmap(modmap_args):
         pam_bond_length = 3.8  ## Ca atom distances for secondary structures
         pam_method = 'gradient'  ## use this exclusively for Gradient
         if pam_method != 'gradient':
-            print("Using gradient method for building pseudo-atomic model! Not using user input:\t {}".format(pam_method))
+            tabbed_print.tprint("Using gradient method for building pseudo-atomic model!\
+                Not using user input:\t {}".format(pam_method))
     
     if pdb_path is None:
-        print("You have not entered a PDB path, running pseudo-atomic model generator!")
+        if verbose:
+            print("."*80)
+            print("You have not entered a PDB path, running pseudo-atomic model generator!")
         input_pdb_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=1, num_atoms=num_atoms, 
                                    method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
     else:
-        print("You have entered a pdb_path {}. Using this to generate reference model".format(pdb_path))
+        if verbose:
+            print("."*80)
+            print("Using user-provided PDB path: {}".format(pdb_path))
         input_pdb_path = pdb_path
     
     if is_pseudomodel(input_pdb_path):
@@ -92,29 +110,37 @@ def get_modmap(modmap_args):
     else:
         only_bfactor_refinement = False
             
-    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False)
+    wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
-    globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution, wilson_cutoff=wilson_cutoff, add_blur=add_blur)
+    if verbose:
+        print("."*80)
+        print("Preparing target map for refinement\n")
+    globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
+                                            wilson_cutoff=wilson_cutoff, add_blur=add_blur, verbose=verbose)
     
+    if verbose:
+        print("."*80)
+        print("Running Refmac refinement\n")
     if skip_refine:
         if verbose: 
-            print("Skipping REFMAC refinements based on user input\n")
+            tabbed_print.tprint("Skipping REFMAC refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
-        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,verbose=verbose)
+        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
+                    only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,
+                    verbose=verbose)
         if refined_model_path is None:
-            print("Problem running REFMAC. Returning None")
+            tabbed_print.tprint("Problem running REFMAC. Returning None")
             return None
         
-        #emmap_path, mask_path = run_mapmask(args.em_map), run_mapmask(mask_path)
-        #pseudomodel_modmap,new_emmap_path,new_mask_path = run_refmap2(model_path=refined_model_path, 
-                                                                     #emmap_path=args.em_map, 
-                                                                     #mask_path=mask_path, verbose=verbose)
-        
+    if verbose:
+        print("."*80)
+        print("Simulating model-map using refined structure factors\n")
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
     if pg_symmetry != "C1":
-        print("Imposing a symmetry condition of {}".format(pg_symmetry))
+        if verbose:
+            tabbed_print.tprint("Imposing a symmetry condition of {}".format(pg_symmetry))
         import emda.emda_methods as em
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
         sym = em.symmetry_average([pseudomodel_modmap],[resolution],pglist=[pg_symmetry])
@@ -124,7 +150,7 @@ def get_modmap(modmap_args):
     
     if model_resolution is not None:
         if verbose:
-            print("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
+            tabbed_print.tprint("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
         from locscale.include.emmer.ndimage.filter import low_pass_filter
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
         
@@ -139,10 +165,10 @@ def get_modmap(modmap_args):
     
     
     if pseudomodel_modmap is None:
-        print("Problem simulating map from refined model. Returning None")
+        tabbed_print.tprint("Problem simulating map from refined model. Returning None")
         return None
     else:
-        print("Successfully created model map")
+        tabbed_print.tprint("Successfully created model map")
         return pseudomodel_modmap
     
 
