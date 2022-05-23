@@ -64,7 +64,7 @@ class test_locscale(unittest.TestCase):
             
             rscc_test = rsc(self.reference_locscale_MB,output_locscale_path)
             
-            self.assertTrue(rscc_test>0.99)
+            self.assertTrue(rscc_test>0.9)
             
     def test_run_model_free_locscale(self):
         from tempfile import TemporaryDirectory
@@ -98,7 +98,7 @@ class test_locscale(unittest.TestCase):
             
             rscc_test = rsc(self.reference_locscale_MF,output_locscale_path)
             
-            self.assertTrue(rscc_test>0.99)
+            self.assertTrue(rscc_test>0.9)
             
     
    

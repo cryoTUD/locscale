@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 import setuptools
 from numpy.distutils.core import setup, Extension
-import locscale
+
 
 setup(name='locscale',
     version='2.0',
