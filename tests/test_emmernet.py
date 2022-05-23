@@ -30,6 +30,7 @@ class test_emmernet(unittest.TestCase):
 
         # test 3: check if assembled cube is same as original emmap
         self.assertTrue(np.allclose(assembled_cube, emmap))
+        self.assertTrue(cubes[0].shape == (cube_size, cube_size, cube_size))
     
     def test_load_emmernet_model(self):
         from locscale.emmernet.run_emmernet import load_emmernet_model
@@ -55,14 +56,13 @@ class test_emmernet(unittest.TestCase):
         emmap = np.random.normal(15,0.5,(252,252,252))
         cube_size = 32
         stride = 16
-        batch_size = 4
-        cubes, cube_centers = get_cubes(emmap, cube_size, stride)
+        batch_size = 8
+        cubes, cube_centers = get_cubes(emmap, stride, cube_size)
         cube_1 = cubes[0]
 
         emmernet_model_1 = load_emmernet_model("model_based")
         i=0
-        cube_list = cubes[0:8]
-        cubes = np.array(cube_list)
+        cubes = np.array(cubes)
         cubes_x = np.expand_dims(cubes, axis=4)
         print(cubes_x.shape)
         cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
@@ -75,7 +75,12 @@ class test_emmernet(unittest.TestCase):
         cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
 
         self.assertTrue(cubes_predicted is not None)
-        self.assertTrue(cubes_predicted[0].mean() < cubes[0].mean())
+       
+        for predicted_cube in cubes_predicted:
+            mean_predicted_cube = np.mean(predicted_cube)
+            self.assertTrue(mean_predicted_cube < 15)
+                        
+        
 
 
     
