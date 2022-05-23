@@ -16,11 +16,11 @@ def prepare_mask_and_maps_for_scaling(args):
         Parsed inputs dictionary
 
     '''
-
+    print("."*80)
     print("Preparing your inputs for LocScale")
     import os
     from locscale.preprocessing.pipeline import get_modmap
-    from locscale.preprocessing.headers import run_FDR, run_mapmask
+    from locscale.preprocessing.headers import run_FDR, check_axis_order
     from locscale.utils.math_tools import round_up_to_even, round_up_to_odd
     from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies
     from locscale.utils.general import get_spherical_mask, check_for_window_bleeding, compute_padding_average, pad_or_crop_volume
@@ -29,7 +29,9 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, number_of_segments
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
+    from locscale.utils.plot_tools import tab_print
     
+    tabbed_print = tab_print(1)
     ## Check dependencies
     dependency_check = check_dependencies()
     
@@ -43,7 +45,7 @@ def prepare_mask_and_maps_for_scaling(args):
     
     emmap_path, shift_vector = get_emmap_path_from_args(args)
     
-    xyz_emmap_path = run_mapmask(emmap_path)  
+    xyz_emmap_path = check_axis_order(emmap_path)  
     
     
     ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
@@ -62,23 +64,29 @@ def prepare_mask_and_maps_for_scaling(args):
     
     ## Get the mask path if provided. Calculate if not provided.
     
+    if verbose:
+        print("."*80)
+        print("Preparing mask \n")
+    
     if args.mask is None:
         if args.verbose:
-            print("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
+            tabbed_print.tprint("A mask path has not been provided. \
+                 False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
         if args.fdr_window_size is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(xyz_emmap.shape[0] * 0.1)
-            print("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
+            tabbed_print.tprint("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
         else:
             fdr_window_size = int(args.fdr_w)
         
         if args.fdr_filter is not None:
             filter_cutoff = float(args.fdr_filter)
-            print("A low pass filter value has been provided. The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
+            tabbed_print.tprint("A low pass filter value has been provided. \
+                The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
         else:
             filter_cutoff = None
             
         mask_path = run_FDR(emmap_path=emmap_path, window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
-        xyz_mask_path = run_mapmask(mask_path)
+        xyz_mask_path = check_axis_order(mask_path)
         
         if xyz_mask_path is not None:
             xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
@@ -86,7 +94,7 @@ def prepare_mask_and_maps_for_scaling(args):
             xyz_mask = get_spherical_mask(xyz_emmap.shape)
     else:
         mask_path = args.mask
-        xyz_mask_path = run_mapmask(mask_path)
+        xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
     
     
@@ -95,6 +103,10 @@ def prepare_mask_and_maps_for_scaling(args):
         molecular_weight = float(args.molecular_weight)    
     else:
         molecular_weight = None
+
+    if verbose:
+        print("."*80)
+        print("Preparing model map \n")
 
     if args.model_map is None and not args.no_reference:
         
@@ -145,7 +157,7 @@ def prepare_mask_and_maps_for_scaling(args):
         
         modmap_path = get_modmap(modmap_args)
         
-        xyz_modmap_path = run_mapmask(modmap_path, return_same_path=True)
+        xyz_modmap_path = check_axis_order(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
     elif args.model_map is not None and not args.no_reference:
         scale_using_theoretical_profile = False ## If a model map is provided, assume that it is from an atomic model thus set this flag as False no matter what the user input 
@@ -153,7 +165,9 @@ def prepare_mask_and_maps_for_scaling(args):
         model_resolution = args.model_resolution
         if model_resolution is not None:
             if verbose:
-                print("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
+                tabbed_print.tprint("Performing low pass filter on the Model Map \
+                    with a cutoff: {} based on user input".format(model_resolution))
+
             from locscale.include.emmer.ndimage.filter import low_pass_filter
             from locscale.include.emmer.ndimage.map_utils import save_as_mrc
             
@@ -164,21 +178,24 @@ def prepare_mask_and_maps_for_scaling(args):
             save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, apix=apix)
             
             modmap_path = filename
-        xyz_modmap_path = run_mapmask(modmap_path)
+        xyz_modmap_path = check_axis_order(modmap_path)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data        
     else:
         print("Running locscale without using any reference")
         xyz_modmap = np.ones(xyz_emmap.shape)
     
+    if verbose:
+        print("."*80)
+        print("Preparing locscale parameters\n")
     if args.window_size is None:   ## Use default window size of 25 A
         wn = round_up_to_even(25 / apix)
         if verbose:
-            print("Using a default window size of 25 A, corresponding to approximately {} pixels".format(wn))
+            tabbed_print.tprint("Using a default window size of 25 A, corresponding to approximately {} pixels".format(wn))
         
     elif args.window_size is not None:
         wn = round_up_to_even(int(args.window_size))
         if verbose:
-            print("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
+            tabbed_print.tprint("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
 
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
     
@@ -199,7 +216,7 @@ def prepare_mask_and_maps_for_scaling(args):
         ## FSC cutoff : threshold above which amplitudes of signal becomes weaked compared to noise
         
     
-    wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path)
+    wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path, verbose=False)
     smooth_factor = args.smooth_factor
     boost_secondary_structure = args.boost_secondary_structure
     if fsc_resolution >= 6:
@@ -227,10 +244,7 @@ def prepare_mask_and_maps_for_scaling(args):
         scale_using_theoretical_profile = True
         print("After: scale_using_theoretical_profile=",scale_using_theoretical_profile)        
     
-    if verbose and scale_using_theoretical_profile:
-        print("To compute bfactors of local windows: \nUsing High Frequency Cutoff of: {:.2f} and FSC cutoff of {}".format(high_frequency_cutoff, nyquist))
-        print("To merge reference and theoretical profiles: \n")
-        print("Using Wilson cutoff of {:.2f} A and smooth factor of {:.2f}".format(wilson_cutoff, smooth_factor))
+    
         
     processing_files_folder = os.path.dirname(xyz_emmap_path)
 
@@ -248,8 +262,8 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments['processing_files_folder'] = processing_files_folder
     
     if verbose:
-        
         print("Preparation completed. Now running LocScale!")
+        print("."*80)
     
     
     parsed_inputs_dict = {}
