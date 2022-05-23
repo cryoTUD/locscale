@@ -175,7 +175,8 @@ def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=Fal
     emmap = np.array(dencalc.grid,copy=False)
     
     if set_refmac_blur:
-        print("Applying a unblur for the sampled density equal to: {:.2f}".format(-inv_d2))
+        if verbose:
+            print("Applying a unblur for the sampled density equal to: {:.2f}".format(-inv_d2))
         emmap = sharpen_maps(emmap, apix=apix_gemmi[0], global_bfactor=-inv_d2)
         
     

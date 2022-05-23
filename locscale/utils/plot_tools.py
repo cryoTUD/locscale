@@ -97,6 +97,17 @@ def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None,
     
     return f
 
+
+class tab_print():
+    def __init__(self, tab_size):
+        self.tab_size = tab_size
+        
+    def tprint(self, string):
+        text = "\t"*self.tab_size + string 
+        print(text)
+    
+
+
 def print_input_arguments(args):
     import matplotlib.pyplot as plt
     

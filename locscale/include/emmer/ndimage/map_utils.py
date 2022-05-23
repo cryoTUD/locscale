@@ -162,13 +162,32 @@ def compare_gemmi_grids(grid_1, grid_2):
     
     report = report.T
     report['final'] = report[0] == report[1] 
-    if report['final'].all():
-        print("The two input grids are same")
-    else:
-        print("Two input grids are not the same")
-        print(report['final'])
+    # if report['final'].all():
+    #     print("The two input grids are same")
+    # else:
+    #     print("Two input grids are not the same")
+    #     print(report['final'])
     return report
-    
+
+def ZYX_to_XYZ(emmap):
+    '''
+    Function to convert a ZYX numpy array to XYZ numpy array
+
+    Parameters
+    ----------
+    emmap : numpy.ndarray
+        Volume data showing the intensities of the EM Map at different points
+
+    Returns
+    -------
+    emmap : numpy.ndarray
+        
+    '''
+    from scipy.ndimage import rotate
+    emmap_flipped = np.flip(emmap,axis=2)
+    emmap_rotated = rotate(emmap_flipped, angle=90, axes=(2,0))
+
+    return emmap_rotated    
 def extract_window(im, center, size):
     '''
     Extract a square window at a given location. 

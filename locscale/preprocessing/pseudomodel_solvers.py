@@ -170,24 +170,38 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
     from locscale.include.emmer.pdb.modify_pdb import set_pdb_cell_based_on_gradient
     from locscale.preprocessing.pseudomodel_classes import Vector, add_Vector
-    
+    from locscale.utils.plot_tools import tab_print
+    from tqdm import tqdm
+
+    tabbed_print = tab_print(2)
+    tprint = tabbed_print.tprint
     peak_bond_length_list = []
     map_values = []
     pseudomodel = model_initial.copy()
     gradient_magnitude = np.sqrt(gx**2+gy**2+gz**2)
     
+    solver_properties = 'Solver started with the following properties: \n'+'\n Number of atoms = '+str(len(pseudomodel.list))+'\n Map potential: \n'+'\n g = '+str(g)+'\n Max gradient magnitude  = '+str(gradient_magnitude.max())+'\n Map value range  = '+str((emmap.min(),emmap.max()))+'\n Cap magnitude at  = '+str(capmagnitude_map)+'\n LJ Potential: \n'+'\n Equilibrium distance = '+str(min_dist_in_angst)+'\n Voxelsize, in A = '+str(voxelsize)+'\n LJ Factor = '+str(lj_factor)+'\n Epsilon = '+str(epsilon)+'\n Cap magnitude at  = '+str(capmagnitude_lj)+'\n Friction: \n'+ '\n Friction Coefficient = '+str(friction)+'\n Solver properties: \n'+'\n Total Iterations = '+str(total_iterations)+'\n Time step = '+str(dt)
+    ## Convert solver_properties to a dictionary
+    solver_properties_dict = {}
+    for line in solver_properties.split('\n'):
+        if '=' in line:
+            key,value = line.split('=')
+            solver_properties_dict[key.strip()] = value.strip()
+
     
-    if verbose:
-        solver_properties = 'Solver started with the following properties: \n'+'\n Number of atoms = '+str(len(pseudomodel.list))+'\n Map potential: \n'+'\n g = '+str(g)+'\n Max gradient magnitude  = '+str(gradient_magnitude.max())+'\n Map value range  = '+str((emmap.min(),emmap.max()))+'\n Cap magnitude at  = '+str(capmagnitude_map)+'\n LJ Potential: \n'+'\n Equilibrium distance = '+str(min_dist_in_angst)+'\n Voxelsize, in A = '+str(voxelsize)+'\n LJ Factor = '+str(lj_factor)+'\n Epsilon = '+str(epsilon)+'\n Cap magnitude at  = '+str(capmagnitude_lj)+'\n Friction: \n'+ '\n Friction Coefficient = '+str(friction)+'\n Solver properties: \n'+'\n Total Iterations = '+str(total_iterations)+'\n Time step = '+str(dt)
-              
-        print(solver_properties)
-        if myoutput is not None:
-            myoutput.write(solver_properties)
+        ## print the solver properties in a nice format
+    
+    print('='*50,file=myoutput)
+    print('Solver started with the following properties: ',file=myoutput)
+    for key,value in solver_properties_dict.items():
+        print(key+' = '+value, file=myoutput)
+    print('='*50,file=myoutput)
+   
     if verbose:    
-        print('# | Inter-atomic distance | Average map value | Average gradient acc | Average LJ potential')        
+        print('# | Inter-atomic distance | Average map value | Average gradient acc | Average LJ potential', file=myoutput)        
     profiles_iterations = []
     cross_correlation = []
-    for iter in range(total_iterations):
+    for iter in tqdm(range(total_iterations),desc="Building Pseudo-atomic model"):
         
         neighborhood = get_neighborhood(pseudomodel.list,min_dist_in_angst/voxelsize)
         all_bond_lengths = np.array([d[0]*voxelsize for d in neighborhood.values()])
@@ -198,9 +212,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
         lj_list= []
         
         point_id = 0
-        for atom in pseudomodel.list:
- 
-            
+        for atom in pseudomodel.list:            
             lj_neighbors = [pseudomodel.list[k] for k in neighborhood[point_id][1]]
             
             gradient_acceleration,map_value = get_acceleration_from_gradient(gx,gy,gz,emmap, g, point=atom, capmagnitude_map=capmagnitude_map)
@@ -208,7 +220,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
                 lj_potential_acceleration,lj_potential = Vector(np.array([0,0,0])),0
             else:
                 lj_potential_acceleration,lj_potential = get_acceleration_from_lj_potential(atom, lj_neighbors, epsilon=1, min_dist_in_pixel=min_dist_in_angst/voxelsize,lj_factor=lj_factor,capmagnitude_lj=capmagnitude_lj)
-            # TO BE CONTINUES
+            
             gradient_acceleration,lj_potential_acceleration = gradient_acceleration.scale(scale_map),lj_potential_acceleration.scale(scale_lj)
             acceleration = add_Vector(gradient_acceleration,lj_potential_acceleration)
             # add friction 
@@ -245,10 +257,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
                 for atom in pseudomodel.list:
                     atom.verlet_integration(dt)
                     atom.update_history()
-        
-            
-        
-        
+
         if compute_map:
             pseudomodel.voxelsize = voxelsize
             pseudomodel.update_pdb_positions(voxelsize)
@@ -274,7 +283,8 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
             
     
             if verbose: 
-                print(str(iter)+": #peak_bond_length = "+str(peak_bond_length_list[iter])+": #map_value = "+str(map_values[iter])+": cc_max = "+str(cc.max()))    
+                print(str(iter)+": #peak_bond_length = "+str(peak_bond_length_list[iter])\
+                +": #map_value = "+str(map_values[iter])+": cc_max = "+str(cc.max()),file=myoutput)
     
         else:
             if verbose:
@@ -284,7 +294,7 @@ def main_solver3D(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,voxe
                       "\t | \t "+str(round(peak_bond_length_list[iter],2))+
                       "\t | \t "+str(map_values[iter])+
                       "\t | \t "+str(round(gradient_acc_arr.mean(),2))+
-                      "\t | \t "+str(round(lj_acc_arr.mean(),2)) )    
+                      "\t | \t "+str(round(lj_acc_arr.mean(),2)),file=myoutput)    
             
     pseudomodel.voxelsize = voxelsize
     pseudomodel.update_pdb_positions(voxelsize)
@@ -325,7 +335,7 @@ def find_and_kick(points_array,kicklist,kick):
     return points_array    
 
         
-def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iterations=99,returnPointsOnly=True,verbose=False):
+def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iterations=99,returnPointsOnly=True,verbose=False, myoutput=None):
     '''
     Solver to iteratively morph a point cloud so that it satisfies a minimum distance criterion for any pair of points
 
@@ -356,7 +366,7 @@ def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iteratio
               '\n Number of atoms = '+str(len(points_array))+
               '\n Equilibrium distance = '+str(min_dist_in_angst)+
               '\n Voxelsize, in A = '+str(voxelsize)+
-              '\n Total Iterations = '+str(total_iterations))
+              '\n Total Iterations = '+str(total_iterations),file=myoutput)
               
     for i in range(total_iterations):
         neighbors = get_neighborhood(points_array,min_dist_in_angst,fromArray=True)
@@ -364,7 +374,7 @@ def main_solver_kick(model_initial, min_dist_in_angst, voxelsize, total_iteratio
         points_array = find_and_kick(points_array,kicklist,kick=1)
         number_of_contacts.append(len(kicklist))
         if verbose: 
-            print("Iteration number =  "+str(i)+": # Atoms less than eq. dist = "+str(len(kicklist)))
+            print("Iteration number =  "+str(i)+": # Atoms less than eq. dist = "+str(len(kicklist)),file=myoutput)
         
         if sum(number_of_contacts[-3:]) == 0:
             break
