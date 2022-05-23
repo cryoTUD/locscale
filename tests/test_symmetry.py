@@ -14,17 +14,10 @@ class TestSymmetry(unittest.TestCase):
     
     def setUp(self):
         from locscale.utils.file_tools import get_locscale_path
-        
+        import os
         self.locscale_path = get_locscale_path()
-        lPath = self.locscale_path
-        self.emmap_path = lPath+"/tests/test_data/emd5778_map.mrc"
-        self.model_path = lPath+"/tests/test_data/pdb3j5p_refined.pdb"
-        self.mask_path = lPath+"/tests/test_data/emd5778_mask.mrc"
-        self.out_dir = lPath+"/tests/processed/"
-        self.wilson_cutoff = 8.55
-        self.fsc = 3.4
-        self.kick_model = lPath+"/tests/test_data/pseudomodel.pdb"
         
+        self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
                 
         
     def test_symmetry(self):
@@ -38,9 +31,7 @@ class TestSymmetry(unittest.TestCase):
             sym = em.symmetry_average([self.emmap_path],[3.4],pglist=["C4"])
             self.assertEqual(sym[0].shape,(256,256,256))
         
-        
-    
-    
+
         
 
 if __name__ == '__main__':
