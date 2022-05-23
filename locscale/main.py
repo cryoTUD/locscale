@@ -144,7 +144,7 @@ def print_start_banner(start_time, text="Map Sharpening"):
     paper_ref_3 = "Alok Bharadwaj, Reinier de Bruin, Arjen J Jakobi (2022), \"TBD\""
     print("="*80)
     print("="*80)
-    result = pyfiglet.figlet_format(text, font = "slant")
+    result = pyfiglet.figlet_format(text, font = "big")
     print(result)
     print("\t"*6 + "Version: v{}".format(version))
     print("."*80)
