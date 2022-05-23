@@ -9,7 +9,7 @@ Created on Mon Aug 17 11:31:51 2020
 import numpy as np
 from locscale.utils.plot_tools import tab_print
 
-tabbed_print = tab_print(3)
+tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None,verbose=True):
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array

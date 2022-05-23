@@ -31,7 +31,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     from locscale.utils.plot_tools import tab_print
     
-    tabbed_print = tab_print(1)
+    tabbed_print = tab_print(2)
     ## Check dependencies
     dependency_check = check_dependencies()
     
