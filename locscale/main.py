@@ -19,7 +19,7 @@ description = ["*** A comprehensive software to optimise amplitude contrast in c
         "EMmerNet: \n",\
         "{}".format(sample_run_emmernet)]
 
-main_parser = argparse.ArgumentParser(
+main_parser = argparse.ArgumentParser(prog="locscale",
 description="".join(description)) 
 
 ## Add subparsers
