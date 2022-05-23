@@ -2,120 +2,126 @@
 ## FILE HANDLING FUNCTIONS
 
 def check_dependencies():
+    
+    import warnings
     import os
     dependency = {}
-    # Check module locscale
-    try:
-        import locscale
-        dependency["locscale"] = True
-    except ImportError:
-        dependency["locscale"] = False
     
-    # Check module gemmi
-    try:
-        import gemmi
-        dependency["gemmi"] = True
-    except ImportError:
-        dependency["gemmi"] = False
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
     
-    ## Check modules mrcfile, pandas, scipy, numpy, matplotlib, tqdm
-    try:
-        import mrcfile
-        dependency["mrcfile"] = True
-    except ImportError:
-        dependency["mrcfile"] = False
+        # Check module locscale
+        try:
+            import locscale
+            dependency["locscale"] = True
+        except ImportError:
+            dependency["locscale"] = False
+        
+        # Check module gemmi
+        try:
+            import gemmi
+            dependency["gemmi"] = True
+        except ImportError:
+            dependency["gemmi"] = False
+        
+        ## Check modules mrcfile, pandas, scipy, numpy, matplotlib, tqdm
+        try:
+            import mrcfile
+            dependency["mrcfile"] = True
+        except ImportError:
+            dependency["mrcfile"] = False
 
-    # Check module pandas
-    try:
-        import pandas
-        dependency["pandas"] = True
-    except ImportError:
-        dependency["pandas"] = False
-    
-    # Check module scipy
-    try:
-        import scipy
-        dependency["scipy"] = True
-    except ImportError:
-        dependency["scipy"] = False
-    
-    # Check module numpy
-    try:
-        import numpy
-        dependency["numpy"] = True
-    except ImportError:
-        dependency["numpy"] = False
-    
-    # Check module matplotlib
-    try:
-        import matplotlib
-        dependency["matplotlib"] = True
-    except ImportError:
-        dependency["matplotlib"] = False
-    
-    ## Check module tqdm
-    try:
-        import tqdm
-        dependency["tqdm"] = True
-    except ImportError:
-        dependency["tqdm"] = False
-    
-    ## Check modules tensorflow, keras, tensorflow_addons, pypdb, pyfiglet, emda, proshade
-    try:
-        import tensorflow
-        dependency["tensorflow"] = True
-    except:
-        dependency["tensorflow"] = False
-    
-    try:
-        import keras
-        dependency["keras"] = True
-    except:
-        dependency["keras"] = False
-    
-    try:
-        import tensorflow_addons
-        dependency["tensorflow_addons"] = True
-    except:
-        dependency["tensorflow_addons"] = False
-    
-    try:
-        import pypdb
-        dependency["pypdb"] = True
-    except:
-        dependency["pypdb"] = False
-    
-    try:
-        import pyfiglet
-        dependency["pyfiglet"] = True
-    except:
-        dependency["pyfiglet"] = False
-    
-    try:
-        import emda
-        dependency["emda"] = True
-    except:
-        dependency["emda"] = False
-    
-    try:
-        import proshade
-        dependency["proshade"] = True
-    except:
-        dependency["proshade"] = False
-    
-    ## Check Bio
-    try:
-        import Bio
-        dependency["Bio"] = True
-    except:
-        dependency["Bio"] = False
-    
-    ## Check Bio.PDB
-    try:
-        import Bio.PDB
-        dependency["Bio.PDB"] = True
-    except:
-        dependency["Bio.PDB"] = False
+        # Check module pandas
+        try:
+            import pandas
+            dependency["pandas"] = True
+        except ImportError:
+            dependency["pandas"] = False
+        
+        # Check module scipy
+        try:
+            import scipy
+            dependency["scipy"] = True
+        except ImportError:
+            dependency["scipy"] = False
+        
+        # Check module numpy
+        try:
+            import numpy
+            dependency["numpy"] = True
+        except ImportError:
+            dependency["numpy"] = False
+        
+        # Check module matplotlib
+        try:
+            import matplotlib
+            dependency["matplotlib"] = True
+        except ImportError:
+            dependency["matplotlib"] = False
+        
+        ## Check module tqdm
+        try:
+            import tqdm
+            dependency["tqdm"] = True
+        except ImportError:
+            dependency["tqdm"] = False
+        
+        ## Check modules tensorflow, keras, tensorflow_addons, pypdb, pyfiglet, emda, proshade
+        try:
+            import tensorflow
+            dependency["tensorflow"] = True
+        except:
+            dependency["tensorflow"] = False
+        
+        try:
+            import keras
+            dependency["keras"] = True
+        except:
+            dependency["keras"] = False
+        
+        try:
+            import tensorflow_addons
+            dependency["tensorflow_addons"] = True
+        except:
+            dependency["tensorflow_addons"] = False
+        
+        try:
+            import pypdb
+            dependency["pypdb"] = True
+        except:
+            dependency["pypdb"] = False
+        
+        try:
+            import pyfiglet
+            dependency["pyfiglet"] = True
+        except:
+            dependency["pyfiglet"] = False
+        
+        try:
+            import emda
+            dependency["emda"] = True
+        except:
+            dependency["emda"] = False
+        
+        try:
+            import proshade
+            dependency["proshade"] = True
+        except:
+            dependency["proshade"] = False
+        
+        ## Check Bio
+        try:
+            import Bio
+            dependency["Bio"] = True
+        except:
+            dependency["Bio"] = False
+        
+        ## Check Bio.PDB
+        try:
+            import Bio.PDB
+            dependency["Bio.PDB"] = True
+        except:
+            dependency["Bio.PDB"] = False
     
     list_of_all_imports = [x for x in dependency.values()]
     if all(list_of_all_imports):
