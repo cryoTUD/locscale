@@ -17,40 +17,56 @@ Please note that there is a GUI implemented version available as part of the [CC
 If you use conda, create a new environment:
 
 ```
-conda create -n locscale python=3.8 numpy
+conda create -n locscale python=3.8 
 conda activate locscale
 ```
-
+0) Download the git repo: 
+```
+git clone https://gitlab.tudelft.nl/aj-lab/locscale.git
+cd /path/to/repo/
+```
 1) Install packages using pip:
 
 The setup.py file contains the list of packages and their versions which are used in this program. Use pip version 21.3 to ensure all packages and their version requirements are met. 
 
 ```bash
-pip install locscale
+pip install -e . 
 ```
-You may need to install dependencies for proshade before installing locscale. You can find these [here](https://github.com/michaltykac/proshade)
+(this will create a pip module from your local git repository)
 
+2) Install proshade and emda
 ```
- sudo apt-get install gcc g++ make cmake git fftw3-dev liblapack-dev zlib1g-dev
+pip install emda==1.1.3.post6
+pip install proshade==0.7.3
 ```
-
-Make sure to update your apt-get before installing dependencies
+Note: 
+(i) proshade and emda requires the following linux dependencies incase you have trouble installing the packages
+(ii) You may need to update apt-get before installing the dependencies
 
 ```
 sudo apt-get update
 sudo apt-get upgrade
 ```
 
-2) The script uses a custom built wrapped for running REFMAC refinement of atomic models. Do install CCPEM and CCP4, and ensure the environment variables "CCPEM" and "CCP4" exist.
+2a)
+For proshade: (more information: https://github.com/michaltykac/proshade)
 
-3) Run the setup_locscale.sh to add a new environment variable "LOCSCALE_PATH" to your .bashrc file. If you do not wish to add the new variable then run the following command before using locscale: 
 ```
-export LOCSCALE_PATH="/home/path/to/locscale/"
+ sudo apt-get install gcc g++ make cmake git fftw3-dev liblapack-dev zlib1g-dev
+```
+2b) 
+For emda:
+```
+sudo apt-get gfortran
 ```
 
-Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
-<br> 
+3) Install GPU dependencies 
+```
+conda install -c anaconda cudatoolkit
+conda install -c anaconda cudnn
+```
 
+4) Install MPI support
 To run on multiple CPUs in parallel, `LocScale` uses MPI for distributed-memory parallelisation. Execution of the MPI-parallelized version requires installation of an MPI implementation (e.g. [openMPI](http://www.open-mpi.de/)) on your system.  
 
 `LocScale` needs [mpi4py](http://pythonhosted.org/mpi4py/) to interface with the MPI implementation. Both can be installed via conda/pip:
@@ -58,9 +74,57 @@ To run on multiple CPUs in parallel, `LocScale` uses MPI for distributed-memory 
 
 ```
 conda install openmpi
-pip install mpi4py
+conda install -c conda-forge mpi4py
 ```
 
+5) Run unittests 
+(i) 
+Change the active directory to "/path/to/locscale/tests/"
+```
+cd /path/to/locscale/tests/
+```
+(ii) LocScale tests
+```
+python -m unittest test_locscale.py -v
+```
+This should run the model-based and model-free locscale tests 
+
+(iii) EMmerNet tests
+```
+python -m unittest test_emmernet.py -v
+```
+(iv) Symmetry tests (to check emda installation)
+```
+python -m unittest test_symmetry.py -v
+```
+
+Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
+<br> 
+
+## How to use? 
+
+Run LocScale (model-based) using the following syntax
+```
+locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+```
+
+Run LocScale (model-free) using the following syntax 
+(this is the same syntax as above just not passing the model path runs the model free version automatically)
+```
+locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
+```
+
+Run EMmerNet 
+```
+locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
+```
+
+Note: For different EMmerNet models: Use the following syntax:
+```
+Model Based: -trained_model model_based
+Model Free: -trained_model model_free
+Ensemble Network: -trained_model ensemble
+```
 
 ## Usage, tutorial and FAQs
 
