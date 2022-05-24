@@ -98,12 +98,34 @@ python -m unittest test_emmernet.py -v
 python -m unittest test_symmetry.py -v
 ```
 
-
-
-
-
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 <br> 
+
+## How to use? 
+
+Run LocScale (model-based) using the following syntax
+```
+python /path/to/locscale/locscale/main.py run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+```
+
+Run LocScale (model-free) using the following syntax 
+(this is the same syntax as above just not passing the model path runs the model free version automatically)
+```
+python /path/to/locscale/locscale/main.py run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
+```
+
+Run EMmerNet 
+```
+python /path/to/locscale/locscale/main.py run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
+```
+
+Note: For different EMmerNet models: Use the following syntax:
+```
+Model Based: -trained_model model_based
+Model Free: -trained_model model_free
+Ensemble Network: -trained_model ensemble
+```
+
 ## Usage, tutorial and FAQs
 
 Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) pages for usage instructions, FAQs and tutorial.
