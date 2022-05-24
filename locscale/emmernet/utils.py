@@ -76,7 +76,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     input_emmap_path = parsed_inputs["emmap_path"]
     input_emmap_folder = os.path.dirname(input_emmap_path)
     output_emmap_filename = parsed_inputs["outfile"]
-    output_emmap_folder = os.path.dirname(output_emmap_filename)
+    output_emmap_folder = parsed_inputs["emmap_folder"]
     verbose = parsed_inputs["verbose"]
 
     if output_emmap_folder is not None:
