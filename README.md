@@ -37,7 +37,7 @@ pip install -e .
 2) Install proshade and emda
 ```
 pip install emda==1.1.3.post6
-pip install proshade>=0.7.6.3
+pip install proshade==0.7.3
 ```
 Note: 
 (i) proshade and emda requires the following linux dependencies incase you have trouble installing the packages
@@ -74,7 +74,7 @@ To run on multiple CPUs in parallel, `LocScale` uses MPI for distributed-memory 
 
 ```
 conda install openmpi
-pip install mpi4py
+conda install -c conda-forge mpi4py
 ```
 
 5) Run unittests 
@@ -105,18 +105,18 @@ Alternatively, download the portable installation with all libraries/dependencie
 
 Run LocScale (model-based) using the following syntax
 ```
-python /path/to/locscale/locscale/main.py run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
 Run LocScale (model-free) using the following syntax 
 (this is the same syntax as above just not passing the model path runs the model free version automatically)
 ```
-python /path/to/locscale/locscale/main.py run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
+locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
 
 Run EMmerNet 
 ```
-python /path/to/locscale/locscale/main.py run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
+locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
 ```
 
 Note: For different EMmerNet models: Use the following syntax:
