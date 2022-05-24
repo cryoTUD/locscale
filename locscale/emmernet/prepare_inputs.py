@@ -2,6 +2,7 @@ import mrcfile
 import os
 
 def prepare_inputs(args):
+    import os
     from locscale.emmernet.utils import check_emmernet_dependencies
     from locscale.utils.file_tools import get_emmap_path_from_args
     from locscale.preprocessing.headers import check_axis_order
@@ -10,6 +11,11 @@ def prepare_inputs(args):
 
     emmap_path, _ = get_emmap_path_from_args(args)
 
+    ## Get absolute path of emmap_path
+    emmap_path_absolute = os.path.abspath(emmap_path)
+    ## Get folder of emmap_path
+    emmap_folder = os.path.dirname(emmap_path_absolute)
+
     xyz_emmap_path = check_axis_order(emmap_path)
     emmernet_type = args.trained_model
     stride = args.stride
@@ -17,6 +23,7 @@ def prepare_inputs(args):
     outputfile = args.outfile
     batch_size = args.batch_size
     gpu_ids = args.gpu_ids
+    
 
 
 
@@ -29,6 +36,7 @@ def prepare_inputs(args):
         "outfile": outputfile,
         "batch_size": batch_size,
         "gpu_ids": gpu_ids,
+        "emmap_folder": emmap_folder
         }
     
     if verbose:
