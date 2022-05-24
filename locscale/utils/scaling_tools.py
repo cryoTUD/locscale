@@ -359,7 +359,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     processing_files_folder=parsed_inputs_dict['processing_files_folder']
     
     from mpi4py import MPI
-    from locscale.utils.prepare_inputs import get_xyz_locs_and_indices_after_edge_cropping_and_masking
+    from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     from locscale.utils.general import save_list_as_map, merge_sequence_of_sequences, split_sequence_evenly, put_scaled_voxels_back_in_original_volume_including_padding
     
     comm = MPI.COMM_WORLD
