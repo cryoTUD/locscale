@@ -4,4 +4,8 @@ __pycache__/
 *.pyc
 .json
 .vscode/
+locscale/emmernet/emmernet_models/
+tests/test_data
+locscale.egg-info/
+
 
