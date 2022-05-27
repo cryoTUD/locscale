@@ -1,6 +1,29 @@
 
 ## FILE HANDLING FUNCTIONS
 
+def download_emmernet_model_from_url(download_folder):
+    import wget
+   
+    url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"
+    wget.download(url_model_based_emmernet, download_folder)
+
+def download_test_data_from_url(download_folder):
+    import wget
+   
+    url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
+    wget.download(url_test_data, download_folder)
+
+def extract_tar_files_in_folder(tar_folder):
+    import tarfile
+    import os
+    print(os.listdir(tar_folder))
+    for file in os.listdir(tar_folder):
+        if file.endswith(".tar.gz"):
+            print("Extracting: {}".format(file))
+            tar = tarfile.open(os.path.join(tar_folder,file))
+            tar.extractall()
+            tar.close()
+
 def check_dependencies():
     
     import warnings
