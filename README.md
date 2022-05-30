@@ -18,7 +18,7 @@ If you use conda, create a new environment:
 
 ```
 conda create -n locscale python=3.8 
-conda activate locscale
+source activate locscale
 ```
 0) Download the git repo: 
 ```
