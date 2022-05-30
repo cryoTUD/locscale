@@ -32,7 +32,7 @@ class TestSymmetry(unittest.TestCase):
         
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
-        import emda.emda_methods as em
+        from locscale.include.symmetrize_map import symmetrize_map_known_pg
         from tempfile import TemporaryDirectory
         import os
         from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map
@@ -44,8 +44,9 @@ class TestSymmetry(unittest.TestCase):
             resampled_emmap_path = os.path.join(tempDir, "resampled_emmap.mrc")
             save_as_mrc(resampled_emmap, resampled_emmap_path, apix=3)
             os.chdir(tempDir)
-            sym = em.symmetry_average([resampled_emmap_path],[3.4],pglist=["C4"],)
-            self.assertEqual(sym[0].shape,(104,104,104))
+            sym = symmetrize_map_known_pg(resampled_emmap, apix=3, pg="C4")
+            self.assertEqual(sym.shape,(104,104,104))
+            
         
        
 
