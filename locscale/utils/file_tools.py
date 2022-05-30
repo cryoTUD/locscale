@@ -13,15 +13,19 @@ def download_test_data_from_url(download_folder):
     url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
     wget.download(url_test_data, download_folder)
 
-def extract_tar_files_in_folder(tar_folder):
+def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile
     import os
-    print(os.listdir(tar_folder))
+    if use_same_folder == 0:
+        target_folder = tar_folder
+    else:
+        target_folder = os.path.dirname(tar_folder)
+
     for file in os.listdir(tar_folder):
         if file.endswith(".tar.gz"):
             print("Extracting: {}".format(file))
             tar = tarfile.open(os.path.join(tar_folder,file))
-            tar.extractall()
+            tar.extractall(target_folder)
             tar.close()
 
 def check_dependencies():
