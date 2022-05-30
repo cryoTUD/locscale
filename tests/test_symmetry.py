@@ -20,6 +20,7 @@ class TestSymmetry(unittest.TestCase):
         self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
 
     def copy_files(self, file_path, tempDir):
+        import os
         from subprocess import run
         run(["cp",file_path,tempDir])
         if os.path.exists(os.path.join(tempDir, os.path.basename(file_path))):               
@@ -33,11 +34,18 @@ class TestSymmetry(unittest.TestCase):
         print("Imposing a symmetry condition of C4")
         import emda.emda_methods as em
         from tempfile import TemporaryDirectory
-        
+        import os
+        from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map
+
         with TemporaryDirectory() as tempDir:
             copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
-            sym = em.symmetry_average([copied_emmap_path],[3.4],pglist=["C4"])
-            self.assertEqual(sym[0].shape,(256,256,256))
+            emmap, apix = load_map(copied_emmap_path)
+            resampled_emmap = resample_map(emmap, apix=apix,apix_new=3)
+            resampled_emmap_path = os.path.join(tempDir, "resampled_emmap.mrc")
+            save_as_mrc(resampled_emmap, resampled_emmap_path, apix=3)
+            os.chdir(tempDir)
+            sym = em.symmetry_average([resampled_emmap_path],[3.4],pglist=["C4"],)
+            self.assertEqual(sym[0].shape,(104,104,104))
         
        
 

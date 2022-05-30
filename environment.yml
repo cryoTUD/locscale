@@ -5,7 +5,6 @@ channels:
 dependencies:
   - cudatoolkit=11.3.1=h2bc3f7f_2
   - cudnn=8.2.1=cuda11.3_0
-  - mpi=1.0=openmpi
   - mpi4py=3.0.3=py38hd0bea5a_0
   - openmpi=4.0.2=hb1b8bf9_1
 
