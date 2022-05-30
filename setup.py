@@ -6,7 +6,7 @@ from setuptools.command.develop import develop
 from numpy.distutils.core import setup, Extension
 
 class PostDevelopCommand(develop):
-  """ Post-installation for installation mode. """
+  """ Post-installation for development mode. """
   def run(self):
     import os
     develop.run(self)   
@@ -27,6 +27,14 @@ class PostDevelopCommand(develop):
     download_test_data_from_url(test_data_path)
     ## Extract tar.gz files in test data folder
     extract_tar_files_in_folder(test_data_path, use_same_folder=True)
+
+    ## Update the current conda environment with the new packages in environment.yml
+    import subprocess
+    subprocess.run(["conda","env","update","--file",os.path.join(locscale_path,"environment.yml")])
+
+    ## Install EMDA and Proshade
+    subprocess.run(["pip","install","emda==1.1.3.post6"])
+    subprocess.run(["pip","install","proshade==0.7.3"])
 
     
 
