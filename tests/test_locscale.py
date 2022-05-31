@@ -99,7 +99,7 @@ class test_locscale(unittest.TestCase):
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
             locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",copied_emmap_path, \
-                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose","--symmetry","C4"]
+                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose"]
                         
             locscale_test_run = run(locscale_command)
             
