@@ -103,7 +103,7 @@ emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of e
                             choices=['model_based', 'model_free', 'ensemble'], default='model_based')
 emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
-emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=True)
+emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
 
 
 
@@ -161,6 +161,21 @@ def print_start_banner(start_time, text="Map Sharpening"):
     print(fill("{}".format(paper_ref_2), width=80, subsequent_indent="\t"))
     #print(wrap("{}".format(paper_ref_3), width=80))
     print("\n")
+    if text == "EMmerNet":
+        ## Print disclaimer for EMmerNet as this is in testing phase
+        print("DISCLAIMER: Network Inpainting.\n")
+        ## Print note on testing for network inpainting
+        print(fill("EMmerNet is a neural network based map sharpening procedure. As such, there exists a risk of network inpainting " \
+                +"i.e. the densities predicted by the network may not correspond to real densities. We are trying hard to mitigate "\
+                +"this risk and we are undertaking a number of tests to ensure that the network inpainting is not a problem. "\
+                +"These tests include: "+"\n"\
+                +"\t-> Testing network performance against simulated data "+"\n"\
+                +"\t-> Quantify the degree of inpainting "+"\n"\
+                +"We have taken steps to ensure minimal bias exists in the training phase by using a appropriate training targets "\
+                +"If you find that the network inpainting is a problem, please report this to the authors. "+"\n"\
+                +"Arjen Jakobi: a.jakobi@tudelft.nl  ", width=80))
+
+
     print("="*80)
     print("="*80)
     

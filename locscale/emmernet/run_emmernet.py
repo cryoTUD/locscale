@@ -58,11 +58,17 @@ def run_emmernet(input_dictionary):
     ## Run EMmerNet using GPUs
     
     # prepare GPU id list
+    if gpu_ids is None:
+        print("No GPU id specified, running on CPU")
+        print("If you want to use GPUs, please specify the GPU id(s) using the --gpu_ids flag")
+        print("This may take a while...")
+        mirrored_strategy = tf.distribute.MirroredStrategy()
+    else:
+        gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
+        if verbose:
+            print("\tGPU ids: {}".format(gpu_id_list))
+        mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_id_list)
     
-    gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
-    if verbose:
-        print("\tGPU ids: {}".format(gpu_id_list))
-    mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_id_list)
     predicted_cubes = run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size=batch_size)
 
     if verbose:
