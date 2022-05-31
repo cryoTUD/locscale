@@ -9,13 +9,15 @@ def compile_fcodes_fast():
   from numpy import f2py
   from locscale.utils.file_tools import get_locscale_path
   import os
+  import subprocess
 
   fcodes_path = os.path.join(get_locscale_path(), "locscale","include", "fcodes_fast.f90")
-
-  with open(fcodes_path) as sourcefile:
-    sourcecode = sourcefile.read()
+  target_dir = os.path.dirname(fcodes_path)
+  current_dir = os.getcwd()
+  os.chdir(target_dir)
+  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--build-dir",target_dir,"--quiet"])
+  os.chdir(current_dir)
   
-  f2py.compile(sourcecode, modulename="fcodes_fast")
 
 def download_emmernet_models():
   from locscale.utils.file_tools import get_locscale_path, download_emmernet_model_from_url, extract_tar_files_in_folder
@@ -42,7 +44,7 @@ def download_test_data():
 def update_conda_environment():
   import subprocess
   from locscale.utils.file_tools import get_locscale_path
-
+  import os
   subprocess.run(["conda", "env", "update", "--file", os.path.join(get_locscale_path(), "environment.yml")])
 
     
