@@ -4,6 +4,16 @@ from locscale.include import fcodes_fast
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from locscale.include.GenerateOperators_v9_ky4 import operators_from_symbol
 
+"""
+Original authors
+
+Author: "Rangana Warshamanage, Garib N. Murshudov"
+MRC Laboratory of Molecular Biology
+
+https://gitlab.com/ccpem/emda/-/tree/master/
+EMDA version 1.1.3.post6
+"""
+
 def get_resolution_array(uc, hf1):
     debug_mode = 0
     nx, ny, nz = hf1.shape
@@ -53,6 +63,13 @@ def rebox_map(arr1):
 
 
 def symmetrize_map_known_pg(emmap, apix, pg):
+    print("===== Symmetrize Map =====")
+    print("Credits: Rangana Warshamanage, Garib N. Murshudov")
+    print("EMDA version 1.1.3.post6")
+    print("https://gitlab.com/ccpem/emda/-/tree/master/")
+    print("==========================")
+    
+
     _, _, ops = operators_from_symbol(pg)
     #uc, arr, orig = em.get_data(imap)
     unitcell = np.array([emmap.shape[0]*apix, emmap.shape[1]*apix, emmap.shape[2]*apix, 90, 90, 90])
@@ -60,7 +77,7 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     f1 = fftshift(fftn(fftshift(arr2)))
     nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
     frs_sum = f1
-    print("Symmetrising map...")
+    
     for op in ops[1:]:
         frs = apply_op(f1, op, bin_idx, nbin)
         frs_sum += frs
