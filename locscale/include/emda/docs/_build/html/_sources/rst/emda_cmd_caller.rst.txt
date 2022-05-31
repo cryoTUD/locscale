@@ -1,7 +1,0 @@
-emda\_cmd\_caller module
-========================
-
-.. argparse::
-   :filename: scripts/emda_cmd_caller.py
-   :func: cmdl_parser
-   :prog: emda
