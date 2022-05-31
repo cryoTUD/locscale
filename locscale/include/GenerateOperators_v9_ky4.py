@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""
+Original authors
+
+Author: "Rangana Warshamanage, Garib N. Murshudov"
+MRC Laboratory of Molecular Biology
+
+https://gitlab.com/ccpem/emda/-/tree/master/
+EMDA version 1.1.3.post6
+"""
 """
 Created on Thu Jan 21 11:51:10 2021
 
 @author: garib
 """
+
+
 import numpy as np
 import random as rnd
 import math as math
