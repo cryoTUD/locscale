@@ -1,6 +1,6 @@
 # symmetrize map by operators
 import numpy as np
-import fcodes_fast
+from locscale.include import fcodes_fast
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from locscale.include.GenerateOperators_v9_ky4 import operators_from_symbol
 

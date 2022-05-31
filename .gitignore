@@ -7,5 +7,5 @@ __pycache__/
 locscale/emmernet/emmernet_models/
 tests/test_data
 locscale.egg-info/
-
+build/
 
