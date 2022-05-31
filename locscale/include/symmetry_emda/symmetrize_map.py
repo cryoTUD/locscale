@@ -1,8 +1,8 @@
 # symmetrize map by operators
 import numpy as np
-from locscale.include import fcodes_fast
+from locscale.include.symmetry_emda import fcodes_fast
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
-from locscale.include.GenerateOperators_v9_ky4 import operators_from_symbol
+from locscale.include.symmetry_emda.GenerateOperators_v9_ky4 import operators_from_symbol
 
 """
 Original authors
