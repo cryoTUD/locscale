@@ -25,7 +25,27 @@ class test_locscale(unittest.TestCase):
         self.reference_locscale_MF = os.path.join(data_folder, "reference_mf_locscale.mrc")
         self.resolution = 3.4
         
+    def copy_files(self, file_path, tempDir):
+        import os
+        from subprocess import run
+        run(["cp",file_path,tempDir])
+        if os.path.exists(os.path.join(tempDir, os.path.basename(file_path))):               
+            return os.path.join(tempDir, os.path.basename(file_path))
+            
+        else:
+            raise UserWarning("Could not copy {} to {}".format(path,tempDir))
+    
+    def resample_map(self,emmap_path):
+        from locscale.include.emmer.ndimage.map_utils import resample_map, load_map, save_as_mrc
+        import os
+        emmap,apix = load_map(emmap_path)
+        emmap_resampled = resample_map(emmap,apix=apix,apix_new=3)
         
+        resampled_map_path = os.path.join(os.path.dirname(emmap_path),"resampled_"+os.path.basename(emmap_path))
+        save_as_mrc(emmap_resampled,resampled_map_path, apix=3)
+        return resampled_map_path
+
+
     
     def test_run_model_based_locscale(self):
         from tempfile import TemporaryDirectory
@@ -37,25 +57,17 @@ class test_locscale(unittest.TestCase):
             from subprocess import run
             
             # copy emmap
-            run(["cp",self.emmap_path,tempDir])
-            emmap_name= os.path.basename(self.emmap_path)
-            temp_emmap_path = os.path.join(tempDir,emmap_name)
-            
-            run(["cp",self.model_coordinates,tempDir])
-            model_name = os.path.basename(self.model_coordinates)
-            temp_model_path = os.path.join(tempDir, model_name)
-
-            run(["cp",self.mask_path,tempDir])
-            mask_name = os.path.basename(self.mask_path)
-            temp_mask_path = os.path.join(tempDir, mask_name)
+            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
+            copied_mask_path = self.copy_files(self.mask_path, tempDir)
+            copied_model_coordinates = self.copy_files(self.model_coordinates, tempDir)
             
             os.chdir(tempDir)
-            
+
             output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
             locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
-                temp_emmap_path, "--model_coordinates",temp_model_path,"--mask",temp_mask_path, \
+                copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
             
             locscale_test_run = run(locscale_command)
@@ -76,21 +88,19 @@ class test_locscale(unittest.TestCase):
             from subprocess import run
             
             # copy emmap
-            run(["cp",self.emmap_path,tempDir])
-            emmap_name= os.path.basename(self.emmap_path)
-            temp_emmap_path = os.path.join(tempDir,emmap_name)
-
-            run(["cp",self.mask_path,tempDir])
-            mask_name = os.path.basename(self.mask_path)
-            temp_mask_path = os.path.join(tempDir, mask_name)
-            
+            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
+            copied_mask_path = self.copy_files(self.mask_path, tempDir)
+                        
             os.chdir(tempDir)
+
+            resampled_emmap_path = self.resample_map(copied_emmap_path)
+            resampled_mask_path = self.resample_map(copied_mask_path)
             
             output_locscale_path = os.path.join(tempDir, "locscale_MF_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",temp_emmap_path, \
-                "--mask",temp_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose"]
+            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",resampled_emmap_path, \
+                "--mask",resampled_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose","--symmetry","C4"]
                         
             locscale_test_run = run(locscale_command)
             
