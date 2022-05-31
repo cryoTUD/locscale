@@ -141,12 +141,15 @@ def get_modmap(modmap_args):
     if pg_symmetry != "C1":
         if verbose:
             tabbed_print.tprint("Imposing a symmetry condition of {}".format(pg_symmetry))
-        import emda.emda_methods as em
+        from locscale.include.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-        sym = em.symmetry_average([pseudomodel_modmap],[resolution],pglist=[pg_symmetry])
+        sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=pg_symmetry)
         symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(pg_symmetry)
-        save_as_mrc(map_data=sym[0], output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=False)
+        save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=False)
         pseudomodel_modmap = symmetrised_modmap
+    else:
+        if verbose:
+            tabbed_print.tprint("No symmetry condition imposed")
     
     if model_resolution is not None:
         if verbose:
