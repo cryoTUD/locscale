@@ -32,7 +32,7 @@ class TestSymmetry(unittest.TestCase):
         
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
-        from locscale.include.symmetrize_map import symmetrize_map_known_pg
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_known_pg
         from tempfile import TemporaryDirectory
         import os
         from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map

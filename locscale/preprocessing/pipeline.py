@@ -141,7 +141,7 @@ def get_modmap(modmap_args):
     if pg_symmetry != "C1":
         if verbose:
             tabbed_print.tprint("Imposing a symmetry condition of {}".format(pg_symmetry))
-        from locscale.include.symmetrize_map import symmetrize_map_emda
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
         sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=pg_symmetry)
         symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(pg_symmetry)
