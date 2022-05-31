@@ -90,23 +90,22 @@ class test_locscale(unittest.TestCase):
             # copy emmap
             copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
             copied_mask_path = self.copy_files(self.mask_path, tempDir)
+            copy_reference_locscale_MF = self.copy_files(self.reference_locscale_MF, tempDir)
                         
             os.chdir(tempDir)
 
-            resampled_emmap_path = self.resample_map(copied_emmap_path)
-            resampled_mask_path = self.resample_map(copied_mask_path)
             
             output_locscale_path = os.path.join(tempDir, "locscale_MF_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",resampled_emmap_path, \
-                "--mask",resampled_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose","--symmetry","C4"]
+            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",copied_emmap_path, \
+                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose","--symmetry","C4"]
                         
             locscale_test_run = run(locscale_command)
             
             self.assertTrue(os.path.exists(output_locscale_path))
             
-            rscc_test = rsc(self.reference_locscale_MF,output_locscale_path)
+            rscc_test = rsc(copy_reference_locscale_MF,output_locscale_path)
             
             self.assertTrue(rscc_test>0.9)
             
