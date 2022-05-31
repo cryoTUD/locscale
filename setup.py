@@ -10,12 +10,12 @@ def compile_fcodes_fast():
   from locscale.utils.file_tools import get_locscale_path
   import os
 
-  fcodes_path = os.path.join(get_locscale_path(), 'include', 'fcodes_fast.f90')
+  fcodes_path = os.path.join(get_locscale_path(), "locscale","include", "fcodes_fast.f90")
 
   with open(fcodes_path) as sourcefile:
     sourcecode = sourcefile.read()
   
-  f2py.compile(sourcecode, modulename='fcodes_fast')
+  f2py.compile(sourcecode, modulename="fcodes_fast")
 
 def download_emmernet_models():
   from locscale.utils.file_tools import get_locscale_path, download_emmernet_model_from_url, extract_tar_files_in_folder
