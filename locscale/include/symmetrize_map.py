@@ -88,4 +88,8 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     return avgmap
 
 
-
+def symmetrize_map_emda(emmap_path, pg):
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    emmap,apix = load_map(emmap_path)
+    symmetry_average_map = symmetrize_map_known_pg(emmap, apix, pg)
+    return symmetry_average_map

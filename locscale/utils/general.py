@@ -227,13 +227,13 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     if args.symmetry != "C1":
         resolution = parsed_inputs_dict['fsc_resolution']
         print("Imposing a symmetry condition of {}".format(args.symmetry))
-        import emda.emda_methods as em
+        from locscale.include.symmetry_map import symmetrize_map_emda
         
-        LocScaleVol_sym = em.symmetry_average([output_filename],[resolution],pglist=[args.symmetry])
+        LocScaleVol_sym = symmetrize_map_emda(emmap_path=output_filename,pg=args.symmetry)
 
         output_filename = output_filename[:-4]+"_symmetrised.mrc"
 
-        save_as_mrc(map_data=LocScaleVol_sym[0], output_filename=output_filename, apix=apix, origin=0, verbose=True)
+        save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
     if args.output_report:
         make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
