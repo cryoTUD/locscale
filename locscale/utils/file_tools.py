@@ -124,17 +124,17 @@ def check_dependencies():
         except:
             dependency["pyfiglet"] = False
         
-        try:
-            import emda
-            dependency["emda"] = True
-        except:
-            dependency["emda"] = False
+        # try:
+        #     import emda
+        #     dependency["emda"] = True
+        # except:
+        #     dependency["emda"] = False
         
-        try:
-            import proshade
-            dependency["proshade"] = True
-        except:
-            dependency["proshade"] = False
+        # try:
+        #     import proshade
+        #     dependency["proshade"] = True
+        # except:
+        #     dependency["proshade"] = False
         
         ## Check Bio
         try:
