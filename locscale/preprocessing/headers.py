@@ -272,7 +272,7 @@ def is_pseudomodel(input_pdb_path):
     
         
     
-def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfactor_refinement, refmac5_path=None, verbose=True):
     import os
     from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
@@ -287,6 +287,9 @@ def run_refmac_servalcat(model_path,map_path,resolution,  num_iter,only_bfactor_
     servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
     if only_bfactor_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
+
+    if refmac5_path is not None:
+        servalcat_command += ["--exe",refmac5_path]
 
     if verbose:       
         tprint("Command line for servalcat: \n")    
