@@ -5,9 +5,18 @@
 
 # LocScale
 
-`LocScale` is a program for reference-based density scaling (local sharpening) of cryo-EM maps with the aim to improve their interpretability.
+`LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
+
+#### New in LocScale 2.0:
+
+- model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
+
+- automatic refinement of B-factors
+
+- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is a network model that has been trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
   
-`LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.  
+`LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
+
 
 Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/).
 <br>   
