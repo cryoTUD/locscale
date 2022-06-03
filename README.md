@@ -34,7 +34,7 @@ cd /path/to/repo/
 The setup.py file contains the list of packages and their versions which are used in this program. Use pip version 21.3 to ensure all packages and their version requirements are met. 
 
 ```bash
-pip install -e . 
+pip install locscale 
 ```
 (this will create a pip module from your local git repository)
 
