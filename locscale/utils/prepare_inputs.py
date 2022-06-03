@@ -124,6 +124,7 @@ def prepare_mask_and_maps_for_scaling(args):
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
         refmac_iter = int(args.refmac_iterations)
+        refmac5_path = args.refmac5_path
         if pseudomodel_method == 'random' and args.total_iterations is None:
             pam_iteration = 100
         elif pseudomodel_method == 'gradient' and args.total_iterations is None:
@@ -152,7 +153,8 @@ def prepare_mask_and_maps_for_scaling(args):
             'pg_symmetry':args.symmetry,
             'molecular_weight':molecular_weight,
             'build_ca_only':build_ca_only,
-            'verbose':verbose
+            'verbose':verbose,
+            'refmac5_path':refmac5_path,
         }
         
         modmap_path = get_modmap(modmap_args)

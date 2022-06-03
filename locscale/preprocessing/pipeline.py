@@ -48,6 +48,7 @@ def get_modmap(modmap_args):
     refmac_iter = modmap_args['refmac_iter']
     add_blur = modmap_args['add_blur']
     skip_refine = modmap_args['skip_refine']
+    refmac5_path = modmap_args['refmac5_path']
     pg_symmetry = modmap_args['pg_symmetry']
     model_resolution = modmap_args['model_resolution']
     molecular_weight = modmap_args['molecular_weight']
@@ -128,7 +129,7 @@ def get_modmap(modmap_args):
     else:
         refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
                     only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,
-                    verbose=verbose)
+                    refmac5_path=refmac5_path,verbose=verbose)
         if refined_model_path is None:
             tabbed_print.tprint("Problem running REFMAC. Returning None")
             return None

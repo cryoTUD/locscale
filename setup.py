@@ -47,7 +47,17 @@ def update_conda_environment():
   import os
   subprocess.run(["conda", "env", "update", "--file", os.path.join(get_locscale_path(), "environment.yml")])
 
-    
+def check_refmac5_installed():
+  from shutil import which
+  # Check if refmac5 is installed
+  refmac5_location = which("refmac5")
+  if refmac5_location is None:
+    raise UserWarning("Refmac5 is not installed. Please install it and try again.")
+  else:
+    print("Refmac5 is installed at {}".format(refmac5_location))
+    print("If you want to use a different binary please use the --refmac5_location option")
+  
+  
 class PostDevelopCommand(develop):
   """ Post-installation for development mode. """
   def run(self):
@@ -66,6 +76,9 @@ class PostDevelopCommand(develop):
     # Compile fcodes_fast
     compile_fcodes_fast()
 
+    # Check if refmac5 is installed
+    check_refmac5_installed()
+
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
     def run(self):
@@ -81,6 +94,10 @@ class PostInstallCommand(install):
 
         # Compile fcodes_fast
         compile_fcodes_fast()
+
+        # Check if refmac5 is installed
+        check_refmac5_installed()
+        
     
 
 setup(name='locscale',
