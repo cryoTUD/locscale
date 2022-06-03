@@ -11,9 +11,12 @@
 
 - model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
 
-- automatic refinement of B-factors
+- completely automated process for local map sharpening 
+
+- full support for point group symmetry (helical symmetry to follow)
 
 - `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is a network model that has been trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
+<br>
   
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
 
