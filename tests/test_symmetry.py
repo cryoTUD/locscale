@@ -27,7 +27,7 @@ class TestSymmetry(unittest.TestCase):
             return os.path.join(tempDir, os.path.basename(file_path))
             
         else:
-            raise UserWarning("Could not copy {} to {}".format(path,tempDir))
+            raise UserWarning("Could not copy {} to {}".format(file_path,tempDir))
 
         
     def test_symmetry(self):
