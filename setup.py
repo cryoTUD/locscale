@@ -66,7 +66,21 @@ class PostDevelopCommand(develop):
     # Compile fcodes_fast
     compile_fcodes_fast()
 
-    
+class PostInstallCommand(install):
+    """Post-installation for installation mode."""
+    def run(self):
+        install.run(self)
+        # Download emmernet models
+        download_emmernet_models()
+
+        # Download test data
+        download_test_data()
+
+        # Update conda environment
+        update_conda_environment()
+
+        # Compile fcodes_fast
+        compile_fcodes_fast()
     
 
 setup(name='locscale',
@@ -85,6 +99,7 @@ setup(name='locscale',
           'locscale = locscale.main:main',
                           ],
       },
-      cmdclass={'develop': PostDevelopCommand},
+      cmdclass={'develop': PostDevelopCommand,
+                'install': PostInstallCommand},
     zip_safe= False)
 
