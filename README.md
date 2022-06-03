@@ -14,12 +14,16 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 ## Installation
 
-If you use conda, create a new environment:
+Create a new environment. 
+
+For more instructions on installing Anaconda click [here](https://www.anaconda.com/products/distribution) 
 
 ```
 conda create -n locscale python=3.8 
 source activate locscale
 ```
+
+
 0) Download the git repo: 
 ```
 git clone https://gitlab.tudelft.nl/aj-lab/locscale.git
@@ -34,50 +38,7 @@ pip install -e .
 ```
 (this will create a pip module from your local git repository)
 
-2) Install proshade and emda
-```
-pip install emda==1.1.3.post6
-pip install proshade==0.7.3
-```
-Note: 
-(i) proshade and emda requires the following linux dependencies incase you have trouble installing the packages
-(ii) You may need to update apt-get before installing the dependencies
-
-```
-sudo apt-get update
-sudo apt-get upgrade
-```
-
-2a)
-For proshade: (more information: https://github.com/michaltykac/proshade)
-
-```
- sudo apt-get install gcc g++ make cmake git fftw3-dev liblapack-dev zlib1g-dev
-```
-2b) 
-For emda:
-```
-sudo apt-get gfortran
-```
-
-3) Install GPU dependencies 
-```
-conda install -c anaconda cudatoolkit
-conda install -c anaconda cudnn
-```
-
-4) Install MPI support
-To run on multiple CPUs in parallel, `LocScale` uses MPI for distributed-memory parallelisation. Execution of the MPI-parallelized version requires installation of an MPI implementation (e.g. [openMPI](http://www.open-mpi.de/)) on your system.  
-
-`LocScale` needs [mpi4py](http://pythonhosted.org/mpi4py/) to interface with the MPI implementation. Both can be installed via conda/pip:
-
-
-```
-conda install openmpi
-conda install -c conda-forge mpi4py
-```
-
-5) Run unittests 
+2) Run unittests 
 (i) 
 Change the active directory to "/path/to/locscale/tests/"
 ```
