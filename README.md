@@ -15,7 +15,7 @@
 
 - full support for point group symmetry (helical symmetry to follow)
 
-- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is a network model that has been trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
+- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is an ensemble network model trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
 <br>
   
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
