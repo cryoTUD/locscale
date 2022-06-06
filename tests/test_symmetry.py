@@ -18,7 +18,7 @@ class TestSymmetry(unittest.TestCase):
         self.locscale_path = get_locscale_path()
         
         self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
-        self.emmap_path = "/home/alok/dev/ForUbuntu/LocScale/tests/new_symmetry/emd5778_tutorial.mrc"
+#        self.emmap_path = "/home/alok/dev/ForUbuntu/LocScale/tests/new_symmetry/emd5778_tutorial.mrc"
 
     def copy_files(self, file_path, tempDir):
         import os
@@ -37,6 +37,7 @@ class TestSymmetry(unittest.TestCase):
         from tempfile import TemporaryDirectory
         import os
         from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map
+        from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
 
         with TemporaryDirectory() as tempDir:
             copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
@@ -47,6 +48,10 @@ class TestSymmetry(unittest.TestCase):
             os.chdir(tempDir)
             sym = symmetrize_map_known_pg(resampled_emmap, apix=3, pg="C4")
             self.assertEqual(sym.shape,(104,104,104))
+            rscc = rsc(sym, resampled_emmap)
+            print(rscc)
+            self.assertTrue(rscc>0.9)
+            
             
         
        
