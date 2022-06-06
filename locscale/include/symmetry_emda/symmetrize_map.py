@@ -1,9 +1,9 @@
 # symmetrize map by operators
 import numpy as np
-from locscale.include.symmetry_emda import fcodes_fast
+#from locscale.include.symmetry_emda import fcodes_fast
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from locscale.include.symmetry_emda.GenerateOperators_v9_ky4 import operators_from_symbol
-
+from locscale.include.symmetry_emda.apply_rotation_matrix import *
 """
 Original authors
 
@@ -50,7 +50,8 @@ def apply_op(f1, op, bin_idx, nbin):
     rm[1, :] = tmp[1, :]
     rm[2, :] = tmp[0, :]  
     nz, ny, nx = f1.shape 
-    frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
+    #frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
+    frs = trilinear_interpolation(f1, rm)
     return frs
 
 def rebox_map(arr1):
