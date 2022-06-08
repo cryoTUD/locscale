@@ -50,10 +50,10 @@ def apply_op(f1, op, bin_idx, nbin):
     rm[1, :] = tmp[1, :]
     rm[2, :] = tmp[0, :]  
     nz, ny, nx = f1.shape 
-    #frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
-    print("rm \n")
-    print(rm.round(2))
-    frs = trilinear_interpolation(f1, rm)
+    frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
+
+    #frs = trilinear_interpolation(f1, rm)  # CODE TBC
+    #frs = trilinear_interpolation_numpy(f1, rm) # TBC
     return frs
 
 def rebox_map(arr1):
@@ -77,22 +77,18 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     #uc, arr, orig = em.get_data(imap)
     unitcell = np.array([emmap.shape[0]*apix, emmap.shape[1]*apix, emmap.shape[2]*apix, 90, 90, 90])
     arr2 = double_the_axes(emmap)
+    print("Double the axes: {}".format(arr2.shape))
     f1 = fftshift(fftn(fftshift(arr2)))
     nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
     frs_sum = f1
     
-    for op in ops[1:]:
-        print("op: \n")
-        print(op.round(2))
-        frs = apply_op(f1, op, bin_idx, nbin)
+    for op in ops:
+        frs = apply_op(f1, op,bin_idx,nbin)
         frs_sum += frs
     avg_f = frs_sum / len(ops)
     avgmap = ifftshift(np.real(ifftn(ifftshift(avg_f))))
     avgmap = rebox_map(avgmap)
     
-    import matplotlib.pyplot as plt
-    plt.imshow(avgmap[:,:,52])
-    plt.savefig("/mnt/c/Users/alok/Downloads/ForUbuntu/Zslice.jpg")
     return avgmap
 
 
