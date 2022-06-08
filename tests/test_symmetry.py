@@ -5,10 +5,7 @@ Created on Fri Sep 10 19:42:23 2021
 
 @author: alok
 """
-
 import unittest
-
-      
 
 class TestSymmetry(unittest.TestCase):
     
@@ -17,15 +14,25 @@ class TestSymmetry(unittest.TestCase):
         import os
         self.locscale_path = get_locscale_path()
         
-        self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
+        self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_chainA.mrc")
+        #self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
+        self.symmetry_output = os.path.join(self.locscale_path,"tests","test_data","avgmap_fcodes.mrc")
 #        self.emmap_path = "/home/alok/dev/ForUbuntu/LocScale/tests/new_symmetry/emd5778_tutorial.mrc"
 
     def copy_files(self, file_path, tempDir):
         import os
         from subprocess import run
         run(["cp",file_path,tempDir])
-        if os.path.exists(os.path.join(tempDir, os.path.basename(file_path))):               
-            return os.path.join(tempDir, os.path.basename(file_path))
+        new_file_path = os.path.join(tempDir, os.path.basename(file_path))
+        if os.path.exists(new_file_path):        
+            from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map
+            emmap, apix = load_map(new_file_path)   
+            resampled_emmap=resample_map(emmap, apix=apix, apix_new=3)
+            resampled_file_path = os.path.join(tempDir, "resampled.mrc")
+            print("Saving resampled map to: {}".format(resampled_file_path))
+            print("Resampled map shape: {}".format(resampled_emmap.shape))
+            save_as_mrc(resampled_emmap, resampled_file_path, apix=3) 
+            return resampled_file_path
             
         else:
             raise UserWarning("Could not copy {} to {}".format(file_path,tempDir))
@@ -41,21 +48,17 @@ class TestSymmetry(unittest.TestCase):
 
         with TemporaryDirectory() as tempDir:
             copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
-            emmap, apix = load_map(copied_emmap_path)
-            resampled_emmap = resample_map(emmap, apix=apix,apix_new=3)
-            resampled_emmap_path = os.path.join(tempDir, "resampled_emmap.mrc")
-            save_as_mrc(resampled_emmap, resampled_emmap_path, apix=3)
             os.chdir(tempDir)
-            sym = symmetrize_map_known_pg(resampled_emmap, apix=3, pg="C4")
-            self.assertEqual(sym.shape,(104,104,104))
-            rscc = rsc(sym, resampled_emmap)
-            print(rscc)
-            self.assertTrue(rscc>0.9)
+            emmap, apix = load_map(copied_emmap_path)  
+            print("Emmap map shape: {}".format(emmap.shape))         
+            sym = symmetrize_map_known_pg(emmap, apix=apix, pg="C4")
+         #   self.assertEqual(sym.shape,(104,104,104))
+            reference_symmetry_map, _ = load_map(self.symmetry_output)
+            rscc = rsc(sym, reference_symmetry_map)
+            print("Correlation with test map", rscc)
+            self.assertTrue(rscc>0.99)
             
             
-        
-       
-
 if __name__ == '__main__':
     unittest.main()           
    
