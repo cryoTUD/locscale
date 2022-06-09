@@ -28,6 +28,21 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
+#### Requirements
+
+We recommend you update and upgrade your linux packages before proceeding with installation. 
+
+```
+sudo apt-get update
+sudo apt-get upgrade
+```
+
+Please make sure to install CCP4 Software Suite and check if the path to run `refmac5` is present in your environment. The following command should return the valid path. 
+
+```
+which refmac5
+```
+
 #### 1. Create and activate a new conda environment
 
 ```bash
