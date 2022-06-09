@@ -108,7 +108,7 @@ class test_locscale(unittest.TestCase):
 
             locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"run_locscale","--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
-                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
+                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose","--mpi"]
             
             locscale_test_run = run(locscale_command)
 
