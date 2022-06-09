@@ -30,13 +30,13 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 #### 1. Create a and acticate a new conda environment
 
-```
+```bash
 conda create -n locscale python=3.8 
 source activate locscale
 conda install -c conda-forge gfortran
 ```
 
-#### 3. Install LocScale and dependencies using pip:
+#### 2. Install LocScale and dependencies using pip:
 
 The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
 
@@ -51,17 +51,17 @@ Alternatively, download the portable installation with all libraries/dependencie
 
 ## Usage
 
-Run LocScale (model-based) using the following syntax:
+1. Run LocScale using an existing atomic model:
 ```
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
-Run LocScale (model-free) by omitting path to a model:
+2. Run LocScale without atomic model:
 ```
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
 
-Run EMmerNet 
+3. Run LocScale using an ensemble network (EMmerNet) prediction:
 ```
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
 ```
