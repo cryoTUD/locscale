@@ -37,7 +37,6 @@ class TestSymmetry(unittest.TestCase):
         else:
             raise UserWarning("Could not copy {} to {}".format(file_path,tempDir))
 
-        
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
         from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_known_pg

@@ -10,12 +10,16 @@ def compile_fcodes_fast():
   from locscale.utils.file_tools import get_locscale_path
   import os
   import subprocess
+  from shutil import which
 
   fcodes_path = os.path.join(get_locscale_path(), "locscale","include","symmetry_emda", "fcodes_fast.f90")
+  gfortran_location = which("gfortran")
+  assert gfortran_location is not None, "gfortran is not installed"
+
   target_dir = os.path.dirname(fcodes_path)
   current_dir = os.getcwd()
   os.chdir(target_dir)
-  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--build-dir",target_dir,"--quiet"])
+  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--build-dir",target_dir,"--quiet", "--f90exec={}".format(gfortran_location)])
   os.chdir(current_dir)
   
 
@@ -56,8 +60,16 @@ def check_refmac5_installed():
   else:
     print("Refmac5 is installed at {}".format(refmac5_location))
     print("If you want to use a different binary please use the --refmac5_location option")
-  
-  
+
+def check_and_install_gfortran():
+  from shutil import which
+  from subprocess import run
+  # Check if gfortran is installed
+  gfortran_location = which("gfortran")
+  if gfortran_location is None:
+    print("Installing gfortran using conda")
+    run(["conda", "install","-c","conda-forge","gfortran"])
+
 class PostDevelopCommand(develop):
   """ Post-installation for development mode. """
   def run(self):
@@ -72,6 +84,9 @@ class PostDevelopCommand(develop):
 
     # Update conda environment
     update_conda_environment()
+
+    # Install gfortran if not installed
+    check_and_install_gfortran()
 
     # Compile fcodes_fast
     compile_fcodes_fast()
@@ -91,6 +106,9 @@ class PostInstallCommand(install):
 
         # Update conda environment
         update_conda_environment()
+
+        # Install gfortran if not installed
+        check_and_install_gfortran()
 
         # Compile fcodes_fast
         compile_fcodes_fast()
