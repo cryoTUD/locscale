@@ -5,6 +5,7 @@ __pycache__/
 .json
 .vscode/
 locscale/emmernet/emmernet_models/
+locscale/include/symmetry_emda/fcodes_fast.cpython-38-x86_64-linux-gnu.so.cpython-38-x86_64-linux-gnu.so
 tests/test_data
 locscale.egg-info/
 build/
