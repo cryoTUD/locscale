@@ -26,69 +26,42 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 ## Installation 
 
-We recommend to use [Conda](https://docs.conda.io/en/latest/) for a working environment to satisfy most dependencies. You can either use [miniconda](https://docs.conda.io/en/latest/miniconda.html) or the full [Anaconda](https://docs.conda.io/projects/conda/en/latest/) installation. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what may be the right choice for you. For more instructions on installing Anaconda click [here](https://www.anaconda.com/products/distribution) 
+We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
-#### 1. Create a new conda environment
+#### 1. Create a and acticate a new conda environment
 
-```
+```bash
 conda create -n locscale python=3.8 
 source activate locscale
+conda install -c conda-forge gfortran
 ```
 
-
-#### 2. Download the git repo: 
-```
-git clone https://gitlab.tudelft.nl/aj-lab/locscale.git
-cd /path/to/repo/
-```  
-
-#### 3. Install LocScale and dependencies using pip:
+#### 2. Install LocScale and dependencies using pip:
 
 The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
 
 ```bash
 pip install locscale 
 ```
-(this will create a pip module from your local git repository)
-
-2) Run unittests 
-(i) 
-Change the active directory to "/path/to/locscale/tests/"
-```
-cd /path/to/locscale/tests/
-```
-(ii) LocScale tests
-```
-python -m unittest test_locscale.py -v
-```
-This should run the model-based and model-free locscale tests 
-
-(iii) EMmerNet tests
-```
-python -m unittest test_emmernet.py -v
-```
-(iv) Symmetry tests (to check emda installation)
-```
-python -m unittest test_symmetry.py -v
-```
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
+
+
 <br> 
 
 ## Usage
 
-Run LocScale (model-based) using the following syntax:
+1. Run LocScale using an existing atomic model:
 ```
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
-Run LocScale (model-free) using the following syntax 
-(this is the same syntax as above just not passing the model path runs the model free version automatically)
+2. Run LocScale without atomic model:
 ```
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
 
-Run EMmerNet 
+3. Run LocScale using an ensemble network (EMmerNet) prediction:
 ```
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
 ```
@@ -109,8 +82,8 @@ Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)
 
 This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
-[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.  
-[EMDA](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/emda/emda.html) – Python library for electron microscopy map and model manipulations. Licence: MPL-2    
+[EMmer](https://pypi.org/project/emmer/) - Python library for electron microscopy map and model manipulations
+[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.     
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html) – coordinate refinement program for macromolecular structures. Refmac is distributed as part of CCP-EM.
 
