@@ -26,21 +26,15 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 ## Installation 
 
-We recommend to use [Conda](https://docs.conda.io/en/latest/) for a working environment to satisfy most dependencies. You can either use [miniconda](https://docs.conda.io/en/latest/miniconda.html) or the full [Anaconda](https://docs.conda.io/projects/conda/en/latest/) installation. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what may be the right choice for you. For more instructions on installing Anaconda click [here](https://www.anaconda.com/products/distribution) 
+We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
-#### 1. Create a new conda environment
+#### 1. Create a and acticate a new conda environment
 
 ```
 conda create -n locscale python=3.8 
 source activate locscale
+conda install -c conda-forge gfortran
 ```
-
-
-#### 2. Download the git repo: 
-```
-git clone https://gitlab.tudelft.nl/aj-lab/locscale.git
-cd /path/to/repo/
-```  
 
 #### 3. Install LocScale and dependencies using pip:
 
@@ -51,28 +45,9 @@ pip install locscale
 ```
 (this will create a pip module from your local git repository)
 
-2) Run unittests 
-(i) 
-Change the active directory to "/path/to/locscale/tests/"
-```
-cd /path/to/locscale/tests/
-```
-(ii) LocScale tests
-```
-python -m unittest test_locscale.py -v
-```
-This should run the model-based and model-free locscale tests 
-
-(iii) EMmerNet tests
-```
-python -m unittest test_emmernet.py -v
-```
-(iv) Symmetry tests (to check emda installation)
-```
-python -m unittest test_symmetry.py -v
-```
-
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
+
+
 <br> 
 
 ## Usage
