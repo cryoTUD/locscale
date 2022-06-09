@@ -28,12 +28,11 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
-#### 1. Create a and acticate a new conda environment
+#### 1. Create and activate a new conda environment
 
 ```bash
 conda create -n locscale python=3.8 
 source activate locscale
-conda install -c conda-forge gfortran
 ```
 
 #### 2. Install LocScale and dependencies using pip:
