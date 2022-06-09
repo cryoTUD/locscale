@@ -10,7 +10,9 @@ def download_emmernet_model_from_url(download_folder):
 def download_test_data_from_url(download_folder):
     import wget
    
-    url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
+    #url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
+    url_test_data = "https://surfdrive.surf.nl/files/index.php/s/HWbgLqfl0fBhLeB/download"
+    
     wget.download(url_test_data, download_folder)
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
