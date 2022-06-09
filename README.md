@@ -1,5 +1,5 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/locscale)](https://pypi.org/project/locscale)
-[![PyPI](https://img.shields.io/pypi/v/instamatic.svg?style=flat)](https://pypi.org/project/locscale/)
+[![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![DOI](https://zenodo.org/badge/DOI/10.7554/eLife.2713110.1007.svg)](https://doi.org/10.7554/eLife.27131)
 
@@ -9,11 +9,11 @@
 
 #### New in LocScale 2.0:
 
-- model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
+- Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
 
-- completely automated process for local map sharpening 
+- Completely automated process for local map sharpening 
 
-- full support for point group symmetry (helical symmetry to follow)
+- Full support for point group symmetry (helical symmetry to follow)
 
 - `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is an ensemble network model trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
 <br>
@@ -28,11 +28,12 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
-#### 1. Create and activate a new conda environment
+#### 1. Create a and acticate a new conda environment
 
 ```bash
 conda create -n locscale python=3.8 
 source activate locscale
+conda install -c conda-forge gfortran
 ```
 
 #### 2. Install LocScale and dependencies using pip:
@@ -50,51 +51,67 @@ Alternatively, download the portable installation with all libraries/dependencie
 
 ## Usage
 
-1. Run LocScale using an existing atomic model:
-```
+#### 1. Run LocScale using an existing atomic model:
+```bash
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
-2. Run LocScale without atomic model:
-```
+#### 2. Run LocScale without atomic model:
+```bash
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
 
-3. Run LocScale using an ensemble network (EMmerNet) prediction:
-```
+For an exhaustive list of options, run:   
+
+```bash
+locscale run_locscale --help
+``` 
+
+#### 3. Run LocScale using EMmerNet predictions:
+```bash
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
 ```
 
-Note: For different EMmerNet models: Use the following syntax:
-```
-Model Based: -trained_model model_based
-Model Free: -trained_model model_free
-Ensemble Network: -trained_model ensemble
-```
+Currently, three different EMmerNet models are available and can be specified using the `-trained_model` flag as follows:
 
-## Usage, tutorial and FAQs
+| Model  | Syntax  | 
+|---|---|
+| Model Based:       | ```-trained_model model_based```| 
+| Model Free:        | ```-trained_model model_free``` | 
+| Ensemble Network:  | ```-trained_model ensemble```   | 
 
-Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) pages for usage instructions, FAQs and tutorial.
+Additional models may become available and will be listed here.
+
+For an exhaustive list of options, run:   
+
+```bash
+locscale run_emmernet --help
+``` 
+
+
+## Tutorial and FAQs
+
+We are currently working on the tutorial and Wiki help. If you are still using LocScale 1.0, see [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) for usage instructions, FAQs and tutorial.
 <br>  
 
 ## Credits
 
 This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
-[EMmer](https://pypi.org/project/emmer/) - Python library for electron microscopy map and model manipulations
+[EMmer](https://pypi.org/project/emmer/) - Python library for electron microscopy map and model manipulations. License: 3-Clause BSD.     
 [FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.     
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html) – coordinate refinement program for macromolecular structures. Refmac is distributed as part of CCP-EM.
 
-## Reference
+## References
 
 If you found `LocScale` useful, please consider citing it:
 
-- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions D2FD00078D (2022)
 - A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-
+- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions D2FD00078D (2022)
 ---
 
+## Bugs and questions
 
 For bug reports please use the [GitLab issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues).   
 For questions or comments please contact <a.jakobi@tudelft.nl> or a.bharadwaj@tudelft.nl.
