@@ -59,7 +59,7 @@ locscale_parser.add_argument('-np', '--number_processes', help='Number of proces
 locscale_parser.add_argument('-ref_it', '--refmac_iterations', help='For atomic model refinement: number of refmac iterations', default=15)
 locscale_parser.add_argument('-res', '--ref_resolution', type=float, help='Resolution target for Refmac refinement')
 locscale_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
-locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=0)
+locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=20)
 locscale_parser.add_argument('--refmac5_path', type=str, help='Path to refmac5 executable', default=None)
 
 ## Model map parameters
