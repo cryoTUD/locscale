@@ -46,7 +46,6 @@ pip install locscale
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 
-<br> 
 
 ## Usage
 
