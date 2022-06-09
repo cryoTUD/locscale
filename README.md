@@ -82,8 +82,8 @@ Please see the [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)
 
 This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
-[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.  
-[EMDA](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/emda/emda.html) – Python library for electron microscopy map and model manipulations. Licence: MPL-2    
+[EMmer](https://pypi.org/project/emmer/) - Python library for electron microscopy map and model manipulations
+[FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.     
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html) – coordinate refinement program for macromolecular structures. Refmac is distributed as part of CCP-EM.
 
