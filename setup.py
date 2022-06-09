@@ -2,8 +2,14 @@ from __future__ import division, absolute_import, print_function
 import setuptools
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-
 from numpy.distutils.core import setup, Extension
+import unittest
+
+def locscale_test_suite():
+  test_loader = unittest.TestLoader()
+  test_suite = test_loader.discover('tests', pattern='test_*.py')
+  return test_suite
+  
 
 def compile_fcodes_fast():
   from numpy import f2py
@@ -134,7 +140,9 @@ setup(name='locscale',
           'locscale = locscale.main:main',
                           ],
       },
-      cmdclass={'develop': PostDevelopCommand,
-                'install': PostInstallCommand},
+    test_suite = 'setup.locscale_test_suite',
+    cmdclass={'develop': PostDevelopCommand,
+              'install': PostInstallCommand},
+
     zip_safe= False)
 
