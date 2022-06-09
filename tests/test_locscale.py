@@ -106,7 +106,7 @@ class test_locscale(unittest.TestCase):
             else:
                 n_proc = n_proc
 
-            locscale_command = ["mpirun","-np","n_proc","python",locscale_script_path,"run_locscale","--emmap_path",\
+            locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"run_locscale","--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
             
