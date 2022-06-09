@@ -112,4 +112,3 @@ If you found `LocScale` useful, please consider citing it:
 ## Bugs and questions
 
 For bug reports please use the [GitLab issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues).   
-For questions or comments please contact <a.jakobi@tudelft.nl> or a.bharadwaj@tudelft.nl.
