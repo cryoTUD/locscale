@@ -43,7 +43,6 @@ The setup.py file contains the list of packages and their versions used inside L
 ```bash
 pip install locscale 
 ```
-(this will create a pip module from your local git repository)
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 
@@ -57,8 +56,7 @@ Run LocScale (model-based) using the following syntax:
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
-Run LocScale (model-free) using the following syntax 
-(this is the same syntax as above just not passing the model path runs the model free version automatically)
+Run LocScale (model-free) by omitting path to a model:
 ```
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
