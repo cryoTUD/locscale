@@ -77,7 +77,47 @@ class test_locscale(unittest.TestCase):
             rscc_test = rsc(self.reference_locscale_MB,output_locscale_path)
             
             self.assertTrue(rscc_test>0.9)
+
+    def test_MPI_run_model_based_locscale(self):
+        from tempfile import TemporaryDirectory
+        
+        print("Testing: MPI Model Based LocScale")
+
+        with TemporaryDirectory() as tempDir:
+            from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
+            import os
+            from subprocess import run
+            import multiprocessing
+
+            # copy emmap
+            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
+            copied_mask_path = self.copy_files(self.mask_path, tempDir)
+            copied_model_coordinates = self.copy_files(self.model_coordinates, tempDir)
+
+            os.chdir(tempDir)
+
+            output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
+            locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
+
+            ## Find number of processors
+            n_proc = multiprocessing.cpu_count()
+            if n_proc > 4:
+                n_proc = 4
+            else:
+                n_proc = n_proc
+
+            locscale_command = ["mpirun","-np","n_proc","python",locscale_script_path,"run_locscale","--emmap_path",\
+                copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
+                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
             
+            locscale_test_run = run(locscale_command)
+
+            self.assertTrue(os.path.exists(output_locscale_path))
+
+            rscc_test = rsc(self.reference_locscale_MB,output_locscale_path)
+            self.assertTrue(rscc_test>0.9)
+
+       
     def test_run_model_free_locscale(self):
         from tempfile import TemporaryDirectory
         
