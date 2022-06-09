@@ -43,6 +43,8 @@ Please make sure to install CCP4 Software Suite and check if the path to run `re
 which refmac5
 ```
 
+Memory requirements: Atleast 3 GB
+
 #### 1. Create and activate a new conda environment
 
 ```bash
