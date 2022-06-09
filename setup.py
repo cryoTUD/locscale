@@ -141,6 +141,7 @@ setup(name='locscale',
                           ],
       },
     test_suite = 'setup.locscale_test_suite',
+    
     cmdclass={'develop': PostDevelopCommand,
               'install': PostInstallCommand},
 

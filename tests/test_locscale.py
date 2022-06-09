@@ -33,7 +33,7 @@ class test_locscale(unittest.TestCase):
             return os.path.join(tempDir, os.path.basename(file_path))
             
         else:
-            raise UserWarning("Could not copy {} to {}".format(path,tempDir))
+            raise UserWarning("Could not copy {} to {}".format(file_path,tempDir))
     
     def resample_map(self,emmap_path):
         from locscale.include.emmer.ndimage.map_utils import resample_map, load_map, save_as_mrc
