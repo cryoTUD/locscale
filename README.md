@@ -26,7 +26,7 @@ Please note that there is a GUI implemented version available as part of the [CC
 
 ## Installation 
 
-We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
+We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
 #### 1. Create a and acticate a new conda environment
 
@@ -45,7 +45,6 @@ pip install locscale
 ```
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
-
 
 <br> 
 
@@ -98,7 +97,7 @@ We are currently working on the tutorial and Wiki help. If you are still using L
 
 This project is using code from a number of third-party open-source projects. Projects used by `LocScale` are included under include/:
 
-[EMmer](https://pypi.org/project/emmer/) - Python library for electron microscopy map and model manipulations. License: 3-Clause BSD.     
+[EMmer](https://gitlab.tudelft.nl/aj-lab/emmer) - Python library for electron microscopy map and model manipulations. License: 3-Clause BSD.     
 [FDRthresholding](https://git.embl.de/mbeckers/FDRthresholding) – tool for FDR-based density thresholding. License: 3-Clause BSD.     
 
 `LocScale` also makes use of [Refmac](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html) – coordinate refinement program for macromolecular structures. Refmac is distributed as part of CCP-EM.
