@@ -9,7 +9,11 @@ def locscale_test_suite():
   test_loader = unittest.TestLoader()
   test_suite = test_loader.discover('tests', pattern='test_*.py')
   return test_suite
-  
+
+def run_locscale_tests():
+  test_runner = unittest.TextTestRunner()
+  test_suite = locscale_test_suite()
+  test_runner.run(test_suite)
 
 def compile_fcodes_fast():
   from numpy import f2py
@@ -100,6 +104,9 @@ class PostDevelopCommand(develop):
     # Check if refmac5 is installed
     check_refmac5_installed()
 
+    # Run tests
+    run_locscale_tests()
+
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
     def run(self):
@@ -121,6 +128,10 @@ class PostInstallCommand(install):
 
         # Check if refmac5 is installed
         check_refmac5_installed()
+
+        # Run tests
+        run_locscale_tests()
+
         
     
 
