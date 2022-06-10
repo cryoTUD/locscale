@@ -29,7 +29,7 @@ def compile_fcodes_fast():
   target_dir = os.path.dirname(fcodes_path)
   current_dir = os.getcwd()
   os.chdir(target_dir)
-  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--build-dir",target_dir,"--quiet", "--f90exec={}".format(gfortran_location)])
+  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--quiet","--f90exec={}".format(gfortran_location)])
   os.chdir(current_dir)
   
 
@@ -59,7 +59,18 @@ def update_conda_environment():
   import subprocess
   from locscale.utils.file_tools import get_locscale_path
   import os
-  subprocess.run(["conda", "env", "update", "--file", os.path.join(get_locscale_path(), "environment.yml")])
+  #subprocess.run(["conda", "env", "update", "--file", os.path.join(get_locscale_path(), "environment.yml")])
+  # Install cudatoolkit using conda 
+  subprocess.run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
+
+  # Install cudnn
+  subprocess.run(["conda", "install", "-c", "anaconda", "cudnn","--yes"])
+
+  # Install openmpi
+  subprocess.run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
+
+  # Install mpi4py
+  subprocess.run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
 
 def check_refmac5_installed():
   from shutil import which
@@ -142,7 +153,7 @@ setup(name='locscale',
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy==1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
                       'mrcfile>=1.3.0','gemmi>=0.4.8','pypdb>=2.0','sklearn>=0.0','pwlf>=2.0.4','tqdm>=4.62.3',\
                       'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.6.0','tensorflow-addons==0.14.0',\
-                        'keras==2.6.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1'],
+                        'keras==2.6.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1', 'locscale'],
     entry_points={
       'console_scripts': [
           'locscale = locscale.main:main',

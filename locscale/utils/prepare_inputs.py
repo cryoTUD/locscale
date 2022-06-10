@@ -192,12 +192,12 @@ def prepare_mask_and_maps_for_scaling(args):
     if args.window_size is None:   ## Use default window size of 25 A
         wn = round_up_to_even(25 / apix)
         if verbose:
-            tabbed_print.tprint("Using a default window size of 25 A, corresponding to approximately {} pixels".format(wn))
+            tabbed_print.tprint("Using a default window size of {} pixels, corresponding to approximately 25A".format(wn))
         
     elif args.window_size is not None:
         wn = round_up_to_even(int(args.window_size))
         if verbose:
-            tabbed_print.tprint("Provided window size in pixels is {} corresponding to {:.2f} Angstorm".format(wn, wn*apix))
+            tabbed_print.tprint("Provided window size in pixels is {} corresponding to approximately {:.2f} Angstorm".format(wn, wn*apix))
 
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
     
