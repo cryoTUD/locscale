@@ -227,13 +227,14 @@ def launch_amplitude_scaling(args):
     from locscale.utils.file_tools import change_directory, check_user_input
     import os 
 
-    ## Print start
-    start_time = datetime.now()
-    print_start_banner(start_time, "LocScale")
-    
+  
     current_directory = os.getcwd()
     
     if not args.mpi:
+        ## Print start
+        start_time = datetime.now()
+        print_start_banner(start_time, "LocScale")
+
         ## Check input
         check_user_input(args)   ## Check user inputs    
         if args.verbose:
@@ -258,6 +259,9 @@ def launch_amplitude_scaling(args):
         ## If rank is 0, check and prepare inputs
         try:
             if rank==0:
+                ## Print start
+                start_time = datetime.now()
+                print_start_banner(start_time, "LocScale")
                 check_user_input(args)   ## Check user inputs
                 if args.verbose:
                     print_arguments(args)
