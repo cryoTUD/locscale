@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import, print_function
 import setuptools
+from setuptools import find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from numpy.distutils.core import setup, Extension
@@ -149,7 +150,7 @@ setup(name='locscale',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     description= 'Contrast optimization for cryo-EM maps',
     license='3-clause BSD',
-    packages=setuptools.find_packages(),
+    packages=find_packages(exclude=['tests*']),
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy==1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
                       'mrcfile>=1.3.0','gemmi>=0.4.8','pypdb>=2.0','sklearn>=0.0','pwlf>=2.0.4','tqdm>=4.62.3',\
                       'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.6.0','tensorflow-addons==0.14.0',\
