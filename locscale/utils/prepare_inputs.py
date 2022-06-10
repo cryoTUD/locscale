@@ -41,14 +41,10 @@ def prepare_mask_and_maps_for_scaling(args):
     else:
         print("All dependencies are satisfied. \n")
     
-    scale_using_theoretical_profile = not(args.ignore_profiles)
+    scale_using_theoretical_profile = not(args.ignore_profiles)  ## Flag to determine whether to use theoretical profiles or not
     
-    emmap_path, shift_vector = get_emmap_path_from_args(args)
-    
+    emmap_path, shift_vector = get_emmap_path_from_args(args)      
     xyz_emmap_path = check_axis_order(emmap_path)  
-    
-    
-    ## run_mapmask() function makes the axis order of the .mrc file to XYZ 
     
     xyz_emmap = mrcfile.open(xyz_emmap_path).data
     
@@ -62,7 +58,7 @@ def prepare_mask_and_maps_for_scaling(args):
         apix = float(args.apix)
     
     
-    ## Get the mask path if provided. Calculate if not provided.
+    ## Get the mask path if provided. Calculate using FDR if a mask is not provided
     
     if verbose:
         print("."*80)
@@ -98,7 +94,9 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
     
     
-    ## Use the mask and emmap to generate a model map using pseudo-atomic model
+    ## Obtain the model map if provided if not determine from user input to generate pseudo-atomic model 
+
+    
     if args.molecular_weight is not None:
         molecular_weight = float(args.molecular_weight)    
     else:
@@ -109,7 +107,8 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Preparing model map \n")
 
     if args.model_map is None and not args.no_reference:
-        
+        # Collect model map arguments and pass it to preprocessing pipeline
+        #     
         pdb_path = args.model_coordinates
         if pdb_path is not None:
             scale_using_theoretical_profile = False ## If a PDB_path is provided, assume that it is an atomic model thus set this flag as False

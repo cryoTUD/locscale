@@ -11,7 +11,29 @@ from locscale.utils.plot_tools import tab_print
 
 tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,return_processed_files=False, output_file_path=None,verbose=True):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,return_processed_files=False, output_file_path=None,verbose=True):
+    '''
+    Function to prepare target map for refinement 
+
+    Parameters
+    ----------
+    emmap_path : str
+        Path to the EM map which needs sharpening. Example: 'path/to/map.mrc'
+    wilson_cutoff : float
+        Wilson cutoff for determining the B factor of the EM map
+    fsc_resolution : float
+        Resolution at which FSC curve is computed used to compute B factor
+    add_blur : float, optional
+        Additional blur to be added to the EM map. The default is 20   
+    
+    Returns
+    -------
+    sharpen_map_path : str
+        Path to the sharpened EM map. Example: 'path/to/sharpen_map.mrc'
+
+
+    '''
+
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
@@ -26,7 +48,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
     if verbose:
         tprint("Estimating global B-factor using breakpoints\n")
     
-    
+    ### Estimate global B-factor ### 
     
     bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix,
                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
@@ -42,11 +64,11 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
         bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
     if verbose:
         tprint("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
-        
+    
+
+    ### Globally sharpen EM Map ###
     sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
-    
-    ## Ignore RunTimeWarnings for this function
-    
+       
     bfactor_final, z_final, slopes_final, fit_final = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, 
                                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
@@ -71,7 +93,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=0,retur
 
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     '''
-    
+    Function to calculate FDR mask for a map
 
     Parameters
     ----------
@@ -79,6 +101,8 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
         Path to the EM Map which needs thresholding. Example: 'path/to/map.mrc'
     window_size : int
         Window size required for FDR thresholding
+    fdr : float, optional
+        FDR value to be used for thresholding. The default is 0.01
     verbose : bool, optional
         Print statistics if True. The default is True.
 
@@ -86,8 +110,6 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     -------
     mask_path : string
         path to mask file. Example: 'path/to/mask.mrc'
-    mask_mrc : mrfile.mrc() 
-        mrcfile object which contains volume and header information about the mask
 
     '''
     import os, sys
@@ -132,7 +154,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
 def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             g=None,friction=None,scale_map=None,scale_lj=None,total_iterations=100,verbose=True):
     '''
-    
+    Function to build a pseudo atomic model     
 
     Parameters
     ----------
@@ -182,11 +204,15 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     from locscale.preprocessing.pseudomodel_solvers import main_solver3D, main_solver_kick
     from locscale.preprocessing.pseudomodel_classes import extract_model_from_mask
     
+    #### Input ####
+
     mrc = mrcfile.open(emmap_path)
     emmap = mrc.data
     voxelsize = mrc.voxel_size.x
 
     mask = mrcfile.open(mask_path).data
+
+    ### Extract a random pseudo-atomic model from the masked map ###
     pseudomodel = extract_model_from_mask(mask,num_atoms,threshold=threshold)
     
     emmap_shape = emmap.shape
@@ -195,6 +221,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     outputlogfilepath = os.path.join(os.path.dirname(emmap_path),"pseudomodel_log.txt")
     output_file = open(outputlogfilepath,"w")
 
+    ### Run the solver depending on user input: gradient or random ###
     if verbose:
         tprint("Running pseudoatomic model generator to add "+str(num_atoms)+" atoms inside the volume using the method: "+method)
     if method=='gradient':
@@ -227,6 +254,8 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
     
+
+    ### Save the pseudo-atomic model ###    
     arranged_points.write_pdb(pseudomodel_path,voxelsize=voxelsize,unitcell=unitcell)
     
     
@@ -273,16 +302,47 @@ def is_pseudomodel(input_pdb_path):
         
     
 def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfactor_refinement, refmac5_path=None, verbose=True):
+    '''
+    Function to run Refmac to refine the model and generate a new model with refined B-factors.
+
+    Parameters
+    ----------
+    model_path : string
+        Path of the model to be refined
+    map_path : string
+        Path of the map to be used for refinement
+    resolution : float
+        Resolution of the map
+    num_iter : int
+        Number of iterations to run Refmac
+    only_bfactor_refinement : bool
+        If True, only the B-factors will be refined. If False, the model will be refined using the map.
+    refmac5_path : string
+        Path of the refmac5 executable. If None, the default path will be used.
+    verbose : bool
+        If True, the output of Refmac will be printed.
+    
+    Returns
+    -------
+    refined_model_path : string
+        Path of the refined model
+    
+    '''
+    
     import os
     from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
     import mrcfile
     
-    
+    #### Input ####
     model_name = os.path.basename(model_path)
     servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+
+    #### Set the starting bfactor of the atomic model to 40 before refinement ####
+
     set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
     
+    ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
     servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
     if only_bfactor_refinement:
@@ -407,34 +467,6 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
         tprint("Reference map was not generated. Returning none")
         return None
     
-def run_mapmask(emmap_path, return_same_path=False):
-    '''
-    Function to generate a XYZ corrected output using CCP4-Mapmask tool
-
-    Parameters
-    ----------
-    emmap_path : str
-        
-
-    Returns
-    -------
-    mapmasked_path : str
-
-    '''
-    import os
-    from subprocess import run, PIPE
-    from locscale.utils.file_tools import get_locscale_path
-    path_to_locscale = get_locscale_path()
-    
-    mapmask_bash_script = os.path.join(path_to_locscale , "locscale","utils","mapmask.sh")
-    
-    if return_same_path:
-        xyz_output_map = emmap_path
-    else:
-        xyz_output_map = "/".join(emmap_path.split('/')[:-1]+   ["xyz_"+emmap_path.split(sep='/')[-1]])
-    run([mapmask_bash_script,emmap_path,xyz_output_map], stdout=PIPE)
-    
-    return xyz_output_map
 
 def check_axis_order(emmap_path, return_same_path=False):
     '''
@@ -476,45 +508,76 @@ def check_axis_order(emmap_path, return_same_path=False):
 
 ############# CODE HELL #############
 
-""" def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
-    import os
-    from subprocess import run, PIPE
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
-    import mrcfile
+# def run_mapmask(emmap_path, return_same_path=False):
+#     '''
+#     Function to generate a XYZ corrected output using CCP4-Mapmask tool
+#     DEPRECATED: Use check_axis_order instead
+
+#     Parameters
+#     ----------
+#     emmap_path : str
+        
+
+#     Returns
+#     -------
+#     mapmasked_path : str
+
+#     '''
+#     import os
+#     from subprocess import run, PIPE
+#     from locscale.utils.file_tools import get_locscale_path
+#     path_to_locscale = get_locscale_path()
     
-    path_to_locscale = get_locscale_path()
-    path_to_ccpem = get_locscale_path()['ccpem']
-    path_to_ccp4 = get_locscale_path()['ccp4']
+#     mapmask_bash_script = os.path.join(path_to_locscale , "locscale","utils","mapmask.sh")
     
-    if only_bfactor_refinement:
-        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
-    else:
-        path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac_restrained.sh")
+#     if return_same_path:
+#         xyz_output_map = emmap_path
+#     else:
+#         xyz_output_map = "/".join(emmap_path.split('/')[:-1]+   ["xyz_"+emmap_path.split(sep='/')[-1]])
+#     run([mapmask_bash_script,emmap_path,xyz_output_map], stdout=PIPE)
+    
+#     return xyz_output_map
+
+
+# """ def run_refmac(model_path,map_path,resolution,  num_iter,only_bfactor_refinement,verbose=True):
+#     import os
+#     from subprocess import run, PIPE
+#     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
+#     import mrcfile
+    
+#     path_to_locscale = get_locscale_path()
+#     path_to_ccpem = get_locscale_path()['ccpem']
+#     path_to_ccp4 = get_locscale_path()['ccp4']
+    
+#     if only_bfactor_refinement:
+#         path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac.sh")
+#     else:
+#         path_to_run_refmac = os.path.join(path_to_locscale,"locscale","utils","run_refmac_restrained.sh")
         
     
-    model_name = model_path[:-4]
-    emmap_mrc = mrcfile.open(map_path)
-    map_dims = emmap_mrc.header.cella.tolist()
+#     model_name = model_path[:-4]
+#     emmap_mrc = mrcfile.open(map_path)
+#     map_dims = emmap_mrc.header.cella.tolist()
     
-    refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
+#     refmac_command_line = "bash "+path_to_run_refmac+" "+model_path+" "+model_name+" "+map_path+" "+str(round(resolution,2))+" "+path_to_ccpem+" "+path_to_ccp4+" "+str(map_dims[0])+" "+str(map_dims[1])+" "+str(map_dims[2])+" "+str(num_iter)
     
     
-    if verbose:
-        print("Running REFMAC to refine the pseudo-atomic model using \n"+
-              "Path to run_refmac: "+path_to_run_refmac+"\n"+
-              "Command line: \n"+refmac_command_line)
+#     if verbose:
+#         print("Running REFMAC to refine the pseudo-atomic model using \n"+
+#               "Path to run_refmac: "+path_to_run_refmac+"\n"+
+#               "Command line: \n"+refmac_command_line)
         
-    refmac_output = run(refmac_command_line.split())
-    refined_model_path = model_name+"_refmac_refined.pdb"
-    bfactors = get_bfactors(in_model_path=refined_model_path)
+#     refmac_output = run(refmac_command_line.split())
+#     refined_model_path = model_name+"_refmac_refined.pdb"
+#     bfactors = get_bfactors(in_model_path=refined_model_path)
     
-    if os.path.exists(refined_model_path):
-        if verbose: 
-            print("The refined PDB model is: "+refined_model_path+"\n\n")    
-            print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+#     if os.path.exists(refined_model_path):
+#         if verbose: 
+#             print("The refined PDB model is: "+refined_model_path+"\n\n")    
+#             print("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
             
-        return refined_model_path
-    else:
-        print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
-        return None
-     """
+#         return refined_model_path
+#     else:
+#         print("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+#         return None
+#      """

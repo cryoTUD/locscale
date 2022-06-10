@@ -30,7 +30,7 @@ def compile_fcodes_fast():
   target_dir = os.path.dirname(fcodes_path)
   current_dir = os.getcwd()
   os.chdir(target_dir)
-  subprocess.run(["f2py3.8","-c","-m","fcodes_fast",fcodes_path,"--quiet","--f90exec={}".format(gfortran_location)])
+  subprocess.run(["f2py3","-c","-m","fcodes_fast",fcodes_path,"--quiet","--f90exec={}".format(gfortran_location)])
   os.chdir(current_dir)
   
 
