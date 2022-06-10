@@ -51,7 +51,7 @@ def compile_fcodes_fast():
 
 def download_emmernet_models():
   import os
-
+  locscale_path=pathlib.Path(__file__).parent.resolve()
   ## Create folder to download emmernet models
   emmernet_models_path = os.path.join(locscale_path, "locscale","emmernet", "emmernet_models")
   if not os.path.exists(emmernet_models_path):
