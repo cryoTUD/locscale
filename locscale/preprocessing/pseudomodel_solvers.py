@@ -1,26 +1,5 @@
 import numpy as np
-
-def value_at_point(g,x,y,z):
-    return g[z,y,x]
-
-def get_gradient(g,point):
-    from scipy.interpolate import interpn
-    
-    [xi,yi,zi] = [int(round(point.position.x)),int(round(point.position.y)),int(round(point.position.z))]
-    x = np.arange(xi-1,xi+2,1)
-    y = np.arange(yi-1,yi+2,1)
-    z = np.arange(zi-1,zi+2,1)
-    points = (z,y,x)
-    values = g[zi-1:zi+2,yi-1:yi+2,xi-1:xi+2]
-  #  print(points[0].shape)
-  #  print(values.shape)
-    (xr,yr,zr) = point.position.get()
-    interpolation_point = np.array([zr,yr,xr])
-    interpolated_value = interpn(points,values,interpolation_point,method='linear')
-    
-    return interpolated_value[0]    
-
-        
+       
 def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
     from locscale.preprocessing.pseudomodel_classes import Vector
     
@@ -35,13 +14,7 @@ def get_acceleration_from_gradient(gx,gy,gz,emmap,g,point,capmagnitude_map):
         print((x,y,z))
         print(e)
         raise
-    '''
-    
-    theta_x = get_gradient(gx,point)
-    theta_y = get_gradient(gy,point)
-    theta_z = get_gradient(gz,point)
-    
-    '''
+
     
     acceleration_x = g * theta_x
     acceleration_y = g * theta_y

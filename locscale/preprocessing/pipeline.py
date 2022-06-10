@@ -5,25 +5,7 @@ def get_modmap(modmap_args):
 
     Parameters
     ----------
-    emmap_path : str
-        path/to/emmap.mrc
-    mask_path : str
-        path/to/mask.mrc
-    pseudomodel_method : str
-        Method to create pseudo-atomic model. 
-        Accepted values:
-            Random placement method: "kick" or "random"
-            Gradient descent method: "gradient"
-            
-    pam_distance : float
-        Typical inter-atomic distance for pseudo-atomic model
-    pam_iteration : int
-        Number of iterations involved to create pseudo-atomic model
-    fsc_resolution : float
-        average FSC resolution (at FSC=0.143 from halfmaps) for Refmac refinement
-    verbose : bool
-        Verbose output
-
+    modmap_args : dict
     Returns
     -------
     pseudomodel_modmap : str

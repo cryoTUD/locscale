@@ -10,3 +10,4 @@ locscale.egg-info/
 build/
 
 locscale/include/symmetry_emda/fcodes_fast.cpython-38-x86_64-linux-gnu.so
+locscale/include/symmetry_emda/fcodes_fast.cpython-37m-x86_64-linux-gnu.so
