@@ -71,7 +71,7 @@ def update_conda_environment():
   subprocess.run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
 
   # Install mpi4py
-  subprocess.run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
+  subprocess.run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
 
 def check_refmac5_installed():
   from shutil import which

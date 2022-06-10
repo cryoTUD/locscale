@@ -54,7 +54,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Global bfactor: {:.3f}\n".format(bfactor))
+        tprint("Global bfactor: {:.3f}\n".format(-1*bfactor))
         tprint("Breakpoints: {}".format(1/np.sqrt(z)))
         tprint("Slopes: {}".format(slopes))
     
@@ -63,7 +63,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     if add_blur != 0:
         bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
     if verbose:
-        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(-1*add_blur))
+        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(add_blur))
     
 
     ### Globally sharpen EM Map ###
@@ -73,7 +73,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
                                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
+        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(-1*bfactor_final))
         tprint("Breakpoints: {}".format(1/np.sqrt(z_final)))
         tprint("Slopes: {}".format(slopes_final))
         
