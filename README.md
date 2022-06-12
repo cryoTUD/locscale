@@ -30,19 +30,6 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 #### Requirements
 
-We recommend you update and upgrade your linux packages before proceeding with installation. 
-
-```
-sudo apt-get update
-sudo apt-get upgrade
-```
-
-Please make sure to install CCP4 Software Suite and check if the path to run `refmac5` is present in your environment. The following command should return the valid path. 
-
-```
-which refmac5
-```
-
 Memory requirements: Atleast 3 GB
 
 #### 1. Create and activate a new conda environment
@@ -62,6 +49,15 @@ pip install locscale
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 
+#### 3. Install REFMAC5 via CCP4/CCPEM
+
+LocScale needs a working instance of [Refmac5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
+
+```bash
+which refmac5
+```
+
+Otherwise, please install [CCP-EM](https://www.ccpem.ac.uk/download.php) or [CCP4](https://www.ccp4.ac.uk/download/).  
 
 ## Usage
 
@@ -90,9 +86,9 @@ Currently, three different EMmerNet models are available and can be specified us
 
 | Model  | Syntax  | 
 |---|---|
-| Model Based:       | ```-trained_model model_based```| 
-| Model Free:        | ```-trained_model model_free``` | 
-| Ensemble Network:  | ```-trained_model ensemble```   | 
+| Model Based EMmerNet  | ```-trained_model model_based```| 
+| Model Free EMmerNet   | ```-trained_model model_free``` | 
+| Ensemble EMmerNet     | ```-trained_model ensemble```   | 
 
 Additional models may become available and will be listed here.
 
