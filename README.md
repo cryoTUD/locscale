@@ -22,7 +22,7 @@
 
 
 Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/).
-<br>   
+<br>. Note that currently the GUI implementation only supports an older version of Locscale (Locscale 1.0, with only Model-based sharpening). 
 
 ## Installation 
 
