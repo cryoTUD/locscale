@@ -79,11 +79,11 @@ def check_and_download_emmernet_model(verbose=False):
     ## Check if Emmernet model is downloaded
     import os
     import locscale
-    
+
     emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
     path_exists = os.path.exists(emmernet_model_folder)
-    MB_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MB.hdf5"))
-    MF_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MF.hdf5"))
+    MB_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MBfa.hdf5"))
+    MF_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MFfa.hdf5"))
     ensemble_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MBMF.hdf5"))
 
     emmernet_downloaded = path_exists and MB_EMMERNET_MODEL_DOWNLOADED and MF_EMMERNET_MODEL_DOWNLOADED and ensemble_EMMERNET_MODEL_DOWNLOADED
@@ -91,7 +91,7 @@ def check_and_download_emmernet_model(verbose=False):
     if not emmernet_downloaded:
         if verbose:
             print("Emmernet model folder does not exist. Downloading model...")
-        os.makedirs(emmernet_model_folder, exist_ok=False)
+        os.makedirs(emmernet_model_folder, exist_ok=True)
         download_emmernet_model_from_url(emmernet_model_folder)
         if verbose:
             print("Model downloaded")
