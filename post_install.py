@@ -38,7 +38,7 @@ def compile_fcodes_fast():
   import subprocess
   from shutil import which
 
-  fcodes_path = os.path.join(locscale_path, "locscale","include","symmetry_emda", "fcodes_fast.f90")
+  
   gfortran_location = which("gfortran")
   assert gfortran_location is not None, "gfortran is not installed"
 
@@ -51,9 +51,13 @@ def compile_fcodes_fast():
 
 def download_emmernet_models():
   import os
-  locscale_path=pathlib.Path(__file__).parent.resolve()
+  
+  ## Find the absolute path of the locscale folder
+  import locscale
+  locscale_path = os.path.dirname(locscale.__file__)
+  print("locscale_path: {}".format(locscale_path))
   ## Create folder to download emmernet models
-  emmernet_models_path = os.path.join(locscale_path, "locscale","emmernet", "emmernet_models")
+  emmernet_models_path = os.path.join(locscale_path, "emmernet", "emmernet_models")
   if not os.path.exists(emmernet_models_path):
     os.makedirs(emmernet_models_path, exist_ok=True)
     download_emmernet_model_from_url(emmernet_models_path)
