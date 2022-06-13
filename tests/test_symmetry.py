@@ -39,7 +39,7 @@ class TestSymmetry(unittest.TestCase):
 
     def test_symmetry(self):
         print("Imposing a symmetry condition of C4")
-        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_known_pg
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from tempfile import TemporaryDirectory
         import os
         from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc, resample_map
@@ -50,7 +50,7 @@ class TestSymmetry(unittest.TestCase):
             os.chdir(tempDir)
             emmap, apix = load_map(copied_emmap_path)  
             print("Emmap map shape: {}".format(emmap.shape))         
-            sym = symmetrize_map_known_pg(emmap, apix=apix, pg="C4")
+            sym = symmetrize_map_emda(copied_emmap_path, pg="C4")
          #   self.assertEqual(sym.shape,(104,104,104))
             reference_symmetry_map, _ = load_map(self.symmetry_output)
             rscc = rsc(sym, reference_symmetry_map)
