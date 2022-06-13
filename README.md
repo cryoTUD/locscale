@@ -83,12 +83,12 @@ mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -
 If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical testing and generate a pseudo-atomic model in the contoured density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate a reference profile for local sharpening. Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
 
 ```bash
-locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
+locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
 ```
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_free_locscale.mrc -mpi
 ```
 
 
