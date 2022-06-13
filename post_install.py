@@ -62,6 +62,13 @@ def download_emmernet_models():
   path_contains_hdf5 = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "EMmerNet_MB.hdf5"))
   do_not_download = path_exists or path_contains_hdf5 or path_contains_tarfile
   download_true = not do_not_download
+  print("EMMERNET_MODEL_PATH: {}".format(EMMERNET_MODEL_PATH))
+  print("path_exists: {}".format(path_exists))
+  print("path_contains_tarfile: {}".format(path_contains_tarfile))
+  print("path_contains_hdf5: {}".format(path_contains_hdf5))
+  print("do_not_download: {}".format(do_not_download))
+  print("download_true: {}".format(download_true))
+  
   if download_true:
     os.makedirs(EMMERNET_MODEL_PATH, exist_ok=True)
     download_emmernet_model_from_url(EMMERNET_MODEL_PATH)
