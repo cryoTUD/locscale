@@ -105,6 +105,7 @@ emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of e
 emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
 emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
+emmernet_parser.add_argument('-download', '--download', help='Download the model weights', action='store_true', default=False)
 
 
 

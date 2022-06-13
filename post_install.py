@@ -1,6 +1,6 @@
 import pathlib
 from .config import *
-
+import unittest
 
 def download_emmernet_model_from_url(download_folder):
     import wget
@@ -48,41 +48,41 @@ def compile_fcodes_fast():
   os.chdir(current_dir)
   
 
-def download_emmernet_models():
-  import os
+# def download_emmernet_models():
+#   import os
   
-  ## Find the absolute path of the locscale folder
-  import locscale
-  locscale_path = os.path.dirname(locscale.__file__)
-  print("locscale_path: {}".format(locscale_path))
-  ## Create folder to download emmernet models
-  
-  path_exists = os.path.exists(EMMERNET_MODEL_PATH)
-  path_contains_tarfile = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "emmernet_models.tar.gz"))
-  path_contains_hdf5 = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "EMmerNet_MB.hdf5"))
-  do_not_download = path_exists or path_contains_hdf5 or path_contains_tarfile
-  download_true = not do_not_download
-  print("EMMERNET_MODEL_PATH: {}".format(EMMERNET_MODEL_PATH))
-  print("path_exists: {}".format(path_exists))
-  print("path_contains_tarfile: {}".format(path_contains_tarfile))
-  print("path_contains_hdf5: {}".format(path_contains_hdf5))
-  print("do_not_download: {}".format(do_not_download))
-  print("download_true: {}".format(download_true))
-  
-  if download_true:
-    os.makedirs(EMMERNET_MODEL_PATH, exist_ok=True)
-    download_emmernet_model_from_url(EMMERNET_MODEL_PATH)
-    extract_tar_files_in_folder(EMMERNET_MODEL_PATH, use_same_folder=True)
+#   ## Find the absolute path of the locscale folder
+#   import locscale
+#   locscale_path = os.path.dirname(locscale.__file__)
+#   print("locscale_path: {}".format(locscale_path))
+#   ## Create folder to download emmernet models
+#   EMMERNET_MODEL_PATH=None
+#   path_exists = os.path.exists(EMMERNET_MODEL_PATH)
+#   path_contains_tarfile = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "emmernet_models.tar.gz"))
+#   path_contains_hdf5 = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "EMmerNet_MB.hdf5"))
+#   do_not_download = path_exists or path_contains_hdf5 or path_contains_tarfile
+#   download_true = not do_not_download
+#   print("EMMERNET_MODEL_PATH: {}".format(EMMERNET_MODEL_PATH))
+#   print("path_exists: {}".format(path_exists))
+#   print("path_contains_tarfile: {}".format(path_contains_tarfile))
+#   print("path_contains_hdf5: {}".format(path_contains_hdf5))
+#   print("do_not_download: {}".format(do_not_download))
+#   print("download_true: {}".format(download_true))
 
-def download_test_data():
-  import os
+#   if download_true:
+#     os.makedirs(EMMERNET_MODEL_PATH, exist_ok=True)
+#     download_emmernet_model_from_url(EMMERNET_MODEL_PATH)
+#     extract_tar_files_in_folder(EMMERNET_MODEL_PATH, use_same_folder=True)
 
-  ## Create folder to download tests_data
-  test_data_path = os.path.join(locscale_path, "tests","test_data")
-  if not os.path.exists(test_data_path):
-    os.makedirs(test_data_path, exist_ok=True)
-    download_test_data_from_url(test_data_path)
-    extract_tar_files_in_folder(test_data_path, use_same_folder=True)
+# def download_test_data():
+#   import os
+
+#   ## Create folder to download tests_data
+#   test_data_path = os.path.join(locscale_path, "tests","test_data")
+#   if not os.path.exists(test_data_path):
+#     os.makedirs(test_data_path, exist_ok=True)
+#     download_test_data_from_url(test_data_path)
+#     extract_tar_files_in_folder(test_data_path, use_same_folder=True)
 
 def update_conda_environment():
   import subprocess
@@ -132,10 +132,10 @@ def run_locscale_tests():
 def main():
 
     # Download emmernet models
-    download_emmernet_models()
+    # download_emmernet_models()
 
     # Download test data
-    download_test_data()
+    # download_test_data()
 
     # Update conda environment
     update_conda_environment()
@@ -150,7 +150,7 @@ def main():
     check_refmac5_installed()
 
     # Run tests
-    run_locscale_tests()
+    # run_locscale_tests()
 
 if __name__ == "__main__":
     main()

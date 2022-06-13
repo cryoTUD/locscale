@@ -5,7 +5,6 @@ from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
 from locscale.emmernet.emmernet_functions import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
 import numpy as np
 import os
-EMMERNET_MODEL_PATH = os.path.expanduser("~/.local/share/locscaleData/emmernet_models")
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
@@ -28,6 +27,7 @@ def run_emmernet(input_dictionary):
     batch_size = input_dictionary["batch_size"]
     gpu_ids = input_dictionary["gpu_ids"]
     verbose = input_dictionary["verbose"]
+    emmernet_model_folder = input_dictionary["emmernet_model_folder"]
 
     emmap, apix = load_map(emmap_path)
     if verbose:
@@ -51,7 +51,7 @@ def run_emmernet(input_dictionary):
         print("\tNumber of cubes: {}".format(len(cubes)))
     ## Load the model
 
-    emmernet_model = load_emmernet_model(emmernet_type)
+    emmernet_model = load_emmernet_model(emmernet_type, emmernet_model_folder)
     if verbose:
         print("\tEMmerNet model loaded: {}".format(emmernet_type))
 
@@ -97,19 +97,23 @@ def run_emmernet(input_dictionary):
     return emmernet_output_dictionary
 
 
-def load_emmernet_model(emmernet_type):
+def load_emmernet_model(emmernet_type, emmernet_model_folder=None):
     import os
     ## Ignore DeprecationWarning
     import warnings
+
+    if emmernet_model_folder is None:
+        import locscale
+        emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
+    
+    assert os.path.exists(emmernet_model_folder), "EMmerNet model folder not found: {}".format(emmernet_model_folder)
+
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)    
         from tensorflow.keras.models import load_model
         from tensorflow_addons.layers import GroupNormalization
 
-    import locscale
-    locscale_path = locscale.__path__[0]
-    #emmernet_folder_path = os.path.join(locscale_path, "emmernet","emmernet_models")
-    emmernet_folder_path = EMMERNET_MODEL_PATH
+    emmernet_folder_path = emmernet_model_folder
     if emmernet_type == "model_based":
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
     elif emmernet_type == "model_free":

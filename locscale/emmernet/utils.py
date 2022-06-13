@@ -1,3 +1,24 @@
+def download_emmernet_model_from_url(download_folder):
+    import wget
+   
+    url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"
+    wget.download(url_model_based_emmernet, download_folder)
+
+def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
+    import tarfile
+    import os
+    if use_same_folder == 0:
+        target_folder = tar_folder
+    else:
+        target_folder = os.path.dirname(tar_folder)
+
+    for file in os.listdir(tar_folder):
+        if file.endswith(".tar.gz"):
+            print("Extracting: {}".format(file))
+            tar = tarfile.open(os.path.join(tar_folder,file))
+            tar.extractall(target_folder)
+            tar.close()
+
 def check_emmernet_inputs(args):
     '''
     Check user inputs for errors and conflicts
@@ -53,6 +74,35 @@ def check_emmernet_dependencies(verbose=False):
             print("Emmernet dependencies are present")
     except ImportError: 
         raise 
+
+def check_and_download_emmernet_model(verbose=False):
+    ## Check if Emmernet model is downloaded
+    import os
+    import locscale
+    
+    emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
+    path_exists = os.path.exists(emmernet_model_folder)
+    MB_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MB.hdf5"))
+    MF_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MF.hdf5"))
+    ensemble_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MBMF.hdf5"))
+
+    emmernet_downloaded = path_exists and MB_EMMERNET_MODEL_DOWNLOADED and MF_EMMERNET_MODEL_DOWNLOADED and ensemble_EMMERNET_MODEL_DOWNLOADED
+
+    if not emmernet_downloaded:
+        if verbose:
+            print("Emmernet model folder does not exist. Downloading model...")
+        os.makedirs(emmernet_model_folder, exist_ok=False)
+        download_emmernet_model_from_url(emmernet_model_folder)
+        if verbose:
+            print("Model downloaded")
+        extract_tar_files_in_folder(emmernet_model_folder)
+        if verbose:
+            print("Model extracted")
+    else:
+        if verbose:
+            print("Emmernet model folder exists: {}".format(emmernet_model_folder))
+    
+    return emmernet_model_folder
 
 def check_and_save_output(parsed_inputs, emmernet_output):
     '''
