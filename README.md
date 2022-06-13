@@ -3,7 +3,7 @@
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![DOI](https://zenodo.org/badge/DOI/10.7554/eLife.2713110.1007.svg)](https://doi.org/10.7554/eLife.27131)
 
-# LocScale - reference-based density scaling for local sharpening of cryo-EM maps
+# LocScale - reference-based local sharpening of cryo-EM maps
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
@@ -15,7 +15,7 @@
 
 - Full support for point group symmetry (helical symmetry to follow)
 
-- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is an ensemble network model trained on model-free `LocScale` maps from a large number of existing cryo-EM structures in the [EMDB]().
+- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is an ensemble network model trained on model-free LocScale maps from a large number of existing cryo-EM structures in the [EMDB]().
 <br>
   
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
@@ -30,16 +30,18 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 #### Requirements
 
-Memory requirements: Atleast 3 GB
+LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). To run LocScale efficiently in EMmerNet mode requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow. 
 
-#### 1. Create and activate a new conda environment
+#### Installation instructions:
+
+##### 1. Create and activate a new conda environment
 
 ```bash
 conda create -n locscale python=3.8 
 source activate locscale
 ```
 
-#### 2. Install LocScale and dependencies using pip:
+##### 2. Install LocScale and dependencies using pip:
 
 The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
 
@@ -49,7 +51,7 @@ pip install locscale
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 
-#### 3. Install REFMAC5 via CCP4/CCPEM
+##### 3. Install REFMAC5 via CCP4/CCPEM
 
 LocScale needs a working instance of [Refmac5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
 
@@ -57,27 +59,52 @@ LocScale needs a working instance of [Refmac5](https://www2.mrc-lmb.cam.ac.uk/gr
 which refmac5
 ```
 
-Otherwise, please install [CCP-EM](https://www.ccpem.ac.uk/download.php) or [CCP4](https://www.ccp4.ac.uk/download/).  
+Otherwise, please install [CCP4](https://www.ccp4.ac.uk/download/).  
 
-## Usage
+## How to use
+
+LocScale can generate locally sharpened cryo-EM maps either using model-based sharpening based on available atomic model(s), using model-free sharpening, or using deep neural network-based sharpening method (EMmerNet).
 
 #### 1. Run LocScale using an existing atomic model:
+
 ```bash
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
+The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
+
+To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
+
+```bash
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
+```
+
 #### 2. Run LocScale without atomic model:
+
+If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical testing and generate a pseudo-atomic model in the contoured density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate a reference profile for local sharpening. Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
+
 ```bash
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_based_locscale.mrc
 ```
+For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
-For an exhaustive list of options, run:   
+```bash
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
+```
+
+
+For an exhaustive list of options, use:   
 
 ```bash
 locscale run_locscale --help
 ``` 
 
+or see the [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/)
+
 #### 3. Run LocScale using EMmerNet predictions:
+
+Instead of using model-based or model-free refernce profiles, LocScale also supports local sharpening based on a new deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid the slightest risk of bias. We do encourage its use, but ask you to be cautious and, in particular, not to use such maps for model refinement.
+
 ```bash
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
 ```
@@ -97,7 +124,6 @@ For an exhaustive list of options, run:
 ```bash
 locscale run_emmernet --help
 ``` 
-
 
 ## Tutorial and FAQs
 
