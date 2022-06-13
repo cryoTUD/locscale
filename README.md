@@ -88,7 +88,7 @@ locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_free_locscale.mrc -mpi
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc -mpi
 ```
 
 
