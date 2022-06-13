@@ -57,7 +57,7 @@ setup(name='locscale',
         'Programming Language :: Python :: 3 :: Only',
     ],
     packages=find_packages(exclude=['tests*']),
-    package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90']},
+    package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90', 'emmernet/emmernet_models/*.tar.gz', 'emmernet/emmernet_models/*.hdf5']},
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy==1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
                       'mrcfile>=1.3.0','gemmi>=0.4.8','pypdb>=2.0','sklearn>=0.0','pwlf>=2.0.4','tqdm>=4.62.3',\
                       'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.6.0','tensorflow-addons==0.14.0',\
