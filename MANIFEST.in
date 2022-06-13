@@ -1,5 +1,6 @@
 include LICENSE.txt
-include *.tar.gz
-include *.hdf5
-include *.toml
+global-include *.tar.gz
+global-include *.hdf5
+include pyproject.toml
+
 
