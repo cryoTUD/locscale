@@ -6,13 +6,13 @@ from datetime import datetime
 import pyfiglet
 
 progname = os.path.basename(sys.argv[0])
-author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Carsten Sachse (EMBL),  Alok Bharadwaj (TU Delft) and Reinier de Bruin (TU Delft)\n\n'
-version = progname + '  0.2'
+author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft), Carsten Sachse (FZJ) \n\n'
+version = progname + '  2.0'
 
 
 sample_run_locscale = "python /path/to/locscale/main.py run_locscale --emmap_path path/to/emmap.mrc -res 3.4 -o locscale.mrc --verbose"
 sample_run_emmernet = "python /path/to/locscale/main.py run_emmernet --emmap_path path/to/emmap.mrc --verbose"
-description = ["*** A comprehensive software to optimise amplitude contrast in cryo-EM density map using both sharpening and machine learning prediction ***\n",\
+description = ["*** Optimisation of contrast in cryo-EM density maps using local density scaling ***\n",\
     "Command line arguments: \n",\
         "LocScale: \n",\
         "{}\n".format(sample_run_locscale),\
@@ -140,8 +140,8 @@ def print_start_banner(start_time, text="Map Sharpening"):
         version = "x"
 
     ## Paper reference
-    paper_ref_1 = "Arjen J Jakobi, Matthias Wilmanns, Carsten Sachse (2017), \"Model-based local density sharpening of cryo-EM maps\"" 
-    paper_ref_2 = "Alok Bharadwaj, Arjen J Jakobi (2022), \"Electron scattering properties of biological macromolecules and their use for cryo-EM map sharpening\""
+    paper_ref_1 = "Arjen J Jakobi, Matthias Wilmanns, Carsten Sachse (2017), \"Model-based local density sharpening of cryo-EM maps\", \"eLife 6:e27131\"" 
+    paper_ref_2 = "Alok Bharadwaj, Arjen J Jakobi (2022), \"Electron scattering properties of biological macromolecules and their use for cryo-EM map sharpening\", \"Faraday Discussions D2FD00078D""
     paper_ref_3 = "Alok Bharadwaj, Reinier de Bruin, Arjen J Jakobi (2022), \"TBD\""
     print("="*80)
     print("="*80)
@@ -166,14 +166,11 @@ def print_start_banner(start_time, text="Map Sharpening"):
         ## Print disclaimer for EMmerNet as this is in testing phase
         print("DISCLAIMER: Network Inpainting.\n")
         ## Print note on testing for network inpainting
-        print(fill("EMmerNet is a neural network based map sharpening procedure. As such, there exists a risk of network inpainting " \
+        print(fill("EMmerNet is a neural network based map sharpening procedure. As such, there exists a risk of network hallucination " \
                 +"i.e. the densities predicted by the network may not correspond to real densities. We are trying hard to mitigate "\
-                +"this risk and we are undertaking a number of tests to ensure that the network inpainting is not a problem. "\
-                +"These tests include: "+"\n"\
-                +"\t-> Testing network performance against simulated data "+"\n"\
-                +"\t-> Quantify the degree of inpainting "+"\n"\
-                +"We have taken steps to ensure minimal bias exists in the training phase by using a appropriate training targets "\
-                +"If you find that the network inpainting is a problem, please report this to the authors. "+"\n"\
+                +"this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. "\
+                +"We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets."\
+                +"If you encounter obvious problems, please report this to the authors. "+"\n"\
                 +"Arjen Jakobi: a.jakobi@tudelft.nl  ", width=80))
 
 
