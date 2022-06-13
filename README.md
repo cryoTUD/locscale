@@ -21,8 +21,7 @@
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
 
 
-Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/).
-<br>. Note that currently the GUI implementation only supports an older version of Locscale (Locscale 1.0, with only Model-based sharpening). 
+Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/). Note that currently the GUI implementations only support an older version of Locscale (Locscale 1.0, with only model-based sharpening). 
 
 ## Installation 
 
@@ -53,13 +52,13 @@ Alternatively, download the portable installation with all libraries/dependencie
 
 ##### 3. Install REFMAC5 via CCP4/CCPEM
 
-LocScale needs a working instance of [Refmac5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
+LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
 
 ```bash
 which refmac5
 ```
 
-Otherwise, please install [CCP4](https://www.ccp4.ac.uk/download/).  
+If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/). Note that you can provide an alternative path to REFMAC5 during runtime by using the `--refmac5_path REFMAC5_PATH` flag in LocScale.
 
 ## How to use
 
@@ -99,7 +98,7 @@ For an exhaustive list of options, use:
 locscale run_locscale --help
 ``` 
 
-or see the [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/)
+Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) for more information. Please note that these pages are still being updated.
 
 #### 3. Run LocScale using EMmerNet predictions:
 
