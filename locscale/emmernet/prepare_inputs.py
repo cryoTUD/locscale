@@ -3,11 +3,13 @@ import os
 
 def prepare_inputs(args):
     import os
-    from locscale.emmernet.utils import check_emmernet_dependencies
+    from locscale.emmernet.utils import check_emmernet_dependencies, check_and_download_emmernet_model
     from locscale.utils.file_tools import get_emmap_path_from_args
     from locscale.preprocessing.headers import check_axis_order
     print("."*80)
+
     check_emmernet_dependencies(verbose=True)
+    emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
 
     emmap_path, _ = get_emmap_path_from_args(args)
 
@@ -36,7 +38,8 @@ def prepare_inputs(args):
         "outfile": outputfile,
         "batch_size": batch_size,
         "gpu_ids": gpu_ids,
-        "emmap_folder": emmap_folder
+        "emmap_folder": emmap_folder,
+        "emmernet_model_folder": emmernet_model_folder,
         }
     
     if verbose:
