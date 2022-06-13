@@ -57,7 +57,7 @@ def download_emmernet_models():
   locscale_path = os.path.dirname(locscale.__file__)
   print("locscale_path: {}".format(locscale_path))
   ## Create folder to download emmernet models
-  emmernet_models_path = os.path.join(locscale_path, "emmernet", "emmernet_models")
+  emmernet_models_path = os.path.join(locscale_path, "locscale", "emmernet", "emmernet_models")
   if not os.path.exists(emmernet_models_path):
     os.makedirs(emmernet_models_path, exist_ok=True)
     download_emmernet_model_from_url(emmernet_models_path)
