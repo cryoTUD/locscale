@@ -50,6 +50,14 @@ pip install locscale
 
 Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
 
+##### Install from git repository
+Run the following command to install the package directly from the git repository
+```bash
+pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
+```
+
+Or you can clone the repository and navigate to the `locscale` directory and run `pip install -e .`
+
 ##### 3. Install REFMAC5 via CCP4/CCPEM
 
 LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
