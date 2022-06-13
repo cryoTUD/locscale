@@ -1,6 +1,5 @@
 import pathlib
-
-locscale_path=pathlib.Path(__file__).parent.resolve()
+from .config import *
 
 
 def download_emmernet_model_from_url(download_folder):
@@ -57,11 +56,16 @@ def download_emmernet_models():
   locscale_path = os.path.dirname(locscale.__file__)
   print("locscale_path: {}".format(locscale_path))
   ## Create folder to download emmernet models
-  emmernet_models_path = os.path.join(locscale_path, "locscale", "emmernet", "emmernet_models")
-  if not os.path.exists(emmernet_models_path):
-    os.makedirs(emmernet_models_path, exist_ok=True)
-    download_emmernet_model_from_url(emmernet_models_path)
-    extract_tar_files_in_folder(emmernet_models_path, use_same_folder=True)
+  
+  path_exists = os.path.exists(EMMERNET_MODEL_PATH)
+  path_contains_tarfile = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "emmernet_models.tar.gz"))
+  path_contains_hdf5 = os.path.exists(os.path.join(EMMERNET_MODEL_PATH, "EMmerNet_MB.hdf5"))
+  do_not_download = path_exists or path_contains_hdf5 or path_contains_tarfile
+  download_true = not do_not_download
+  if download_true:
+    os.makedirs(EMMERNET_MODEL_PATH, exist_ok=True)
+    download_emmernet_model_from_url(EMMERNET_MODEL_PATH)
+    extract_tar_files_in_folder(EMMERNET_MODEL_PATH, use_same_folder=True)
 
 def download_test_data():
   import os

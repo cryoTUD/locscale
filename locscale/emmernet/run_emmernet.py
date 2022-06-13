@@ -5,7 +5,7 @@ from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
 from locscale.emmernet.emmernet_functions import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
 import numpy as np
 import os
-
+EMMERNET_MODEL_PATH = os.path.expanduser("~/.local/share/locscaleData/emmernet_models")
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
@@ -108,8 +108,8 @@ def load_emmernet_model(emmernet_type):
 
     import locscale
     locscale_path = locscale.__path__[0]
-    emmernet_folder_path = os.path.join(locscale_path, "emmernet","emmernet_models")
-    
+    #emmernet_folder_path = os.path.join(locscale_path, "emmernet","emmernet_models")
+    emmernet_folder_path = EMMERNET_MODEL_PATH
     if emmernet_type == "model_based":
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
     elif emmernet_type == "model_free":
