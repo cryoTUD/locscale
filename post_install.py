@@ -129,7 +129,7 @@ def main():
     check_and_install_gfortran()
 
     # Compile fcodes_fast
-    compile_fcodes_fast()
+    # compile_fcodes_fast()
 
     # Check if refmac5 is installed
     check_refmac5_installed()

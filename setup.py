@@ -8,6 +8,10 @@ import unittest
 import pathlib
 locscale_path=pathlib.Path(__file__).parent.resolve()
 
+ex1 = Extension(name = 'fcodes_fast',
+                sources = ['locscale/include/symmetry_emda/fcodes_fast.f90'])
+
+
 def locscale_test_suite():
   test_loader = unittest.TestLoader()
   test_suite = test_loader.discover('tests', pattern='test_*.py')
@@ -25,26 +29,6 @@ class PostDevelopCommand(develop):
         
     run(['python', str(post_install_path)])
 
-    # # Download emmernet models
-    # download_emmernet_models()
-
-    # # Download test data
-    # download_test_data()
-
-    # # Update conda environment
-    # update_conda_environment()
-
-    # # Install gfortran if not installed
-    # check_and_install_gfortran()
-
-    # # Compile fcodes_fast
-    # compile_fcodes_fast()
-
-    # # Check if refmac5 is installed
-    # check_refmac5_installed()
-
-    # # Run tests
-    # run_locscale_tests()
 
 class PostInstallCommand(install):
   """Post-installation for installation mode."""
@@ -57,26 +41,7 @@ class PostInstallCommand(install):
     post_install_path = os.path.join(locscale_path, 'post_install.py')
 
     run(['python', str(post_install_path)])
-    # # Download emmernet models
-    # download_emmernet_models()
 
-    # # Download test data
-    # download_test_data()
-
-    # # Update conda environment
-    # update_conda_environment()
-
-    # # Install gfortran if not installed
-    # check_and_install_gfortran()
-
-    # # Compile fcodes_fast
-    # compile_fcodes_fast()
-
-    # # Check if refmac5 is installed
-    # check_refmac5_installed()
-
-    # # Run tests
-    # run_locscale_tests()
 
 setup(name='locscale',
     version='2.0',
@@ -103,7 +68,7 @@ setup(name='locscale',
                           ],
       },
     test_suite = 'setup.locscale_test_suite',
-    
+    ext_modules =[ex1],
     cmdclass={'develop': PostDevelopCommand,
               'install': PostInstallCommand},
 
