@@ -36,7 +36,7 @@ LocScale should run on any CPU system with Linux, OS X or Windows subsytem for L
 ##### 1. Create and activate a new conda environment
 
 ```bash
-conda create -n locscale python=3.8 
+conda create -n locscale python=3.7 
 conda activate locscale
 ```
 
