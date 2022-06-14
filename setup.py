@@ -24,23 +24,54 @@ class PostDevelopCommand(develop):
     develop.run(self)   
 
     from subprocess import run
+    from shutil import which
     import os
-    post_install_path = os.path.join(locscale_path, 'post_install.py')
-        
-    run(['python', str(post_install_path)])
+    #post_install_path = os.path.join(locscale_path, 'post_install.py')
 
+    ## Install conda packages   
+    run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
+
+    run(["conda", "install", "-c", "anaconda", "cudnn","--yes"])
+
+    run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
+
+    run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
+
+    # Check if refmac5 is installed
+    refmac5_location = which("refmac5")
+    if refmac5_location is None:
+      raise UserWarning("Refmac5 is not installed. Please install it and try again.")
+    else:
+      print("Refmac5 is installed at {}".format(refmac5_location))
+      print("If you want to use a different binary please use the --refmac5_location option or alias it to refmac5")
+    
 
 class PostInstallCommand(install):
   """Post-installation for installation mode."""
   def run(self):
     install.run(self)
     
-    ## Run post_install.py
     from subprocess import run
+    from shutil import which
     import os
-    post_install_path = os.path.join(locscale_path, 'post_install.py')
+    #post_install_path = os.path.join(locscale_path, 'post_install.py')
 
-    run(['python', str(post_install_path)])
+    ## Install conda packages   
+    run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
+
+    run(["conda", "install", "-c", "anaconda", "cudnn","--yes"])
+
+    run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
+
+    run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
+
+    # Check if refmac5 is installed
+    refmac5_location = which("refmac5")
+    if refmac5_location is None:
+      raise UserWarning("Refmac5 is not installed. Please install CCP4 before running locscale. Without Refmac locscale cannot refine the input atomic structure.")
+    else:
+      print("Refmac5 is installed at {}".format(refmac5_location))
+      print("If you want to use a different binary please use the --refmac5_location option or alias it to refmac5")
 
 
 setup(name='locscale',
