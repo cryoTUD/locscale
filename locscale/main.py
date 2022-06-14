@@ -26,6 +26,7 @@ description="".join(description))
 sub_parser = main_parser.add_subparsers(dest='command')
 locscale_parser = sub_parser.add_parser('run_locscale', help='Run LocScale')
 emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMMERNET')
+test_parser = sub_parser.add_parser('test', help='Run tests')
 
 # **************************************************************************************
 # ************************ Command line arguments LocScale *****************************
@@ -107,6 +108,9 @@ emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size f
 emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
 emmernet_parser.add_argument('-download', '--download', help='Download the model weights', action='store_true', default=False)
 
+############################################################################################
+# ************************ Command line arguments TESTS ********************************** #
+############################################################################################
 
 
 def print_arguments(args):
@@ -281,7 +285,11 @@ def launch_amplitude_scaling(args):
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
             print(e)
-               
+
+def test_everything():
+    from locscale.tests.test_utils import download_and_test_everything()
+    download_and_test_everything()
+
 def main():
     main_args = main_parser.parse_args()
     launch_command = main_args.command
@@ -290,6 +298,8 @@ def main():
         launch_emmernet(main_args)
     elif launch_command == 'run_locscale':
         launch_amplitude_scaling(main_args)
+    elif launch_command == "test":
+        test_everything()
     
 
 if __name__ == '__main__':

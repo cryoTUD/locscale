@@ -7,28 +7,7 @@ def download_emmernet_model_from_url(download_folder):
     url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"
     wget.download(url_model_based_emmernet, download_folder)
 
-def download_test_data_from_url(download_folder):
-    import wget
-   
-    #url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
-    url_test_data = "https://surfdrive.surf.nl/files/index.php/s/lk9CdNO5gszFll1/download"
-    
-    wget.download(url_test_data, download_folder)
 
-def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
-    import tarfile
-    import os
-    if use_same_folder == 0:
-        target_folder = tar_folder
-    else:
-        target_folder = os.path.dirname(tar_folder)
-
-    for file in os.listdir(tar_folder):
-        if file.endswith(".tar.gz"):
-            print("Extracting: {}".format(file))
-            tar = tarfile.open(os.path.join(tar_folder,file))
-            tar.extractall(target_folder)
-            tar.close()
 
 def compile_fcodes_fast():
   from numpy import f2py
