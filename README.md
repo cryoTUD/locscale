@@ -116,7 +116,7 @@ LocScale currently supports all common point group symmetries. We are working on
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc -mpi
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc -mpi
 ```
 
 
