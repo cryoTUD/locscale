@@ -41,7 +41,7 @@ def download_and_test_everything():
 
     ## Create test suite
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover('tests', pattern='test_*.py')
+    test_suite = test_loader.discover(test_data_path, pattern="test_*.py")
     ## Run test suite
     test_runner = unittest.TextTestRunner(verbosity=2)
     test_result = test_runner.run(test_suite)
