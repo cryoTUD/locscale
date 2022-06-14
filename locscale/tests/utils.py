@@ -31,17 +31,18 @@ def download_and_test_everything():
     import locscale
     ## Create folder to download tests_data
     test_data_path = os.path.join(os.path.dirname(locscale.__file__), "tests","test_data")
+    test_path = os.path.join(os.path.dirname(locscale.__file__), "tests")
     if not os.path.exists(test_data_path):
         os.makedirs(test_data_path, exist_ok=True)
     
-    ## Download test data
-    download_test_data_from_url(test_data_path)
-    ## Extract tar files
-    extract_tar_files_in_folder(test_data_path)
+        ## Download test data
+        download_test_data_from_url(test_data_path)
+        ## Extract tar files
+        extract_tar_files_in_folder(test_data_path)
 
     ## Create test suite
     test_loader = unittest.TestLoader()
-    test_suite = test_loader.discover(test_data_path, pattern="test_*.py")
+    test_suite = test_loader.discover(test_path, pattern="test_*.py")
     ## Run test suite
     test_runner = unittest.TextTestRunner(verbosity=2)
     test_result = test_runner.run(test_suite)
@@ -49,7 +50,7 @@ def download_and_test_everything():
     print("Test result: {}".format(test_result))
     if test_result.wasSuccessful():
         print("All tests passed")
-        print(test_result.printSummary())
+        
     else:
         print("Some tests failed")
         print(test_result.printErrors())

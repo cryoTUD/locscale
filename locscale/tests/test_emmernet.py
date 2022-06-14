@@ -11,6 +11,15 @@ import numpy as np
 import os
 
 class test_emmernet(unittest.TestCase):
+    def setUp(self):
+        from locscale.emmernet.utils import check_and_download_emmernet_model
+
+        emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
+        self.assertTrue(emmernet_model_folder is not None)
+
+        self.emmernet_model_folder = emmernet_model_folder
+
+        
     def test_map_chunking(self):
         from locscale.emmernet.emmernet_functions import get_cubes, assemble_cubes
         import numpy as np
@@ -39,9 +48,9 @@ class test_emmernet(unittest.TestCase):
         emmernet_type_2 = "model_free"
         emmernet_type_3 = "ensemble"
 
-        emmernet_model_1 = load_emmernet_model(emmernet_type_1)
-        emmernet_model_2 = load_emmernet_model(emmernet_type_2)
-        emmernet_model_3 = load_emmernet_model(emmernet_type_3)
+        emmernet_model_1 = load_emmernet_model(emmernet_type_1, self.emmernet_model_folder)
+        emmernet_model_2 = load_emmernet_model(emmernet_type_2, self.emmernet_model_folder)
+        emmernet_model_3 = load_emmernet_model(emmernet_type_3, self.emmernet_model_folder)
 
         self.assertTrue(emmernet_model_1 is not None)
         self.assertTrue(emmernet_model_2 is not None)
@@ -60,7 +69,7 @@ class test_emmernet(unittest.TestCase):
         cubes, cube_centers = get_cubes(emmap, stride, cube_size)
         cube_1 = cubes[0]
 
-        emmernet_model_1 = load_emmernet_model("model_based")
+        emmernet_model_1 = load_emmernet_model("model_based", self.emmernet_model_folder)
         i=0
         cubes = np.array(cubes)
         cubes_x = np.expand_dims(cubes, axis=4)
