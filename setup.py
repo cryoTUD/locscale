@@ -11,6 +11,7 @@ locscale_path=pathlib.Path(__file__).parent.resolve()
 ex1 = Extension(name = 'fcodes_fast',
                 sources = ['locscale/include/symmetry_emda/fcodes_fast.f90'])
 
+long_description = (locscale_path / "README.md").read_text()
 
 def locscale_test_suite():
   test_loader = unittest.TestLoader()
