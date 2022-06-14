@@ -81,7 +81,7 @@ setup(name='locscale',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     description= 'Contrast optimization for cryo-EM maps',
     license='3-clause BSD',
-    packages=find_packages(exclude=['tests*']),
+    packages=find_packages(),
     include_package_data=True,
     package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90', 'emmernet/emmernet_models/*.tar.gz', 'emmernet/emmernet_models/*.hdf5']},
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy==1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
