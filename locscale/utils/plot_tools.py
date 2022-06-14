@@ -184,8 +184,9 @@ def plot_pickle_output(folder):
     return fig
 
 def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad, report_output_filename=None, statistic_output_filename=None):
-    from locscale.include.emmer.ndimage.profile_tools import plot_emmap_section
-    from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile, compute_radial_profile, frequency_array 
+    from locscale.include.emmer.ndimage.plots import plot_emmap_section, plot_radial_profile
+    from locscale.utils.plot_tools import plot_pickle_output
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array 
     from matplotlib.backends.backend_pdf import PdfPages
     import os
     import mrcfile
