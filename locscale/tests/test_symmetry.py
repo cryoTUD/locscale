@@ -14,9 +14,9 @@ class TestSymmetry(unittest.TestCase):
         import os
         self.locscale_path = get_locscale_path()
         
-        self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_chainA.mrc")
+        self.emmap_path = os.path.join(self.locscale_path,"locscale","tests","test_data","emd5778_map_chainA.mrc")
         #self.emmap_path = os.path.join(self.locscale_path,"tests","test_data","emd5778_map_full.mrc")
-        self.symmetry_output = os.path.join(self.locscale_path,"tests","test_data","avgmap_fcodes.mrc")
+        self.symmetry_output = os.path.join(self.locscale_path,"locscale","tests","test_data","avgmap_fcodes.mrc")
 #        self.emmap_path = "/home/alok/dev/ForUbuntu/LocScale/tests/new_symmetry/emd5778_tutorial.mrc"
 
     def copy_files(self, file_path, tempDir):
