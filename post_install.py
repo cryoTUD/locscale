@@ -1,5 +1,4 @@
 import pathlib
-from .config import *
 import unittest
 
 def download_emmernet_model_from_url(download_folder):
