@@ -40,6 +40,12 @@ conda create -n locscale python=3.8
 conda activate locscale
 ```
 
+##### Install fortran compiler
+LocScale uses a fortran code to perform symmetry operations. Hence a fortran compiler must be present in your system. If not, you can install `gfortran` from conda-forge
+```bash
+conda install -c conda-forge gfortran
+```
+
 ##### 2. Install LocScale and dependencies using pip:
 
 The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
