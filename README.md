@@ -40,29 +40,28 @@ conda create -n locscale python=3.7
 conda activate locscale
 ```
 
-##### Install fortran compiler
-LocScale uses a fortran code to perform symmetry operations. Hence a fortran compiler must be present in your system. If not, you can install `gfortran` from conda-forge
+###### Install fortran compiler
+LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install `gfortran` from conda-forge.
 ```bash
 conda install -c conda-forge gfortran
 ```
 
 ##### 2. Install LocScale and dependencies using pip:
 
+###### Option 1: Install from PyPi 
 The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
 
 ```bash
 pip install locscale 
 ```
 
-Alternatively, download the portable installation with all libraries/dependencies included: https://gitlab.tudelft.nl/aj-lab/locscale/releases/latest.
+###### Option 2: Install from git repository
 
-##### Install from git repository
-Run the following command to install the package directly from the git repository
 ```bash
 pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 ```
 
-Or you can clone the repository and navigate to the `locscale` directory and run `pip install -e .`
+Alternatively, you can clone the repository, navigate to the `locscale` directory and run `pip install -e .`
 
 ##### 3. Install REFMAC5 via CCP4/CCPEM
 
@@ -84,7 +83,7 @@ LocScale can generate locally sharpened cryo-EM maps either using model-based sh
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
-Her,e emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
+Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
 
 ```bash
 locscale run_locscale -hm path/to/halfmap1.mrc,path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
@@ -100,11 +99,20 @@ mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -
 
 #### 2. Run LocScale without atomic model:
 
-If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical testing and generate a pseudo-atomic model in the contoured density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate a reference profile for local sharpening. Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
+If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical thresholding and generate a pseudo-atomic model in the thresholded density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate an average reference profile for local sharpening based on the experimental data and expected properties for electron scattering of biological macromolecules [[2]](#references). Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
 
 ```bash
 locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
 ```
+##### Symmetry
+If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
+
+```bash
+locscale run_locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc
+```
+
+LocScale currently supports all common point group symmetries. We are working on supporting helical symmetry, but this is not yet implemented. 
+
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
