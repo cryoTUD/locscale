@@ -17,7 +17,7 @@ class test_locscale(unittest.TestCase):
         from locscale.include.confidenceMapUtil import FDRutil
 
         self.locscale = get_locscale_path()
-        data_folder = os.path.join(self.locscale,'tests','test_data') 
+        data_folder = os.path.join(self.locscale,"locscale",'tests','test_data') 
         self.emmap_path = os.path.join(data_folder, "emd5778_map_chainA.mrc")
         self.mask_path = os.path.join(data_folder, "emd5778_mask_chainA.mrc")
         self.model_coordinates = os.path.join(data_folder, "pdb3j5p_refined_chainA.pdb")
