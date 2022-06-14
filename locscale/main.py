@@ -287,7 +287,7 @@ def launch_amplitude_scaling(args):
             print(e)
 
 def test_everything():
-    from locscale.tests.test_utils import download_and_test_everything()
+    from locscale.tests.test_utils import download_and_test_everything
     download_and_test_everything()
 
 def main():
