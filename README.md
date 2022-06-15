@@ -48,20 +48,20 @@ conda install -c conda-forge gfortran
 
 ##### 2. Install LocScale and dependencies using pip:
 
-###### Option 1: Install from PyPi 
-The setup.py file contains the list of packages and their versions used inside LocScale. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
+###### Recommended installation
+We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
 
 ```bash
 pip install locscale 
 ```
 
-###### Option 2: Install from git repository
-
+###### Install development version
+If you'd like to install the latest development version of locscale, use the following command to install from the git repository. 
 ```bash
 pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 ```
 
-Alternatively, you can clone the repository, navigate to the `locscale` directory and run `pip install -e .`
+To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
 
 ###### Testing
 
