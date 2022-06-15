@@ -63,7 +63,9 @@ pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 
 Alternatively, you can clone the repository, navigate to the `locscale` directory and run `pip install -e .`
 
-Post installation, run tests using the following command 
+###### Testing
+
+To test functionality after installation, you can run LocScale unit tests using the following command:
 
 ```bash
 locscale test
