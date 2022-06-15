@@ -63,7 +63,9 @@ pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 
 Alternatively, you can clone the repository, navigate to the `locscale` directory and run `pip install -e .`
 
-Post installation, run tests using the following command 
+###### Testing
+
+To test functionality after installation, you can run LocScale unit tests using the following command:
 
 ```bash
 locscale test
@@ -161,7 +163,7 @@ locscale run_emmernet --help
 
 ## Tutorial and FAQs
 
-We are currently working on the tutorial and Wiki help. If you are still using LocScale 1.0, see [__Wiki__](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home) for usage instructions, FAQs and tutorial.
+We are currently working on the tutorial and [__Wiki__](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) help. If you are still using LocScale 1.0, see the [LocScale1](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)-Wiki for usage instructions, FAQs and tutorial.
 <br>  
 
 ## Credits
