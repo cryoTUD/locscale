@@ -214,7 +214,7 @@ def get_emmap_path_from_args(args):
         shift_vector=shift_map_to_zero_origin(emmap_path)
     elif args.halfmap_paths is not None:
         print("Adding the two half maps provided to generate a full map \n")
-        halfmap_paths = args.halfmap_paths.split(",")
+        halfmap_paths = args.halfmap_paths
         assert len(halfmap_paths) == 2, "Please provide two half maps"
         print(halfmap_paths[0])
         print(halfmap_paths[1])
@@ -366,11 +366,5 @@ def check_user_input(args):
                   
 
 
-    if args.outfile is None:
-        print("You have not entered a filename for LocScale output. Using a standard output file name: loc_scale.mrc. \
-              Any file with the same name in the current directory will be overwritten")
 
-        outfile = [x for x in vars(args) if x=="outfile"]
-        
-        setattr(args, outfile[0], "loc_scale.mrc")
 

@@ -35,7 +35,7 @@ test_parser = sub_parser.add_parser('test', help='Run tests')
 ## Input either unsharpened EM map or two halfmaps
 locscale_emmap_input = locscale_parser.add_mutually_exclusive_group(required=True)
 locscale_emmap_input.add_argument('-em', '--emmap_path',  help='Path to unsharpened EM map')
-locscale_emmap_input.add_argument('-hm', '--halfmap_paths', help='Paths to first and second halfmaps')
+locscale_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths to first and second halfmaps')
 
 ## Input model map file (mrc file) or atomic model (pdb file)
 locscale_parser.add_argument('-mm', '--model_map', help='Path to model map file')
@@ -45,7 +45,7 @@ locscale_parser.add_argument('-mc', '--model_coordinates', help='Path to PDB fil
 locscale_parser.add_argument('-ma', '--mask', help='Input filename mask')
 
 ## Output arguments
-locscale_parser.add_argument('-o', '--outfile', help='Output filename')
+locscale_parser.add_argument('-o', '--outfile', help='Output filename', default="locscale_output.mrc")
 locscale_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 locscale_parser.add_argument('--output_report', action='store_true', default=False,help='Print a PDF copy of the report')
 locscale_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
@@ -96,7 +96,7 @@ emmernet_emmap_input.add_argument('-em', '--emmap_path',  help='Path to unsharpe
 emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', help='Paths to first and second halfmaps')
 
 ## Output arguments
-emmernet_parser.add_argument('-o', '--outfile', help='Output filename')
+emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
 emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 
