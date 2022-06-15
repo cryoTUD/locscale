@@ -170,6 +170,7 @@ def change_directory(args, folder_name):
             if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files":
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location)
+        if isinstance(value, list):
             if arg == "halfmap_paths":
                 halfmap_paths = value
                 halfmap1_path = halfmap_paths[0]
