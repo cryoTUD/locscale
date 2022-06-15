@@ -76,7 +76,7 @@ class PostInstallCommand(install):
 
 
 setup(name='locscale',
-    version='2.0.1',
+    version='2.0.0',
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin, Carsten Sachse',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     description= 'Contrast optimization for cryo-EM maps',
