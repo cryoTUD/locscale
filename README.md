@@ -56,7 +56,7 @@ pip install locscale
 ```
 
 ###### Install development version
-If you'd like to install the latest development version of locscale, use the following command to install from the git repository. 
+If you would like to install the latest development version of locscale, use the following command to install from the git repository. 
 ```bash
 pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 ```
