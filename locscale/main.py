@@ -6,7 +6,7 @@ from datetime import datetime
 import pyfiglet
 
 progname = os.path.basename(sys.argv[0])
-author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft), Carsten Sachse (FZJ) \n\n'
+author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft) \n\n'
 version = progname + '  2.0'
 
 
@@ -136,10 +136,12 @@ def print_start_banner(start_time, text="Map Sharpening"):
     ## Author credits
     
     if text == "LocScale":
-        author_list = ["Arjen J. Jakobi (TU Delft)", "Carsten Sachse (EMBL)",  "Alok Bharadwaj (TU Delft)"]
+        author_list = ["Arjen J. Jakobi (TU Delft)", "Alok Bharadwaj (TU Delft)"]
+        contributor_list = ["Carsten Sachse (EMBL)"]
         version = "2.0"
     elif text == "EMmerNet":
         author_list = ["Arjen J. Jakobi (TU Delft)",  "Alok Bharadwaj (TU Delft)", "Reinier de Bruin (TU Delft)"]
+        contributor_list = None
         version = "1.0"
     else:
         version = "x"
@@ -158,9 +160,15 @@ def print_start_banner(start_time, text="Map Sharpening"):
     print("  |  ".join(["User: {}".format(username), "Date: {}".format(today_date), "Time: {}".format(time_now)]))
     print("\n")
     # Print author credits
-    print("Credits:\n")
+    print("Authors:\n")
     for author in author_list:
         print("\t{} \n".format(author))
+    # Print contributor credits if any
+    if contributor_list is not None:
+        print("Contributors:\n")
+        for contributor in contributor_list:
+            print("\t{} \n".format(contributor))
+        
     # Print paper references
     print("References:\n")
     print(fill("{}".format(paper_ref_1), width=80, subsequent_indent="\t"))
