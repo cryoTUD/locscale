@@ -142,7 +142,7 @@ Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home
 Instead of using model-based or model-free refernce profiles, LocScale also supports local sharpening based on a new deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid the slightest risk of bias. We do encourage its use, but ask you to be cautious and, in particular, not to use such maps for model refinement.
 
 ```bash
-locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 0 -o emmernet_model_based.mrc
+locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 1 -o emmernet_model_based.mrc
 ```
 
 Currently, three different EMmerNet models are available and can be specified using the `-trained_model` flag as follows:
