@@ -171,13 +171,13 @@ def change_directory(args, folder_name):
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location)
             if arg == "halfmap_paths":
-                halfmap_paths = value.split(",")
+                halfmap_paths = value
                 halfmap1_path = halfmap_paths[0]
                 halfmap2_path = halfmap_paths[1]
 
                 new_halfmap1_path = copy_file_to_folder(halfmap1_path, new_directory)
                 new_halfmap2_path = copy_file_to_folder(halfmap2_path, new_directory)
-                new_halfmap_paths = new_halfmap1_path + "," + new_halfmap2_path
+                new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
     
     if args.verbose:
