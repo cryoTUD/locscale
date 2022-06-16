@@ -1,7 +1,8 @@
 def download_emmernet_model_from_url(download_folder):
     import wget
    
-    url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"
+    #url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"    # OLD SURFdrive link
+    url_model_based_emmernet = "https://zenodo.org/record/6651995/files/emmernet.tar.gz?download=1"    # NEW Zenodo link
     wget.download(url_model_based_emmernet, download_folder)
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):

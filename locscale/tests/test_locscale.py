@@ -100,12 +100,12 @@ class test_locscale(unittest.TestCase):
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
 
             ## Find number of processors
-            n_proc = multiprocessing.cpu_count()
-            if n_proc > 4:
-                n_proc = 4
-            else:
-                n_proc = n_proc
-
+            n_proc = os.cpu_count()
+            
+            ## Limit to 2 processors
+            if n_proc > 2:
+                n_proc = 2
+            
             locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"run_locscale","--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose","--mpi"]
