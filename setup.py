@@ -39,12 +39,12 @@ class PostDevelopCommand(develop):
     run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
 
     # Check if refmac5 is installed
-    refmac5_location = which("refmac5")
-    if refmac5_location is None:
+    refmac5_path = which("refmac5")
+    if refmac5_path is None:
       raise UserWarning("Refmac5 is not installed. Please install it and try again.")
     else:
-      print("Refmac5 is installed at {}".format(refmac5_location))
-      print("If you want to use a different binary please use the --refmac5_location option or alias it to refmac5")
+      print("Refmac5 is installed at {}".format(refmac5_path))
+      print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
     
 
 class PostInstallCommand(install):
@@ -67,12 +67,12 @@ class PostInstallCommand(install):
     run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
 
     # Check if refmac5 is installed
-    refmac5_location = which("refmac5")
-    if refmac5_location is None:
+    refmac5_path = which("refmac5")
+    if refmac5_path is None:
       raise UserWarning("Refmac5 is not installed. Please install CCP4 before running locscale. Without Refmac locscale cannot refine the input atomic structure.")
     else:
-      print("Refmac5 is installed at {}".format(refmac5_location))
-      print("If you want to use a different binary please use the --refmac5_location option or alias it to refmac5")
+      print("Refmac5 is installed at {}".format(refmac5_path))
+      print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
 
 
 setup(name='locscale',
