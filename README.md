@@ -1,7 +1,9 @@
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/locscale)](https://pypi.org/project/locscale)
+[![BSD license](https://img.shields.io/badge/License-BSD-orange.svg)](https://lbesson.mit-license.org/)
+[![Python 3.6](https://img.shields.io/badge/python-3.7%20%7C%203.8-brightgreen)](https://www.python.org/downloads/release/python-370/)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
-[![DOI](https://zenodo.org/badge/DOI/10.7554/eLife.2713110.1007.svg)](https://doi.org/10.7554/eLife.27131)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6652013.svg)](https://doi.org/10.5281/zenodo.6652013)
+[![Citation Badge](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://juleskreuer.eu/projekte/citation-badge/)
 
 # LocScale - reference-based local sharpening of cryo-EM maps
 
@@ -139,7 +141,7 @@ Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home
 
 #### 3. Run LocScale using EMmerNet predictions:
 
-Instead of using model-based or model-free refernce profiles, LocScale also supports local sharpening based on a new deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid the slightest risk of bias. We do encourage its use, but ask you to be cautious and, in particular, not to use such maps for model refinement.
+Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a new deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid the slightest risk of bias. We do encourage its use, but ask you to be cautious and, in particular, not to use such maps for model refinement.
 
 ```bash
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 1 -o emmernet_model_based.mrc
