@@ -115,9 +115,9 @@ def load_emmernet_model(emmernet_type, emmernet_model_folder=None):
 
     emmernet_folder_path = emmernet_model_folder
     if emmernet_type == "model_based":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MBfa.hdf5")
     elif emmernet_type == "model_free":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MF.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MFfa.hdf5")
     elif emmernet_type == "ensemble":
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MBMF.hdf5")
     else:
