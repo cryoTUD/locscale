@@ -27,7 +27,6 @@ class PostDevelopCommand(develop):
     from subprocess import run
     from shutil import which
     import os
-    #post_install_path = os.path.join(locscale_path, 'post_install.py')
 
     ## Install conda packages   
     run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
@@ -55,7 +54,6 @@ class PostInstallCommand(install):
     from subprocess import run
     from shutil import which
     import os
-    #post_install_path = os.path.join(locscale_path, 'post_install.py')
 
     ## Install conda packages   
     run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
@@ -76,7 +74,7 @@ class PostInstallCommand(install):
 
 
 setup(name='locscale',
-    version='2.0.0',
+    version='2.0.1',
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     description= 'Contrast optimization for cryo-EM maps',
