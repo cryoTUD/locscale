@@ -11,7 +11,7 @@ def download_test_data_from_url(download_folder):
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile
     import os
-    if use_same_folder == 0:
+    if use_same_folder:
         target_folder = tar_folder
     else:
         target_folder = os.path.dirname(tar_folder)

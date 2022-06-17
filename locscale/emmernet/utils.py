@@ -8,7 +8,7 @@ def download_emmernet_model_from_url(download_folder):
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile
     import os
-    if use_same_folder == 0:
+    if use_same_folder:
         target_folder = tar_folder
     else:
         target_folder = os.path.dirname(tar_folder)
@@ -96,7 +96,7 @@ def check_and_download_emmernet_model(verbose=False):
         download_emmernet_model_from_url(emmernet_model_folder)
         if verbose:
             print("Model downloaded")
-        extract_tar_files_in_folder(emmernet_model_folder)
+        extract_tar_files_in_folder(emmernet_model_folder, use_same_folder=True)
         if verbose:
             print("Model extracted")
     else:
@@ -127,14 +127,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     input_emmap_path = parsed_inputs["emmap_path"]
     input_emmap_folder = os.path.dirname(input_emmap_path)
     output_emmap_filename = parsed_inputs["outfile"]
-    output_emmap_folder = parsed_inputs["emmap_folder"]
     verbose = parsed_inputs["verbose"]
-
-    if output_emmap_folder is not None:
-        if not os.path.exists(output_emmap_folder):
-            output_emmap_folder = input_emmap_folder
-    
-    output_emmap_path = os.path.join(output_emmap_folder, output_emmap_filename)
     
     emmap, apix = load_map(input_emmap_path)
 
@@ -144,10 +137,10 @@ def check_and_save_output(parsed_inputs, emmernet_output):
 
     if verbose:
         print("."*80)
-        print("Saving Emmernet output to {}".format(output_emmap_path))
+        print("Saving Emmernet output to {}".format(output_emmap_filename))
         
 
-    save_as_mrc(emmernet_output_map, output_emmap_path, apix, verbose=verbose)
+    save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
 
 
     
