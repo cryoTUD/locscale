@@ -80,6 +80,7 @@ locscale_parser.add_argument('--build_ca_only', help='For gradient pseudomodel b
 locscale_parser.add_argument('-s', '--smooth_factor', type=float, help='Smooth factor for merging profiles', default=0.3)
 locscale_parser.add_argument('--boost_secondary_structure', type=float, help='Amplify signal corresponding to secondary structures', default=1.5)
 locscale_parser.add_argument('--no_reference', action='store_true', default=False,help='Run locscale without using any reference information')
+locscale_parser.add_argument('--set_local_bfactor', type=float, default=20,help='For reference-less sharpening. Use this value to set the local b-factor of the maps')
 
 ## non-default arguments
 locscale_parser.add_argument('--dev_mode', action='store_true', default=False,help='If true, this will force locscale to use the theoretical profile even if model map present and will not check for user input consistency')

@@ -272,13 +272,13 @@ def check_user_input(args):
     None.
 
     '''
-    return 
+    
     if args.dev_mode:
         print("Warning: You are in Dev mode. Not checking user input! Results maybe unreliable")
         return 
     
     import mrcfile
-    print("ignore profiles default", args.ignore_profiles)
+    
     ## Check input files
     emmap_absent = True
     if args.emmap_path is not None:
@@ -286,8 +286,8 @@ def check_user_input(args):
             emmap_absent = False
     
     half_maps_absent = True
-    if args.half_map1 is not None and args.half_map2 is not None:
-        if is_input_path_valid([args.half_map1, args.half_map2]):
+    if args.halfmap_paths is not None:
+        if is_input_path_valid([args.halfmap_paths[0], args.halfmap_paths[1]]):
             half_maps_absent = False
     
     mask_absent = True
@@ -364,6 +364,22 @@ def check_user_input(args):
         if window_size_ang < 10:
             print("Warning: Provided window size of {} is too small for pixel size of {}. \
                   Default window size is generally 25 A. Think of increasing the window size".format(window_size_pixels, apix))
+    
+    ## Check if the user added a no_reference flag
+
+    if args.no_reference:
+        from textwrap import fill
+        disclaimer = " Warning: You have asked to not use a reference to perform sharpening. This is not recommended for the following reason. \n\
+            With no reference, it is possible to perform local sharpening by scaling the local b-factor to a constant value. \n \
+            The constant b-factor is set to 20 by default. When using with reconstruction where the local resolution has a spatial variation \
+            then it is not optimal to set the local b-factor to a constant value as it likely boost noise present in high resolution regions. " 
+        
+        print(fill(disclaimer, width=80))
+        ## Pause 
+        import time
+        time.sleep(2)
+        
+
                   
 
 
