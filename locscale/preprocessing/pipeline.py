@@ -18,6 +18,9 @@ def get_modmap(modmap_args):
     from locscale.utils.plot_tools import tab_print
     import mrcfile
     
+    ###########################################################################
+    # Extract the inputs from the dictionary
+    ###########################################################################
     tabbed_print = tab_print(2)
     
     emmap_path = modmap_args['emmap_path']
@@ -48,23 +51,28 @@ def get_modmap(modmap_args):
         for key, value in modmap_args.items():
             tabbed_print.tprint("{:<20} : {}".format(key, value))
 
-    ################### START PIPELINE ###################
-    
+    #########################################################################
+    # Open data files and collect required inputs
+    # #######################################################################    
     emmap_mrc = mrcfile.open(emmap_path)
     apix = average_voxel_size(emmap_mrc.voxel_size)
+    
     pam_bond_length = pam_distance
     pam_method = pseudomodel_method
     pam_iteration = pam_iteration
-    
     resolution = fsc_resolution
     verbose = verbose
-    
+    ###########################################################################
+    # Stage 1: Check the required number of atoms for the pseudomodel
+    ###########################################################################
     if molecular_weight is None:
         num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=False)
     else:
         avg_mass_per_atom = 13.14  #amu
         num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
-
+    ###########################################################################
+    # Stage 1a: Check if the user requires to build only Ca atoms
+    ###########################################################################
     if build_ca_only:
         num_atoms = int(num_atoms/9)  ## Assuming 9 atoms per residue
         pam_bond_length = 3.8  ## Ca atom distances for secondary structures
@@ -72,7 +80,10 @@ def get_modmap(modmap_args):
         if pam_method != 'gradient':
             tabbed_print.tprint("Using gradient method for building pseudo-atomic model!\
                 Not using user input:\t {}".format(pam_method))
-    
+    ###########################################################################
+    # Stage 1b: If user has not provided a PDB path then build a 
+    # pseudomodel using the run_pam() routine else use the PDB path directly
+    ###########################################################################
     if pdb_path is None:
         if verbose:
             print("."*80)
@@ -87,7 +98,9 @@ def get_modmap(modmap_args):
             print("."*80)
             print("Using user-provided PDB path: {}".format(pdb_path))
         input_pdb_path = pdb_path
-    
+    ###########################################################################
+    # Stage 2: Refine the reference model usign servalcat
+    ###########################################################################
     if is_pseudomodel(input_pdb_path):
         only_bfactor_refinement = True
     else:
@@ -95,32 +108,48 @@ def get_modmap(modmap_args):
             
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
+    #############################################################################
+    # Stage 2a: Prepare the target map for refinement by globally sharpening
+    # the input map
+    #############################################################################
     if verbose:
         print("."*80)
         print("Preparing target map for refinement\n")
     globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
                                             wilson_cutoff=wilson_cutoff, add_blur=add_blur, verbose=verbose)
     
+    #############################################################################
+    # Stage 2b: Run servalcat to refine the reference model (either 
+    # using the input PDB or the pseudo-atomic model)
+    #############################################################################
     if verbose:
         print("."*80)
-        print("Running Refmac refinement\n")
+        print("Running model refinement\n")
     if skip_refine:
         if verbose: 
-            tabbed_print.tprint("Skipping REFMAC refinements based on user input\n")
+            tabbed_print.tprint("Skipping model refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
         refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
                     only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,
                     refmac5_path=refmac5_path,verbose=verbose)
         if refined_model_path is None:
-            tabbed_print.tprint("Problem running REFMAC. Returning None")
+            tabbed_print.tprint("Problem running servalcat. Returning None")
             return None
-        
+    
+    #############################################################################
+    # Stage 3: Convert the refined model to a model-map using the 
+    # run_refmap() function
+    #############################################################################
+
     if verbose:
         print("."*80)
         print("Simulating model-map using refined structure factors\n")
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
+    #############################################################################
+    # Stage 3a: If the user has specified symmetry, then apply the PG symmetry
+    #############################################################################
     if pg_symmetry != "C1":
         if verbose:
             tabbed_print.tprint("Imposing a symmetry condition of {}".format(pg_symmetry))
@@ -134,6 +163,10 @@ def get_modmap(modmap_args):
         if verbose:
             tabbed_print.tprint("No symmetry condition imposed")
     
+    #############################################################################
+    # Stage 3b: If the user has specified a low pass filter cutoff then 
+    # apply the low pass filter for model map
+    #############################################################################
     if model_resolution is not None:
         if verbose:
             tabbed_print.tprint("Performing low pass filter on the Model Map with a cutoff: {} based on user input".format(model_resolution))
@@ -148,7 +181,9 @@ def get_modmap(modmap_args):
         
         pseudomodel_modmap = filename
     
-    
+    #############################################################################
+    # Stage 4: Check and return the model-map
+    #############################################################################
     
     if pseudomodel_modmap is None:
         tabbed_print.tprint("Problem simulating map from refined model. Returning None")
