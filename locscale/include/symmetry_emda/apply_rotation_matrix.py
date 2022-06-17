@@ -411,29 +411,6 @@
 #     return interpolate_FT
                 
 
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ############################ CODE DUMP #############################
 # # def trilinear_interpolation2(FT, rotation_matrix):
 
