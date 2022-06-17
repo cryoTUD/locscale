@@ -18,6 +18,10 @@ def prepare_mask_and_maps_for_scaling(args):
     '''
     print("."*80)
     print("Preparing your inputs for LocScale")
+
+    #########################################################################
+    # Import necessary modules
+    #########################################################################
     import os
     from locscale.preprocessing.pipeline import get_modmap
     from locscale.preprocessing.headers import run_FDR, check_axis_order
@@ -30,26 +34,43 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     from locscale.utils.plot_tools import tab_print
-    
+
+    #########################################################################
+    # Stage 1: Check dependencies
+    #########################################################################
     tabbed_print = tab_print(2)
     ## Check dependencies
     dependency_check = check_dependencies()
-    
     if isinstance(dependency_check, list):
         print("The following dependencies are missing. The program may not work as expected. \n")
         print("\t".join(dependency_check))
     else:
         print("All dependencies are satisfied. \n")
     
-    scale_using_theoretical_profile = not(args.ignore_profiles)  ## Flag to determine whether to use theoretical profiles or not
+    #########################################################################
+    # Stage 2: Parse the inputs 
+    # a) Prepare the emmap
+    # b) Check axis orders of the maps 
+    # c) Check if pseudo-model is required
+    #########################################################################
+
+    
+    scale_using_theoretical_profile = not(args.ignore_profiles)  
+    ##########################################################################
+    ## scale_using_theoretical_profile is the flag used to determine 
+    ## if scale factors are computed using the theoretical profile 
+    ## which is required for the pseudo-atomic model routine. Although 
+    ## pseudo-model routine is run automaticall if the pdb_path 
+    ## is not provided, this flag can be used to override the theoretical 
+    ## profile computation.
+    ##########################################################################
+
     
     emmap_path, shift_vector = get_emmap_path_from_args(args)      
     xyz_emmap_path = check_axis_order(emmap_path)  
-    
     xyz_emmap = mrcfile.open(xyz_emmap_path).data
     
     verbose = bool(args.verbose)
-    
     fsc_resolution = float(args.ref_resolution)
     
     if args.apix is None:
@@ -58,7 +79,9 @@ def prepare_mask_and_maps_for_scaling(args):
         apix = float(args.apix)
     
     
-    ## Get the mask path if provided. Calculate using FDR if a mask is not provided
+    ###########################################################################
+    # Stage 3: Prepare the mask
+    ###########################################################################
     
     if verbose:
         print("."*80)
@@ -94,9 +117,16 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_mask = (mrcfile.open(xyz_mask_path).data > 0.99).astype(np.int8)
     
     
-    ## Obtain the model map if provided if not determine from user input to generate pseudo-atomic model 
+    #############################################################################
+    # Stage 4: Prepare the model-map
+    # Here we check if the user has provided model map (.mrc format) or not. If the 
+    # user has provided the model map, then we use it directly for computation. 
+    # Else, we need to have a reference model and then simulate a model map from it. 
+    # The reference model generation and simulation will be done in the 
+    # preprocessing/pipeline module.
+    #############################################################################
 
-    
+    ### Collect the required information for the reference model pipeline    
     if args.molecular_weight is not None:
         molecular_weight = float(args.molecular_weight)    
     else:
@@ -106,20 +136,30 @@ def prepare_mask_and_maps_for_scaling(args):
         print("."*80)
         print("Preparing model map \n")
 
-    if args.model_map is None and not args.no_reference:
-        # Collect model map arguments and pass it to preprocessing pipeline
-        #     
+    ## If the user has not provided the model map and has not used the 
+    ## no_reference option, then we need to run the get_modmap pipeline
+    if args.model_map is None and not args.no_reference:  
+
+        # Collect model map arguments and pass it to get_modmap pipeline
+        
         pdb_path = args.model_coordinates
+        
+        ## Check if the user has provided the atomic model and set the
+        ## scale_using_theoretical_profile to False if yes
         if pdb_path is not None:
-            scale_using_theoretical_profile = False ## If a PDB_path is provided, assume that it is an atomic model thus set this flag as False
+            scale_using_theoretical_profile = False 
+            ## If a PDB_path is provided, assume that it is an atomic model hence 
+            ## we do not need to use the theoretical profile for scaling
+
             shift_coordinates(in_model_path=pdb_path, trans_matrix=shift_vector,
                                          out_model_path=pdb_path[:-4]+"_shifted.pdb")
             pdb_path = pdb_path[:-4]+"_shifted.pdb"
-            
+
+        ## Collect the rest of the arguments from argument parser
         add_blur = float(args.add_blur)
         skip_refine = args.skip_refine
         model_resolution = args.model_resolution
-        ## Defaults for pseudo-atomic model 
+        ##### Following are arguments for pseudo-atomic model generation
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
         refmac_iter = int(args.refmac_iterations)
@@ -132,10 +172,9 @@ def prepare_mask_and_maps_for_scaling(args):
             pam_iteration = int(args.total_iterations)
         build_ca_only = args.build_ca_only
         
-        ## Get reference map using get_modmap_from_pseudomodel()
-        ## Note that if a pdb_path is provided then the function 
-        ## will use that instead of running pseudo-atomic model 
-        ## routine. 
+        #############################################################################
+        # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
+        #############################################################################
         
         modmap_args = {
             'emmap_path':xyz_emmap_path,
@@ -156,12 +195,21 @@ def prepare_mask_and_maps_for_scaling(args):
             'refmac5_path':refmac5_path,
         }
         
+        #############################################################################
+        # Stage 4b: Run the get_modmap pipeline                                 #
+        #############################################################################
         modmap_path = get_modmap(modmap_args)
-        
         xyz_modmap_path = check_axis_order(modmap_path, return_same_path=True)
         xyz_modmap = mrcfile.open(xyz_modmap_path).data
+    
+    ## If the user has provided the model map, then we use it directly for computation
+    ## but not if the user has used the no_reference option
+
     elif args.model_map is not None and not args.no_reference:
-        scale_using_theoretical_profile = False ## If a model map is provided, assume that it is from an atomic model thus set this flag as False no matter what the user input 
+        scale_using_theoretical_profile = False 
+        ## If a model map is provide 
+        ## we do not need to use the theoretical profile for scaling
+
         modmap_path = args.model_map
         model_resolution = args.model_resolution
         if model_resolution is not None:
@@ -183,11 +231,24 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_modmap = mrcfile.open(xyz_modmap_path).data        
     else:
         print("Running locscale without using any reference")
+        ## Running locscale without using any reference means that the bfactors of the 
+        ## local window will be set to zero. This is not a recommended option.
+        ## This option is only present due to testing purposes and has 
+        ## to be removed in the future.
+        
         xyz_modmap = np.ones(xyz_emmap.shape)
     
+    #############################################################################
+    # Stage 5: Prepare other parameters for the locscale pipeline               
+    #############################################################################
     if verbose:
         print("."*80)
         print("Preparing locscale parameters\n")
+
+    ##############################################################################
+    # Stage 5a: If window size is not given, then use a default size of 25A and 
+    # calculate the window size in pixels based on this value
+    ##############################################################################
     if args.window_size is None:   ## Use default window size of 25 A
         wn = round_up_to_even(25 / apix)
         if verbose:
@@ -198,10 +259,14 @@ def prepare_mask_and_maps_for_scaling(args):
         if verbose:
             tabbed_print.tprint("Provided window size in pixels is {} corresponding to approximately {:.2f} Angstorm".format(wn, wn*apix))
 
+    ##############################################################################
+    # Stage 5b: If the locscale window extends out of the box then we need to
+    # pad the input box to make it fit the window size
+    ##############################################################################
     window_bleed_and_pad = check_for_window_bleeding(xyz_mask, wn)
     
+    ## Collect the padded inputs if required
     if window_bleed_and_pad:
-
         pad_int_emmap = compute_padding_average(xyz_emmap, xyz_mask)
         pad_int_modmap = compute_padding_average(xyz_modmap, xyz_mask)
         map_shape = [(xyz_emmap.shape[0] + wn), (xyz_emmap.shape[1] + wn), (xyz_emmap.shape[2] + wn)]
@@ -210,13 +275,27 @@ def prepare_mask_and_maps_for_scaling(args):
         xyz_mask = pad_or_crop_volume(xyz_mask, map_shape, 0)
 
 
-    ## Next few lines of code characterizes radial profile of 
-    ## input emmap : 
-        ## wilson cutoff : threshold between guinier and wilson regimes in the radial profile
-        ## high frequency cutoff : threshold above which to computing bfactor becomes valid  (for low resolution map, it's same as wilson cutoff)
-        ## FSC cutoff : threshold above which amplitudes of signal becomes weaked compared to noise
-        
-    
+    ##############################################################################
+    # Stage 5c: Get the parameters required to compute the scale factors
+    # which maybe required for pseudo-atomic model routine when the 
+    # scale_using_theoretical_profile is set to True
+    ############################################################################## 
+
+    ###############################################################################
+    # Stage 6: Collect scale factor arguments and pack it into a dictionary
+    ###############################################################################
+
+    ###############################################################################
+    # Definitions: 
+    # wilson_cutoff: The resolution where Wilson regime starts (in Angstrom) 
+    # high frequency cutoff: the resolution at which debye effects are negligible
+    # FSC cutoff:  FSC resolution obtained using the two halfmaps thresholded at 0.143
+    # boost_secondary_structure: Factor to boost radial profile of secondary structure 
+    #                            in the debye regions
+    # Nyquist cutoff: the resolution correponding to sampling frequency 
+    # PS: all cutoff values are in Angstrom
+    ###############################################################################
+       
     wilson_cutoff = find_wilson_cutoff(mask_path=xyz_mask_path, verbose=False)
     smooth_factor = args.smooth_factor
     boost_secondary_structure = args.boost_secondary_structure
@@ -237,6 +316,9 @@ def prepare_mask_and_maps_for_scaling(args):
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
         pwlf_fit_quality = fit.r_squared()
     
+    ###############################################################################
+    ## Add a dev_mode flag to override normal routine
+    ###############################################################################
     dev_mode = args.dev_mode
     if dev_mode:
         print("DEV MODE: Scaling using theoretical profiles even if you have input an atomic model!")
@@ -245,13 +327,15 @@ def prepare_mask_and_maps_for_scaling(args):
         scale_using_theoretical_profile = True
         print("After: scale_using_theoretical_profile=",scale_using_theoretical_profile)        
     
-    
-        
     processing_files_folder = os.path.dirname(xyz_emmap_path)
 
     ## number of processes
     number_processes = args.number_processes
     
+    ###############################################################################
+    # Stage 6a: Pack into a dictionary
+    ###############################################################################
+
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
@@ -267,6 +351,9 @@ def prepare_mask_and_maps_for_scaling(args):
         print("."*80)
     
     
+    #################################################################################
+    # Stage 7: Pack everything into a dictionary and pass it to main function
+    #################################################################################
     parsed_inputs_dict = {}
     parsed_inputs_dict['emmap'] = xyz_emmap
     parsed_inputs_dict['modmap'] = xyz_modmap
@@ -286,6 +373,9 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
     
+    #################################################################################
+    # Stage 8: Make some common sense checks and return 
+    #################################################################################
     
     ## all maps should have same shape
     assert xyz_emmap.shape == xyz_modmap.shape == xyz_mask.shape, "The input maps and mask do not have the same shape"

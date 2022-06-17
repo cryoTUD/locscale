@@ -11,3 +11,22 @@ build/
 
 locscale/include/symmetry_emda/fcodes_fast.cpython-38-x86_64-linux-gnu.so
 locscale/include/symmetry_emda/fcodes_fast.cpython-37m-x86_64-linux-gnu.so
+locscale/tests/test_data/avgmap_fcodes.mrc
+locscale/tests/test_data/emd5778_map_chainA.mrc
+locscale/tests/test_data/emd5778_map_full_global_sharpened_filtered.mrc
+locscale/tests/test_data/emd5778_map_full_global_sharpened.mrc
+locscale/tests/test_data/emd5778_map_full.mrc
+locscale/tests/test_data/emd5778_mask_chainA.mrc
+locscale/tests/test_data/emd5778_mask_full.mrc
+locscale/tests/test_data/get_test_scaling_data.py
+locscale/tests/test_data/pdb3j5p_refined_4locscale.mrc
+locscale/tests/test_data/pdb3j5p_refined_chainA.pdb
+locscale/tests/test_data/pdb3j5p_refined.pdb
+locscale/tests/test_data/pseudomodel.pdb
+locscale/tests/test_data/reference_mb_locscale.mrc
+locscale/tests/test_data/reference_mf_locscale.mrc
+locscale/tests/test_data/test_data.tar.gz
+locscale/tests/test_data/test_scaling_data_1.pickle
+locscale/tests/test_data/test_scaling_data_2.pickle
+locscale/tests/test_data/test_scaling_data_3.pickle
+fcodes_fast.cpython-37m-x86_64-linux-gnu.so
