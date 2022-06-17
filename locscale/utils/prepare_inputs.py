@@ -89,8 +89,7 @@ def prepare_mask_and_maps_for_scaling(args):
     
     if args.mask is None:
         if args.verbose:
-            tabbed_print.tprint("A mask path has not been provided. \
-                 False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
+            tabbed_print.tprint("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
         if args.fdr_window_size is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(xyz_emmap.shape[0] * 0.1)
             tabbed_print.tprint("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
@@ -233,10 +232,11 @@ def prepare_mask_and_maps_for_scaling(args):
         print("Running locscale without using any reference")
         ## Running locscale without using any reference means that the bfactors of the 
         ## local window will be set to zero. This is not a recommended option.
-        ## This option is only present due to testing purposes and has 
-        ## to be removed in the future.
+        ## This option is only present due to testing purposes and may 
+        ## be removed in the future.
         
-        xyz_modmap = np.ones(xyz_emmap.shape)
+        xyz_modmap = np.ones(xyz_emmap.shape)  ## only for code compliance
+        set_local_bfactor = args.set_local_bfactor
     
     #############################################################################
     # Stage 5: Prepare other parameters for the locscale pipeline               
@@ -345,6 +345,8 @@ def prepare_mask_and_maps_for_scaling(args):
     scale_factor_arguments['boost_secondary_structure'] = boost_secondary_structure
     scale_factor_arguments['no_reference'] = args.no_reference
     scale_factor_arguments['processing_files_folder'] = processing_files_folder
+    if args.no_reference:
+        scale_factor_arguments['set_local_bfactor'] = set_local_bfactor
     
     if verbose:
         print("Preparation completed. Now running LocScale!")
