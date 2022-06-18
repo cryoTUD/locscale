@@ -14,7 +14,7 @@
 
 - Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
 
-- `EMmerNet`: a physics-inspired deep convolutional neural network-based sharpening method.
+- `EMmerNet`: a physics-inspired deep convolutional neural network sharpening method.
 
 - Completely automated process for local map sharpening 
 
