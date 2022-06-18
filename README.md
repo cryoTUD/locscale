@@ -14,11 +14,12 @@
 
 - Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
 
+- `EMmerNet`: a physics-inspired deep convolutional neural network-based sharpening method.
+
 - Completely automated process for local map sharpening 
 
 - Full support for point group symmetry (helical symmetry to follow)
 
-- `EMmerNet`: deep convolutional neural network-based sharpening method. `EMmerNet` is an ensemble network model trained on model-free LocScale maps from a large number of existing cryo-EM structures in the [EMDB]().
 <br>
   
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
@@ -142,7 +143,7 @@ Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home
 
 #### 3. Run LocScale using EMmerNet predictions:
 
-Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a new deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid the slightest risk of bias. We do encourage its use, but ask you to be cautious and, in particular, not to use such maps for model refinement.
+Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a physics-inspired deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid bias. We do encourage its use, but ask to not to use such maps for model refinement.
 
 ```bash
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 1 -o emmernet_model_based.mrc
