@@ -29,8 +29,8 @@ class PostDevelopCommand(develop):
     import os
 
     ## Install conda packages   
-    run(["conda", "install", "-c", "anaconda", "cudatoolkit==11.2","--yes"])
-    run(["conda", "install", "-c", "anaconda", "cudnn==8.1","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "cudatoolkit==11.2","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "cudnn==8.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
     run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
 
@@ -53,8 +53,8 @@ class PostInstallCommand(install):
     import os
 
     ## Install conda packages   
-    run(["conda", "install", "-c", "anaconda", "cudatoolkit==11.2","--yes"])
-    run(["conda", "install", "-c", "anaconda", "cudnn==8.1","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "cudatoolkit==11.2","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "cudnn==8.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
     run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
 
