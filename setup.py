@@ -29,13 +29,10 @@ class PostDevelopCommand(develop):
     import os
 
     ## Install conda packages   
-    run(["conda", "install", "-c", "anaconda", "cudatoolkit","--yes"])
-
-    run(["conda", "install", "-c", "anaconda", "cudnn","--yes"])
-
+    run(["conda", "install", "-c", "anaconda", "cudatoolkit==11.2","--yes"])
+    run(["conda", "install", "-c", "anaconda", "cudnn==8.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
-
-    run(["conda", "install", "-c", "conda-forge", "mpi4py==3.0.0","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
 
     # Check if refmac5 is installed
     refmac5_path = which("refmac5")
@@ -56,8 +53,8 @@ class PostInstallCommand(install):
     import os
 
     ## Install conda packages   
-    run(["conda", "install", "-c", "anaconda", "cudatoolkit==11.3.1","--yes"])
-    run(["conda", "install", "-c", "anaconda", "cudnn=8.2.1","--yes"])
+    run(["conda", "install", "-c", "anaconda", "cudatoolkit==11.2","--yes"])
+    run(["conda", "install", "-c", "anaconda", "cudnn==8.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
     run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
 
@@ -95,8 +92,8 @@ setup(name='locscale',
     package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90', 'emmernet/emmernet_models/*.tar.gz', 'emmernet/emmernet_models/*.hdf5']},
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy>=1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
                       'mrcfile>=1.3.0','gemmi>=0.4.8','pypdb>=2.0','sklearn>=0.0','pwlf>=2.0.4','tqdm>=4.62.3',\
-                      'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.6','tensorflow-addons==0.14.0',\
-                      'keras==2.6.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1', 'wget>=3.2', 'locscale'],
+                      'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.7','tensorflow-addons==0.17.1',\
+                      'keras==2.7.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1', 'wget>=3.2', 'locscale'],
     extras_require={'mac': ['tensorflow-macos==2.7','tensorflow-metal']},
     entry_points={
       'console_scripts': [
