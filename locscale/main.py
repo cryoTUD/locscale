@@ -94,7 +94,7 @@ locscale_parser.add_argument('--skip_refine', help='Ignore REFMAC refinement', a
 ## Input either unsharpened EM map or two halfmaps
 emmernet_emmap_input = emmernet_parser.add_mutually_exclusive_group(required=True)
 emmernet_emmap_input.add_argument('-em', '--emmap_path',  help='Path to unsharpened EM map')
-emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', help='Paths to first and second halfmaps')
+emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths to first and second halfmaps')
 
 ## Output arguments
 emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
