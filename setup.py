@@ -77,11 +77,11 @@ setup(name='locscale',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
-        "Topic :: Scientific/Engineering"
+        "Topic :: Scientific/Engineering",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.7"
-        "Programming Language :: Python :: 3.8"
-        "License :: OSI Approved :: BSD License"
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: BSD License",
     ],
     description= 'Contrast optimization for cryo-EM maps',
     long_description=long_description,
