@@ -39,7 +39,7 @@ def download_and_test_everything():
         ## Download test data
         download_test_data_from_url(test_data_path)
         ## Extract tar files
-        extract_tar_files_in_folder(test_data_path, use_same_folder=True)
+        extract_tar_files_in_folder(test_data_path, use_same_folder=False)
 
     ## Create test suite
     test_loader = unittest.TestLoader()
