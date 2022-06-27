@@ -29,16 +29,17 @@ def download_and_test_everything():
     import unittest
     import os
     import locscale
+    from locscale import tests
     ## Create folder to download tests_data
-    test_data_path = os.path.join(os.path.dirname(locscale.__file__), "tests","test_data")
-    test_path = os.path.join(os.path.dirname(locscale.__file__), "tests")
+    test_path = os.path.dirname(test.__file__)
+    test_data_path = os.path.join(test_path, "test_data")
     if not os.path.exists(test_data_path):
         os.makedirs(test_data_path, exist_ok=True)
     
         ## Download test data
         download_test_data_from_url(test_data_path)
         ## Extract tar files
-        extract_tar_files_in_folder(test_data_path)
+        extract_tar_files_in_folder(test_data_path, use_same_folder=True)
 
     ## Create test suite
     test_loader = unittest.TestLoader()
