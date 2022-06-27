@@ -143,7 +143,7 @@ Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home
 
 #### 3. Run LocScale using EMmerNet predictions:
 
-Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a physics-inspired deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as inherent to any such approach (including existing software) care needs to be exercised to avoid bias. We do encourage its use, but ask to not to use such maps for model refinement.
+Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a physics-inspired deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as for any such approach care needs to be exercised to avoid bias. We do encourage its use for model building and visualisation, but recommend to perform model refinement against the original map.
 
 ```bash
 locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 1 -o emmernet_model_based.mrc
