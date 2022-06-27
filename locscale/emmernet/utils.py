@@ -15,7 +15,7 @@ def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
 
     for file in os.listdir(tar_folder):
         if file.endswith(".tar.gz"):
-            print("Extracting: {}".format(file))
+            print("\nExtracting: {}".format(file))
             tar = tarfile.open(os.path.join(tar_folder,file))
             tar.extractall(target_folder)
             tar.close()
@@ -91,14 +91,14 @@ def check_and_download_emmernet_model(verbose=False):
 
     if not emmernet_downloaded:
         if verbose:
-            print("Emmernet model folder does not exist. Downloading model...")
+            print("Emmernet model folder does not exist. Downloading model...\n")
         os.makedirs(emmernet_model_folder, exist_ok=True)
         download_emmernet_model_from_url(emmernet_model_folder)
         if verbose:
-            print("Model downloaded")
+            print("Model downloaded\n")
         extract_tar_files_in_folder(emmernet_model_folder, use_same_folder=True)
         if verbose:
-            print("Model extracted")
+            print("Model extracted\n")
     else:
         if verbose:
             print("Emmernet model folder exists: {}".format(emmernet_model_folder))

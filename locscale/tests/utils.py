@@ -5,7 +5,7 @@ def download_test_data_from_url(download_folder):
     print("Downloading test data \n")
     #url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
    # url_test_data = "https://surfdrive.surf.nl/files/index.php/s/lk9CdNO5gszFll1/download"
-    url_test_data = "https://data.4tu.nl/ndownloader/files/35988275"
+    url_test_data = "https://data.4tu.nl/ndownloader/files/35988275/download"
     wget.download(url_test_data, download_folder)
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
@@ -18,7 +18,7 @@ def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
 
     for file in os.listdir(tar_folder):
         if file.endswith(".tar.gz"):
-            print("Extracting: {}".format(file))
+            print("\nExtracting: {}".format(file))
             tar = tarfile.open(os.path.join(tar_folder,file))
             tar.extractall(target_folder)
             tar.close()
