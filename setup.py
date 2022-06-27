@@ -31,8 +31,8 @@ class PostDevelopCommand(develop):
     ## Install conda packages   
     run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1","--yes"])
-    run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
-    run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1","--yes"])
 
     # Check if refmac5 is installed
     refmac5_path = which("refmac5")
@@ -55,8 +55,8 @@ class PostInstallCommand(install):
     ## Install conda packages   
     run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1","--yes"])
     run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1","--yes"])
-    run(["conda", "install", "-c", "conda-forge", "openmpi","--yes"])
-    run(["conda", "install", "-c", "conda-forge", "mpi4py","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2","--yes"])
+    run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1","--yes"])
 
     # Check if refmac5 is installed
     refmac5_path = which("refmac5")
