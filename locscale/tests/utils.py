@@ -31,7 +31,7 @@ def download_and_test_everything():
     import locscale
     from locscale import tests
     ## Create folder to download tests_data
-    test_path = os.path.dirname(test.__file__)
+    test_path = os.path.dirname(tests.__file__)
     test_data_path = os.path.join(test_path, "test_data")
     if not os.path.exists(test_data_path):
         os.makedirs(test_data_path, exist_ok=True)
