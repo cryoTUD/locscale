@@ -1,7 +1,7 @@
 # Development
 This branch is currently under development. Please switch to the master branch for a working installation. 
 
-#LocScale using predicted profiles
+# LocScale using predicted profiles
 The goal of this project is to perform Local sharpening using predicted profiles. 
 
 # Authors:
@@ -20,26 +20,7 @@ The goal of this project is to perform Local sharpening using predicted profiles
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
-#### New in LocScale 2.0:
-
-- Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
-
-- `EMmerNet`: a physics-inspired deep convolutional neural network sharpening method.
-
-- Completely automated process for local map sharpening 
-
-- Full support for point group symmetry (helical symmetry to follow)
-
-<br>
-  
-`LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
-
-
-Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/). Note that currently the GUI implementations only support an older version of Locscale (Locscale 1.0, with only model-based sharpening). 
-
 ## Installation 
-
-We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
 #### Requirements
 
@@ -54,28 +35,13 @@ conda create -n locscale python=3.8
 conda activate locscale
 ```
 
-###### Install fortran compiler
-LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install `gfortran` from conda-forge.
-```bash
-conda install -c conda-forge gfortran
-```
-
-##### 2. Install LocScale and dependencies using pip:
-
-###### Recommended installation
-We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
-
-```bash
-pip install locscale 
-```
-
 ###### Install development version
 If you would like to install the latest development version of locscale, use the following command to install from the git repository. 
 ```bash
-pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
+pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git@predict_profile
 ```
 
-To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
+To install the git repository in editable mode, clone the repository and navigate to the `locscale` directory. Switch branch:  `git checkout predict_profile` and run `pip install -e .`
 
 ###### Testing
 
