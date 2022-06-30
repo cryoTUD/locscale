@@ -1,4 +1,14 @@
-[![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)
+# Development
+This branch is currently under development. Please switch to the master branch for a working installation. 
+
+#LocScale using predicted profiles
+The goal of this project is to perform Local sharpening using predicted profiles. 
+
+# Authors:
+- Ian Bot, (TU Delft)
+- Alok Bharadwaj, (TU Delft)
+- Arjen Jakobi, (TU Delft)
+
 [![Python 3.6](https://img.shields.io/badge/python-3.7%20%7C%203.8-brightgreen)](https://www.python.org/downloads/release/python-370/)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
