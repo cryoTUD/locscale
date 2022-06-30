@@ -19,181 +19,24 @@ def compute_radial_profile_proper(vol, frequency_map):
 
     return radial_profile, frequencies;
 
-def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
-                          use_theoretical_profile=True, check_scaling=False):
+def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments):
     """Function to calculate the scale factors given two profiles.
-    This function is compatible with both pseudo-atomic model routine and 
-    regular atomic model routine.
-
-    Args:
-        em_profile (numpy array (1D)): The profile of the unsharpened EM map
-        ref_profile (numpy array (1D)): The profile of the reference map
-        apix (float): The pixel size of the map 
-        scale_factor_arguments (dict): The arguments for the scaling function for pseudomodle routine
-        use_theoretical_profile (bool, optional): Flag to check if pseudomodel routine is to be followed 
-                                                            (using theoretical profiles). Defaults to True.
-        check_scaling (bool, optional): Flag to collect local profile information for auditing later. 
-                                        Defaults to False.
-
     Returns:
         scale_factor (numpy array (1D)): The scale factors for the EM map
         bfactor (float): The local bfactor of the reference map 
         qfit (float): The local qfit of the reference map for bfactor calculation
     """
+
+    freq = frequency_array(ref_profile, apix=apix)
+    wilson_cutoff_traditional = 10
+    ##########################################################################################
+    # Calculate the local bfactor information from refernce profile
+    ##########################################################################################
+    bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_traditional, 
+                                                    fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True,\
+                                                        return_fit_quality=True, standard_notation=True)
     
-    from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, \
-        add_deviations_to_reference_profile, frequency_array, estimate_bfactor_standard, get_theoretical_profile
-
-    ################################################################################
-    # SCALING WITHOUT REFERENCE
-    # Scaling without a reference profile is done by measuring the local bfactor
-    # and obtaining a "sharpening profile" which has the negative bfactor of the 
-    # unsharpened cube. This is then used to calculate the scale factors.
-    # This method is not recommended since it is not robust to noise.
-    ################################################################################
-    if scale_factor_arguments['no_reference']:
-        use_theoretical_profile = False
-        ################################################################################
-        # Get a theoretical profile to add deviations
-        ################################################################################
-        theoretical_profile_tuple = get_theoretical_profile(length=len(em_profile),apix=apix)
-        freq = theoretical_profile_tuple[0]
-        scaled_theoretical_amplitude = theoretical_profile_tuple[1]
-
-        ################################################################################
-        # Calculate local B-factors
-        ################################################################################
-        wilson_cutoff = scale_factor_arguments['wilson']
-        fsc_cutoff = scale_factor_arguments['fsc_cutoff']
-        bfactor, amplitude, qfit = estimate_bfactor_standard(
-            freq, em_profile, wilson_cutoff, fsc_cutoff, return_amplitude=True, 
-            return_fit_quality=True, standard_notation=True)
-
-        ################################################################################
-        # Calculate the sharpening profile
-        ################################################################################
-        set_local_bfactor = scale_factor_arguments['set_local_bfactor']
-        assert set_local_bfactor >= 0, "Local bfactor must be positive or zero"
-        b_sharpen = bfactor - set_local_bfactor
-        sharpening_profile = np.exp(0.25 * b_sharpen * freq**2)
-        
-        ################################################################################
-        # Scale the reference profile using sharpening profile
-        ################################################################################
-        scaled_reference_profile = em_profile * sharpening_profile
-
-        ################################################################################
-        # Filter the scaled reference profile at FSC resolution
-        ################################################################################
-        fsc_filtered_reference_profile = merge_two_profiles(scaled_reference_profile, np.zeros(len(freq)), freq, smooth=10, d_cutoff=fsc_cutoff)
-        
-        
-        reference_profile_for_scaling = fsc_filtered_reference_profile
-        if check_scaling:
-            temporary_dictionary = {}
-            temporary_dictionary['em_profile'] = em_profile
-            temporary_dictionary['input_ref_profile'] = fsc_filtered_reference_profile
-            temporary_dictionary['freq'] = freq
-            temporary_dictionary['theoretical_amplitude'] = theoretical_profile_tuple[1]
-            temporary_dictionary['scaled_theoretical_amplitude'] = scaled_theoretical_amplitude
-            temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
-            temporary_dictionary['fsc_filtered_reference_profile'] = fsc_filtered_reference_profile
-            temporary_dictionary['deviated_reference_profile'] = np.zeros(len(freq)) ## temp to save errors later
-            temporary_dictionary['bfactor'] = bfactor
-            temporary_dictionary['qfit'] = qfit
-            temporary_dictionary['amplitude'] = amplitude
-            temporary_dictionary['scaling_condition'] = scale_factor_arguments
-    
-    ################################################################################
-    # SCALING WITH A REFERENCE:
-    # Scaling is done with a reference. The reference is generated either 
-    # from pseudo-atomic model map modulated by a theoretical profile or
-    # from a regular atomic model map.
-    ################################################################################
-
-    ##############################################################################################
-    ## Stage 1: Prepare the reference profile to be used for scaling
-    ##############################################################################################
-    elif use_theoretical_profile:
-        ##########################################################################################
-        # Follow pseudomodel routine using theoretical profiles
-        ##########################################################################################
-        theoretical_profile_tuple = get_theoretical_profile(length=len(ref_profile),apix=apix)
-        freq = theoretical_profile_tuple[0]
-        
-        ##########################################################################################
-        # Calculate the local wilson cutoff to apply deviations
-        ##########################################################################################
-        num_atoms = ref_profile[0]
-        mol_weight = num_atoms * 16  # daltons 
-        wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
-        wilson_cutoff_local = np.clip(wilson_cutoff_local, scale_factor_arguments['fsc_cutoff']*1.5, scale_factor_arguments['wilson'])
-
-        ##########################################################################################
-        # Scale the theoretical profile to match the bfactor of the reference profile
-        ##########################################################################################
-        reference_profile_tuple = (freq, ref_profile)
-        scaled_theoretical_tuple,(bfactor,amp, qfit) = scale_profiles(reference_profile_tuple, theoretical_profile_tuple,
-                                                wilson_cutoff=wilson_cutoff_local, fsc_cutoff=scale_factor_arguments['nyquist'], \
-                                                return_bfactor_properties=True)
-        bfactor = -1 * bfactor  ## Standard notation
-        scaled_theoretical_amplitude = scaled_theoretical_tuple[1]
-        
-        smooth = scale_factor_arguments['smooth']
-        
-        ## Using merge_profile
-        scaled_reference_profile = merge_two_profiles(ref_profile,scaled_theoretical_amplitude,freq,smooth=smooth,d_cutoff=wilson_cutoff_local)
-        
-        ############################################################################################
-        ## Apply the required deviations to the reference profile to match theoretical prediction
-        ############################################################################################
-        deviations_begin = wilson_cutoff_local
-        deviations_end = scale_factor_arguments['fsc_cutoff']
-        magnify = scale_factor_arguments['boost_secondary_structure']
-        
-        deviated_reference_profile, exp_fit = add_deviations_to_reference_profile(
-            freq, ref_profile, scaled_theoretical_amplitude, wilson_cutoff=wilson_cutoff_local, \
-            nyquist_cutoff=scale_factor_arguments['nyquist'], deviation_freq_start=deviations_begin, \
-            deviation_freq_end=deviations_end, magnify=magnify)
-                
-        reference_profile_for_scaling = deviated_reference_profile 
-        ## ^ This is the profile used for scale factor calculation
-
-        ############################################################################################
-        ## Collect profile information if check_scaling is True
-        ############################################################################################
-        if check_scaling:
-            temporary_dictionary = {}
-            temporary_dictionary['em_profile'] = em_profile
-            temporary_dictionary['input_ref_profile'] = ref_profile
-            temporary_dictionary['freq'] = freq
-            temporary_dictionary['theoretical_amplitude'] = theoretical_profile_tuple[1]
-            temporary_dictionary['scaled_theoretical_amplitude'] = scaled_theoretical_amplitude
-            temporary_dictionary['scaled_reference_profile'] = scaled_reference_profile
-            temporary_dictionary['deviated_reference_profile'] = deviated_reference_profile
-            temporary_dictionary['exponential_fit'] = exp_fit
-            temporary_dictionary['bfactor'] = bfactor
-            temporary_dictionary['amplitude'] = amp
-            temporary_dictionary['qfit'] = qfit
-            temporary_dictionary['local_wilson'] = wilson_cutoff_local
-            temporary_dictionary['deviations_begin'] = deviations_begin
-            temporary_dictionary['deviations_end'] = deviations_end
-            temporary_dictionary['magnify'] = magnify
-            temporary_dictionary['scaling_condition'] = scale_factor_arguments
-    else:
-        ##########################################################################################
-        # Follow regular atomic model routine and use the input reference profile for calculation
-        ##########################################################################################
-
-        freq = frequency_array(ref_profile, apix=apix)
-        wilson_cutoff_traditional = 10
-        ##########################################################################################
-        # Calculate the local bfactor information from refernce profile
-        ##########################################################################################
-        bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_traditional, 
-                                                       fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True, return_fit_quality=True, standard_notation=True)
-        
-        reference_profile_for_scaling = ref_profile
+    reference_profile_for_scaling = ref_profile
     
     ##############################################################################################
     # Stage 2: Calculate the scale factor
@@ -202,12 +45,8 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     np.seterr(divide='ignore', invalid='ignore')
     scale_factor = np.divide(np.abs(reference_profile_for_scaling), np.abs(em_profile))
     scale_factor[ ~ np.isfinite( scale_factor )] = 0; #handle division by zero    
-    
-    if check_scaling and (use_theoretical_profile or scale_factor_arguments['no_reference']) :
-        temporary_dictionary['scale_factor'] = scale_factor
-        return scale_factor, bfactor, qfit, temporary_dictionary
-    else:
-        return scale_factor, bfactor, qfit  
+
+    return scale_factor, bfactor, qfit  
 
 def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
     vol_fft = np.fft.rfftn(np.copy(vol), norm='ortho');
@@ -217,6 +56,19 @@ def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
 
     return scaled_map, scaled_map_fft;
 
+def predict_profile_from_cube(emmap_cube):
+    """Function to predict the profile from a cube of EM maps.
+    Returns:
+        profile (numpy array (1D)): The predicted profile
+    """
+
+
+    ##########################################################################################
+    # Predict the profile from the cube
+    ##########################################################################################
+    # TBC
+
+    return 
 def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, wn, apix, use_theoretical_profile,
     scale_factor_arguments, verbose=False,f_cutoff=None, process_name='LocScale', audit=True):
 
@@ -281,13 +133,16 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
             # Stage 2a: Extract the cube from the EM map and model maps
             #######################################################################
             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
-            modmap_wn = modmap[k: k+wn, j: j+wn, i: i+ wn]
+            
 
             #######################################################################
             # Stage 2b: Compute the radial profile of the two cubes        
             #######################################################################
-            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window);
-            mod_profile, _ = compute_radial_profile_proper(modmap_wn, frequency_map_window);
+            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window)
+            #########################
+            # TO BE COMPLETED
+            #########################
+            mod_profile = predict_profile_from_cube(emmap_wn)
             
             # Checks scaling operation for 1% of all voxels. 
             check_scaling=true_percent_probability(1) 
@@ -295,20 +150,10 @@ def get_central_scaled_pixel_vals_after_scaling(emmap, modmap, masked_xyz_locs, 
             #######################################################################
             # Stage 2c: Compute the scale factors given the two radial profiles
             #######################################################################
-            if check_scaling and use_theoretical_profile:
 
-                ### A profile audit is done for pseudo-atomic model routine 
-                ### to check if the theoretical profiles were scaled properly
-
-                scale_factors, bfactor, quality_fit, report = compute_scale_factors(
-                    em_profile, mod_profile,apix=apix,scale_factor_arguments=scale_factor_arguments, \
-                    use_theoretical_profile=use_theoretical_profile, check_scaling=check_scaling)
-
-                profiles_audit[(k,j,i)] = report
-            else:
-                scale_factors, bfactor, quality_fit = compute_scale_factors(
-                    em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, \
-                    use_theoretical_profile=use_theoretical_profile, check_scaling=check_scaling)
+            scale_factors, bfactor, quality_fit = compute_scale_factors(
+                em_profile, mod_profile,apix=apix, scale_factor_arguments=scale_factor_arguments, \
+                check_scaling=check_scaling)
                 
             #######################################################################
             # Stage 2d: Get the scaled cube by applying the scale factors
@@ -399,7 +244,9 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     mask = parsed_inputs_dict['mask']
     wn = parsed_inputs_dict['wn']
     emmap = parsed_inputs_dict['emmap']
-    modmap = parsed_inputs_dict['modmap']
+
+    modmap = None
+    
     use_theoretical_profile = parsed_inputs_dict['use_theoretical']
     scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
     apix = parsed_inputs_dict['apix']
@@ -457,7 +304,9 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     mask = parsed_inputs_dict['mask']
     wn = parsed_inputs_dict['wn']
     emmap = parsed_inputs_dict['emmap']
-    modmap = parsed_inputs_dict['modmap']
+
+    modmap = None
+
     use_theoretical_profile = parsed_inputs_dict['use_theoretical']
     scale_factor_arguments = parsed_inputs_dict['scale_factor_args']
     apix = parsed_inputs_dict['apix']

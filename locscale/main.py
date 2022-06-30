@@ -87,31 +87,7 @@ locscale_parser.add_argument('--dev_mode', action='store_true', default=False,he
 locscale_parser.add_argument('--ignore_profiles', help='Ignore average secondary structure profile during local scaling', action='store_true')
 locscale_parser.add_argument('--skip_refine', help='Ignore REFMAC refinement', action='store_true')
 
-# **************************************************************************************
-# ************************ Command line arguments EMMERNET *******************************
-# **************************************************************************************
 
-## Input either unsharpened EM map or two halfmaps
-emmernet_emmap_input = emmernet_parser.add_mutually_exclusive_group(required=True)
-emmernet_emmap_input.add_argument('-em', '--emmap_path',  help='Path to unsharpened EM map')
-emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths to first and second halfmaps')
-
-## Output arguments
-emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
-emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
-emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
-
-## Emmernet main function parameters
-emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of emmernet model to use', \
-                            choices=['model_based', 'model_free', 'ensemble'], default='model_based')
-emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
-emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
-emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
-emmernet_parser.add_argument('-download', '--download', help='Download the model weights', action='store_true', default=False)
-
-############################################################################################
-# ************************ Command line arguments TESTS ********************************** #
-############################################################################################
 
 
 def print_arguments(args):
@@ -201,35 +177,6 @@ def print_end_banner(time_now, start_time):
     print("="*80)
     
 
-def launch_emmernet(args):
-    from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
-    from locscale.utils.file_tools import change_directory
-    from locscale.emmernet.prepare_inputs import prepare_inputs
-    from locscale.emmernet.run_emmernet import run_emmernet
-    
-    ## Print start
-    start_time = datetime.now()
-    print_start_banner(start_time, "EMmerNet")
-    if args.verbose:
-        print_arguments(args)
-    
-    ## Check input
-    check_emmernet_inputs(args)
-
-    ## Change to output directory
-    current_directory = os.getcwd()
-    copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
-    ## Prepare inputs
-    input_dictionary = prepare_inputs(copied_args)
-    ## Run EMMERNET
-    emmernet_output_dictionary = run_emmernet(input_dictionary)
-    ## Check and save output
-    os.chdir(current_directory)
-    check_and_save_output(input_dictionary, emmernet_output_dictionary)
-
-    ## Print end
-    print_end_banner(datetime.now(), start_time)
-
 
 def launch_amplitude_scaling(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
@@ -259,7 +206,12 @@ def launch_amplitude_scaling(args):
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
         ## Change to current directory and save output
         os.chdir(current_directory)
-        write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
+
+        #### POST PROCESSING
+
+        LocScale_postprocessed = postprocessing()
+
+        write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
         ## Print end
         print_end_banner(datetime.now(), start_time=start_time)
 
@@ -290,25 +242,24 @@ def launch_amplitude_scaling(args):
             ## Change to current directory and save output 
             if rank == 0:
                 os.chdir(current_directory)
-                write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
+                #### POST PROCESSING
+
+                LocScale_postprocessed = postprocessing()
+
+                write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
             print(e)
 
-def test_everything():
-    from locscale.tests.utils import download_and_test_everything
-    download_and_test_everything()
 
 def main():
     main_args = main_parser.parse_args()
     launch_command = main_args.command
 
-    if launch_command == 'run_emmernet':
-        launch_emmernet(main_args)
-    elif launch_command == 'run_locscale':
+    if launch_command == 'run_locscale':
         launch_amplitude_scaling(main_args)
-    elif launch_command == "test":
-        test_everything()
+    else:
+        print("Unknown command: {}".format(launch_command))
     
 
 if __name__ == '__main__':
