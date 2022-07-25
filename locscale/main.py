@@ -209,7 +209,7 @@ def launch_amplitude_scaling(args):
 
         #### POST PROCESSING
 
-        LocScale_postprocessed = postprocessing()
+        LocScale_postprocessed = LocScaleVol
 
         write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
         ## Print end
@@ -244,7 +244,7 @@ def launch_amplitude_scaling(args):
                 os.chdir(current_directory)
                 #### POST PROCESSING
 
-                LocScale_postprocessed = postprocessing()
+                LocScale_postprocessed = LocScaleVol
 
                 write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
