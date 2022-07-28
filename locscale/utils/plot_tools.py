@@ -191,6 +191,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     import os
     import mrcfile
     from locscale.include.emmer.ndimage.fsc_util import plot_fsc_maps
+    from locscale.utils.file_tools import get_fsc_curve_from_arguments
     from locscale.utils.general import pad_or_crop_volume
     
     ## Input-Output characteristics
@@ -233,7 +234,23 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     except Exception as e:
         print("Could not print radial profiles")
         print(e)
-        
+    
+    #2a FSC curve halfmaps
+    try:
+        fsc_curve = get_fsc_curve_from_arguments(args)
+        fig, ax = plt.subplots(figsize=(8,8))
+        ax.plot(freq, fsc_curve,'b')
+        cref = parsed_input['Cref']
+        ax.plot(freq, cref, 'r')
+        ax.set_xlabel("Frequency (1/A)")
+        ax.set_ylabel("FSC")
+        ax.legend(["FSC curve","Cref"])
+        # Set title
+        ax.set_title("FSC curve of halfmaps")
+        pdf.savefig(fig)
+    except Exception as e:
+        print("Could not print FSC curve")
+        print(e)
     #3 Sections
     
     try:
