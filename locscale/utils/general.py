@@ -235,8 +235,14 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
 
         save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
-    if args.output_report:
+    try:
         make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
+    except Exception as e:
+        print("LocScale successfully completed, but failed to generate a report")
+        print("Error: \n{}".format(e))
+        
+        
+        
     
     return LocScaleVol
 

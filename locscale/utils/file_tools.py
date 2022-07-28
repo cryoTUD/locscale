@@ -411,6 +411,38 @@ def get_cref_from_arguments(args):
     
     return Cref
 
+def get_fsc_curve_from_arguments(args):
+    '''
+    Get the fsc curve from the arguments
+    
+    Parameters
+    ----------
+    args : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    fsc_curve : TYPE
+        DESCRIPTION.
+
+    '''
+    from locscale.include.emmer.ndimage.fsc_util import calculate_fsc_maps
+    ## Check if halfmaps present in arguments
+    if args.halfmap_paths is not None:
+        half_maps_present = True
+    else:
+        half_maps_present = False
+    
+    if half_maps_present:
+        halfmap_path_1 = args.halfmap_paths[0]
+        halfmap_path_2 = args.halfmap_paths[1]
+
+        fsc_curve = calculate_fsc_maps(halfmap_path_1, halfmap_path_2)
+    else:
+        fsc_curve = None
+    
+    return fsc_curve
+
         
     
                   

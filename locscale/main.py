@@ -47,7 +47,6 @@ locscale_parser.add_argument('-ma', '--mask', help='Input filename mask')
 ## Output arguments
 locscale_parser.add_argument('-o', '--outfile', help='Output filename', default="locscale_output.mrc")
 locscale_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
-locscale_parser.add_argument('--output_report', action='store_true', default=False,help='Print a PDF copy of the report')
 locscale_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
 locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
 
