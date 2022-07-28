@@ -379,7 +379,40 @@ def check_user_input(args):
         import time
         time.sleep(2)
         
+def get_cref_from_arguments(args):
+    '''
+    Get the cref value from the arguments
+    
+    Parameters
+    ----------
+    args : TYPE
+        DESCRIPTION.
 
+    Returns
+    -------
+    cref : TYPE
+        DESCRIPTION.
+
+    '''
+    from locscale.include.emmer.ndimage.fsc_util import get_fsc_filter
+    ## Check if halfmaps present in arguments
+    if args.halfmap_paths is not None:
+        half_maps_present = True
+    else:
+        half_maps_present = False
+    
+    if half_maps_present:
+        halfmap_path_1 = args.halfmap_paths[0]
+        halfmap_path_2 = args.halfmap_paths[1]
+
+        Cref = get_fsc_filter(halfmap_path_1, halfmap_path_2)
+    else:
+        Cref = None
+    
+    return Cref
+
+        
+    
                   
 
 

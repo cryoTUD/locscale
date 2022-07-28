@@ -11,7 +11,7 @@ from locscale.utils.plot_tools import tab_print
 
 tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,return_processed_files=False, output_file_path=None,verbose=True):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,return_processed_files=False, output_file_path=None,verbose=True,Cref=None):
     '''
     Function to prepare target map for refinement 
 
@@ -38,6 +38,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
     from locscale.include.emmer.ndimage.filter import apply_filter_to_map
+    from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
     import mrcfile
     import warnings
 
@@ -82,7 +83,13 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     output_filename_filtered_map = emmap_path[:-4] +"_global_sharpened_filtered.mrc"
     
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix)
-    apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
+    if Cref is not None:
+        tprint("Applying FSC filter to final sharpened map")
+        fsc_filtered_map, _ = apply_fsc_filter(sharpened_map, apix=apix, Cref=Cref)
+        save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_filtered_map, apix=apix)
+    else:
+        tprint("Applying filter at FSC resolution to final sharpened map")
+        apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
     
     if return_processed_files:
         if verbose:
@@ -344,7 +351,10 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfacto
     
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
-    servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,"--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)), "--output_prefix",output_prefix]
+    servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,\
+        "--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)),\
+        "--output_prefix",output_prefix]
+        
     if only_bfactor_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
 

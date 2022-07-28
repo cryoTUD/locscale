@@ -26,7 +26,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.preprocessing.pipeline import get_modmap
     from locscale.preprocessing.headers import run_FDR, check_axis_order
     from locscale.utils.math_tools import round_up_to_even, round_up_to_odd
-    from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies
+    from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies, get_cref_from_arguments
     from locscale.utils.general import get_spherical_mask, check_for_window_bleeding, compute_padding_average, pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_tools import add_half_maps, compute_radial_profile_simple
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
@@ -78,6 +78,7 @@ def prepare_mask_and_maps_for_scaling(args):
     else:
         apix = float(args.apix)
     
+        
     
     ###########################################################################
     # Stage 3: Prepare the mask
@@ -158,6 +159,10 @@ def prepare_mask_and_maps_for_scaling(args):
         add_blur = float(args.add_blur)
         skip_refine = args.skip_refine
         model_resolution = args.model_resolution
+
+        ## Obtain the Cref from argument parser
+        Cref = get_cref_from_arguments(args)
+
         ##### Following are arguments for pseudo-atomic model generation
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
@@ -170,6 +175,7 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         build_ca_only = args.build_ca_only
+
         
         #############################################################################
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
@@ -192,6 +198,7 @@ def prepare_mask_and_maps_for_scaling(args):
             'build_ca_only':build_ca_only,
             'verbose':verbose,
             'refmac5_path':refmac5_path,
+            'Cref':Cref,
         }
         
         #############################################################################
