@@ -39,6 +39,7 @@ def get_modmap(modmap_args):
     molecular_weight = modmap_args['molecular_weight']
     build_ca_only = modmap_args['build_ca_only']
     verbose = modmap_args['verbose']
+    Cref = modmap_args['Cref']
 
     if verbose:
         print("."*80)
@@ -116,7 +117,8 @@ def get_modmap(modmap_args):
         print("."*80)
         print("Preparing target map for refinement\n")
     globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
-                                            wilson_cutoff=wilson_cutoff, add_blur=add_blur, verbose=verbose)
+                                            wilson_cutoff=wilson_cutoff, add_blur=add_blur,
+                                            verbose=verbose,Cref=Cref)
     
     #############################################################################
     # Stage 2b: Run servalcat to refine the reference model (either 
