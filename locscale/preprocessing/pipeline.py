@@ -50,7 +50,14 @@ def get_modmap(modmap_args):
         tabbed_print.tprint("Model map arguments: \n")
         ## Print keys and values of dictionary in a nice format
         for key, value in modmap_args.items():
-            tabbed_print.tprint("{:<20} : {}".format(key, value))
+            if key == "Cref":
+                # Print Cref shape
+                if value is not None:
+                    tabbed_print.tprint("{} : {}".format(key, value.shape))
+                else:
+                    tabbed_print.tprint("{} : {}".format(key, value))
+            else:
+                tabbed_print.tprint("{:<20} : {}".format(key, value))
 
     #########################################################################
     # Open data files and collect required inputs

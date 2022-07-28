@@ -30,6 +30,7 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.utils.general import get_spherical_mask, check_for_window_bleeding, compute_padding_average, pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_tools import add_half_maps, compute_radial_profile_simple
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, number_of_segments
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
@@ -161,7 +162,22 @@ def prepare_mask_and_maps_for_scaling(args):
         model_resolution = args.model_resolution
 
         ## Obtain the Cref from argument parser
-        Cref = get_cref_from_arguments(args)
+        if args.cref_pickle is not None:
+            binarised_mask = (xyz_mask>0.99).astype(np.int_)
+            softmask = get_cosine_mask(binarised_mask, 5)
+            Cref = get_cref_from_arguments(args, mask=softmask)
+            if Cref is not None:
+                print("Cref is calculated from the halfmaps")
+                print("Cref: \n", Cref)
+            
+        else:
+            cref_pickle_file = args.cref_pickle
+            assert os.path.exists(cref_pickle_file), "The cref pickle file {} does not exist".format(cref_pickle_file)
+            Cref = pickle.load(open(cref_pickle_file, "rb"))
+            if args.verbose:
+                print("Cref has been loaded from pickle file {} \n".format(cref_pickle_file))
+                print("Cref: \n", Cref)
+            
 
         ##### Following are arguments for pseudo-atomic model generation
         pseudomodel_method=args.pseudomodel_method

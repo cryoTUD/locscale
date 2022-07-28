@@ -61,6 +61,8 @@ locscale_parser.add_argument('-res', '--ref_resolution', type=float, help='Resol
 locscale_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=20)
 locscale_parser.add_argument('--refmac5_path', type=str, help='Path to refmac5 executable', default=None)
+locscale_parser.add_argument('--cref_pickle', type=str, help='Path for Cref filter for the target map of bfactor refinement', default=None)
+
 
 ## Model map parameters
 locscale_parser.add_argument('-mres', '--model_resolution', type=float, help='Resolution limit for Model Map generation')
