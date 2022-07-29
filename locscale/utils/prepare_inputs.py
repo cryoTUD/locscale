@@ -162,7 +162,7 @@ def prepare_mask_and_maps_for_scaling(args):
         model_resolution = args.model_resolution
 
         ## Obtain the Cref from argument parser
-        if args.cref_pickle is not None:
+        if args.cref_pickle is None:
             binarised_mask = (xyz_mask>0.99).astype(np.int_)
             softmask = get_cosine_mask(binarised_mask, 5)
             Cref = get_cref_from_arguments(args, mask=softmask)
