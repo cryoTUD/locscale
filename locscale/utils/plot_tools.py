@@ -193,6 +193,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     from locscale.include.emmer.ndimage.fsc_util import plot_fsc_maps
     from locscale.utils.file_tools import get_fsc_curve_from_arguments
     from locscale.utils.general import pad_or_crop_volume
+    import matplotlib.pyplot as plt
     
     ## Input-Output characteristics
     locscale_map = mrcfile.open(locscale_path).data
@@ -286,12 +287,12 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
         print("Could not print bfactor_kde_fig")
         print(e)
         
-    try:
-        stats_table = get_map_characteristics(parsed_input)
-        pdf.savefig(stats_table)
-    except Exception as e:
-        print("Could not print stats_table")
-        print(e)
+    #try:
+    #    stats_table = get_map_characteristics(parsed_input)
+    #    pdf.savefig(stats_table)
+    #except Exception as e:
+    #    print("Could not print stats_table")
+    #    print(e)
   
     try:      
         if parsed_input['use_theoretical']:
