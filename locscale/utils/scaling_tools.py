@@ -526,7 +526,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
         # Stage 5: Save the processing files 
         ###########################################################################
         
-        print("Saving bfactor and qfist maps in here: {}".format(os.getcwd()))
+        print("Saving bfactor and qfist maps in here: {}".format(processing_files_folder))
         bfactor_path = os.path.join(processing_files_folder, "bfactor_map.mrc")
         qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
         save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
