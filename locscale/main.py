@@ -218,7 +218,12 @@ def launch_emmernet(args):
     check_emmernet_inputs(args)
 
     ## Change to output directory
-    current_directory = os.getcwd()
+    # If current directory is not found point current_directory to home directory
+    try:
+        current_directory = os.getcwd()
+    except:
+        current_directory = os.path.expanduser("~")
+    
     copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
     ## Prepare inputs
     input_dictionary = prepare_inputs(copied_args)
@@ -239,8 +244,10 @@ def launch_amplitude_scaling(args):
     from locscale.utils.file_tools import change_directory, check_user_input
     import os 
 
-  
-    current_directory = os.getcwd()
+    try:
+        current_directory = os.getcwd()
+    except:
+        current_directory = os.path.expanduser("~")
     
     if not args.mpi:
         ## Print start
