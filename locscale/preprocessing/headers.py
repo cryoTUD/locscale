@@ -313,7 +313,7 @@ def is_pseudomodel(input_pdb_path):
     
         
     
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfactor_refinement, refmac5_path=None, verbose=True):
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True):
     '''
     Function to run Refmac to refine the model and generate a new model with refined B-factors.
 
@@ -327,8 +327,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfacto
         Resolution of the map
     num_iter : int
         Number of iterations to run Refmac
-    only_bfactor_refinement : bool
-        If True, only the B-factors will be refined. If False, the model will be refined using the map.
+    pseudomodel_refinement : bool
+        If True, bfactor refinement is performed without any restraints
     refmac5_path : string
         Path of the refmac5 executable. If None, the default path will be used.
     verbose : bool
@@ -360,8 +360,10 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, only_bfacto
         "--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
         
-    if only_bfactor_refinement:
+    if pseudomodel_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
+    else:
+        servalcat_command += ["--keywords","refi bonly"]
 
     if refmac5_path is not None:
         servalcat_command += ["--exe",refmac5_path]
