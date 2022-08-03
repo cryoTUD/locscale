@@ -539,6 +539,8 @@ def plot_amplitude_correlation_maps(input_map_1, input_map_2, apix, input_mask=N
 def get_fsc_filter(input_map_1, input_map_2):
     import numpy as np
     fsc_curve = calculate_fsc_maps(input_map_1, input_map_2)
+    ## Set all negative values to 0
+    fsc_curve[fsc_curve<0] = 0
     C_ref = np.sqrt(2*fsc_curve / (1+fsc_curve))
     
     return C_ref
