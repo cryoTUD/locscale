@@ -30,3 +30,4 @@ locscale/tests/test_data/test_scaling_data_1.pickle
 locscale/tests/test_data/test_scaling_data_2.pickle
 locscale/tests/test_data/test_scaling_data_3.pickle
 fcodes_fast.cpython-37m-x86_64-linux-gnu.so
+fcodes_fast.cpython-38-x86_64-linux-gnu.so
