@@ -679,4 +679,43 @@ def get_model_mask(input_pdb, mask_shape, apix, threshold_factor=5, bfactor=100,
     
     return binarised_map
     
+def check_oversharpening(emmap, apix, fsc_cutoff):
+    '''
+    Function to check whether a map has been oversharpened based on the slope of the radial profile
+    '''
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_standard
+
+    rp_emmap = compute_radial_profile(emmap)
+    freq = frequency_array(rp_emmap, apix)
+
+    fsc_cutoff = fsc_cutoff
+    nyquist_cutoff = 2 * apix
     
+    wilson_freq = 1 / fsc_cutoff
+    fsc_freq = 1 / nyquist_cutoff
+    
+    if freq[0] >= wilson_freq:
+        start_index = 0
+    else:
+        start_index = np.where(freq>=wilson_freq)[0][0]
+    
+    if freq[-1] <= fsc_freq:
+        end_index = len(freq)
+    else:
+        end_index = np.where(freq>=fsc_freq)[0][0]
+    
+    xdata = freq[start_index:end_index]**2
+    ydata = np.log(rp_emmap[start_index:end_index])
+
+    print(len(rp_emmap))
+
+    print(start_index, end_index)
+    print(ydata)
+
+    bfactor = estimate_bfactor_standard(freq, rp_emmap, wilson_cutoff=fsc_cutoff, fsc_cutoff=nyquist_cutoff, standard_notation=True)
+
+    # If the bfactor is negative, then the map has been oversharpened
+    if bfactor < 0:
+        return True
+    else:
+        return False
