@@ -37,7 +37,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, check_oversharpening
     from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
-    from locscale.include.emmer.ndimage.filter import apply_filter_to_map
+    from locscale.include.emmer.ndimage.filter import apply_filter_to_map, low_pass_filter
     from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
     import mrcfile
     import warnings
@@ -84,14 +84,22 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     
     save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix)
     if Cref is not None:
-        tprint("Applying FSC filter to final sharpened map")
+        tprint("Applying Cref filter to final sharpened map")
         fsc_filtered_map, _ = apply_fsc_filter(sharpened_map, apix=apix, Cref=Cref)
         oversharpening_check = check_oversharpening(fsc_filtered_map, apix=apix, fsc_cutoff=fsc_resolution)
         if oversharpening_check:
             print("WARNING: Oversharpening detected in the target map for refinement. Please check the FSC curve")
+            output_filename_fsc_filtered = emmap_path[:-4] +"_global_sharpened_Cref_filtered_temp.mrc"
+            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_fsc_filtered, apix=apix)
+            
+            # Low pass filter the FSC filtered map at the resolution of the map
+            print("Low pass filtering the map at FSC resolution {}".format(fsc_resolution))
+            fsc_filtered_low_pass_filtered = low_pass_filter(fsc_filtered_map, cutoff=fsc_resolution, apix=apix)
+            save_as_mrc(map_data=fsc_filtered_low_pass_filtered, output_filename=output_filename_filtered_map, apix=apix)
+
         else:
             print("No oversharpening detected in the target map for refinement")
-        save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_filtered_map, apix=apix)
+            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_filtered_map, apix=apix)
     else:
         tprint("Applying filter at FSC resolution to final sharpened map")
         apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
@@ -383,11 +391,6 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     if os.path.exists(refined_model_path):
         if verbose: 
             tprint("The refined PDB model is: "+refined_model_path+"\n\n")    
-            tprint("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
-            ## If range of bfactors is too small then warn the user
-            if max(bfactors)-min(bfactors) < 10:
-                tprint("Warning: The range of B-factors in the refined model is too small. Please check the model.")
-            
         return refined_model_path
     else:
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
