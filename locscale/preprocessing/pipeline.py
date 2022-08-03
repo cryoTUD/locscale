@@ -15,8 +15,10 @@ def get_modmap(modmap_args):
     from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     from locscale.utils.plot_tools import tab_print
     import mrcfile
+    import os
     
     ###########################################################################
     # Extract the inputs from the dictionary
@@ -110,9 +112,9 @@ def get_modmap(modmap_args):
     # Stage 2: Refine the reference model usign servalcat
     ###########################################################################
     if is_pseudomodel(input_pdb_path):
-        only_bfactor_refinement = True
+        pseudomodel_refinement = True
     else:
-        only_bfactor_refinement = False
+        pseudomodel_refinement = False
             
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
@@ -140,11 +142,22 @@ def get_modmap(modmap_args):
         refined_model_path = input_pdb_path
     else:
         refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
-                    only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,
+                    pseudomodel_refinement=pseudomodel_refinement, resolution=resolution, num_iter=refmac_iter,
                     refmac5_path=refmac5_path,verbose=verbose)
         if refined_model_path is None:
             tabbed_print.tprint("Problem running servalcat. Returning None")
             return None
+        
+    if os.path.exists(refined_model_path):
+        bfactors = get_bfactors(in_model_path=refined_model_path)
+            
+        if verbose: 
+            tabbed_print.tprint("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+            ## If range of bfactors is too small then warn the user
+            if max(bfactors)-min(bfactors) < 10:
+                tabbed_print.tprint("Warning: The range of B-factors in the refined model is too small. Please check the model.")
+                tabbed_print.tprint("Consider increasing the bfactor of the target map for refinement using the --add_blur option")
+                tabbed_print.tprint("Current value used for add_blur = {}".format(add_blur))
     
     #############################################################################
     # Stage 3: Convert the refined model to a model-map using the 

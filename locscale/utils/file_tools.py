@@ -189,19 +189,24 @@ def change_directory(args, folder_name):
 
 def generate_filename_from_halfmap_path(in_path):
     ## find filename in the path    
-    filename = in_path.split("/")[-1]
+    import os
+    filename = os.path.basename(in_path)
+
+    ## Find all the numbers in the filename
+    import re
+    numbers = re.findall('[0-9]+',filename)
     
-    ## find EMDB ID in filename
-    
-    possible_emdb_id = [filename[x:x+4] for x in range(len(filename)-3) if filename[x:x+4].isnumeric()]
-    if len(possible_emdb_id) == 1:
-        emdb_id = possible_emdb_id[0]
-        newfilename = ["EMD_"+emdb_id+"_unfiltered.mrc"]
+    ## Select only those numbers which have four or five digits
+    emdb_numbers = [int(x) for x in numbers if len(str(x)) in [4,5]]
+
+    ## If there is only one number in the filename, then it is the EMDB number
+    if len(emdb_numbers) == 1:
+        emdb_number = emdb_numbers[0]
+        newfilename = "EMD_{}_unsharpened_fullmap.mrc".format(emdb_number)
     else:
-        newfilename = ["emdb_map_unfiltered.mrc"]
+        newfilename = "emdb_map_unfiltered.mrc"
     
-    
-    new_path = "/".join(in_path.split("/")[:-1]+newfilename)
+    new_path = os.path.join(os.path.dirname(in_path), newfilename)
     
     return new_path
     

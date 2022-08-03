@@ -1,5 +1,7 @@
 
 ## PLOT FUNCTIONS
+import numpy as np
+
 def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
     from matplotlib.offsetbox import AnchoredText
     import matplotlib.pyplot as plt
@@ -239,16 +241,26 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     #2a FSC curve halfmaps
     try:
         fsc_curve = get_fsc_curve_from_arguments(args)
-        fig, ax = plt.subplots(figsize=(8,8))
-        ax.plot(freq, fsc_curve,'b')
         cref = parsed_input['Cref']
-        ax.plot(freq, cref, 'r')
-        ax.set_xlabel("Frequency (1/A)")
-        ax.set_ylabel("FSC")
-        ax.legend(["FSC curve","Cref"])
-        # Set title
-        ax.set_title("FSC curve of halfmaps")
-        pdf.savefig(fig)
+        if cref is not None:
+            fig, ax = plt.subplots(figsize=(8,8))
+            ax.plot(freq, fsc_curve,'b')
+            ax.plot(freq, cref, 'r')
+            ax.set_xlabel("Frequency (1/A)")
+            ax.set_ylabel("FSC")
+            ax.legend(["FSC curve","Cref"])
+            # Set title
+            ax.set_title("FSC curve of halfmaps")
+            pdf.savefig(fig)
+        else:
+            fig, ax = plt.subplots(figsize=(8,8))
+            ax.plot(freq, fsc_curve,'b')
+            ax.set_xlabel("Frequency (1/A)")
+            ax.set_ylabel("FSC")
+            ax.legend(["FSC curve"])
+            # Set title
+            ax.set_title("FSC curve of halfmaps")
+            pdf.savefig(fig)
     except Exception as e:
         print("Could not print FSC curve")
         print(e)

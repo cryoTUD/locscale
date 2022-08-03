@@ -397,6 +397,11 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask_path'] = xyz_mask_path
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
+
+    try:
+        parsed_inputs_dict['Cref'] = Cref
+    except:
+        parsed_inputs_dict['Cref'] = None
     
     #################################################################################
     # Stage 8: Make some common sense checks and return 

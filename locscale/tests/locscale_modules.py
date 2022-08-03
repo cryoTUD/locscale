@@ -145,7 +145,7 @@ class TestPseudomodelHeaders(unittest.TestCase):
             
             
             os.chdir(tempDir)
-            refined_model=run_refmac_servalcat(model_path=temp_model_path,map_path=temp_emmap_path,resolution=self.fsc,num_iter=1,only_bfactor_refinement=True, verbose=True)
+            refined_model=run_refmac_servalcat(model_path=temp_model_path,map_path=temp_emmap_path,resolution=self.fsc,num_iter=1,pseudomodel_refinement=True, verbose=True)
             
             refined_model_path_exists = os.path.exists(refined_model)
             self.assertTrue(refined_model_path_exists)
