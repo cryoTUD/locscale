@@ -450,7 +450,8 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, load_map, save_as_mrc
     from locscale.include.emmer.pdb.pdb_tools import combine_pdb_structures_into_one
     from locscale.include.emmer.ndimage.map_tools import find_unmodelled_mask_region
-    
+    import os
+
     mask, apix = load_map(mask_path)
     # Get the difference mask 
     difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = 0.99, \
@@ -461,6 +462,8 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     save_as_mrc(difference_mask, difference_mask_path, apix)
 
     num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=0.5, verbose=False)
+    pdb_filename = os.path.basename(pdb_path)
+    print("Adding {} pseudoatoms to {}".format(num_atoms, pdb_filename))
 
     partial_pseudo_model_path = run_pam(emmap_path = emmap_path, mask_path = difference_mask_path, threshold = mask_threshold, \
        num_atoms = num_atoms, method=pseudomodel_method, bl=bond_length, total_iterations = pseudomodel_iteration, verbose=False)

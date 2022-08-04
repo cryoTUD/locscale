@@ -191,7 +191,8 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         build_ca_only = args.build_ca_only
-
+        complete_model = args.complete_model
+        averaging_window = args.averaging_window
         
         #############################################################################
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
@@ -215,6 +216,8 @@ def prepare_mask_and_maps_for_scaling(args):
             'verbose':verbose,
             'refmac5_path':refmac5_path,
             'Cref':Cref,
+            'complete_model':complete_model,
+            'averaging_window':averaging_window,
         }
         
         #############################################################################

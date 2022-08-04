@@ -14,7 +14,7 @@ def get_modmap(modmap_args):
     '''
     from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
-    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff, add_pseudoatoms_to_input_pdb
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     from locscale.utils.plot_tools import tab_print
     import mrcfile
@@ -42,6 +42,8 @@ def get_modmap(modmap_args):
     build_ca_only = modmap_args['build_ca_only']
     verbose = modmap_args['verbose']
     Cref = modmap_args['Cref']
+    complete_model = modmap_args['complete_model']
+    averaging_window = modmap_args['averaging_window']
 
     if verbose:
         print("."*80)
@@ -104,10 +106,20 @@ def get_modmap(modmap_args):
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
     else:
-        if verbose:
-            print("."*80)
-            print("Using user-provided PDB path: {}".format(pdb_path))
-        input_pdb_path = pdb_path
+        
+        if complete_model:
+            if verbose:
+                print("."*80)
+                print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
+            integrated_structure = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
+                averaging_window=averaging_window, pseudomodel_method=pam_method, mask_threshold=0.5)
+            input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
+            integrated_structure.write_pdb(input_pdb_path)
+        else:
+            if verbose:
+                print("."*80)
+                print("Using user-provided PDB path: {}".format(pdb_path))    
+            input_pdb_path = pdb_path
     ###########################################################################
     # Stage 2: Refine the reference model usign servalcat
     ###########################################################################
