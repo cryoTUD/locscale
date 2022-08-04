@@ -371,5 +371,100 @@ def get_atomic_bfactor_window(input_pdb, atomic_position, window_size_A, min_dis
     return average_atomic_bfactor
 
 
+def combine_pdb_structures_into_one(list_of_input_pdb):
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+
+    def add_chains(combined_model, model_to_add, starting_chain_num):
+        import string
+        chain_letters = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        chain_count = starting_chain_num
+        for chain in model_to_add:
+            combined_model.add_chain(chain_letters[chain_count])
+            res_count = 0
+            for res in chain:
+                atom_count = 0
+                residue_name = res.name
+                combined_model = add_residue(combined_model, chain_count, res_count, residue_name)
+                for atom in res:
+                    atom_name = atom.name
+                    atom_position = atom.pos
+                    atom_element = atom.element
+                    combined_model = add_atom(combined_model, chain_count, res_count, atom_count, atom_position, atom_element, atom_name)
+                    atom_count += 1
+
+                res_count += 1
+            chain_count += 1
+        
+        final_chain_count = chain_count
+        return combined_model, final_chain_count
+
+    def add_residue(gemmi_model, chain_num, res_num, res_name):
+        gemmi_model[chain_num].add_residue(gemmi.Residue(),res_num)
+        gemmi_model[chain_num][res_num].name = res_name
+        gemmi_model[chain_num][res_num].seqid.num = res_num
+
+        return gemmi_model
+
+    def add_atom(gemmi_model, chain_num, res_num, atom_num, gemmi_atom_position,  gemmi_element, atom_name):
+        
+        atom = gemmi.Atom()
+        atom.pos = gemmi_atom_position
+        atom.element = gemmi_element
+        atom.b_iso = 40
+        atom.occ = 1
+        atom.name = atom_name
+
+        gemmi_model[chain_num][res_num].add_atom(atom, atom_num)
+        
+        return gemmi_model
     
+    combined_structure = gemmi.Structure()
+    combined_model = gemmi.Model("combined")
     
+    chain_count = 0
+    for input_pdb in list_of_input_pdb:
+        chain_count_init = chain_count
+        st = detect_pdb_input(input_pdb)
+        model_to_add = st[0]
+        combined_model, chain_count_final = add_chains(combined_model, model_to_add, chain_count_init)
+        chain_count = chain_count_final
+
+    combined_structure.add_model(combined_model)
+
+    total_num_atoms_in_combined_structure = combined_structure[0].count_atom_sites()
+
+    num_atoms_in_input = 0
+    for input_pdb in list_of_input_pdb:
+        st = detect_pdb_input(input_pdb)
+        model_to_add = st[0]
+        num_atoms_in_input += model_to_add.count_atom_sites()
+    
+    assert total_num_atoms_in_combined_structure == num_atoms_in_input, \
+        "Number of atoms in combined structure does not match number of atoms in input"
+    
+    return combined_structure
+
+def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2):
+    from locscale.preprocessing.headers import run_pam
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, load_map, save_as_mrc
+    from locscale.include.emmer.pdb.pdb_tools import combine_pdb_structures_into_one
+    from locscale.include.emmer.ndimage.map_tools import find_unmodelled_mask_region
+    
+    mask, apix = load_map(mask_path)
+    # Get the difference mask 
+    difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = 0.99, \
+        atomic_mask_threshold = 0.5, averaging_window_size = 5)
+    
+    difference_mask_path_filename = mask_path[:-4] + "_difference_mask.mrc"
+    difference_mask_path = os.path.join(os.path.dirname(mask_path), difference_mask_path_filename)
+    save_as_mrc(difference_mask, difference_mask_path, apix)
+
+    num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=0.5, verbose=False)
+
+    partial_pseudo_model_path = run_pam(emmap_path = emmap_path, mask_path = difference_mask_path, threshold = mask_threshold, \
+       num_atoms = num_atoms, method="gradient", bl=1.2, total_iterations = 50, verbose=False)
+
+    combined_structure = combine_pdb_structures_into_one([pdb_path, partial_pseudo_model_path])
+
+    return combined_structure
