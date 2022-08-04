@@ -72,6 +72,10 @@ locscale_parser.add_argument('-sym', '--symmetry', default='C1', type=str, help=
 locscale_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
 locscale_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
 
+## Integrated pseudo-atomic model method parameters
+locscale_parser.add_argument('--complete_model', help='Add pseudo-atoms to areas of the map which are not modelled', action='store_true')
+locscale_parser.add_argument('-avg_w', '--averaging_window', type=int, help='Window size for filtering the fdr difference map for integrated pseudo-model', default=3)
+
 ## Pseudo-atomic model method parameters
 locscale_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
 locscale_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=None)
