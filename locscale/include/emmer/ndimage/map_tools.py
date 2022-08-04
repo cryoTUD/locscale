@@ -524,6 +524,8 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     """
     from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
     from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    import os
     from scipy.ndimage import uniform_filter
     import numpy as np
 
@@ -540,6 +542,10 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
 
     # Compute the difference 
     difference_mask = fdr_mask_binarised - atomic_model_mask_binarised
+
+    
+    difference_mask_path  = fdr_mask_path[:-4] + "_difference_mask_binarised.mrc"
+    save_as_mrc(difference_mask,difference_mask_path, apix=apix)
 
     # Perform a moving window average of the difference mask
     difference_mask_averaged = uniform_filter(difference_mask, size = averaging_window_size)
