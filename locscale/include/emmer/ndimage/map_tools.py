@@ -271,7 +271,7 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     return cropped_map
 
-def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_parameter=5, output_filename=None):
+def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_parameter=5, output_filename=None, save_files = True):
     '''
     Function to extract map intensities around atoms between a given residue range
 
@@ -327,13 +327,16 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     
     softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
     
-
-    if output_filename is None:
-        output_filename = os.path.join(pdb_folder, pdb_name[:-4]+"_model_mask.mrc")
+    if save_files:
+        if output_filename is None:
+            output_filename = os.path.join(pdb_folder, pdb_name[:-4]+"_model_mask.mrc")
+                
+        save_as_mrc(softened_mask, output_filename=output_filename, apix=apix)
             
-    save_as_mrc(softened_mask, output_filename=output_filename, apix=apix)
-        
-    return output_filename
+        return output_filename
+    else:
+
+        return softened_mask
     
     
 def apply_radial_profile(emmap, reference_map):
@@ -514,5 +517,33 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     
     return bfactor_distributions
     
-        
-        
+
+def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=5):
+    """
+    Finds the unmodelled regions in the input pdb file.
+    """
+    from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    from scipy.ndimage import uniform_filter
+    import numpy as np
+
+    fdr_mask, apix = load_map(fdr_mask_path)
+
+    atomic_mask = get_atomic_model_mask(emmap_path = fdr_mask_path, pdb_path = pdb_path, \
+        dilation_radius = 3, save_files = False)
+    
+    # Binarise 
+    # Binarise the atomic model mask and FDR confidence mask at X threshold 
+    
+    atomic_model_mask_binarised = (atomic_mask >= atomic_mask_threshold).astype(np.int_)
+    fdr_mask_binarised = (fdr_mask >= fdr_threshold).astype(np.int_)
+
+    # Compute the difference 
+    difference_mask = fdr_mask_binarised - atomic_model_mask_binarised
+
+    # Perform a moving window average of the difference mask
+    difference_mask_averaged = uniform_filter(difference_mask, size = averaging_window_size)
+
+    return difference_mask_averaged
+
+
