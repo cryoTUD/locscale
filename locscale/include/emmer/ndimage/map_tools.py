@@ -257,7 +257,7 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     pdb_positions = get_atomic_positions_between_residues(gemmi_st, chain_name, residue_range)
     
-    print("Found {} atom sites".format(len(pdb_positions)))
+    #print("Found {} atom sites".format(len(pdb_positions)))
     
     mrc_position = convert_pdb_to_mrc_position(pdb_positions, apix)
     zz,yy,xx = zip(*mrc_position)
@@ -316,7 +316,7 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
                     pdb_positions.append(atom.pos.tolist())
                         
         
-    print("Found {} atom sites".format(len(pdb_positions)))
+    #print("Found {} atom sites".format(len(pdb_positions)))
         
     mrc_position = convert_pdb_to_mrc_position(pdb_positions, apix)
     zz,yy,xx = zip(*mrc_position)
