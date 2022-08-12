@@ -388,9 +388,8 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask'] = xyz_mask
     parsed_inputs_dict['wn'] = wn
     parsed_inputs_dict['apix'] = apix
- 
-    parsed_inputs_dict['use_theoretical'] = scale_using_theoretical_profile
-    parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
+    parsed_inputs_dict['use_theoretical_profile'] = scale_using_theoretical_profile
+    parsed_inputs_dict['scale_factor_arguments'] = scale_factor_arguments
     parsed_inputs_dict['verbose'] = verbose
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
     parsed_inputs_dict['bfactor_info'] = bfactor_info

@@ -307,7 +307,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     #    print(e)
   
     try:      
-        if parsed_input['use_theoretical']:
+        if parsed_input['use_theoretical_profile']:
             pickle_output_sample_fig = plot_pickle_output(processing_files_folder)
             pdf.savefig(pickle_output_sample_fig)
     except Exception as e:
