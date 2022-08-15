@@ -139,7 +139,7 @@ def prepare_mask_and_maps_for_scaling(args):
     # Normalise to mean 0 and std 0.1
     ##############################################################################
     
-    preprocessed_emmap, preprocessed_mask = preprocess_map(xyz_emmap, xyz_mask)
+    preprocessed_emmap, preprocessed_mask = preprocess_map(xyz_emmap, xyz_mask, apix)
     wn = 25
     window_bleed_and_pad = check_for_window_bleeding(preprocessed_mask, wn)
     
@@ -188,11 +188,17 @@ def prepare_mask_and_maps_for_scaling(args):
     
     return parsed_inputs_dict
 
-def preprocess_map(emmap, mask):
-    
-    ## Resample emmap
-    ## Normalise emmap
-    
-    ## Resample mask
+def preprocess_map(emmap, mask, apix):
+    from locscale.include.emmer.ndimage.map_utils import resample_image
+    from locscale.include.emmer.ndimage.map_utils import resample_map
+    from locscale.emmernet.run_emmernet import standardize_map
+
+    # emmap = resample_map(emmap, apix=apix, apix_new=1, order=2)
+    # mask = resample_map(mask, apix=apix, apix_new=1, order=2)
+
+    emmap = resample_image(emmap, apix=apix, apix_new=1)
+    mask = resample_image(mask, apix=apix, apix_new=1)
+
+    emmap = standardize_map(emmap)
     
     return emmap, mask
