@@ -244,6 +244,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     into a list. This list is then returned. This function is compatible with 
     both MPI and non-MPI environments.
     """
+    import os
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, estimate_bfactor_standard
@@ -251,6 +252,9 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     from locscale.include.confidenceMapUtil import FDRutil
     import pickle
     from locscale.utils.math_tools import round_up_proper
+    import locscale
+
+    
     
     ###############################################################################
     # Stage 1: Initialize and collect variables
@@ -276,7 +280,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     ###############################################################################
     # Stage 1a: Create a progress bar 
     ###############################################################################
-
+    print("wn: {}".format(wn))
     mpi=False
     if process_name != 'LocScale':
         mpi=True
@@ -297,16 +301,20 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     # Stage 2: Perform the scaling in a rolling window fashion
     ###############################################################################
     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
-    freq = frequency_array(profile_size=25//2, apix=1)
+    freq = frequency_array(profile_size=13, apix=1)
 
-    reconstructed_model = keras.models.load_model("/mnt/d/Modules/edited_locscale/locscale/locscale/utils/trained_model")
+    trained_model_path = os.path.join(os.path.dirname(locscale.__file__),'utils','trained_model')
+    reconstructed_model = keras.models.load_model(trained_model_path)
 
     raw_profiles = []
-
+    
+    
     for k, j, i in masked_xyz_locs - wn / 2:
         try:
+           # print("Before rounding: {}".format((k,j,i)))
             # k,j,i are indices of the corner voxel in each cube. Ensure it is rounded up to integer.
             k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
+          #  print("After rounding: {}".format((k,j,i)))
             
             #######################################################################
             # Stage 2a: Extract the cube from the EM map and model maps
@@ -404,6 +412,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
                 temp_dictionary['ref_profile'] = mod_profile
                 temp_dictionary['bfactor'] = bfactor
                 temp_dictionary['amplitude'] = amplitude
+                temp_dictionary['freq'] = freq
                 temp_dictionary['qfit'] = qfit
                 temp_dictionary['scale_factors'] = scale_factors
                 profiles_audit[tuple([k,j,i])] = temp_dictionary
@@ -486,7 +495,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
 
     mask = parsed_inputs_dict['mask']
     emmap = parsed_inputs_dict['emmap']
-    wn = 25
+    wn = parsed_inputs_dict['wn']
     modmap = None
     
     apix = parsed_inputs_dict['apix']
@@ -555,7 +564,7 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     mask = parsed_inputs_dict['mask']
     emmap = parsed_inputs_dict['emmap']
     fsc_resolution = parsed_inputs_dict['fsc_resolution']
-    wn = 25
+    wn = parsed_inputs_dict['wn']
 
     apix = parsed_inputs_dict['apix']
     verbose=parsed_inputs_dict['verbose']
@@ -619,6 +628,8 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     qfit_vals = comm.gather(qfit_vals, root=0)
 
     if rank == 0:
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+        save_as_mrc(emmap, os.path.join(processing_files_folder, "unsharpened_resample_1A.mrc"), apix=1)
         sharpened_vals = merge_sequence_of_sequences(sharpened_vals)
         bfactor_vals = merge_sequence_of_sequences(bfactor_vals)
         qfit_vals = merge_sequence_of_sequences(qfit_vals)
@@ -635,8 +646,10 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
         qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
         save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
         save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
-        
+
+        save_as_mrc(map_scaled, os.path.join(processing_files_folder, "sharpened_resample_1A.mrc"), apix=1)
     else:
+
         map_scaled = None
 
     ######## Wait for all processes to finish #########
@@ -653,7 +666,8 @@ def postprocess_map(emmap, apix):
     from locscale.include.emmer.ndimage.map_utils import resample_image
     from locscale.include.emmer.ndimage.map_utils import resample_map
     # resampling etc. and keep normilization
-    emmap = resample_image(emmap, apix=1, apix_new=apix)
+    emmap = resample_map(emmap, apix=1, apix_new=apix)
+    #emmap = resample_image(emmap, apix=1, apix_new=apix)
     ## TBC
     return emmap
 
