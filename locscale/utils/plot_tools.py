@@ -171,15 +171,9 @@ def plot_pickle_output(folder):
     
     freq = audit_scaling[key]['freq']
     em_profile = audit_scaling[key]['em_profile']
-    ref_profile = audit_scaling[key]['input_ref_profile']
-    theoretical_profile = audit_scaling[key]['theoretical_amplitude']
-    scaled_theoretical = audit_scaling[key]['scaled_theoretical_amplitude']
-    deviated_profile = audit_scaling[key]['deviated_reference_profile']
-    exponential_fit = audit_scaling[key]['exponential_fit']
-    
-        
-        
-    fig=plot_radial_profile(freq,[em_profile, ref_profile, theoretical_profile, scaled_theoretical, deviated_profile, exponential_fit],legends=['em_profile','ref_profile','th profile','scaled th profile','Deviated profile','exponential fit'])
+    ref_profile = audit_scaling[key]['ref_profile']
+
+    fig=plot_radial_profile(freq,[em_profile, ref_profile],legends=['em_profile','ref_profile'])
     
     return fig
 
