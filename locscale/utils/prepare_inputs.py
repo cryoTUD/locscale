@@ -159,7 +159,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict = {}
     parsed_inputs_dict['emmap'] = preprocessed_emmap
     parsed_inputs_dict['mask'] = preprocessed_mask
-    parsed_inputs_dict['wn'] = 25
+    parsed_inputs_dict['wn'] = 24
     parsed_inputs_dict['apix'] = apix
  
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
@@ -193,11 +193,11 @@ def preprocess_map(emmap, mask, apix):
     from locscale.include.emmer.ndimage.map_utils import resample_map
     from locscale.emmernet.run_emmernet import standardize_map
 
-    # emmap = resample_map(emmap, apix=apix, apix_new=1, order=2)
-    # mask = resample_map(mask, apix=apix, apix_new=1, order=2)
+    emmap = resample_map(emmap, apix=apix, apix_new=1)
+    mask = resample_map(mask, apix=apix, apix_new=1)
 
-    emmap = resample_image(emmap, apix=apix, apix_new=1)
-    mask = resample_image(mask, apix=apix, apix_new=1)
+    #emmap = resample_image(emmap, apix=apix, apix_new=1)
+    #mask = resample_image(mask, apix=apix, apix_new=1)
 
     emmap = standardize_map(emmap)
     
