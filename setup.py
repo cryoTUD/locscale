@@ -3,7 +3,7 @@ import setuptools
 from setuptools import find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-from numpy.distutils.core import setup, Extension
+from numpy.distutils.core import Extension, setup
 import unittest
 import pathlib
 locscale_path=pathlib.Path(__file__).parent.resolve()
