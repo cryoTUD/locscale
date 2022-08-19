@@ -279,6 +279,7 @@ def launch_amplitude_scaling(args):
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
+
         ## If rank is 0, check and prepare inputs
         try:
             if rank==0:
@@ -288,7 +289,7 @@ def launch_amplitude_scaling(args):
                 check_user_input(args)   ## Check user inputs
                 if args.verbose:
                     print_arguments(args)
-                    copied_args = change_directory(args, args.output_processing_files)
+                copied_args = change_directory(args, args.output_processing_files)
                 parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
             else:
                 parsed_inputs_dict = None
@@ -305,7 +306,13 @@ def launch_amplitude_scaling(args):
                 write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
-            print(e)
+            print("Process {} failed with error: {}".format(rank, e))
+            comm.Abort()
+            raise e
+        
+        
+        
+
 
 def test_everything():
     from locscale.tests.utils import download_and_test_everything
