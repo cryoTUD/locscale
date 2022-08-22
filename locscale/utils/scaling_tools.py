@@ -414,8 +414,8 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
     bfactor_vals_array = np.array(bfactor_voxels, dtype=np.float32)
     qfit_vals_array = np.array(qfit_voxels, dtype=np.float32)
     
-
-    return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
+    results = {'sharpened_vals': sharpened_vals_array, 'bfactor_vals': bfactor_vals_array, 'qfit_vals': qfit_vals_array}
+    return results
 
 def run_window_function_including_scaling(parsed_inputs_dict):
     """
@@ -424,6 +424,8 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     """
     from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     from locscale.utils.general import save_list_as_map, put_scaled_voxels_back_in_original_volume_including_padding
+    from locscale.utils.general import merge_sequence_of_sequences, split_sequence_evenly
+    from joblib import Parallel, delayed
     ###############################################################################
     # Stage 1: Collect inputs from the dictionary
     ###############################################################################
@@ -437,18 +439,43 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(
         scaling_dictionary['mask'], scaling_dictionary['wn'])
 
-    scaling_dictionary["masked_xyz_locs"] = masked_xyz_locs
+    masked_xyz_locs_split = split_sequence_evenly(masked_xyz_locs, scaling_dictionary['number_processes'])
+
     scaling_dictionary["masked_indices"] = masked_indices
     scaling_dictionary["map_shape"] = map_shape
-    scaling_dictionary["use_mpi"] = False
+    
+
+    scaling_dictionary_split = {}
+    for i in range(scaling_dictionary['number_processes']):
+        scaling_dictionary_split[i] = scaling_dictionary.copy()
+        scaling_dictionary_split[i]["masked_xyz_locs"] = masked_xyz_locs_split[i]
+        scaling_dictionary_split[i]["use_mpi"] = True
     ###############################################################################
     # Stage 3: Run the window function to get sharpened values and bfactor information
     ###############################################################################
-
-    sharpened_vals, bfactor_vals, qfit_vals = get_central_scaled_pixel_vals_after_scaling(scaling_dictionary)
+    # Use joblib to parallelize the window function 
+    if scaling_dictionary['number_processes'] > 1:
+        results = Parallel(n_jobs=scaling_dictionary['number_processes'])(
+            delayed(get_central_scaled_pixel_vals_after_scaling)(scaling_dictionary_split[i]) for i in range(scaling_dictionary['number_processes']))
+    else:
+        scaling_dictionary_split[0]["use_mpi"] = False
+        results = [get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_split[0])]
     
     ###############################################################################
-    # Stage 4: Put the sharpened values back into the original volume
+    # Stage 4: Merge the results from the parallelized window function
+    ###############################################################################
+    if scaling_dictionary['number_processes'] > 1:
+        sharpened_vals = merge_sequence_of_sequences([results[i]['sharpened_vals'] for i in range(scaling_dictionary['number_processes'])])
+        bfactor_vals = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
+        qfit_vals = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
+    else:
+        sharpened_vals = results[0]['sharpened_vals']
+        bfactor_vals = results[0]['bfactor_vals']
+        qfit_vals = results[0]['qfit_vals']
+
+
+    ###############################################################################
+    # Stage 5: Put the sharpened values back in the original volume
     ###############################################################################
 
     map_scaled = put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape)
@@ -523,12 +550,14 @@ def run_window_function_including_scaling_mpi(parsed_inputs_dict):
     # Stage 3: Run the window function to get sharpened values and bfactor information
     ###############################################################################
 
-    sharpened_vals, bfactor_vals, qfit_vals = get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_mpi)
+    results = get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_mpi)
     
     ###############################################################################
     # Stage 4: Put the sharpened values back into the original volume
     ###############################################################################
-
+    sharpened_vals = results['sharpened_vals']
+    bfactor_vals = results['bfactor_vals']
+    qfit_vals = results['qfit_vals']
     ###############################################################################
     # Stage 4a: Gather the computed values from all nodes to the root node
     ###############################################################################
