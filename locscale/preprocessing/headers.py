@@ -146,6 +146,12 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     
         
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+    
+    current_directory = os.getcwd()
+
+    processing_folder = os.path.dirname(emmap_path)
+    os.chdir(processing_folder)    
+
     emmap = mrcfile.open(emmap_path).data
     voxel_size_record = mrcfile.open(emmap_path).voxel_size
     apix = average_voxel_size(voxel_size_record)
@@ -161,6 +167,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     save_as_mrc(fdr_mask, output_filename=mask_path, 
                 apix=voxel_size_record.tolist(), origin=0)
     
+    os.chdir(current_directory)
     if os.path.exists(mask_path):
         if verbose:
             tprint("FDR Procedure completed. \n"+
