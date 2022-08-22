@@ -48,7 +48,7 @@ locscale_parser.add_argument('-ma', '--mask', help='Input filename mask')
 locscale_parser.add_argument('-o', '--outfile', help='Output filename', default="locscale_output.mrc")
 locscale_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 locscale_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
-locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
+locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 
 ## LocScale main function parameters
 locscale_parser.add_argument('-wn', '--window_size', type=int, help='window size in pixels', default=None)
@@ -103,7 +103,7 @@ emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths
 
 ## Output arguments
 emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
-emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
+emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 
 ## Emmernet main function parameters
@@ -233,8 +233,7 @@ def launch_emmernet(args):
     input_dictionary = prepare_inputs(copied_args)
     ## Run EMMERNET
     emmernet_output_dictionary = run_emmernet(input_dictionary)
-    ## Check and save output
-    os.chdir(current_directory)
+    
     check_and_save_output(input_dictionary, emmernet_output_dictionary)
 
     ## Print end
@@ -245,7 +244,7 @@ def launch_amplitude_scaling(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
     import os 
 
     try:
@@ -269,8 +268,7 @@ def launch_amplitude_scaling(args):
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         ## Run LocScale non-MPI 
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
-        ## Change to current directory and save output
-        os.chdir(current_directory)
+        
         write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
         ## Print end
         print_end_banner(datetime.now(), start_time=start_time)
@@ -302,7 +300,6 @@ def launch_amplitude_scaling(args):
             LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
             ## Change to current directory and save output 
             if rank == 0:
-                os.chdir(current_directory)
                 write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
