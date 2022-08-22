@@ -321,11 +321,17 @@ class LocScaleRun:
 
         return 0
     
-    def execute(self):
+    def execute(self, dry_run=False):
         # Prepare job
         self.prepare_job()
         # Submit job
-        returncode = self.submit_job()
+        if not dry_run:
+            returncode = self.submit_job()
+        else:
+            returncode = 10
+            print("Dry run: job not submitted")
+            return returncode
+        
         if returncode == 0:
             print("Successfully submitted job {}".format(self.job_name))
         elif returncode == 1:
