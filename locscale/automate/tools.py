@@ -22,8 +22,24 @@ class LocScaleInputs:
     def __init__(self):
         self.input = get_defaults_dictionary()
         self.is_halfmap_input = None
-        self.output_folder = None
-    
+        
+    def check_if_key_is_path(self, key, return_value=False):
+        """
+        Check if a key is a path.
+        """
+        if key != "halfmap_paths":
+            value = self.input[key]
+            value_is_not_none = value is not None
+            value_is_str = isinstance(value, str)
+            if value_is_not_none and value_is_str:
+                if os.path.isfile(value):
+                    return True
+            return False
+        else:
+            return True
+        
+        
+
     def check_is_halfmap_input(self):
         """
         Check if the input is halfmap input.
@@ -93,42 +109,47 @@ class LocScaleInputs:
         Copy files in a dictionary to the output directory.
         """
         import shutil
+        files_copied = 0
         for key in self.input.keys():
-            value = self.input[key]
-            value_is_none = value is None
-            
-            destination_same_as_source = self.output_folder == output_dir
-            files_copied = 0
-            if destination_same_as_source:
-                print("Destination folder is the same as the source folder. Skipping copying files.")
+            if key == "halfmap_paths":
+                halfmap_path_1 = self.input["halfmap_paths"][0]
+                halfmap_path_2 = self.input["halfmap_paths"][1]
+                old_file_path_1 = os.path.abspath(halfmap_path_1)
+                old_file_path_2 = os.path.abspath(halfmap_path_2)
+                new_file_path_1 = os.path.join(output_dir, os.path.basename(old_file_path_1))
+                new_file_path_2 = os.path.join(output_dir, os.path.basename(old_file_path_2))
+                shutil.copy(old_file_path_1, new_file_path_1)
+                shutil.copy(old_file_path_2, new_file_path_2)
+                self.input["halfmap_paths"] = [new_file_path_1, new_file_path_2]
+                files_copied += 2
+            elif self.check_if_key_is_path(key):
+                value = self.input[key]
+                old_file_path = os.path.abspath(value)
+                new_file_path = os.path.join(output_dir, os.path.basename(value))
+                shutil.copy(old_file_path, new_file_path)
+                self.input[key] = new_file_path
+                files_copied += 1
             else:
-                if not value_is_none and isinstance(value, str):
-                    if os.path.isfile(value):
-                        new_file_path = os.path.join(output_dir, os.path.basename(value))
-                        shutil.copy(value, new_file_path)
-                        self.input[key] = new_file_path
-                        files_copied += 1
+                continue
+        
+        print("{} files copied".format(files_copied))
 
-    
-    def update_folder_from_input_paths(self):
+    def get_folder_from_input_paths(self):
         """
         Update the output folder from the input paths.
         """
         import os
+        self.check_is_halfmap_input()
+
         if self.is_halfmap_input:
-            print("Updating output folder from input paths")
-            halfmap_path_1 = self.input["halfmap_paths"][0]
-            print("Halfmap 1: {}".format(halfmap_path_1))
-            print(os.path.dirname(halfmap_path_1))
-            self.output_folder = os.path.dirname(self.input["halfmap_paths"][0])
+            halfmap_path_1 = os.path.abspath(self.input["halfmap_paths"][0])
+            assert os.path.isfile(halfmap_path_1), "Halfmap 1 path is not valid"
+            return os.path.dirname(halfmap_path_1)
 
         else:
-            if self.input["emmap_path"] is not None:
-                self.output_folder = os.path.dirname(self.input["emmap_path"])
-            else:
-                self.output_folder = None
-
-        print("Output folder set to {}".format(self.output_folder))
+            emmap_path = os.path.abspath(self.input["emmap_path"])
+            assert os.path.isfile(emmap_path), "EM map path is not valid"
+            return os.path.dirname(emmap_path)
 
         
 
@@ -143,13 +164,15 @@ class LocScaleRun:
         self.timeout = 4*3600 # 4 hours
         self.mpi_jobs = mpi_jobs
         self.input.check_is_halfmap_input()
-        if self.input.output_folder is None:
-            if data_folder is None:
-                self.input.update_folder_from_input_paths()
-            else:
-                self.input.output_folder = data_folder
+        if data_folder is not None:
+            self.data_folder = data_folder
+        else:
+            input_folder = self.input.get_folder_from_input_paths()
+            self.data_folder = os.path.join(input_folder, job_name)
         
-
+        if not os.path.exists(self.data_folder):
+            os.mkdir(self.data_folder)
+        
     def print_locscale_command(self):
         '''
         Print the command to the screen with a banner and run type. Command is a list of strings.
@@ -197,7 +220,7 @@ class LocScaleRun:
             # Append output folder
 
             self.command.append("--output_processing_files")
-            processing_files_folder = os.path.join(self.input.output_folder, "processing_files_{}_{}".format(self.job_name, self.locscale_run_type))
+            processing_files_folder = os.path.join(self.data_folder, "processing_files_{}_{}".format(self.job_name, self.locscale_run_type))
             self.command.append(processing_files_folder)
             self.command.append("--verbose")
                     
@@ -235,13 +258,10 @@ class LocScaleRun:
         import json
 
         # Create output folder for this job
-        job_folder = os.path.join(self.input.output_folder, self.job_name)
-        if not os.path.isdir(job_folder):
-            os.mkdir(job_folder)
+        job_folder = self.data_folder
         
         # Copy files to new folder
         self.input.copy_files_to_new_folder(job_folder)
-        self.input.output_folder = job_folder
 
         # Make a locscale output log file
         log_file_path = os.path.join(job_folder, "locscale_output.log")
@@ -259,7 +279,7 @@ class LocScaleRun:
         "timeout": int(self.timeout)}
 
         # Write job file
-        self.job_file_path = os.path.join(job_folder, "job.json")
+        self.job_file_path = os.path.join(job_folder, self.job_name + "_job.json")
         with open(self.job_file_path, "w") as f:
             json.dump(job, f)
 
@@ -274,10 +294,6 @@ class LocScaleRun:
     def submit_job(self):
         import os
         import subprocess
-        try:
-            active_directory = os.getcwd()
-        except:
-            active_directory = os.path.expanduser("~")
 
         self.fetch_job()
 
@@ -322,6 +338,8 @@ class LocScaleRun:
         return 0
     
     def execute(self, dry_run=False):
+        # print header
+        self.print_header()
         # Prepare job
         self.prepare_job()
         # Submit job
@@ -330,6 +348,7 @@ class LocScaleRun:
         else:
             returncode = 10
             print("Dry run: job not submitted")
+            self.print_footer()
             return returncode
         
         if returncode == 0:
@@ -340,7 +359,23 @@ class LocScaleRun:
             print("Error submitting job {}".format(self.job_name))
         else:
             print("Error submitting job {}".format(self.job_name))
+        
+        self.print_footer()
         return returncode
+
+        
+    
+    def print_header(self):
+        print("~"*80)
+        print("Executing job name: {}".format(self.job_name))
+        print("~"*80)
+    
+    def print_footer(self):
+        print("~"*80)
+        print("Finished job name: {}".format(self.job_name))
+        print("~"*80)
+
+
 
 
 
