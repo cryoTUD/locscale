@@ -1,6 +1,9 @@
 
 ## FILE HANDLING FUNCTIONS
 
+from posixpath import isabs
+
+
 def check_dependencies():
     
     import warnings
@@ -136,6 +139,26 @@ def get_locscale_path():
     import os
     return os.path.dirname(locscale.__path__[0])
 
+def get_input_file_directory(args):
+    import os
+    # Check if halfmap paths are given or emmap path is given
+    if args.halfmap_paths is not None:
+        halfmap_given = True
+    else:
+        halfmap_given = False
+    
+    if halfmap_given:
+        # Get the emmap folder from the input paths
+        assert os.path.exists(args.halfmap_paths[0]), "Halfmap 1 path does not exist"
+
+        halfmap_1_path_full = os.path.abspath(args.halfmap_paths[0])
+        input_folder = os.path.dirname(halfmap_1_path_full)
+    else:
+        assert os.path.exists(args.emmap_path), "EMmap path does not exist"
+        input_folder = os.path.dirname(os.path.abspath(args.emmap_path))
+
+    return input_folder
+
     
 def copy_file_to_folder(full_path_to_file, new_folder):
     import shutil
@@ -152,17 +175,28 @@ def change_directory(args, folder_name):
     import os    
     from locscale.utils.file_tools import copy_file_to_folder
     
-    if folder_name == "processing_files":
-        current_directory = os.getcwd()
-        new_directory = os.path.join(current_directory, folder_name)
+    # Get the input folder
+    input_folder = get_input_file_directory(args)
+    
+    if folder_name is None:
+        new_directory = os.path.join(input_folder, "processing_files")
     else:
-        new_directory = folder_name
+        if os.path.isabs(folder_name):
+            new_directory = folder_name
+        else:
+            new_directory = os.path.join(input_folder, folder_name)
     
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
     
+    assert os.path.isdir(new_directory), "New directory does not exist"
+    assert os.path.isabs(new_directory), "New directory is not absolute"
+    
     if args.verbose:
         print("Copying files to {}\n".format(new_directory))
+    
+    # Set the "output_processing_files" argument to the new_directory
+    setattr(args, "output_processing_files", new_directory)
 
     for arg in vars(args):
         value = getattr(args, arg)
@@ -180,10 +214,6 @@ def change_directory(args, folder_name):
                 new_halfmap2_path = copy_file_to_folder(halfmap2_path, new_directory)
                 new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
-    
-    if args.verbose:
-        print("Changing active directory to: {}\n".format(new_directory))
-    os.chdir(new_directory)
     
     return args
 

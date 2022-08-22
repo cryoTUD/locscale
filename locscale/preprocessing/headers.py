@@ -354,6 +354,13 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
     import mrcfile
     
+    # Get the current working directory
+    current_directory = os.getcwd()
+    processing_files_directory = os.path.dirname(os.path.abspath(model_path))
+    os.chdir(processing_files_directory)
+    if verbose:
+        tprint("Changing to directory: "+processing_files_directory)
+
     #### Input ####
     model_name = os.path.basename(model_path)
     servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
@@ -387,7 +394,14 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     refmac_output = run(servalcat_command, stdout=servalcat_log_file)
     refined_model_path = output_prefix+".pdb"
     bfactors = get_bfactors(in_model_path=refined_model_path)
+
+    refined_model_path = os.path.join(processing_files_directory, os.path.basename(refined_model_path))
     
+    # Change the active directory back to the original one
+    os.chdir(current_directory)
+    if verbose:
+        tprint("Changing to directory: "+current_directory)
+
     if os.path.exists(refined_model_path):
         if verbose: 
             tprint("The refined PDB model is: "+refined_model_path+"\n\n")    

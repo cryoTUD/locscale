@@ -281,8 +281,7 @@ class LocScaleRun:
         except:
             active_directory = os.path.expanduser("~")
 
-        # Change to job folder
-        os.chdir(self.input.output_folder)
+        
 
         self.fetch_job()
 
@@ -324,8 +323,6 @@ class LocScaleRun:
         log_file.write("Success running LocScale for {}\n".format(self.job_name))
         log_file.close()
 
-        # Change back to original directory
-        os.chdir(active_directory)
         return 0
     
     def execute(self):
