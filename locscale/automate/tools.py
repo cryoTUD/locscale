@@ -213,8 +213,6 @@ class LocScaleRun:
         else:
             print("Mandatory variables: {}".format(mandatory_variables_present))
             print("Path variables: {}".format(path_variables_valid))
-
-            self.command = 420
             print("Command not created")
         
     
@@ -280,8 +278,6 @@ class LocScaleRun:
             active_directory = os.getcwd()
         except:
             active_directory = os.path.expanduser("~")
-
-        
 
         self.fetch_job()
 
