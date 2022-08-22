@@ -252,13 +252,15 @@ def launch_amplitude_scaling(args):
     except:
         current_directory = os.path.expanduser("~")
     
+    input_file_directory = get_input_file_directory(args) ## Get input file directory
+
     if not args.mpi:
         ## Print start
         start_time = datetime.now()
         print_start_banner(start_time, "LocScale")
 
         ## Check input
-        check_user_input(args)   ## Check user inputs    
+        check_user_input(args)   ## Check user inputs  
         if args.verbose:
             print_arguments(args)
         
@@ -268,7 +270,7 @@ def launch_amplitude_scaling(args):
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         ## Run LocScale non-MPI 
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
-        
+        parsed_inputs_dict["output_directory"] = input_file_directory
         write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
         ## Print end
         print_end_banner(datetime.now(), start_time=start_time)
@@ -289,6 +291,7 @@ def launch_amplitude_scaling(args):
                     print_arguments(args)
                 copied_args = change_directory(args, args.output_processing_files)
                 parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
+                
             else:
                 parsed_inputs_dict = None
             
@@ -300,6 +303,7 @@ def launch_amplitude_scaling(args):
             LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
             ## Change to current directory and save output 
             if rank == 0:
+                parsed_inputs_dict["output_directory"] = input_file_directory
                 write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
