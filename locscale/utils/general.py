@@ -208,7 +208,7 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.plot_tools import make_locscale_report
     import mrcfile
-    
+    import os
     input_map = mrcfile.open(parsed_inputs_dict['emmap_path']).data
     
     wn = parsed_inputs_dict['wn']
@@ -221,6 +221,9 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
 
     output_filename = args.outfile
+    output_directory = parsed_inputs_dict["output_directory"]
+    if not os.path.isabs(output_filename):
+        output_filename = os.path.join(output_directory, output_filename)
     if args.dev_mode:
         output_filename = output_filename[:-4]+"_devmode.mrc"
     

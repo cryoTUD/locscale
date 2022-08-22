@@ -205,24 +205,44 @@ class LocScaleRun:
                 self.command.append("--emmap_path")
                 self.command.append(self.input.input["emmap_path"])
             
-            # For every other input, append to command list if value is not none or a boolean value
+            # For every other input, append to command list if value is not none or a boolean value 
+            restricted_keys = ["halfmap_paths","emmap_path","model_coordinates","help",\
+                "complete_model","dev_mode","averaging_window","mpi","symmetry","number_processes"]
+
             for key in self.input.input.keys():
                 value = self.input.input[key]
-                key_is_not_unsharpened = key not in ["halfmap_paths","emmap_path","help","output_processing_files"]
+                key_not_restricted = key not in restricted_keys
                 value_is_not_none = value is not None
                 value_is_boolean = isinstance(value, bool)
-                if key_is_not_unsharpened and value_is_not_none and not value_is_boolean:
+                if key_not_restricted and value_is_not_none and not value_is_boolean:
                     self.command.append("--{}".format(key))
                     self.command.append(str(value))
-                if value_is_boolean:
-                    if value:
-                        self.command.append("--{}".format(key))
+
             # Append output folder
 
             self.command.append("--output_processing_files")
             processing_files_folder = os.path.join(self.data_folder, "processing_files_{}_{}".format(self.job_name, self.locscale_run_type))
             self.command.append(processing_files_folder)
             self.command.append("--verbose")
+
+            if self.locscale_run_type == "model_based":
+                self.command.append("--model_coordinates")
+                self.command.append(self.input.input["model_coordinates"])
+            
+            if self.locscale_run_type == "model_free":
+                self.command.append("--symmetry")
+                self.command.append(str(self.input.input["symmetry"]))
+            
+            if self.locscale_run_type == "model_based_integrated":
+                self.command.append("--complete_model")
+                self.command.append("--model_coordinates")
+                self.command.append(self.input.input["model_coordinates"])
+                self.command.append("--averaging_window")
+                self.command.append(str(self.input.input["averaging_window"]))
+                self.command.append("--symmetry")
+                self.command.append(str(self.input.input["symmetry"]))
+
+
                     
             
             # If MPI jobs are used, append the number of jobs to the command
