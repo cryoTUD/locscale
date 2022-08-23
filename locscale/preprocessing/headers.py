@@ -228,14 +228,14 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     import os
     import mrcfile
     import gemmi
-    from locscale.preprocessing.pseudomodel_solvers import main_solver3D, main_solver_kick
+    from locscale.preprocessing.pseudomodel_solvers import gradient_solver, main_solver_kick
     from locscale.preprocessing.pseudomodel_classes import extract_model_from_mask
     
     #### Input ####
 
     mrc = mrcfile.open(emmap_path)
     emmap = mrc.data
-    voxelsize = mrc.voxel_size.x
+    apix = mrc.voxel_size.x
 
     mask = mrcfile.open(mask_path).data
 
@@ -243,7 +243,7 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
     pseudomodel = extract_model_from_mask(mask,num_atoms,threshold=threshold)
     
     emmap_shape = emmap.shape
-    unitcell = gemmi.UnitCell(emmap_shape[0]*voxelsize,emmap_shape[1]*voxelsize,emmap_shape[2]*voxelsize,90,90,90)
+    unitcell = gemmi.UnitCell(emmap_shape[0]*apix,emmap_shape[1]*apix,emmap_shape[2]*apix,90,90,90)
     
     outputlogfilepath = os.path.join(os.path.dirname(emmap_path),"pseudomodel_log.txt")
     output_file = open(outputlogfilepath,"w")
@@ -265,8 +265,8 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             friction = 10
             
         
-        arranged_points = main_solver3D(
-            emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,voxelsize=voxelsize,dt=0.1,
+        arranged_points = gradient_solver(
+            emmap,gx,gy,gz,pseudomodel,g=g,friction=friction,min_dist_in_angst=bl,apix=apix,dt=0.1,
             capmagnitude_lj=100,epsilon=1,scale_lj=scale_lj,capmagnitude_map=100,scale_map=scale_map,
             total_iterations=total_iterations, compute_map=None,emmap_path=None,mask_path=None,
             returnPointsOnly=True,integration='verlet',verbose=False, myoutput=output_file)
@@ -276,14 +276,14 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
 
     elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
-                pseudomodel,min_dist_in_angst=bl,voxelsize=voxelsize,total_iterations=total_iterations,
+                pseudomodel,min_dist_in_angst=bl,apix=apix,total_iterations=total_iterations,
                 returnPointsOnly=True,verbose=False, myoutput=output_file)
         mask_name = mask_path[:-4]
         pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
     
 
     ### Save the pseudo-atomic model ###    
-    arranged_points.write_pdb(pseudomodel_path,voxelsize=voxelsize,unitcell=unitcell)
+    arranged_points.write_pdb(pseudomodel_path,apix=apix,unitcell=unitcell)
     
     
     if os.path.exists(pseudomodel_path):    
@@ -463,7 +463,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     
     
     ## Generate parameters of the simulated map
-    voxelsize = grid_input.spacing   
+    apix = grid_input.spacing   
     unitcell = grid_input.unit_cell
     
     ## Simulate a reference map from the input atomic model in the pdb_structure variable
