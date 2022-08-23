@@ -4,6 +4,7 @@ import argparse
 from distutils.cmd import Command
 from genericpath import isfile
 import os
+from socket import timeout
 import sys
 from subprocess import PIPE
 from locscale.main import launch_amplitude_scaling
@@ -411,11 +412,11 @@ class LocScaleMultiple:
         if self.resume_scaling:
             print("Resuming scaling from stored state")
         else:
-            joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky")(
+            joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=2*3600)(
                 joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
 
         ## Run the scaling in parallel
-        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky")(
+        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=2*3600)(
             joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
 
         
