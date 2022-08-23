@@ -1,9 +1,13 @@
 # Script to automate LocScale for large number of files
 
+import argparse
 from distutils.cmd import Command
 from genericpath import isfile
 import os
 import sys
+from subprocess import PIPE
+from locscale.main import launch_amplitude_scaling
+import json
 
 def get_defaults_dictionary():
     """
@@ -13,7 +17,9 @@ def get_defaults_dictionary():
     defaults_dictionary = {}
     variables = locscale_parser._actions
     for variable in variables:
-        defaults_dictionary[variable.dest] = variable.default
+        # if variable.dest is not help then add to dictionary
+        if variable.dest != 'help':
+            defaults_dictionary[variable.dest] = variable.default
     
     return defaults_dictionary
 
@@ -22,6 +28,17 @@ class LocScaleInputs:
     def __init__(self):
         self.input = get_defaults_dictionary()
         self.is_halfmap_input = None
+        self.args = argparse.Namespace()
+    
+    def clone(self):
+        """
+        Clone the input dictionary.
+        """
+        clonedInput = LocScaleInputs()
+        clonedInput.input = self.input.copy()
+        clonedInput.is_halfmap_input = self.is_halfmap_input
+        clonedInput.args = self.args
+        return clonedInput
         
     def check_if_key_is_path(self, key, return_value=False):
         """
@@ -37,8 +54,6 @@ class LocScaleInputs:
             return False
         else:
             return True
-        
-        
 
     def check_is_halfmap_input(self):
         """
@@ -132,7 +147,6 @@ class LocScaleInputs:
             else:
                 continue
         
-        print("{} files copied".format(files_copied))
 
     def get_folder_from_input_paths(self):
         """
@@ -151,14 +165,16 @@ class LocScaleInputs:
             assert os.path.isfile(emmap_path), "EM map path is not valid"
             return os.path.dirname(emmap_path)
 
+    def update_args(self):
+        self.args.__dict__.update(self.input)
         
 
 class LocScaleRun:
     def __init__(self, Input, job_name, locscale_run_type, mpi_jobs, data_folder=None):
-        self.input = Input
+        self.input = Input.clone()
+    
         self.job_name = job_name
         self.locscale_run_type = locscale_run_type
-        self.command = ["locscale","run_locscale"]
         self.job_file_path = None
         self.job = None
         self.timeout = 4*3600 # 4 hours
@@ -170,95 +186,10 @@ class LocScaleRun:
             input_folder = self.input.get_folder_from_input_paths()
             self.data_folder = os.path.join(input_folder, job_name)
         
+        
         if not os.path.exists(self.data_folder):
             os.mkdir(self.data_folder)
-        
-    def print_locscale_command(self):
-        '''
-        Print the command to the screen with a banner and run type. Command is a list of strings.
-        '''
-        print("="*80)
-        print("Run type: {}".format(self.locscale_run_type))
-        print("Command: \n")
-        print(" ".join(self.command))
-        print("="*80)
 
-    def create_command(self):
-        """
-        Create locscale command from input dictionary
-        """
-        # Check for mandatory variables
-        mandatory_variables_present = self.input.check_mandatory_variables(self.locscale_run_type)
-
-        # Check for paths
-        path_variables_valid = self.input.check_paths()
-        print("Path variables valid: {}".format(path_variables_valid))
-        print("Mandatory variables present: {}".format(mandatory_variables_present))
-        
-        if mandatory_variables_present and path_variables_valid:
-            # Append unsharpened input based on is_halfmap_input
-            if self.input.is_halfmap_input:
-                self.command.append("--halfmap_paths")
-                self.command.append(self.input.input["halfmap_paths"][0])
-                self.command.append(self.input.input["halfmap_paths"][1])
-            else:
-                self.command.append("--emmap_path")
-                self.command.append(self.input.input["emmap_path"])
-            
-            # For every other input, append to command list if value is not none or a boolean value 
-            restricted_keys = ["halfmap_paths","emmap_path","model_coordinates","help",\
-                "complete_model","dev_mode","averaging_window","mpi","symmetry","number_processes"]
-
-            for key in self.input.input.keys():
-                value = self.input.input[key]
-                key_not_restricted = key not in restricted_keys
-                value_is_not_none = value is not None
-                value_is_boolean = isinstance(value, bool)
-                if key_not_restricted and value_is_not_none and not value_is_boolean:
-                    self.command.append("--{}".format(key))
-                    self.command.append(str(value))
-
-            # Append output folder
-
-            self.command.append("--output_processing_files")
-            processing_files_folder = os.path.join(self.data_folder, "processing_files_{}_{}".format(self.job_name, self.locscale_run_type))
-            self.command.append(processing_files_folder)
-            self.command.append("--verbose")
-
-            if self.locscale_run_type == "model_based":
-                self.command.append("--model_coordinates")
-                self.command.append(self.input.input["model_coordinates"])
-            
-            if self.locscale_run_type == "model_free":
-                self.command.append("--symmetry")
-                self.command.append(str(self.input.input["symmetry"]))
-            
-            if self.locscale_run_type == "model_based_integrated":
-                self.command.append("--complete_model")
-                self.command.append("--model_coordinates")
-                self.command.append(self.input.input["model_coordinates"])
-                self.command.append("--averaging_window")
-                self.command.append(str(self.input.input["averaging_window"]))
-                self.command.append("--symmetry")
-                self.command.append(str(self.input.input["symmetry"]))
-
-
-                    
-            
-            # If MPI jobs are used, append the number of jobs to the command
-            if self.mpi_jobs > 1:
-                self.command.append("--mpi")
-                self.command.insert(0,"mpirun")
-                self.command.insert(1,"-np")
-                self.command.insert(2,str(self.mpi_jobs))
-            
-                    
-        else:
-            print("Mandatory variables: {}".format(mandatory_variables_present))
-            print("Path variables: {}".format(path_variables_valid))
-            print("Command not created")
-        
-    
     def write_header_to_log_file(self,log_file_path):
         import os
         from datetime import datetime
@@ -269,8 +200,8 @@ class LocScaleRun:
             f.write("Run type: {}\n".format(self.locscale_run_type))
             f.write("User: {}\n".format(os.environ.get('USER')))
             f.write("Date: {}\n".format(datetime.now()))
-            f.write("Command: \n")
-            f.write(" ".join(self.command))
+            f.write("Arguments: \n")
+            f.write(self.input.args.__str__())
             f.write("\n")
             f.write("="*80)
         
@@ -287,16 +218,17 @@ class LocScaleRun:
         log_file_path = os.path.join(job_folder, "locscale_output.log")
 
         # Create command
-        self.create_command()
+        self.input.update_args()
         self.write_header_to_log_file(log_file_path)
-        self.print_locscale_command()
 
         # Create job file
         job = {
-        "command": self.command, 
+        "args": self.input.args.__dict__, 
         "output_log": log_file_path, 
         "job_name": self.job_name,
-        "timeout": int(self.timeout)}
+        "timeout": int(self.timeout),
+        "data_folder": self.data_folder,}
+        
 
         # Write job file
         self.job_file_path = os.path.join(job_folder, self.job_name + "_job.json")
@@ -310,81 +242,25 @@ class LocScaleRun:
         if self.job is None:
             with open(self.job_file_path, "r") as f:
                 self.job = json.load(f)
-        
+
     def submit_job(self):
-        import os
-        import subprocess
 
         self.fetch_job()
 
         log_file = open(self.job["output_log"], "a")
-        # Submit job
-        try:
-            subprocess_output=subprocess.run(self.command, stdout=log_file, stderr=log_file, check=True, timeout=self.job["timeout"])
-        except subprocess.CalledProcessError as exc:
-            print("Error running LocScale for {}".format(self.job_name))
-            print("Error: \n{}".format(exc))
-            print("Command: \n{}".format(self.command))
-            # Write error to log file
-            log_file.write("Error running LocScale for {}\n".format(self.job_name))
-            log_file.write("Error: \n{}\n".format(exc))
-            log_file.close()
-            return 2
-        except subprocess.TimeoutExpired as exc:
-            print("Timeout running LocScale for {}".format(self.job_name))
-            print("Error: \n{}".format(exc))
-            print("Time elapsed: {}".format(exc.timeout))
-            print("Command: \n{}".format(self.command))
-            # Write error to log file
-            log_file.write("Timeout running LocScale for {}\n".format(self.job_name))
-            log_file.write("Error: \n{}\n".format(exc))
-            log_file.write("Time elapsed: {}\n".format(exc.timeout))
-            log_file.close()
-            return 1
-        except Exception as exc:
-            print("Error running LocScale for {}".format(self.job_name))
-            print("Error: \n{}".format(exc))
-            print("Command: \n{}".format(self.command))
-            # Write error to log file
-            log_file.write("Error running LocScale for {}\n".format(self.job_name))
-            log_file.write("Error: \n{}\n".format(exc))
-            log_file.close()
-            return 420
-        
-        # Write success to log file
-        log_file.write("Success running LocScale for {}\n".format(self.job_name))
-        log_file.close()
+        sys.stdout = log_file
+        sys.stderr = log_file
+        print("Submitting job {}".format(self.job_name))
 
-        return 0
-    
-    def execute(self, dry_run=False):
-        # print header
-        self.print_header()
-        # Prepare job
-        self.prepare_job()
-        # Submit job
-        if not dry_run:
-            returncode = self.submit_job()
-        else:
-            returncode = 10
-            print("Dry run: job not submitted")
-            self.print_footer()
-            return returncode
-        
-        if returncode == 0:
-            print("Successfully submitted job {}".format(self.job_name))
-        elif returncode == 1:
-            print("Timeout submitting job {}".format(self.job_name))
-        elif returncode == 2:
-            print("Error submitting job {}".format(self.job_name))
-        else:
-            print("Error submitting job {}".format(self.job_name))
-        
-        self.print_footer()
-        return returncode
+        args = argparse.Namespace()
+        args.__dict__.update(self.job["args"])
 
-        
+        # Run LocScale
+        launch_amplitude_scaling(args)
+
+        print("Job {} submitted".format(self.job_name))
     
+
     def print_header(self):
         print("~"*80)
         print("Executing job name: {}".format(self.job_name))
@@ -395,8 +271,171 @@ class LocScaleRun:
         print("Finished job name: {}".format(self.job_name))
         print("~"*80)
 
+class LocScaleMultiple:
+    def __init__(self, input_jobs, num_process_preparation, num_process_scaling):
+        self.input_jobs = input_jobs.copy()
+        self.num_process_preparation = num_process_preparation
+        self.num_process_scaling = num_process_scaling
+        self.parsed_inputs_dictionary_list = {}
+        self.locscale_volumes = {}
+        self.dry_run = False
+
+        for job in self.input_jobs:
+            job.prepare_job()
+        
+    def get_parsed_inputs_dict(self, job_id):
+        from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
+        from locscale.main import print_arguments, print_end_banner, print_start_banner
+        from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
+        from datetime import datetime
+        from contextlib import redirect_stdout
+
+        ## Collect all preprocessing steps for all jobs
+        args = argparse.Namespace()
+        args.__dict__.update(self.input_jobs[job_id].job["args"])
+        job_file_path = self.input_jobs[job_id].job_file_path
+        log_file_path = self.input_jobs[job_id].job["output_log"]
+        data_folder = self.input_jobs[job_id].job["data_folder"]
+        json_file_path = os.path.join(data_folder, "parsed_inputs.json")
+        job_name = self.input_jobs[job_id].job["job_name"]
+        
+        # Print start banner
+        print("Job ID: {} \t Job name: {} \t Begin preparing inputs".format(job_id, job_name))
+        
+        with open(log_file_path, "w") as f:
+            with redirect_stdout(f):
+                
+                ## Print start
+                start_time = datetime.now()
+                print_start_banner(start_time, "LocScale")
+
+                ## Check input
+                check_user_input(args)   ## Check user inputs  
+                if args.verbose:
+                    print_arguments(args)
+                
+                ## Change to output directory
+                copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+                ## Prepare inputs
+                
+                if not self.dry_run:
+                    try:
+                        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
+                        ouput_file_path = os.path.join(data_folder, args.outfile)
+                        parsed_inputs_dict["input_file_directory"] = data_folder
+                        parsed_inputs_dict["ouput_file_path"] = ouput_file_path
+                        parsed_inputs_dict["job_id"] = job_id
+
+                        # Save parsed inputs dict as a json file in the input file directory
+                        
+                        with open(json_file_path, "w") as f:
+                            json.dump(parsed_inputs_dict, f)
+                        
+                    except Exception as e:
+                        print("Error preparing inputs for job {}".format(job_id))
+                        print(e)
+                        # create empty json file in the input file directory
+                        with open(json_file_path, "w") as f:
+                            json.dump({}, f)
+                else:
+                    print("Dry run: skipping preprocessing")                    
+                    with open(json_file_path, "w") as f:
+                        parsed_inputs_dict = {"job_id": str(job_id), "dry_run": str(1), "input_file_directory": data_folder}
+
+                        json.dump(parsed_inputs_dict, f)
 
 
+        print("Job ID: {} \t Job name: {} \t Finished preparing inputs".format(job_id, job_name))
+
+
+    def scale_amplitudes(self, job_id):
+        from locscale.utils.scaling_tools import run_window_function_including_scaling
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+        from contextlib import redirect_stdout
+        
+        job_name = self.input_jobs[job_id].job["job_name"]
+        print("Job ID: {} \t Job name: {} \t Begin scaling".format(job_id, job_name))
+        # print all keys from parsed_inputs_dictionary_list
+        
+
+        data_folder = self.input_jobs[job_id].job["data_folder"]
+        json_file_path = os.path.join(data_folder, "parsed_inputs.json")
+        
+        with open(json_file_path, "r") as f:
+            parsed_inputs_dict = json.load(f)
+        
+       # print("SCALING: json file for job id {}: {}".format(job_id, json_file_path))
+       # print("Parsed inputs dict for job {}: {}".format(job_id, parsed_inputs_dict))
+        
+        job_file_path = self.input_jobs[job_id].job_file_path
+        log_file_path = self.input_jobs[job_id].job["output_log"]
+
+        with open(log_file_path, "a") as f:
+            with redirect_stdout(f):
+                print("Scaling job {}".format(job_id))
+                print("="*80)
+                if not self.dry_run:
+                    if parsed_inputs_dict is not None:
+                        try:
+                            locscale_volume = run_window_function_including_scaling(parsed_inputs_dict)
+                            save_as_mrc(locscale_volume, parsed_inputs_dict["ouput_file_path"], apix=parsed_inputs_dict["apix"])
+                            returncode = 0
+                            
+                        except Exception as e:
+                            print("Error scaling amplitudes for job {}".format(parsed_inputs_dict["job_id"]))
+                            print(e)
+                            returncode = 2
+                    else:
+                        print("Problem preparing inputs for job {}".format(job_id))
+                        returncode = 1
+                else:
+                    print("Dry run: skipping scaling")
+                    returncode = 0
+        print("Job ID: {} \t Job name: {} \t Finished scaling: {}".format(job_id, job_name, returncode))
+        return returncode
+
+    def launch(self):
+        from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
+        from locscale.utils.general import write_out_final_volume_window_back_if_required, merge_sequence_of_sequences, split_sequence_evenly
+        import os 
+        import joblib
+        import numpy as np
+
+        num_jobs = len(self.input_jobs)
+        # Create a list of jobs to be submitted
+        job_list = list(np.arange(num_jobs))
+
+        ## Run the preprocessing steps in parallel
+        joblib.Parallel(n_jobs=self.num_process_preparation, backend="multiprocessing")(
+            joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
+
+        print("Finished preparing inputs")
+        print("Now running scaling")
+        # # print the parsed inputs dictinary list for each job
+        # for job_id in self.parsed_inputs_dictionary_list.keys():
+        #     print("Parsed inputs dictinary list for job {}".format(job_id))
+        
+
+
+        ## Run the scaling in parallel
+        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="multiprocessing")(
+            joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
+
+        
+        # Print the results for each job
+        for job_id in job_list:
+            print("Job {} finished with status {}".format(job_id, result[job_id]))
+            
+
+
+            
+        
+        
+
+    
+
+    
+        
 
 
 
