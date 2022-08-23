@@ -274,17 +274,66 @@ class LocScaleRun:
         print("~"*80)
 
 class LocScaleMultiple:
-    def __init__(self, input_jobs, num_process_preparation, num_process_scaling):
+    def __init__(self, input_jobs, num_process_scaling, num_process_preparation=1):
         self.input_jobs = input_jobs.copy()
         self.num_process_preparation = num_process_preparation
         self.num_process_scaling = num_process_scaling
         self.parsed_inputs_dictionary_list = {}
         self.locscale_volumes = {}
         self.dry_run = False
+        self.split_jobs = False
         self.resume_scaling = False
 
         for job in self.input_jobs:
             job.prepare_job()
+    
+    def launch_locscale(self, job_id):
+        from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
+        from locscale.main import print_arguments, print_end_banner, print_start_banner, launch_amplitude_scaling
+        from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
+        from datetime import datetime
+        from contextlib import redirect_stdout
+
+        ## Collect all preprocessing steps for all jobs
+        args = argparse.Namespace()
+        args.__dict__.update(self.input_jobs[job_id].job["args"])
+        job_file_path = self.input_jobs[job_id].job_file_path
+        log_file_path = self.input_jobs[job_id].job["output_log"]
+        data_folder = self.input_jobs[job_id].job["data_folder"]
+        parsed_dict_pickle = os.path.join(data_folder, "parsed_inputs.pickle")
+        job_name = self.input_jobs[job_id].job["job_name"]
+        if not self.dry_run:
+            try:
+                launch_amplitude_scaling(args)
+            except Exception as e:
+                print("Error in job {}: {}".format(job_name, e))
+                with open(log_file_path, "a") as f:
+                    f.write("Error in job {}: {}".format(job_name, e))
+                    f.write("\n")
+                returncode = 1
+            
+            with open(log_file_path, "a") as f:
+                f.write("\n")
+                f.write("="*80)
+                f.write("\n")
+                f.write("Finished job {} at {}".format(job_name, datetime.now()))
+                f.write("\n")
+                f.write("="*80)
+                f.write("\n")
+        else:
+            print("Dry run: skipping job {}".format(job_name))
+            with open(log_file_path, "a") as f:
+                f.write("\n")
+                f.write("="*80)
+                f.write("\n")
+                f.write("Finished job {} at {}".format(job_name, datetime.now()))
+                f.write("\n")
+                f.write("="*80)
+                f.write("\n")
+        
+        returncode = 0
+        return returncode
+       
         
     def get_parsed_inputs_dict(self, job_id):
         from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
@@ -408,16 +457,22 @@ class LocScaleMultiple:
         # Create a list of jobs to be submitted
         job_list = list(np.arange(num_jobs))
 
-        # Run the preprocessing steps in parallel
-        if self.resume_scaling:
-            print("Resuming scaling from stored state")
-        else:
-            joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=2*3600)(
-                joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
+        # Submit jobs
+        if self.split_jobs:
 
-        ## Run the scaling in parallel
-        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=2*3600)(
-            joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
+            # Run the preprocessing steps in parallel
+            if self.resume_scaling:
+                print("Resuming scaling from stored state")
+            else:
+                joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=2*3600)(
+                    joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
+
+            ## Run the scaling in parallel
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=2*3600)(
+                joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
+        else:
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=4*3600)(
+                joblib.delayed(self.launch_locscale)(job_id) for job_id in job_list)
 
         
         # Print the results for each job

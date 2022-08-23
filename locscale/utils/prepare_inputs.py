@@ -416,4 +416,9 @@ def prepare_mask_and_maps_for_scaling(args):
     ## No element of the mask should be negative
     assert (xyz_mask>=0).any(), "Negative numbers found in mask"
     
+    # Dump the parsed inputs to a pickle file in the input folder
+    import pickle
+    with open(os.path.join(processing_files_folder, 'parsed_inputs.pickle'), 'wb') as f:
+        pickle.dump(parsed_inputs_dict, f)
+        
     return parsed_inputs_dict
