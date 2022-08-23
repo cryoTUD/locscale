@@ -8,6 +8,7 @@ import sys
 from subprocess import PIPE
 from locscale.main import launch_amplitude_scaling
 import json
+import pickle
 
 def get_defaults_dictionary():
     """
@@ -279,6 +280,7 @@ class LocScaleMultiple:
         self.parsed_inputs_dictionary_list = {}
         self.locscale_volumes = {}
         self.dry_run = False
+        self.resume_scaling = False
 
         for job in self.input_jobs:
             job.prepare_job()
@@ -296,12 +298,19 @@ class LocScaleMultiple:
         job_file_path = self.input_jobs[job_id].job_file_path
         log_file_path = self.input_jobs[job_id].job["output_log"]
         data_folder = self.input_jobs[job_id].job["data_folder"]
-        json_file_path = os.path.join(data_folder, "parsed_inputs.json")
+        parsed_dict_pickle = os.path.join(data_folder, "parsed_inputs.pickle")
         job_name = self.input_jobs[job_id].job["job_name"]
         
         # Print start banner
         print("Job ID: {} \t Job name: {} \t Begin preparing inputs".format(job_id, job_name))
-        
+        parsed_inputs_dict = {}
+        parsed_inputs_dict["job_name"] = job_name
+        parsed_inputs_dict["job_file_path"] = job_file_path
+        parsed_inputs_dict["job_id"] = str(job_id)
+        parsed_inputs_dict["input_file_directory"] = data_folder
+        output_file_path = os.path.join(data_folder, args.outfile)
+        parsed_inputs_dict["ouput_file_path"] = output_file_path
+
         with open(log_file_path, "w") as f:
             with redirect_stdout(f):
                 
@@ -320,30 +329,23 @@ class LocScaleMultiple:
                 
                 if not self.dry_run:
                     try:
-                        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
-                        ouput_file_path = os.path.join(data_folder, args.outfile)
-                        parsed_inputs_dict["input_file_directory"] = data_folder
-                        parsed_inputs_dict["ouput_file_path"] = ouput_file_path
-                        parsed_inputs_dict["job_id"] = job_id
-
-                        # Save parsed inputs dict as a json file in the input file directory
-                        
-                        with open(json_file_path, "w") as f:
-                            json.dump(parsed_inputs_dict, f)
-                        
+                        parsed_inputs_dict_from_args = prepare_mask_and_maps_for_scaling(copied_args)
+                        parsed_inputs_dict.update(parsed_inputs_dict_from_args)
+                        parsed_inputs_dict["parsing_success"] = str(True)
                     except Exception as e:
                         print("Error preparing inputs for job {}".format(job_id))
                         print(e)
-                        # create empty json file in the input file directory
-                        with open(json_file_path, "w") as f:
-                            json.dump({}, f)
+                        parsed_inputs_dict["parsing_success"] = str(False)
                 else:
-                    print("Dry run: skipping preprocessing")                    
-                    with open(json_file_path, "w") as f:
-                        parsed_inputs_dict = {"job_id": str(job_id), "dry_run": str(1), "input_file_directory": data_folder}
+                    print("Dry run: skipping preprocessing")              
+                    parsed_inputs_dict["parsing_success"] = "dry_run"
 
-                        json.dump(parsed_inputs_dict, f)
+                with open(parsed_dict_pickle, "wb") as f:
+                        pickle.dump(parsed_inputs_dict, f)
+                
+                # dump parsed inputs dictionary to pickle file
 
+                    
 
         print("Job ID: {} \t Job name: {} \t Finished preparing inputs".format(job_id, job_name))
 
@@ -359,12 +361,12 @@ class LocScaleMultiple:
         
 
         data_folder = self.input_jobs[job_id].job["data_folder"]
-        json_file_path = os.path.join(data_folder, "parsed_inputs.json")
+        parsed_dict_pickle = os.path.join(data_folder, "parsed_inputs.pickle")
         
-        with open(json_file_path, "r") as f:
-            parsed_inputs_dict = json.load(f)
+        with open(parsed_dict_pickle, "rb") as f:
+            parsed_inputs_dict = pickle.load(f)
         
-       # print("SCALING: json file for job id {}: {}".format(job_id, json_file_path))
+       # print("SCALING: json file for job id {}: {}".format(job_id, parsed_dict_pickle))
        # print("Parsed inputs dict for job {}: {}".format(job_id, parsed_inputs_dict))
         
         job_file_path = self.input_jobs[job_id].job_file_path
@@ -382,7 +384,7 @@ class LocScaleMultiple:
                             returncode = 0
                             
                         except Exception as e:
-                            print("Error scaling amplitudes for job {}".format(parsed_inputs_dict["job_id"]))
+                            print("Error scaling job {}".format(job_id))
                             print(e)
                             returncode = 2
                     else:
@@ -405,20 +407,15 @@ class LocScaleMultiple:
         # Create a list of jobs to be submitted
         job_list = list(np.arange(num_jobs))
 
-        ## Run the preprocessing steps in parallel
-        joblib.Parallel(n_jobs=self.num_process_preparation, backend="multiprocessing")(
-            joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
-
-        print("Finished preparing inputs")
-        print("Now running scaling")
-        # # print the parsed inputs dictinary list for each job
-        # for job_id in self.parsed_inputs_dictionary_list.keys():
-        #     print("Parsed inputs dictinary list for job {}".format(job_id))
-        
-
+        # Run the preprocessing steps in parallel
+        if self.resume_scaling:
+            print("Resuming scaling from stored state")
+        else:
+            joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky")(
+                joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
 
         ## Run the scaling in parallel
-        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="multiprocessing")(
+        result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky")(
             joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
 
         
