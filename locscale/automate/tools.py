@@ -303,7 +303,7 @@ class LocScaleMultiple:
         parsed_dict_pickle = os.path.join(data_folder, "parsed_inputs.pickle")
         job_name = self.input_jobs[job_id].job["job_name"]
         with open(log_file_path, "a") as f:
-            with redirect_stdout(f)
+            with redirect_stdout(f):
                 if not self.dry_run:
                     try:
                         launch_amplitude_scaling(args)
