@@ -190,8 +190,13 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         ##########################################################################################
         # Calculate the local bfactor information from refernce profile
         ##########################################################################################
-        bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_traditional, 
-                                                       fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True, return_fit_quality=True, standard_notation=True)
+        try:
+            bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_traditional, 
+                                                        fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True, return_fit_quality=True, standard_notation=True)
+        except:
+            bfactor = 99
+            amp = 99
+            qfit = 0.99
         
         reference_profile_for_scaling = ref_profile
     
