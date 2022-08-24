@@ -302,34 +302,36 @@ class LocScaleMultiple:
         data_folder = self.input_jobs[job_id].job["data_folder"]
         parsed_dict_pickle = os.path.join(data_folder, "parsed_inputs.pickle")
         job_name = self.input_jobs[job_id].job["job_name"]
-        if not self.dry_run:
-            try:
-                launch_amplitude_scaling(args)
-            except Exception as e:
-                print("Error in job {}: {}".format(job_name, e))
-                with open(log_file_path, "a") as f:
-                    f.write("Error in job {}: {}".format(job_name, e))
-                    f.write("\n")
-                returncode = 1
-            
-            with open(log_file_path, "a") as f:
-                f.write("\n")
-                f.write("="*80)
-                f.write("\n")
-                f.write("Finished job {} at {}".format(job_name, datetime.now()))
-                f.write("\n")
-                f.write("="*80)
-                f.write("\n")
-        else:
-            print("Dry run: skipping job {}".format(job_name))
-            with open(log_file_path, "a") as f:
-                f.write("\n")
-                f.write("="*80)
-                f.write("\n")
-                f.write("Finished job {} at {}".format(job_name, datetime.now()))
-                f.write("\n")
-                f.write("="*80)
-                f.write("\n")
+        with open(log_file_path, "a") as f:
+            with redirect_stdout(f)
+                if not self.dry_run:
+                    try:
+                        launch_amplitude_scaling(args)
+                    except Exception as e:
+                        print("Error in job {}: {}".format(job_name, e))
+                        with open(log_file_path, "a") as f:
+                            f.write("Error in job {}: {}".format(job_name, e))
+                            f.write("\n")
+                        returncode = 1
+                    
+                    with open(log_file_path, "a") as f:
+                        f.write("\n")
+                        f.write("="*80)
+                        f.write("\n")
+                        f.write("Finished job {} at {}".format(job_name, datetime.now()))
+                        f.write("\n")
+                        f.write("="*80)
+                        f.write("\n")
+                else:
+                    print("Dry run: skipping job {}".format(job_name))
+                    with open(log_file_path, "a") as f:
+                        f.write("\n")
+                        f.write("="*80)
+                        f.write("\n")
+                        f.write("Finished job {} at {}".format(job_name, datetime.now()))
+                        f.write("\n")
+                        f.write("="*80)
+                        f.write("\n")
         
         returncode = 0
         return returncode
