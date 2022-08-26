@@ -112,7 +112,7 @@ def get_modmap(modmap_args):
                 print("."*80)
                 print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
             integrated_structure = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
-                averaging_window=averaging_window, pseudomodel_method=pam_method, mask_threshold=0.5)
+                averaging_window=averaging_window, pseudomodel_method=pam_method, mask_threshold=0.5, fsc_resolution=fsc_resolution)
             input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
             integrated_structure.write_pdb(input_pdb_path)
         else:

@@ -518,7 +518,7 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     return bfactor_distributions
     
 
-def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=5, fsc_resolution=None):
+def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=3, fsc_resolution=None):
     """
     Finds the unmodelled regions in the input pdb file.
     """
@@ -549,6 +549,9 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
 
     # Compute the difference 
     difference_mask = fdr_mask_binarised - atomic_model_mask_binarised
+
+    # Remove negative values
+    difference_mask[difference_mask < 0] = 0
 
     
     difference_mask_path  = fdr_mask_path[:-4] + "_difference_mask_binarised.mrc"

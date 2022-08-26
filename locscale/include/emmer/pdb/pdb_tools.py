@@ -445,7 +445,7 @@ def combine_pdb_structures_into_one(list_of_input_pdb):
     
     return combined_structure
 
-def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, averaging_window=3, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2):
+def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, averaging_window=3, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2, fsc_resolution=None):
     from locscale.preprocessing.headers import run_pam
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, load_map, save_as_mrc
     from locscale.include.emmer.pdb.pdb_tools import combine_pdb_structures_into_one
@@ -455,7 +455,7 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     mask, apix = load_map(mask_path)
     # Get the difference mask 
     difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = 0.99, \
-        atomic_mask_threshold = 0.5, averaging_window_size = averaging_window)
+        atomic_mask_threshold = 0.5, averaging_window_size = averaging_window, fsc_resolution = fsc_resolution)
     
     difference_mask_path_filename = mask_path[:-4] + "_difference_mask.mrc"
     difference_mask_path = os.path.join(os.path.dirname(mask_path), difference_mask_path_filename)
