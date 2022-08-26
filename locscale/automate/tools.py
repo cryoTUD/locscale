@@ -62,7 +62,6 @@ class LocScaleInputs:
         Check if the input is halfmap input.
         """
         halfmap_paths_present = self.input["halfmap_paths"] is not None
-        
         self.is_halfmap_input = halfmap_paths_present
     def check_mandatory_variables(self, locscale_run_type):
         """
@@ -158,8 +157,9 @@ class LocScaleInputs:
         self.check_is_halfmap_input()
 
         if self.is_halfmap_input:
-            halfmap_path_1 = os.path.abspath(self.input["halfmap_paths"][0])
-            assert os.path.isfile(halfmap_path_1), "Halfmap 1 path is not valid"
+            halfmap_path_1 = self.input["halfmap_paths"][0]
+            assert os.path.isabs(halfmap_path_1)
+            assert os.path.isfile(halfmap_path_1), "Halfmap 1 path is not absolute"
             return os.path.dirname(halfmap_path_1)
 
         else:
