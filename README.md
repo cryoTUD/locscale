@@ -62,7 +62,7 @@ pip install locscale
 ###### Install development version
 If you would like to install the latest development version of locscale, use the following command to install from the git repository. 
 ```bash
-pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
+pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git@development
 ```
 
 To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
