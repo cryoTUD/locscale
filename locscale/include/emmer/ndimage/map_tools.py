@@ -518,7 +518,7 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     return bfactor_distributions
     
 
-def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=5):
+def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=5, fsc_resolution=None):
     """
     Finds the unmodelled regions in the input pdb file.
     """
@@ -530,9 +530,16 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     import numpy as np
 
     fdr_mask, apix = load_map(fdr_mask_path)
-
+    if fsc_resolution is None:
+        dilation_radius = 3
+    else:
+        dilation_radius = np.ceil(fsc_resolution / apix).astype(int)
+        min_radius = np.ceil(3 / apix).astype(int)
+        max_radius = np.ceil(8 / apix).astype(int)
+        dilation_radius = np.clip(dilation_radius, min_radius, max_radius)
+        
     atomic_mask = get_atomic_model_mask(emmap_path = fdr_mask_path, pdb_path = pdb_path, \
-        dilation_radius = 3, save_files = False)
+        dilation_radius = dilation_radius, save_files = False)
     
     # Binarise 
     # Binarise the atomic model mask and FDR confidence mask at X threshold 
