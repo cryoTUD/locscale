@@ -44,7 +44,7 @@ conda create -n locscale python=3.8
 conda activate locscale
 ```
 
-###### 2. Install fortran compiler
+##### 2. Install fortran compiler
 LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install `gfortran` from conda-forge.
 ```bash
 conda install -c conda-forge gfortran
@@ -59,7 +59,7 @@ which refmac5
 
 If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
 
-##### 2. Install LocScale and dependencies using pip:
+##### 4. Install LocScale and dependencies using pip:
 
 ###### Recommended installation
 We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
@@ -76,7 +76,7 @@ pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 
 To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
 
-###### Testing
+##### 5. Testing
 
 To test functionality after installation, you can run LocScale unit tests using the following command:
 
