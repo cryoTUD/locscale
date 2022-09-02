@@ -44,11 +44,20 @@ conda create -n locscale python=3.8
 conda activate locscale
 ```
 
-###### Install fortran compiler
+###### 2. Install fortran compiler
 LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install `gfortran` from conda-forge.
 ```bash
 conda install -c conda-forge gfortran
 ```
+##### 3. Install REFMAC5 via CCP4/CCPEM
+
+LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
+
+```bash
+which refmac5
+```
+
+If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
 
 ##### 2. Install LocScale and dependencies using pip:
 
@@ -76,15 +85,7 @@ locscale test
 ```
 
 
-##### 3. Install REFMAC5 via CCP4/CCPEM
 
-LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed, you can skip this step. Check if the path to run `refmac5` is present in your environment. 
-
-```bash
-which refmac5
-```
-
-If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/). Note that you can provide an alternative path to REFMAC5 during runtime by using the `--refmac5_path REFMAC5_PATH` flag in LocScale.
 
 ## How to use
 
