@@ -471,3 +471,31 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     combined_structure = combine_pdb_structures_into_one([pdb_path, partial_pseudo_model_path])
 
     return combined_structure
+
+def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10):
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from tqdm import tqdm
+    from scipy.stats import pearsonr
+    st = detect_pdb_input(input_pdb)
+    model = st[0]
+
+    bfactor_correlation_with_distance = {}
+    for r in tqdm(np.linspace(min_radius,max_radius,num_steps), total=num_steps, desc="Finding neighborhood bfactor correlation"):
+        ns_pseudo = gemmi.NeighborSearch(st[0], st.cell, r).populate()
+        individual_bfactor_list = []
+        neighborhood_bfactor_list = []
+        for cra in model.all():
+            atom = cra.atom
+            atomic_biso = atom.b_iso
+            neighbors = ns_pseudo.find_atoms(atom.pos, '\0', radius=r)
+            neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
+            atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
+            average_bfactor_neighbors = atomic_bfactor_list.mean()
+            individual_bfactor_list.append(atomic_biso)
+            neighborhood_bfactor_list.append(average_bfactor_neighbors)
+        
+        pearson_correlation = pearsonr(individual_bfactor_list, neighborhood_bfactor_list)
+        bfactor_correlation_with_distance[r] = [individual_bfactor_list,neighborhood_bfactor_list, pearson_correlation]
+    
+    return bfactor_correlation_with_distance
