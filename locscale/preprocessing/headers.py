@@ -326,9 +326,51 @@ def is_pseudomodel(input_pdb_path):
     else:
         return False
     
+def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True):
+    import os
+    from subprocess import run, PIPE, Popen
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
+    import mrcfile
+    tprint(" Running iterative refinement of the model using One Cycle ServalCat")
+    if not pseudomodel_refinement:
+        tprint("This is a refinement of a real atomic model")
+        servalcat_refined_path = run_refmac_servalcat(
+            model_path=model_path, map_path=map_path, resolution=resolution, \
+            num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
+            refmac5_path=refmac5_path, verbose=verbose)
         
+        return servalcat_refined_path
+        
+    else:
+        tprint("This is a refinement of a pseudo-atomic model")
+        tprint("Running iterative refinement of the model")
+        for cycle in range(num_iter):
+            print("Cycle: "+str(cycle))
+            if cycle == 0:
+                model_path_input = model_path
+                initialise_bfactors = True
+            else:
+                assert os.path.exists(servalcat_refinement_next_cycle_path), "Servalcat refinement failed in the previous cycle "
+                model_path_input = servalcat_refinement_next_cycle_path
+                initialise_bfactors = False
+            
+            servalcat_refined_once_path = run_refmac_servalcat(
+                model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,
+                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors)
+            
+            servalcat_refinement_next_cycle_path = os.path.join(
+                os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
+            
+            tprint("Averaging the bfactors with radius of 3 angstroms")
+            window_averaged_bfactors_structure = average_atomic_bfactors_window(input_pdb=servalcat_refined_once_path, window_radius=3)
+            window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
+        
+        return servalcat_refinement_next_cycle_path
+
+        
+
     
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True):
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True):
     '''
     Function to run Refmac to refine the model and generate a new model with refined B-factors.
 
@@ -370,22 +412,32 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
 
     #### Input ####
     model_name = os.path.basename(model_path)
-    servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+    
 
     #### Set the starting bfactor of the atomic model to 40 before refinement ####
+    if initialise_bfactors:
+        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+        set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
+        servalcat_input = servalcat_uniform_bfactor_input_path
+    else:
+        servalcat_input = model_path
 
-    set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
     
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
-    servalcat_command = ["servalcat","refine_spa","--model",servalcat_uniform_bfactor_input_path,\
+    servalcat_command = ["servalcat","refine_spa","--model",servalcat_input,\
         "--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
+    
+    servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
+    servalcat_command += ["--hydrogen","no"]
+    #servalcat_command += ["--no_mask"]
+    
         
     if pseudomodel_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
     else:
-        servalcat_command += ["--keywords","refi bonly"]
+         servalcat_command += ["--keywords","refi bonly"]
 
     if refmac5_path is not None:
         servalcat_command += ["--exe",refmac5_path]
@@ -417,7 +469,32 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
+def average_atomic_bfactors_window(input_pdb, window_radius):
+    '''
+    Function to average bfactors over a rolling window of a sphere
+    '''
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    import gemmi
+    st = detect_pdb_input(input_pdb)
+    st_copy = detect_pdb_input(input_pdb)
 
+    model = st[0]
+    model_copy = st_copy[0]
+    ns = gemmi.NeighborSearch(st[0], st.cell, window_radius).populate()
+    ns_copy = gemmi.NeighborSearch(st_copy[0], st_copy.cell, window_radius).populate()
+    r = window_radius
+    for cra in model.all():
+        atom = cra.atom
+        neighbors = ns.find_atoms(atom.pos, '\0', radius=r)
+        neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
+        atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
+        average_bfactor_neighbors = atomic_bfactor_list.mean()
+
+        nearest_atom = ns_copy.find_nearest_atom(atom.pos).to_cra(model_copy).atom
+        nearest_atom.b_iso = average_bfactor_neighbors
+    
+    return st_copy
+    
 def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbose=True):
     '''
     Function to obtain reference map using structure factors determined by atomic model.
@@ -510,7 +587,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     else:
         tprint("Reference map was not generated. Returning none")
         return None
-    
+
 
 def check_axis_order(emmap_path, return_same_path=False):
     '''

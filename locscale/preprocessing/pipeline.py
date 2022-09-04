@@ -12,7 +12,7 @@ def get_modmap(modmap_args):
         path/to/modmap.mrc
 
     '''
-    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
+    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel, run_servalcat_iterative
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff, add_pseudoatoms_to_input_pdb
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
@@ -153,7 +153,7 @@ def get_modmap(modmap_args):
             tabbed_print.tprint("Skipping model refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
-        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
+        refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
                     pseudomodel_refinement=pseudomodel_refinement, resolution=resolution, num_iter=refmac_iter,
                     refmac5_path=refmac5_path,verbose=verbose)
         if refined_model_path is None:
