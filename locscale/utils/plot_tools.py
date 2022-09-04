@@ -160,7 +160,7 @@ def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path
 def plot_pickle_output(folder):
     import pickle
     import random
-    from locscale.include.emmer.ndimage.profile_tools import plot_radial_profile
+    from locscale.include.emmer.ndimage.plots import plot_radial_profile
     import os
     
     pickle_output = os.path.join(folder, "profiles_audit.pickle")
