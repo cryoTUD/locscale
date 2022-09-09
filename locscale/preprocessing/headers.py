@@ -431,7 +431,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
-    #servalcat_command += ["--no_mask"]
+    servalcat_command += ["--no_mask"]
     
         
     if pseudomodel_refinement:
