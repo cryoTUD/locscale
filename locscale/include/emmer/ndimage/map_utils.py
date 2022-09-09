@@ -343,7 +343,7 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     real_image =np.fft.ifftn(ft).real
     return real_image
 
-def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1):
+def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1, assert_shape=None):
     '''
     Function to resample an emmap in real space using linear interpolation 
 
@@ -376,7 +376,19 @@ def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1):
         except:
             raise UserWarning("Please provide proper input: emmap_size_new must be a tuple")
     
-    resampled_image = zoom(emmap, resample_factor, order=order)
+    if assert_shape is not None:
+        if isinstance(assert_shape, int):
+            nx = assert_shape
+        if isinstance(assert_shape, tuple):
+            nx = assert_shape[0]
+        if isinstance(assert_shape, list):
+            nx = assert_shape[0]
+        assertion_factor = nx / (emmap.shape[0] * resample_factor)
+        resample_factor *= assertion_factor
+
+    resampled_image = zoom(emmap, resample_factor, order=order, grid_mode=False)
+
+
     
     return resampled_image
 
