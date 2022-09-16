@@ -350,7 +350,7 @@ def rotate_and_interpolate_scipy(FT, rotation_matrix):
     print("Euler angles: {}".format(euler_angles))
 
     # Loop over Euler angles and define the axes to rotate around
-    FT_rot_average = np.zeros(FT.shape, dtype=np.complex64)
+    
     for i, angle in enumerate(euler_angles):
         if angle != 0:
             if i == 0:
@@ -359,15 +359,15 @@ def rotate_and_interpolate_scipy(FT, rotation_matrix):
                 axes = (2,0)
             elif i == 2:
                 axes = (0,1)
-            FT_rot_average += rotate(FT, angle, axes=axes, reshape=False, order=1)
+            FT = rotate(FT, angle, axes=axes, reshape=False, order=1)
         else:
-            FT_rot_average += FT 
+            FT += FT 
     # angle = euler_angles[0]
     # # set the axis to y and z
     # axes = (1,2)
     # FT_rotated = rotate(FT, angle, axes=axes, order=3, reshape=False)
 
-    return FT_rot_average
+    return FT
 
     
 def trilinear_interpolation(FT, rotation_matrix):
