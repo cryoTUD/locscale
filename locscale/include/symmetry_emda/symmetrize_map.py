@@ -1,6 +1,6 @@
 # symmetrize map by operators
 import numpy as np
-#import fcodes_fast
+import fcodes_fast
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from locscale.include.symmetry_emda.GenerateOperators_v9_ky4 import operators_from_symbol
 from locscale.include.symmetry_emda.apply_rotation_matrix import *
@@ -50,12 +50,12 @@ def apply_op(f1, op, bin_idx, nbin):
     rm[1, :] = tmp[1, :]
     rm[2, :] = tmp[0, :]  
     nz, ny, nx = f1.shape 
-    #frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
+    frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
     # frs = trilinear_interpolation(f1, rm)  # 
     # frs = trilinear_interpolation_numpy(f1, rm) # TBC
     # frs = trilinear_interpolation_gemmi(f1, rm) # TBC
     # frs = trilinear_interpolation_gemmi_real(f1, rm) # TBC
-    frs = rotate_and_interpolate_scipy(f1, rm) 
+    # frs = rotate_and_interpolate_scipy(f1, rm) 
     return frs
 
 def rebox_map(arr1):
@@ -81,11 +81,11 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     #arr2 = double_the_axes(emmap)
     #print("Double the axes: {}".format(arr2.shape))
     f1 = fftshift(fftn(fftshift(emmap)))
-    #nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
+    nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
     frs_sum = f1
     i=0
     for op in ops:
-        frs = apply_op(f1, op,bin_idx=0,nbin=0)
+        frs = apply_op(f1, op,bin_idx,nbin)
         i+=1
         frs_sum += frs
     avg_f = frs_sum / len(ops)
