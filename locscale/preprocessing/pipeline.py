@@ -230,7 +230,9 @@ def get_modmap(modmap_args):
     if verbose:
         print("."*80)
         print("Collecting intermediate files and dumping into a pickle file\n")
-    preprocessing_pipeline_directory = os.path.dirname(emmap_path)    
+    preprocessing_pipeline_directory = os.path.dirname(emmap_path)
+    if not complete_model:
+        difference_mask_path = "not_used"
     intermediate_outputs = {
         "refined_model_path": refined_model_path,
         "pseudomodel_modmap": pseudomodel_modmap,
