@@ -18,6 +18,7 @@ def get_modmap(modmap_args):
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     from locscale.utils.plot_tools import tab_print
     import mrcfile
+    import pickle
     import os
     
     ###########################################################################
@@ -105,17 +106,21 @@ def get_modmap(modmap_args):
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
+        final_chain_counts = None
     else:
         
         if complete_model:
             if verbose:
                 print("."*80)
                 print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
-            integrated_structure = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
-                averaging_window=averaging_window, pseudomodel_method=pam_method, mask_threshold=0.5, fsc_resolution=fsc_resolution)
+            integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
+                averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=pam_iteration, mask_threshold=0.5, fsc_resolution=fsc_resolution, \
+                return_chain_counts=True, return_difference_mask=True) 
+
             input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
             integrated_structure.write_pdb(input_pdb_path)
         else:
+            final_chain_counts = None
             if verbose:
                 print("."*80)
                 print("Using user-provided PDB path: {}".format(pdb_path))    
@@ -155,7 +160,8 @@ def get_modmap(modmap_args):
     else:
         refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
                     pseudomodel_refinement=pseudomodel_refinement, resolution=resolution, num_iter=refmac_iter,
-                    refmac5_path=refmac5_path,verbose=verbose)
+                    refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, final_chain_counts=final_chain_counts)
+        
         if refined_model_path is None:
             tabbed_print.tprint("Problem running servalcat. Returning None")
             return None
@@ -179,6 +185,7 @@ def get_modmap(modmap_args):
     if verbose:
         print("."*80)
         print("Simulating model-map using refined structure factors\n")
+    
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
     #############################################################################
@@ -218,6 +225,25 @@ def get_modmap(modmap_args):
     #############################################################################
     # Stage 4: Check and return the model-map
     #############################################################################
+
+    # Collect pipeline intermediate files and output and dump them into a pickle file
+    if verbose:
+        print("."*80)
+        print("Collecting intermediate files and dumping into a pickle file\n")
+    preprocessing_pipeline_directory = os.path.dirname(emmap_path)    
+    intermediate_outputs = {
+        "refined_model_path": refined_model_path,
+        "pseudomodel_modmap": pseudomodel_modmap,
+        "globally_sharpened_map": globally_sharpened_map,
+        "mask_path": mask_path,
+        "emmap_path": emmap_path,
+        "input_pdb_path": input_pdb_path,
+        "difference_mask_path": difference_mask_path,
+        "preprocessing_pipeline_directory": preprocessing_pipeline_directory,
+    }
+
+    with open(os.path.join(preprocessing_pipeline_directory,"intermediate_outputs.pickle"), "wb") as f:
+        pickle.dump(intermediate_outputs, f)
     
     if pseudomodel_modmap is None:
         tabbed_print.tprint("Problem simulating map from refined model. Returning None")

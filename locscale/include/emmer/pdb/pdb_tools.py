@@ -371,7 +371,7 @@ def get_atomic_bfactor_window(input_pdb, atomic_position, window_size_A, min_dis
     return average_atomic_bfactor
 
 
-def combine_pdb_structures_into_one(list_of_input_pdb):
+def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False):
     import gemmi
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
 
@@ -423,12 +423,14 @@ def combine_pdb_structures_into_one(list_of_input_pdb):
     combined_model = gemmi.Model("combined")
     
     chain_count = 0
+    final_chain_counts = []
     for input_pdb in list_of_input_pdb:
         chain_count_init = chain_count
         st = detect_pdb_input(input_pdb)
         model_to_add = st[0]
         combined_model, chain_count_final = add_chains(combined_model, model_to_add, chain_count_init)
         chain_count = chain_count_final
+        final_chain_counts.append(chain_count_final)
 
     combined_structure.add_model(combined_model)
 
@@ -443,9 +445,12 @@ def combine_pdb_structures_into_one(list_of_input_pdb):
     assert total_num_atoms_in_combined_structure == num_atoms_in_input, \
         "Number of atoms in combined structure does not match number of atoms in input"
     
-    return combined_structure
+    if return_chain_counts:
+        return combined_structure, final_chain_counts
+    else:
+        return combined_structure
 
-def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, averaging_window=3, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2, fsc_resolution=None):
+def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, averaging_window=3, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2, fsc_resolution=None, return_chain_counts=False, return_difference_mask=False):
     from locscale.preprocessing.headers import run_pam
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, load_map, save_as_mrc
     from locscale.include.emmer.pdb.pdb_tools import combine_pdb_structures_into_one
@@ -468,9 +473,20 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     partial_pseudo_model_path = run_pam(emmap_path = emmap_path, mask_path = difference_mask_path, threshold = mask_threshold, \
        num_atoms = num_atoms, method=pseudomodel_method, bl=bond_length, total_iterations = pseudomodel_iteration, verbose=False)
 
-    combined_structure = combine_pdb_structures_into_one([pdb_path, partial_pseudo_model_path])
+    combined_structure, final_chain_counts = combine_pdb_structures_into_one([pdb_path, partial_pseudo_model_path], return_chain_counts=return_chain_counts)
 
-    return combined_structure
+    return_elements = [combined_structure]
+    if return_chain_counts:
+        return_elements.append(final_chain_counts)
+    if return_difference_mask:
+        return_elements.append(difference_mask_path)
+    
+    if not return_chain_counts and not return_difference_mask:
+        return combined_structure
+    else:
+        return tuple(return_elements)
+
+        
 
 def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10):
     import gemmi
@@ -485,6 +501,7 @@ def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num
         ns_pseudo = gemmi.NeighborSearch(st[0], st.cell, r).populate()
         individual_bfactor_list = []
         neighborhood_bfactor_list = []
+        atomic_position_list = []
         for cra in model.all():
             atom = cra.atom
             atomic_biso = atom.b_iso
@@ -494,8 +511,10 @@ def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num
             average_bfactor_neighbors = atomic_bfactor_list.mean()
             individual_bfactor_list.append(atomic_biso)
             neighborhood_bfactor_list.append(average_bfactor_neighbors)
+            atomic_position_list.append(atom.pos.tolist())
+            
         
         pearson_correlation = pearsonr(individual_bfactor_list, neighborhood_bfactor_list)
-        bfactor_correlation_with_distance[r] = [individual_bfactor_list,neighborhood_bfactor_list, pearson_correlation]
+        bfactor_correlation_with_distance[r] = [individual_bfactor_list,neighborhood_bfactor_list, pearson_correlation, atomic_position_list]
     
     return bfactor_correlation_with_distance

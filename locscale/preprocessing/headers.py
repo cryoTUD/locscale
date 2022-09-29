@@ -326,13 +326,18 @@ def is_pseudomodel(input_pdb_path):
     else:
         return False
     
-def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True):
+def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, hybrid_model_refinement=False, final_chain_counts=None):
     import os
     from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
     import mrcfile
+
+    if hybrid_model_refinement: 
+        assert final_chain_counts is not None, "Please provide the final chain counts for the hybrid model refinement"
+
     tprint(" Running iterative refinement of the model using One Cycle ServalCat")
-    if not pseudomodel_refinement:
+    normal_refinement = not pseudomodel_refinement and not hybrid_model_refinement
+    if normal_refinement:
         tprint("This is a refinement of a real atomic model")
         servalcat_refined_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
@@ -356,21 +361,75 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             
             servalcat_refined_once_path = run_refmac_servalcat(
                 model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,
-                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors)
+                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, hybrid_model_refinement=hybrid_model_refinement)
             
             servalcat_refinement_next_cycle_path = os.path.join(
                 os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
             
             tprint("Averaging the bfactors with radius of 3 angstroms")
-            window_averaged_bfactors_structure = average_atomic_bfactors_window(input_pdb=servalcat_refined_once_path, window_radius=3)
+            window_averaged_bfactors_structure = average_atomic_bfactors_window(
+                input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
             window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
         
-        return servalcat_refinement_next_cycle_path
+        tprint("Setting the element composition of the model to match a typical protein composition")
+        tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
 
+        proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path)
+        proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
+        proper_element_composition_structure.write_pdb(proper_element_composition_filename)
         
+        return proper_element_composition_filename
+        
+def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percentage=0.17, oxygen_percentage=0.2, starting_chain_count=None):
+    '''
+    Function to convert the oxygen atoms in the structure to carbon, nitrogen and oxygen atoms with probability: 
+    Carbon: 0.63, Nitrogen: 0.17, Oxygen: 0.2
 
-    
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True):
+    Parameters
+    ----------
+    input_pdb : TYPE
+        DESCRIPTION.
+    carbon_percentage : TYPE, optional
+        DESCRIPTION. The default is 0.63.
+    nitrogen_percentage : TYPE, optional
+        DESCRIPTION. The default is 0.17.
+    oxygen_percentage : TYPE, optional
+        DESCRIPTION. The default is 0.2.
+
+    Returns
+    -------
+    None.
+
+    '''
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    import numpy as np
+    import gemmi
+    import random
+    import string
+    gemmi_st = detect_pdb_input(input_pdb)
+
+    if starting_chain_count is None:
+        for cra in gemmi_st[0].all():
+            atom = cra.atom
+            atom.element = np.random.choice([gemmi.Element("C"), gemmi.Element("O"), gemmi.Element("N")], p=[0.63, 0.2, 0.17])
+
+        return gemmi_st
+    else:
+        chain_letters = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        final_chain_count = starting_chain_count
+        # split chain_letters into two lists one for the first half indicating atomic model and the second half indicating the pseudo-model 
+        chain_letters_atomic = chain_letters[:final_chain_count]
+        chain_letters_pseudo = chain_letters[final_chain_count:]
+        for chain in gemmi_st[0]:
+            if chain.name in chain_letters_pseudo:
+                for res in chain:
+                    for atom in res:
+                        atom = cra.atom
+                        atom.element = np.random.choice([gemmi.Element("C"), gemmi.Element("O"), gemmi.Element("N")], p=[0.63, 0.2, 0.17])
+        
+        return gemmi_st
+        
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
     '''
     Function to run Refmac to refine the model and generate a new model with refined B-factors.
 
@@ -433,8 +492,9 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     servalcat_command += ["--hydrogen","no"]
     servalcat_command += ["--no_mask"]
     
-        
-    if pseudomodel_refinement:
+    use_unrestrained_refinement = pseudomodel_refinement and not hybrid_model_refinement 
+       
+    if use_unrestrained_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
     else:
          servalcat_command += ["--keywords","refi bonly"]
@@ -469,12 +529,21 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
-def average_atomic_bfactors_window(input_pdb, window_radius):
+def average_atomic_bfactors_window(input_pdb, window_radius, hybrid_model_refinement=False, final_chain_counts=None):
     '''
     Function to average bfactors over a rolling window of a sphere
     '''
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     import gemmi
+    import string
+    if hybrid_model_refinement:
+        assert final_chain_counts is not None, "Please provide the chain counts of the final model"
+        assert len(final_chain_counts) == 2, "Number of final_chain counts should be 1, found {} chain counts".format(len(final_chain_counts))
+        chain_letters = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        final_chain_count = final_chain_counts[0]
+        # split chain_letters into two lists one for the first half indicating atomic model and the second half indicating the pseudo-model 
+        chain_letters_atomic = chain_letters[:final_chain_count]
+        chain_letters_pseudo = chain_letters[final_chain_count:]
     st = detect_pdb_input(input_pdb)
     st_copy = detect_pdb_input(input_pdb)
 
@@ -483,16 +552,29 @@ def average_atomic_bfactors_window(input_pdb, window_radius):
     ns = gemmi.NeighborSearch(st[0], st.cell, window_radius).populate()
     ns_copy = gemmi.NeighborSearch(st_copy[0], st_copy.cell, window_radius).populate()
     r = window_radius
-    for cra in model.all():
-        atom = cra.atom
-        neighbors = ns.find_atoms(atom.pos, '\0', radius=r)
-        neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
-        atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
-        average_bfactor_neighbors = atomic_bfactor_list.mean()
 
-        nearest_atom = ns_copy.find_nearest_atom(atom.pos).to_cra(model_copy).atom
-        nearest_atom.b_iso = average_bfactor_neighbors
-    
+    if hybrid_model_refinement:
+        for chain in model: 
+            if chain.name in chain_letters_pseudo:
+                for res in chain:
+                    for atom in res:
+                        neighbors = ns.find_atoms(atom.pos, '\0', radius=r)
+                        neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
+                        atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
+                        average_bfactor_neighbors = atomic_bfactor_list.mean()
+                        nearest_atom = ns_copy.find_nearest_atom(atom.pos).to_cra(model_copy).atom
+                        nearest_atom.b_iso = average_bfactor_neighbors
+    else:
+
+        for cra in model.all():
+            atom = cra.atom
+            neighbors = ns.find_atoms(atom.pos, '\0', radius=r)
+            neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
+            atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
+            average_bfactor_neighbors = atomic_bfactor_list.mean()
+            nearest_atom = ns_copy.find_nearest_atom(atom.pos).to_cra(model_copy).atom
+            nearest_atom.b_iso = average_bfactor_neighbors
+        
     return st_copy
     
 def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbose=True):
