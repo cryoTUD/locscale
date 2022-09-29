@@ -241,9 +241,13 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
     """
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
+    from locscale.include.emmer.ndimage.map_utils import load_map
     from locscale.utils.math_tools import true_percent_probability
     from locscale.include.confidenceMapUtil import FDRutil
+    from locscale.utils.general import pad_or_crop_volume
     import pickle
+    import pandas as pd
+    import os
     from locscale.utils.math_tools import round_up_proper
     
     ###############################################################################
@@ -260,6 +264,23 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
         profiles_audit = {}
 
     temp_folder = scaling_dictionary['processing_files_folder']
+    hybrid_model_scaling = scaling_dictionary['complete_model']
+    preprocess_intermediate_pickle_file = os.path.join(temp_folder, 'intermediate_outputs.pickle')
+    # If the intermediate pickle file exists, load it and continue from there
+    if os.path.exists(preprocess_intermediate_pickle_file):
+        preprocess_outputs = pd.read_pickle(preprocess_intermediate_pickle_file)
+    if hybrid_model_scaling:
+        difference_mask_path = preprocess_outputs['difference_mask_path']
+        difference_mask = load_map(difference_mask_path)[0]
+        # check for window bleeding
+        if scaling_dictionary["win_bleed_pad"]:
+            new_emmap_shape = scaling_dictionary["emmap"].shape
+            difference_mask = pad_or_crop_volume(difference_mask, new_emmap_shape, 0)
+
+        difference_mask_bool = difference_mask.astype(bool)
+    else:
+        difference_mask_bool = None
+
     central_pix = round_up_proper(wn / 2.0)
     total = (scaling_dictionary['masked_xyz_locs'] - wn / 2).shape[0]
     cnt = 1.0
@@ -312,16 +333,25 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
             # Stage 2c: Compute the scale factors given the two radial profiles
             #######################################################################
 
+            
+            if hybrid_model_scaling: 
+                k_center, j_center, i_center = round_up_proper(k + wn // 2), round_up_proper(j + wn // 2), round_up_proper(i + wn // 2)
+
+                central_voxel_inside_mask = difference_mask_bool[k_center, j_center, i_center]
+                use_theoretical_profile = central_voxel_inside_mask
+            else:
+                use_theoretical_profile = scaling_dictionary['use_theoretical_profile']
+
             scale_factor_result = compute_scale_factors(
                 em_profile,mod_profile, apix=apix, check_scaling=check_scaling, \
                 scale_factor_arguments=scaling_dictionary['scale_factor_arguments'], \
-                use_theoretical_profile=scaling_dictionary['use_theoretical_profile'])
+                use_theoretical_profile=use_theoretical_profile)
             
             scale_factors = scale_factor_result['scale_factors']
             bfactor = scale_factor_result['bfactor']
             quality_fit = scale_factor_result['quality_fit']
 
-            if check_scaling and scaling_dictionary['use_theoretical_profile']:
+            if check_scaling and use_theoretical_profile:
                 report = scale_factor_result['report']
                 profiles_audit[(k,j,i)] = report
             
