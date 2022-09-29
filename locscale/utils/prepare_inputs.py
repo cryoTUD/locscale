@@ -399,6 +399,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask_path'] = xyz_mask_path
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
+    parsed_inputs_dict['complete_model'] = complete_model
 
     try:
         parsed_inputs_dict['Cref'] = Cref
