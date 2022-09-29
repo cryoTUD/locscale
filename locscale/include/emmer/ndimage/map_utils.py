@@ -410,7 +410,7 @@ def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=0
         Average protein density to calculate number of atoms. The default is 1.35.
     average_atomic_weight : float, optional
         Atomic weight of an "average atom present in protein". 
-        Found using 54% carbon, 20% oxygen and 16% nitrogen. The default is 12.066.
+        Found using 54% carbon, 20% oxygen and 16% nitrogen. The default is 13.14
     verbose : bool, optional
         Print statistics if True. The default is True.
 
