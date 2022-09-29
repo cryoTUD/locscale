@@ -422,7 +422,7 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
         boxsize = round_up_to_even(25 / apix)
     else:
         boxsize = round_up_to_even(boxsize)
-    print(boxsize)
+#    print(boxsize)
     all_points = get_all_voxels_inside_mask(mask_input=mask, mask_threshold=1)
     random_centers = random.sample(all_points,num_centers)
     
@@ -456,8 +456,8 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     
     return bfactor_distributions
 
-def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="singer"):
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="local"):
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -471,7 +471,7 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     mask = mrcfile.open(mask_path).data
     
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
-    global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+    global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, verbose=False)
     fsc_cutoff = fsc_resolution
     if boxsize is None:
         boxsize = round_up_to_even(25 / apix)
