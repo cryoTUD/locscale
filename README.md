@@ -10,7 +10,9 @@
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
-#### New in LocScale 2.0:
+#### New in LocScale 2.1:
+
+- Hybrid sharpening: `LocScale` now supports reference-based sharpening when only partial atomic model information is present
 
 - Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
 
@@ -71,7 +73,7 @@ pip install locscale
 ###### Install development version
 If you would like to install the latest development version of locscale, use the following command to install from the git repository. 
 ```bash
-pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git@development
+pip install git+https://gitlab.tudelft.nl/aj-lab/locscale.git
 ```
 
 To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
@@ -83,9 +85,6 @@ To test functionality after installation, you can run LocScale unit tests using 
 ```bash
 locscale test
 ```
-
-
-
 
 ## How to use
 
@@ -100,7 +99,7 @@ locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o m
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
 
 ```bash
-locscale run_locscale -hm path/to/halfmap1.mrc,path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
@@ -110,8 +109,33 @@ To speed up computation, you can use multiple CPUs if available. LocScale uses [
 ```bash
 mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
 ```
+#### 1. Run LocScale using a partial atomic model:
 
-#### 2. Run LocScale without atomic model:
+```bash
+locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
+```
+
+Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
+
+```bash
+locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
+```
+##### Symmetry
+If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
+
+```bash
+locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model -sym D2
+```
+
+The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
+
+To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
+
+```bash
+mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc  --complete_model -mpi
+```
+
+#### 3. Run LocScale without atomic model:
 
 If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical thresholding and generate a pseudo-atomic model in the thresholded density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate an average reference profile for local sharpening based on the experimental data and expected properties for electron scattering of biological macromolecules [[2]](#references). Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
 
