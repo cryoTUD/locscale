@@ -497,7 +497,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     if use_unrestrained_refinement:
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
     else:
-         servalcat_command += ["--keywords","refi bonly"]
+        servalcat_command += ["--keywords","refi bonly"]
 
     if refmac5_path is not None:
         servalcat_command += ["--exe",refmac5_path]
