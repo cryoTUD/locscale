@@ -177,10 +177,6 @@ class test_locscale(unittest.TestCase):
             locscale_test_run = run(locscale_command)
             
             self.assertTrue(os.path.exists(output_locscale_path))
-            
-            rscc_test = rsc(self.emmap_path_full,output_locscale_path)
-            
-            self.assertTrue(rscc_test>0.9)
 
     def test_no_reference_scaling(self):
         from tempfile import TemporaryDirectory
