@@ -12,11 +12,15 @@ def get_modmap(modmap_args):
         path/to/modmap.mrc
 
     '''
-    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel
+    from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel, run_servalcat_iterative
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
-    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
+    from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff, add_pseudoatoms_to_input_pdb
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors
     from locscale.utils.plot_tools import tab_print
     import mrcfile
+    import pickle
+    import numpy as np
+    import os
     
     ###########################################################################
     # Extract the inputs from the dictionary
@@ -39,6 +43,9 @@ def get_modmap(modmap_args):
     molecular_weight = modmap_args['molecular_weight']
     build_ca_only = modmap_args['build_ca_only']
     verbose = modmap_args['verbose']
+    Cref = modmap_args['Cref']
+    complete_model = modmap_args['complete_model']
+    averaging_window = modmap_args['averaging_window']
 
     if verbose:
         print("."*80)
@@ -49,7 +56,14 @@ def get_modmap(modmap_args):
         tabbed_print.tprint("Model map arguments: \n")
         ## Print keys and values of dictionary in a nice format
         for key, value in modmap_args.items():
-            tabbed_print.tprint("{:<20} : {}".format(key, value))
+            if key == "Cref":
+                # Print Cref shape
+                if value is not None:
+                    tabbed_print.tprint("{} : {}".format(key, value.shape))
+                else:
+                    tabbed_print.tprint("{} : {}".format(key, value))
+            else:
+                tabbed_print.tprint("{:<20} : {}".format(key, value))
 
     #########################################################################
     # Open data files and collect required inputs
@@ -93,18 +107,32 @@ def get_modmap(modmap_args):
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
+        final_chain_counts = None
     else:
-        if verbose:
-            print("."*80)
-            print("Using user-provided PDB path: {}".format(pdb_path))
-        input_pdb_path = pdb_path
+        
+        if complete_model:
+            if verbose:
+                print("."*80)
+                print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
+            integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
+                averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=pam_iteration, mask_threshold=0.5, fsc_resolution=fsc_resolution, \
+                return_chain_counts=True, return_difference_mask=True) 
+
+            input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
+            integrated_structure.write_pdb(input_pdb_path)
+        else:
+            final_chain_counts = None
+            if verbose:
+                print("."*80)
+                print("Using user-provided PDB path: {}".format(pdb_path))    
+            input_pdb_path = pdb_path
     ###########################################################################
     # Stage 2: Refine the reference model usign servalcat
     ###########################################################################
     if is_pseudomodel(input_pdb_path):
-        only_bfactor_refinement = True
+        pseudomodel_refinement = True
     else:
-        only_bfactor_refinement = False
+        pseudomodel_refinement = False
             
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
@@ -116,7 +144,8 @@ def get_modmap(modmap_args):
         print("."*80)
         print("Preparing target map for refinement\n")
     globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
-                                            wilson_cutoff=wilson_cutoff, add_blur=add_blur, verbose=verbose)
+                                           wilson_cutoff=wilson_cutoff, add_blur=add_blur,
+                                           verbose=verbose,Cref=Cref)
     
     #############################################################################
     # Stage 2b: Run servalcat to refine the reference model (either 
@@ -130,13 +159,29 @@ def get_modmap(modmap_args):
             tabbed_print.tprint("Skipping model refinements based on user input\n")
         refined_model_path = input_pdb_path
     else:
-        refined_model_path = run_refmac_servalcat(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
-                    only_bfactor_refinement=only_bfactor_refinement, resolution=resolution, num_iter=refmac_iter,
-                    refmac5_path=refmac5_path,verbose=verbose)
+        refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=globally_sharpened_map,\
+                    pseudomodel_refinement=pseudomodel_refinement, resolution=resolution, num_iter=refmac_iter,
+                    refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, final_chain_counts=final_chain_counts)
+        
         if refined_model_path is None:
             tabbed_print.tprint("Problem running servalcat. Returning None")
             return None
-    
+        
+    if os.path.exists(refined_model_path):
+        bfactors = get_bfactors(in_model_path=refined_model_path)
+            
+        if verbose: 
+            tabbed_print.tprint("ADP statistics for the refined model")
+            tabbed_print.tprint("Mean B-factor: {}".format(np.mean(bfactors)))
+            tabbed_print.tprint("Median B-factor: {}".format(np.median(bfactors)))
+            tabbed_print.tprint("Max B-factor: {}".format(np.max(bfactors)))
+            tabbed_print.tprint("Min B-factor: {}".format(np.min(bfactors)))
+            ## If range of bfactors is too small then warn the user
+            if max(bfactors)-min(bfactors) < 10:
+                tabbed_print.tprint("Warning: The range of B-factors in the refined model is too small. Please check the model.")
+                tabbed_print.tprint("Consider increasing the bfactor of the target map for refinement using the --add_blur option")
+                tabbed_print.tprint("Current value used for add_blur = {}".format(add_blur))
+        
     #############################################################################
     # Stage 3: Convert the refined model to a model-map using the 
     # run_refmap() function
@@ -145,6 +190,7 @@ def get_modmap(modmap_args):
     if verbose:
         print("."*80)
         print("Simulating model-map using refined structure factors\n")
+    
     pseudomodel_modmap = run_refmap(model_path=refined_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
     #############################################################################
@@ -184,6 +230,27 @@ def get_modmap(modmap_args):
     #############################################################################
     # Stage 4: Check and return the model-map
     #############################################################################
+
+    # Collect pipeline intermediate files and output and dump them into a pickle file
+    if verbose:
+        print("."*80)
+        print("Collecting intermediate files and dumping into a pickle file\n")
+    preprocessing_pipeline_directory = os.path.dirname(emmap_path)
+    if not complete_model:
+        difference_mask_path = "not_used"
+    intermediate_outputs = {
+        "refined_model_path": refined_model_path,
+        "pseudomodel_modmap": pseudomodel_modmap,
+        "globally_sharpened_map": globally_sharpened_map,
+        "mask_path": mask_path,
+        "emmap_path": emmap_path,
+        "input_pdb_path": input_pdb_path,
+        "difference_mask_path": difference_mask_path,
+        "preprocessing_pipeline_directory": preprocessing_pipeline_directory,
+    }
+
+    with open(os.path.join(preprocessing_pipeline_directory,"intermediate_outputs.pickle"), "wb") as f:
+        pickle.dump(intermediate_outputs, f)
     
     if pseudomodel_modmap is None:
         tabbed_print.tprint("Problem simulating map from refined model. Returning None")

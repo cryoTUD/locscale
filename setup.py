@@ -3,7 +3,7 @@ import setuptools
 from setuptools import find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
-from numpy.distutils.core import setup, Extension
+from numpy.distutils.core import Extension, setup
 import unittest
 import pathlib
 locscale_path=pathlib.Path(__file__).parent.resolve()
@@ -68,7 +68,7 @@ class PostInstallCommand(install):
 
 
 setup(name='locscale',
-    version='2.0.1',
+    version='2.1.1',
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     project_urls={
@@ -93,7 +93,7 @@ setup(name='locscale',
     install_requires=['matplotlib>=3.3.4','biopython>=1.78','numpy==1.19.2','scipy>=1.5.4','pandas>=1.1.5',\
                       'mrcfile>=1.3.0','gemmi>=0.4.8','pypdb>=2.0','sklearn>=0.0','pwlf>=2.0.4','tqdm>=4.62.3',\
                       'more_itertools>=8.10.0','servalcat>=0.2.23','tensorflow==2.6','tensorflow-addons==0.14.0',\
-                      'keras==2.6.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1', 'wget>=3.2', 'locscale'],
+                      'keras==2.6.0','tensorflow_datasets==4.5.2','pyfiglet>=0.8.post1', 'wget>=3.2','seaborn>=0.11' 'locscale'],
     extras_require={'mac': ['tensorflow-macos==2.7','tensorflow-metal']},
     entry_points={
       'console_scripts': [

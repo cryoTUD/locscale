@@ -343,7 +343,7 @@ def resample_image(im, imsize_new=None, apix=1.0, apix_new=None):
     real_image =np.fft.ifftn(ft).real
     return real_image
 
-def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1):
+def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1, assert_shape=None):
     '''
     Function to resample an emmap in real space using linear interpolation 
 
@@ -376,7 +376,19 @@ def resample_map(emmap, emmap_size_new=None, apix=None, apix_new=None, order=1):
         except:
             raise UserWarning("Please provide proper input: emmap_size_new must be a tuple")
     
-    resampled_image = zoom(emmap, resample_factor, order=order)
+    if assert_shape is not None:
+        if isinstance(assert_shape, int):
+            nx = assert_shape
+        if isinstance(assert_shape, tuple):
+            nx = assert_shape[0]
+        if isinstance(assert_shape, list):
+            nx = assert_shape[0]
+        assertion_factor = nx / (emmap.shape[0] * resample_factor)
+        resample_factor *= assertion_factor
+
+    resampled_image = zoom(emmap, resample_factor, order=order, grid_mode=False)
+
+
     
     return resampled_image
 
@@ -398,7 +410,7 @@ def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=0
         Average protein density to calculate number of atoms. The default is 1.35.
     average_atomic_weight : float, optional
         Atomic weight of an "average atom present in protein". 
-        Found using 54% carbon, 20% oxygen and 16% nitrogen. The default is 12.066.
+        Found using 54% carbon, 20% oxygen and 16% nitrogen. The default is 13.14
     verbose : bool, optional
         Print statistics if True. The default is True.
 
@@ -679,4 +691,22 @@ def get_model_mask(input_pdb, mask_shape, apix, threshold_factor=5, bfactor=100,
     
     return binarised_map
     
+def check_oversharpening(emmap, apix, fsc_cutoff):
+    '''
+    Function to check whether a map has been oversharpened based on the slope of the radial profile
+    '''
+    from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, frequency_array, estimate_bfactor_standard
+
+    rp_emmap = compute_radial_profile(emmap)
+    freq = frequency_array(rp_emmap, apix)
+
+    fsc_cutoff = fsc_cutoff
+    nyquist_cutoff = 2 * apix
     
+    bfactor = estimate_bfactor_standard(freq, rp_emmap, wilson_cutoff=fsc_cutoff, fsc_cutoff=nyquist_cutoff, standard_notation=True)
+
+    # If the bfactor is negative, then the map has been oversharpened
+    if bfactor < 0:
+        return True
+    else:
+        return False

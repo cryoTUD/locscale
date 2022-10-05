@@ -47,9 +47,8 @@ locscale_parser.add_argument('-ma', '--mask', help='Input filename mask')
 ## Output arguments
 locscale_parser.add_argument('-o', '--outfile', help='Output filename', default="locscale_output.mrc")
 locscale_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
-locscale_parser.add_argument('--output_report', action='store_true', default=False,help='Print a PDF copy of the report')
 locscale_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
-locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
+locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 
 ## LocScale main function parameters
 locscale_parser.add_argument('-wn', '--window_size', type=int, help='window size in pixels', default=None)
@@ -57,11 +56,13 @@ locscale_parser.add_argument('-mpi', '--mpi', action='store_true', default=False
 locscale_parser.add_argument('-np', '--number_processes', help='Number of processes to use', type=int, default=1)
 
 ## Refinement parameters
-locscale_parser.add_argument('-ref_it', '--refmac_iterations', help='For atomic model refinement: number of refmac iterations', default=15)
+locscale_parser.add_argument('-ref_it', '--refmac_iterations', help='For atomic model refinement: number of refmac iterations', default=10)
 locscale_parser.add_argument('-res', '--ref_resolution', type=float, help='Resolution target for Refmac refinement')
 locscale_parser.add_argument('-p', '--apix', type=float, help='pixel size in Angstrom')
 locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=20)
 locscale_parser.add_argument('--refmac5_path', type=str, help='Path to refmac5 executable', default=None)
+locscale_parser.add_argument('--cref_pickle', type=str, help='Path for Cref filter for the target map of bfactor refinement', default=None)
+
 
 ## Model map parameters
 locscale_parser.add_argument('-mres', '--model_resolution', type=float, help='Resolution limit for Model Map generation')
@@ -70,6 +71,10 @@ locscale_parser.add_argument('-sym', '--symmetry', default='C1', type=str, help=
 ## FDR parameters
 locscale_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
 locscale_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
+
+## Integrated pseudo-atomic model method parameters
+locscale_parser.add_argument('--complete_model', help='Add pseudo-atoms to areas of the map which are not modelled', action='store_true')
+locscale_parser.add_argument('-avg_w', '--averaging_window', type=int, help='Window size for filtering the fdr difference map for integrated pseudo-model', default=3)
 
 ## Pseudo-atomic model method parameters
 locscale_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
@@ -98,7 +103,7 @@ emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths
 
 ## Output arguments
 emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
-emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default="processing_files")
+emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 
 ## Emmernet main function parameters
@@ -217,14 +222,18 @@ def launch_emmernet(args):
     check_emmernet_inputs(args)
 
     ## Change to output directory
-    current_directory = os.getcwd()
+    # If current directory is not found point current_directory to home directory
+    try:
+        current_directory = os.getcwd()
+    except:
+        current_directory = os.path.expanduser("~")
+    
     copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
     ## Prepare inputs
     input_dictionary = prepare_inputs(copied_args)
     ## Run EMMERNET
     emmernet_output_dictionary = run_emmernet(input_dictionary)
-    ## Check and save output
-    os.chdir(current_directory)
+    
     check_and_save_output(input_dictionary, emmernet_output_dictionary)
 
     ## Print end
@@ -235,19 +244,23 @@ def launch_amplitude_scaling(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
     import os 
 
-  
-    current_directory = os.getcwd()
+    try:
+        current_directory = os.getcwd()
+    except:
+        current_directory = os.path.expanduser("~")
     
+    input_file_directory = get_input_file_directory(args) ## Get input file directory
+
     if not args.mpi:
         ## Print start
         start_time = datetime.now()
         print_start_banner(start_time, "LocScale")
 
         ## Check input
-        check_user_input(args)   ## Check user inputs    
+        check_user_input(args)   ## Check user inputs  
         if args.verbose:
             print_arguments(args)
         
@@ -257,8 +270,7 @@ def launch_amplitude_scaling(args):
         parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
         ## Run LocScale non-MPI 
         LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
-        ## Change to current directory and save output
-        os.chdir(current_directory)
+        parsed_inputs_dict["output_directory"] = input_file_directory
         write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
         ## Print end
         print_end_banner(datetime.now(), start_time=start_time)
@@ -267,6 +279,7 @@ def launch_amplitude_scaling(args):
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
+
         ## If rank is 0, check and prepare inputs
         try:
             if rank==0:
@@ -276,8 +289,9 @@ def launch_amplitude_scaling(args):
                 check_user_input(args)   ## Check user inputs
                 if args.verbose:
                     print_arguments(args)
-                    copied_args = change_directory(args, args.output_processing_files)
+                copied_args = change_directory(args, args.output_processing_files)
                 parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
+                
             else:
                 parsed_inputs_dict = None
             
@@ -289,11 +303,17 @@ def launch_amplitude_scaling(args):
             LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
             ## Change to current directory and save output 
             if rank == 0:
-                os.chdir(current_directory)
+                parsed_inputs_dict["output_directory"] = input_file_directory
                 write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
                 print_end_banner(datetime.now(), start_time=start_time)
         except Exception as e:
-            print(e)
+            print("Process {} failed with error: {}".format(rank, e))
+            comm.Abort()
+            raise e
+        
+        
+        
+
 
 def test_everything():
     from locscale.tests.utils import download_and_test_everything

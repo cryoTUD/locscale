@@ -208,7 +208,7 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.plot_tools import make_locscale_report
     import mrcfile
-    
+    import os
     input_map = mrcfile.open(parsed_inputs_dict['emmap_path']).data
     
     wn = parsed_inputs_dict['wn']
@@ -219,24 +219,33 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
         map_shape = input_map.shape
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
+
     output_filename = args.outfile
+    output_directory = parsed_inputs_dict["output_directory"]
+    if not os.path.isabs(output_filename):
+        output_filename = os.path.join(output_directory, output_filename)
     if args.dev_mode:
         output_filename = output_filename[:-4]+"_devmode.mrc"
-    save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
     if args.symmetry != "C1":
+        asymmetric_output_filename = output_filename[:-4]+"_before_symmetrizing.mrc"
+        save_as_mrc(map_data=LocScaleVol, output_filename=asymmetric_output_filename, apix=apix, origin=0, verbose=True)
         resolution = parsed_inputs_dict['fsc_resolution']
         print("Imposing a symmetry condition of {}".format(args.symmetry))
-        from locscale.include.symmetry_emda.symmetry_map import symmetrize_map_emda
-        
-        LocScaleVol_sym = symmetrize_map_emda(emmap_path=output_filename,pg=args.symmetry)
-
-        output_filename = output_filename[:-4]+"_symmetrised.mrc"
-
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
+        LocScaleVol_sym = symmetrize_map_emda(emmap_path=asymmetric_output_filename,pg=args.symmetry)
         save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
+    else:
+        save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
-    if args.output_report:
+    try:
         make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
+    except Exception as e:
+        print("LocScale successfully completed, but failed to generate a report")
+        print("Error: \n{}".format(e))
+        
+        
+        
     
     return LocScaleVol
 

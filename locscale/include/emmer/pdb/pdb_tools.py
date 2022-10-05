@@ -181,7 +181,8 @@ Reference:
         mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask_path=mask_path, detailed_report=True, verbose=False)
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
-        Rg = R_constant * num_atoms**v
+        num_residues = num_atoms/8
+        Rg = R_constant * num_residues**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
     elif mask is not None and apix is not None and mask_path is None:
@@ -189,11 +190,12 @@ Reference:
         
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
-        Rg = R_constant * num_atoms**v
+        num_residues = num_atoms/8
+        Rg = R_constant * num_residues**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
     elif num_atoms is not None:
-         mol_weight = num_atoms * 16  # daltons 
+         mol_weight = num_atoms * 13  # daltons 
          wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
          return wilson_cutoff_local
     
@@ -371,5 +373,150 @@ def get_atomic_bfactor_window(input_pdb, atomic_position, window_size_A, min_dis
     return average_atomic_bfactor
 
 
+def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False):
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+
+    def add_chains(combined_model, model_to_add, starting_chain_num):
+        import string
+        chain_letters = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        chain_count = starting_chain_num
+        for chain in model_to_add:
+            combined_model.add_chain(chain_letters[chain_count])
+            res_count = 0
+            for res in chain:
+                atom_count = 0
+                residue_name = res.name
+                combined_model = add_residue(combined_model, chain_count, res_count, residue_name)
+                for atom in res:
+                    atom_name = atom.name
+                    atom_position = atom.pos
+                    atom_element = atom.element
+                    combined_model = add_atom(combined_model, chain_count, res_count, atom_count, atom_position, atom_element, atom_name)
+                    atom_count += 1
+
+                res_count += 1
+            chain_count += 1
+        
+        final_chain_count = chain_count
+        return combined_model, final_chain_count
+
+    def add_residue(gemmi_model, chain_num, res_num, res_name):
+        gemmi_model[chain_num].add_residue(gemmi.Residue(),res_num)
+        gemmi_model[chain_num][res_num].name = res_name
+        gemmi_model[chain_num][res_num].seqid.num = res_num
+
+        return gemmi_model
+
+    def add_atom(gemmi_model, chain_num, res_num, atom_num, gemmi_atom_position,  gemmi_element, atom_name):
+        
+        atom = gemmi.Atom()
+        atom.pos = gemmi_atom_position
+        atom.element = gemmi_element
+        atom.b_iso = 40
+        atom.occ = 1
+        atom.name = atom_name
+
+        gemmi_model[chain_num][res_num].add_atom(atom, atom_num)
+        
+        return gemmi_model
     
+    combined_structure = gemmi.Structure()
+    combined_model = gemmi.Model("combined")
     
+    chain_count = 0
+    final_chain_counts = []
+    for input_pdb in list_of_input_pdb:
+        chain_count_init = chain_count
+        st = detect_pdb_input(input_pdb)
+        model_to_add = st[0]
+        combined_model, chain_count_final = add_chains(combined_model, model_to_add, chain_count_init)
+        chain_count = chain_count_final
+        final_chain_counts.append(chain_count_final)
+
+    combined_structure.add_model(combined_model)
+
+    total_num_atoms_in_combined_structure = combined_structure[0].count_atom_sites()
+
+    num_atoms_in_input = 0
+    for input_pdb in list_of_input_pdb:
+        st = detect_pdb_input(input_pdb)
+        model_to_add = st[0]
+        num_atoms_in_input += model_to_add.count_atom_sites()
+    
+    assert total_num_atoms_in_combined_structure == num_atoms_in_input, \
+        "Number of atoms in combined structure does not match number of atoms in input"
+    
+    if return_chain_counts:
+        return combined_structure, final_chain_counts
+    else:
+        return combined_structure
+
+def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold = 0.5, averaging_window=3, pseudomodel_method = "gradient", pseudomodel_iteration=50, bond_length=1.2, fsc_resolution=None, return_chain_counts=False, return_difference_mask=False):
+    from locscale.preprocessing.headers import run_pam
+    from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, load_map, save_as_mrc
+    from locscale.include.emmer.pdb.pdb_tools import combine_pdb_structures_into_one
+    from locscale.include.emmer.ndimage.map_tools import find_unmodelled_mask_region
+    import os
+
+    mask, apix = load_map(mask_path)
+    # Get the difference mask 
+    difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = 0.99, \
+        atomic_mask_threshold = 0.5, averaging_window_size = averaging_window, fsc_resolution = fsc_resolution)
+    
+    difference_mask_path_filename = mask_path[:-4] + "_difference_mask.mrc"
+    difference_mask_path = os.path.join(os.path.dirname(mask_path), difference_mask_path_filename)
+    save_as_mrc(difference_mask, difference_mask_path, apix)
+
+    num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=0.5, verbose=False)
+    pdb_filename = os.path.basename(pdb_path)
+    print("Adding {} pseudoatoms to {}".format(num_atoms, pdb_filename))
+
+    partial_pseudo_model_path = run_pam(emmap_path = emmap_path, mask_path = difference_mask_path, threshold = mask_threshold, \
+       num_atoms = num_atoms, method=pseudomodel_method, bl=bond_length, total_iterations = pseudomodel_iteration, verbose=False)
+
+    combined_structure, final_chain_counts = combine_pdb_structures_into_one([pdb_path, partial_pseudo_model_path], return_chain_counts=return_chain_counts)
+
+    return_elements = [combined_structure]
+    if return_chain_counts:
+        return_elements.append(final_chain_counts)
+    if return_difference_mask:
+        return_elements.append(difference_mask_path)
+    
+    if not return_chain_counts and not return_difference_mask:
+        return combined_structure
+    else:
+        return tuple(return_elements)
+
+        
+
+def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10):
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from tqdm import tqdm
+    from scipy.stats import pearsonr
+    st = detect_pdb_input(input_pdb)
+    model = st[0]
+
+    bfactor_correlation_with_distance = {}
+    for r in tqdm(np.linspace(min_radius,max_radius,num_steps), total=num_steps, desc="Finding neighborhood bfactor correlation"):
+        ns_pseudo = gemmi.NeighborSearch(st[0], st.cell, r).populate()
+        individual_bfactor_list = []
+        neighborhood_bfactor_list = []
+        atomic_position_list = []
+        for cra in model.all():
+            atom = cra.atom
+            atomic_biso = atom.b_iso
+            neighbors = ns_pseudo.find_atoms(atom.pos, '\0', radius=r)
+            neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
+            atomic_bfactor_list = np.array([x.b_iso for x in neigbor_atoms])
+            average_bfactor_neighbors = atomic_bfactor_list.mean()
+            individual_bfactor_list.append(atomic_biso)
+            neighborhood_bfactor_list.append(average_bfactor_neighbors)
+            atomic_position_list.append(atom.pos.tolist())
+            
+        
+        pearson_correlation = pearsonr(individual_bfactor_list, neighborhood_bfactor_list)
+        bfactor_correlation_with_distance[r] = [individual_bfactor_list,neighborhood_bfactor_list, pearson_correlation, atomic_position_list]
+    
+    return bfactor_correlation_with_distance

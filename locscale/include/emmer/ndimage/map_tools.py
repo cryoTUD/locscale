@@ -257,7 +257,7 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     pdb_positions = get_atomic_positions_between_residues(gemmi_st, chain_name, residue_range)
     
-    print("Found {} atom sites".format(len(pdb_positions)))
+    #print("Found {} atom sites".format(len(pdb_positions)))
     
     mrc_position = convert_pdb_to_mrc_position(pdb_positions, apix)
     zz,yy,xx = zip(*mrc_position)
@@ -271,7 +271,7 @@ def crop_map_between_residues(emmap_path, pdb_path, chain_name, residue_range=No
     
     return cropped_map
 
-def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_parameter=5, output_filename=None):
+def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_parameter=5, output_filename=None, save_files = True):
     '''
     Function to extract map intensities around atoms between a given residue range
 
@@ -316,7 +316,7 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
                     pdb_positions.append(atom.pos.tolist())
                         
         
-    print("Found {} atom sites".format(len(pdb_positions)))
+    #print("Found {} atom sites".format(len(pdb_positions)))
         
     mrc_position = convert_pdb_to_mrc_position(pdb_positions, apix)
     zz,yy,xx = zip(*mrc_position)
@@ -327,13 +327,16 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     
     softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
     
-
-    if output_filename is None:
-        output_filename = os.path.join(pdb_folder, pdb_name[:-4]+"_model_mask.mrc")
+    if save_files:
+        if output_filename is None:
+            output_filename = os.path.join(pdb_folder, pdb_name[:-4]+"_model_mask.mrc")
+                
+        save_as_mrc(softened_mask, output_filename=output_filename, apix=apix)
             
-    save_as_mrc(softened_mask, output_filename=output_filename, apix=apix)
-        
-    return output_filename
+        return output_filename
+    else:
+
+        return softened_mask
     
     
 def apply_radial_profile(emmap, reference_map):
@@ -354,7 +357,7 @@ def apply_radial_profile(emmap, reference_map):
     return scaled_map
 
 def get_local_bfactor_emmap(emmap_path, center, fsc_resolution, boxsize=None, standard_notation=True, mask_path=None, wilson_cutoff="singer"):
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -399,7 +402,7 @@ def get_local_bfactor_emmap(emmap_path, center, fsc_resolution, boxsize=None, st
     return bfactor, qfit
 
 def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="singer"):
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -407,6 +410,7 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     import random
     import mrcfile
     from tqdm import tqdm
+    import numpy as np
 
     emmap = mrcfile.open(emmap_path).data
     mask = mrcfile.open(mask_path).data
@@ -418,7 +422,7 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
         boxsize = round_up_to_even(25 / apix)
     else:
         boxsize = round_up_to_even(boxsize)
-    print(boxsize)
+#    print(boxsize)
     all_points = get_all_voxels_inside_mask(mask_input=mask, mask_threshold=1)
     random_centers = random.sample(all_points,num_centers)
     
@@ -452,8 +456,8 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     
     return bfactor_distributions
 
-def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="singer"):
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="local"):
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
@@ -467,7 +471,7 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     mask = mrcfile.open(mask_path).data
     
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
-    global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path)
+    global_wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, verbose=False)
     fsc_cutoff = fsc_resolution
     if boxsize is None:
         boxsize = round_up_to_even(25 / apix)
@@ -513,5 +517,47 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
     
     return bfactor_distributions
     
+
+def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, atomic_mask_threshold=0.5, averaging_window_size=3, fsc_resolution=None):
+    """
+    Finds the unmodelled regions in the input pdb file.
+    """
+    from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    import os
+    from scipy.ndimage import uniform_filter
+    import numpy as np
+
+    fdr_mask, apix = load_map(fdr_mask_path)
+    if fsc_resolution is None:
+        dilation_radius = 3
+    else:
+        dilation_radius = fsc_resolution
         
         
+    atomic_mask = get_atomic_model_mask(emmap_path = fdr_mask_path, pdb_path = pdb_path, \
+        dilation_radius = dilation_radius, save_files = False)
+    
+    # Binarise 
+    # Binarise the atomic model mask and FDR confidence mask at X threshold 
+    
+    atomic_model_mask_binarised = (atomic_mask >= atomic_mask_threshold).astype(np.int_)
+    fdr_mask_binarised = (fdr_mask >= fdr_threshold).astype(np.int_)
+
+    # Compute the difference 
+    difference_mask = fdr_mask_binarised - atomic_model_mask_binarised
+
+    # Remove negative values
+    difference_mask[difference_mask < 0] = 0
+
+    
+    difference_mask_path  = fdr_mask_path[:-4] + "_difference_mask_binarised.mrc"
+    save_as_mrc(difference_mask,difference_mask_path, apix=apix)
+
+    # Perform a moving window average of the difference mask
+    difference_mask_averaged = uniform_filter(difference_mask, size = averaging_window_size)
+
+    return difference_mask_averaged
+
+
