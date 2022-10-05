@@ -181,7 +181,8 @@ Reference:
         mask_vol_A3, protein_mass, num_atoms, mask_dims,maskshape = measure_mask_parameters(mask_path=mask_path, detailed_report=True, verbose=False)
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
-        Rg = R_constant * num_atoms**v
+        num_residues = num_atoms/8
+        Rg = R_constant * num_residues**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
     elif mask is not None and apix is not None and mask_path is None:
@@ -189,11 +190,12 @@ Reference:
         
         R_constant = 2 #A
         v = 0.4 # Exponent derived empirically Ref. 1 for monomers and oligomers
-        Rg = R_constant * num_atoms**v
+        num_residues = num_atoms/8
+        Rg = R_constant * num_residues**v
         protein_density = 0.8 ## 0.8 dalton/ang^3 from Henderson, 1995
         molecular_weight = mask_vol_A3 * protein_density
     elif num_atoms is not None:
-         mol_weight = num_atoms * 16  # daltons 
+         mol_weight = num_atoms * 13  # daltons 
          wilson_cutoff_local = 1/(0.309 * np.power(mol_weight, -1/12))   ## From Amit Singer
          return wilson_cutoff_local
     
