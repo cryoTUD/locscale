@@ -109,7 +109,7 @@ To speed up computation, you can use multiple CPUs if available. LocScale uses [
 ```bash
 mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
 ```
-#### 1. Run LocScale using a partial atomic model:
+#### 2. Run LocScale using a partial atomic model:
 
 ```bash
 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
@@ -124,7 +124,7 @@ locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/
 If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
 
 ```bash
-locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model -sym D2
+locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -sym D2 -o model_based_locscale.mrc --complete_model 
 ```
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
