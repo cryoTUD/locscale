@@ -139,6 +139,7 @@ def prepare_mask_and_maps_for_scaling(args):
 
     ## If the user has not provided the model map and has not used the 
     ## no_reference option, then we need to run the get_modmap pipeline
+    
     if args.model_map is None and not args.no_reference:  
 
         # Collect model map arguments and pass it to get_modmap pipeline
@@ -399,7 +400,8 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask_path'] = xyz_mask_path
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
-    parsed_inputs_dict['complete_model'] = complete_model
+    if complete_model:
+        parsed_inputs_dict['complete_model'] = complete_model
 
     try:
         parsed_inputs_dict['Cref'] = Cref
