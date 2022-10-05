@@ -19,6 +19,7 @@ class test_locscale(unittest.TestCase):
         self.locscale = get_locscale_path()
         data_folder = os.path.join(self.locscale,"locscale",'tests','test_data') 
         self.emmap_path = os.path.join(data_folder, "emd5778_map_chainA.mrc")
+        self.emmap_path_full = os.path.join(data_folder, "emd5778_map_full.mrc")
         self.mask_path = os.path.join(data_folder, "emd5778_mask_chainA.mrc")
         self.mask_path_full = os.path.join(data_folder, "emd5778_mask_full.mrc")
         self.model_coordinates = os.path.join(data_folder, "pdb3j5p_refined_chainA.pdb")
@@ -160,7 +161,7 @@ class test_locscale(unittest.TestCase):
             from subprocess import run
             
             # copy emmap
-            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
+            copied_emmap_path = self.copy_files(self.emmap_path_full, tempDir)
             copied_mask_path = self.copy_files(self.mask_path_full, tempDir)
             copied_model_coordinates = self.copy_files(self.model_coordinates, tempDir)
             
@@ -177,7 +178,7 @@ class test_locscale(unittest.TestCase):
             
             self.assertTrue(os.path.exists(output_locscale_path))
             
-            rscc_test = rsc(self.copy_reference_locscale_MF,output_locscale_path)
+            rscc_test = rsc(self.emmap_path_full,output_locscale_path)
             
             self.assertTrue(rscc_test>0.9)
 
