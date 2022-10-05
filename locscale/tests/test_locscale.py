@@ -19,7 +19,9 @@ class test_locscale(unittest.TestCase):
         self.locscale = get_locscale_path()
         data_folder = os.path.join(self.locscale,"locscale",'tests','test_data') 
         self.emmap_path = os.path.join(data_folder, "emd5778_map_chainA.mrc")
+        self.emmap_path_full = os.path.join(data_folder, "emd5778_map_full.mrc")
         self.mask_path = os.path.join(data_folder, "emd5778_mask_chainA.mrc")
+        self.mask_path_full = os.path.join(data_folder, "emd5778_mask_full.mrc")
         self.model_coordinates = os.path.join(data_folder, "pdb3j5p_refined_chainA.pdb")
         self.reference_locscale_MB = os.path.join(data_folder, "reference_mb_locscale.mrc")
         self.reference_locscale_MF = os.path.join(data_folder, "reference_mf_locscale.mrc")
@@ -139,13 +141,44 @@ class test_locscale(unittest.TestCase):
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
             locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",copied_emmap_path, \
-                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose"]
+                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose", "-pm_it","10","-ref_it","2"]
                         
             locscale_test_run = run(locscale_command)
             
             self.assertTrue(os.path.exists(output_locscale_path))
             
             rscc_test = rsc(copy_reference_locscale_MF,output_locscale_path)
+            
+            self.assertTrue(rscc_test>0.9)
+    def test_model_based_integrated_locscale(self):
+        from tempfile import TemporaryDirectory
+        
+        print("Testing: Model Based Integrated LocScale")
+        with TemporaryDirectory() as tempDir: 
+            from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
+            import os
+            import gemmi
+            from subprocess import run
+            
+            # copy emmap
+            copied_emmap_path = self.copy_files(self.emmap_path_full, tempDir)
+            copied_mask_path = self.copy_files(self.mask_path_full, tempDir)
+            copied_model_coordinates = self.copy_files(self.model_coordinates, tempDir)
+            
+            os.chdir(tempDir)
+
+            output_locscale_path = os.path.join(tempDir, "locscale_MBI_unittest.mrc")
+            locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
+            
+            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
+                copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
+                "--ref_resolution","3.4","--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
+            
+            locscale_test_run = run(locscale_command)
+            
+            self.assertTrue(os.path.exists(output_locscale_path))
+            
+            rscc_test = rsc(self.emmap_path_full,output_locscale_path)
             
             self.assertTrue(rscc_test>0.9)
 

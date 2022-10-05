@@ -1,6 +1,9 @@
 
 ## FILE HANDLING FUNCTIONS
 
+from posixpath import isabs
+
+
 def check_dependencies():
     
     import warnings
@@ -136,6 +139,26 @@ def get_locscale_path():
     import os
     return os.path.dirname(locscale.__path__[0])
 
+def get_input_file_directory(args):
+    import os
+    # Check if halfmap paths are given or emmap path is given
+    if args.halfmap_paths is not None:
+        halfmap_given = True
+    else:
+        halfmap_given = False
+    
+    if halfmap_given:
+        # Get the emmap folder from the input paths
+        assert os.path.exists(args.halfmap_paths[0]), "Halfmap 1 path does not exist"
+
+        halfmap_1_path_full = os.path.abspath(args.halfmap_paths[0])
+        input_folder = os.path.dirname(halfmap_1_path_full)
+    else:
+        assert os.path.exists(args.emmap_path), "EMmap path does not exist"
+        input_folder = os.path.dirname(os.path.abspath(args.emmap_path))
+
+    return input_folder
+
     
 def copy_file_to_folder(full_path_to_file, new_folder):
     import shutil
@@ -152,17 +175,28 @@ def change_directory(args, folder_name):
     import os    
     from locscale.utils.file_tools import copy_file_to_folder
     
-    if folder_name == "processing_files":
-        current_directory = os.getcwd()
-        new_directory = os.path.join(current_directory, folder_name)
+    # Get the input folder
+    input_folder = get_input_file_directory(args)
+    
+    if folder_name is None:
+        new_directory = os.path.join(input_folder, "processing_files")
     else:
-        new_directory = folder_name
+        if os.path.isabs(folder_name):
+            new_directory = folder_name
+        else:
+            new_directory = os.path.join(input_folder, folder_name)
     
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
     
+    assert os.path.isdir(new_directory), "New directory does not exist"
+    assert os.path.isabs(new_directory), "New directory is not absolute"
+    
     if args.verbose:
         print("Copying files to {}\n".format(new_directory))
+    
+    # Set the "output_processing_files" argument to the new_directory
+    setattr(args, "output_processing_files", new_directory)
 
     for arg in vars(args):
         value = getattr(args, arg)
@@ -181,27 +215,28 @@ def change_directory(args, folder_name):
                 new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
     
-    if args.verbose:
-        print("Changing active directory to: {}\n".format(new_directory))
-    os.chdir(new_directory)
-    
     return args
 
 def generate_filename_from_halfmap_path(in_path):
     ## find filename in the path    
-    filename = in_path.split("/")[-1]
+    import os
+    filename = os.path.basename(in_path)
+
+    ## Find all the numbers in the filename
+    import re
+    numbers = re.findall('[0-9]+',filename)
     
-    ## find EMDB ID in filename
-    
-    possible_emdb_id = [filename[x:x+4] for x in range(len(filename)-3) if filename[x:x+4].isnumeric()]
-    if len(possible_emdb_id) == 1:
-        emdb_id = possible_emdb_id[0]
-        newfilename = ["EMD_"+emdb_id+"_unfiltered.mrc"]
+    ## Select only those numbers which have four or five digits
+    emdb_numbers = [int(x) for x in numbers if len(str(x)) in [4,5]]
+
+    ## If there is only one number in the filename, then it is the EMDB number
+    if len(emdb_numbers) == 1:
+        emdb_number = emdb_numbers[0]
+        newfilename = "EMD_{}_unsharpened_fullmap.mrc".format(emdb_number)
     else:
-        newfilename = ["emdb_map_unfiltered.mrc"]
+        newfilename = "emdb_map_unfiltered.mrc"
     
-    
-    new_path = "/".join(in_path.split("/")[:-1]+newfilename)
+    new_path = os.path.join(os.path.dirname(in_path), newfilename)
     
     return new_path
     
@@ -379,7 +414,79 @@ def check_user_input(args):
         import time
         time.sleep(2)
         
+def get_cref_from_arguments(args, mask):
+    '''
+    Get the cref value from the arguments
+    
+    Parameters
+    ----------
+    args : TYPE
+        DESCRIPTION.
 
+    Returns
+    -------
+    cref : TYPE
+        DESCRIPTION.
+
+    '''
+    from locscale.include.emmer.ndimage.fsc_util import get_fsc_filter
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    ## Check if halfmaps present in arguments
+    if args.halfmap_paths is not None:
+        half_maps_present = True
+    else:
+        half_maps_present = False
+    
+    if half_maps_present:
+        halfmap_path_1 = args.halfmap_paths[0]
+        halfmap_path_2 = args.halfmap_paths[1]
+
+        halfmap_1, apix = load_map(halfmap_path_1)
+        halfmap_2, apix = load_map(halfmap_path_2)
+
+        masked_halfmap_1 = halfmap_1 * mask
+        masked_halfmap_2 = halfmap_2 * mask
+        Cref = get_fsc_filter(masked_halfmap_1, masked_halfmap_2)
+        
+    else:
+        Cref = None
+    
+    return Cref
+
+def get_fsc_curve_from_arguments(args):
+    '''
+    Get the fsc curve from the arguments
+    
+    Parameters
+    ----------
+    args : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    fsc_curve : TYPE
+        DESCRIPTION.
+
+    '''
+    from locscale.include.emmer.ndimage.fsc_util import calculate_fsc_maps
+    ## Check if halfmaps present in arguments
+    if args.halfmap_paths is not None:
+        half_maps_present = True
+    else:
+        half_maps_present = False
+    
+    if half_maps_present:
+        halfmap_path_1 = args.halfmap_paths[0]
+        halfmap_path_2 = args.halfmap_paths[1]
+
+        fsc_curve = calculate_fsc_maps(halfmap_path_1, halfmap_path_2)
+    else:
+        fsc_curve = None
+    
+    return fsc_curve
+
+        
+    
                   
 
 

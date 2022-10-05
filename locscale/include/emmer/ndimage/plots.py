@@ -263,7 +263,6 @@ def compute_radial_profile_from_mrcs(mrc_paths,keys=None,logScale=False, ylims=N
         k += 1
     for key in keys:
         radial_profiles[key] = compute_radial_profile(emmaps[key])
-        radial_profiles[key] = radial_profiles[key]/radial_profiles[key].max()
         
     k = 0
     for key in keys:

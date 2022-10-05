@@ -26,10 +26,11 @@ def prepare_mask_and_maps_for_scaling(args):
     from locscale.preprocessing.pipeline import get_modmap
     from locscale.preprocessing.headers import run_FDR, check_axis_order
     from locscale.utils.math_tools import round_up_to_even, round_up_to_odd
-    from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies
+    from locscale.utils.file_tools import get_emmap_path_from_args, check_dependencies, get_cref_from_arguments
     from locscale.utils.general import get_spherical_mask, check_for_window_bleeding, compute_padding_average, pad_or_crop_volume
     from locscale.include.emmer.ndimage.map_tools import add_half_maps, compute_radial_profile_simple
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_through_pwlf, frequency_array, number_of_segments
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
@@ -78,6 +79,7 @@ def prepare_mask_and_maps_for_scaling(args):
     else:
         apix = float(args.apix)
     
+        
     
     ###########################################################################
     # Stage 3: Prepare the mask
@@ -137,6 +139,7 @@ def prepare_mask_and_maps_for_scaling(args):
 
     ## If the user has not provided the model map and has not used the 
     ## no_reference option, then we need to run the get_modmap pipeline
+    
     if args.model_map is None and not args.no_reference:  
 
         # Collect model map arguments and pass it to get_modmap pipeline
@@ -158,6 +161,25 @@ def prepare_mask_and_maps_for_scaling(args):
         add_blur = float(args.add_blur)
         skip_refine = args.skip_refine
         model_resolution = args.model_resolution
+
+        ## Obtain the Cref from argument parser
+        if args.cref_pickle is None:
+            binarised_mask = (xyz_mask>0.99).astype(np.int_)
+            softmask = get_cosine_mask(binarised_mask, 5)
+            Cref = get_cref_from_arguments(args, mask=softmask)
+            if Cref is not None:
+                print("Cref is calculated from the halfmaps")
+                print("Cref: \n", Cref)
+            
+        else:
+            cref_pickle_file = args.cref_pickle
+            assert os.path.exists(cref_pickle_file), "The cref pickle file {} does not exist".format(cref_pickle_file)
+            Cref = pickle.load(open(cref_pickle_file, "rb"))
+            if args.verbose:
+                print("Cref has been loaded from pickle file {} \n".format(cref_pickle_file))
+                print("Cref: \n", Cref)
+            
+
         ##### Following are arguments for pseudo-atomic model generation
         pseudomodel_method=args.pseudomodel_method
         pam_distance = float(args.distance)
@@ -170,6 +192,8 @@ def prepare_mask_and_maps_for_scaling(args):
         elif args.total_iterations is not None:
             pam_iteration = int(args.total_iterations)
         build_ca_only = args.build_ca_only
+        complete_model = args.complete_model
+        averaging_window = args.averaging_window
         
         #############################################################################
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
@@ -192,6 +216,9 @@ def prepare_mask_and_maps_for_scaling(args):
             'build_ca_only':build_ca_only,
             'verbose':verbose,
             'refmac5_path':refmac5_path,
+            'Cref':Cref,
+            'complete_model':complete_model,
+            'averaging_window':averaging_window,
         }
         
         #############################################################################
@@ -362,9 +389,8 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask'] = xyz_mask
     parsed_inputs_dict['wn'] = wn
     parsed_inputs_dict['apix'] = apix
- 
-    parsed_inputs_dict['use_theoretical'] = scale_using_theoretical_profile
-    parsed_inputs_dict['scale_factor_args'] = scale_factor_arguments
+    parsed_inputs_dict['use_theoretical_profile'] = scale_using_theoretical_profile
+    parsed_inputs_dict['scale_factor_arguments'] = scale_factor_arguments
     parsed_inputs_dict['verbose'] = verbose
     parsed_inputs_dict['win_bleed_pad'] = window_bleed_and_pad
     parsed_inputs_dict['bfactor_info'] = bfactor_info
@@ -374,6 +400,12 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['mask_path'] = xyz_mask_path
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
+    parsed_inputs_dict['complete_model'] = args.complete_model
+
+    try:
+        parsed_inputs_dict['Cref'] = Cref
+    except:
+        parsed_inputs_dict['Cref'] = None
     
     #################################################################################
     # Stage 8: Make some common sense checks and return 
@@ -386,4 +418,9 @@ def prepare_mask_and_maps_for_scaling(args):
     ## No element of the mask should be negative
     assert (xyz_mask>=0).any(), "Negative numbers found in mask"
     
+    # Dump the parsed inputs to a pickle file in the input folder
+    import pickle
+    with open(os.path.join(processing_files_folder, 'parsed_inputs.pickle'), 'wb') as f:
+        pickle.dump(parsed_inputs_dict, f)
+        
     return parsed_inputs_dict

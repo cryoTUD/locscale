@@ -112,7 +112,7 @@ class Model:
     def __init__(self,points_list):
         self.list = points_list       
         self.unitcell = gemmi.UnitCell(1,1,1,90,90,90)
-        self.voxelsize = None
+        self.apix = None
     def calculate_map_values_for_each_point(self,emmap):
         ''' Get map values at each atomic index location.
         
@@ -123,13 +123,13 @@ class Model:
             x,y,z = int(round(x)),int(round(y)),int(round(z))
             point.map_value = emmap[z,y,x]
     
-    def calculate_nearest_neighbor_dist_for_each_point(self,voxelsize):
+    def calculate_nearest_neighbor_dist_for_each_point(self,apix):
         ''' get_neighborhood works only on pixel distance. So use only pixel distance '''
         from locscale.preprocessing.pseudomodel_solvers import get_neighborhood
         
         neighborhood = get_neighborhood(self.list,min_dist_in_pixel=3,only_neighbors=True)
         for i,point in enumerate(self.list):
-            point.nearest_neighbor = neighborhood[i][0]*voxelsize
+            point.nearest_neighbor = neighborhood[i][0]*apix
     
     def calculate_relative_acceleration_magnitude(self,emmap,min_dist_in_pixels,g,capmagnitude_map,epsilon,capmagnitude_lj):
         
@@ -153,9 +153,9 @@ class Model:
                 point.relative_acceleration = 999.99
                 print("Zero division error encoutered at: ",+str(point.position.get()))
     
-    def get_all_properties(self,emmap,voxelsize,min_dist_in_pixels=1.5,g=10,capmagnitude_map=100,epsilon=1,capmagnitude_lj=100):
+    def get_all_properties(self,emmap,apix,min_dist_in_pixels=1.5,g=10,capmagnitude_map=100,epsilon=1,capmagnitude_lj=100):
         self.calculate_map_values_for_each_point(emmap)
-        self.calculate_nearest_neighbor_dist_for_each_point(voxelsize)
+        self.calculate_nearest_neighbor_dist_for_each_point(apix)
         self.calculate_relative_acceleration_magnitude(emmap,min_dist_in_pixels,g,capmagnitude_map,epsilon,capmagnitude_lj)
     
     def extract_pdb_positions(self):
@@ -257,19 +257,19 @@ class Model:
      
          return model
 
-    def update_unitcell(self,voxelsize,unitcell=None):
+    def update_unitcell(self,apix,unitcell=None):
         from locscale.include.emmer.pdb.pdb_tools import get_unit_cell_estimate
         
         if unitcell is not None:
             self.unitcell = unitcell
         else:
-            voxelsize = self.voxelsize
+            apix = self.apix
             num = len(self.list)
-            self.unitcell = get_unit_cell_estimate(number_of_atoms=num, vsize=voxelsize)
-        self.voxelsize = voxelsize
+            self.unitcell = get_unit_cell_estimate(number_of_atoms=num, vsize=apix)
+        self.apix = apix
 
-    def write_pdb(self,output_string,voxelsize,unitcell=None):
-          self.update_unitcell(voxelsize,unitcell)
+    def write_pdb(self,output_string,apix,unitcell=None):
+          self.update_unitcell(apix,unitcell)
           gemmi_model = self.convert_to_gemmi_model()
           
           structure = gemmi.Structure()
@@ -277,9 +277,9 @@ class Model:
           structure.cell = self.unitcell
           structure.write_pdb(output_string)
           
-    def update_pdb_positions(self,voxelsize=1):
+    def update_pdb_positions(self,apix=1):
          for atom in self.list:
-              atom.pdb_position = atom.position.scale(voxelsize)
+              atom.pdb_position = atom.position.scale(apix)
 
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     from locscale.preprocessing.pseudomodel_classes import Atom
@@ -310,7 +310,7 @@ def get_model_from_gemmi_pdb(pdb_path,emmap_path=None):
     
     if emmap_path is not None:
         mrc = mrcfile.open(emmap_path)
-        voxelsize = mrc.voxel_size.x
+        apix = mrc.voxel_size.x
         
         cella = mrc.header.cella
         x = cella.x
@@ -318,17 +318,17 @@ def get_model_from_gemmi_pdb(pdb_path,emmap_path=None):
         z = cella.z
         unitcell = (x,y,z)
     else:
-        print(" \n\nWarning! EM-MAP not specified. Setting voxelsize = 1 and unit cell as (1,1,1) \n\n")
-        voxelsize = 1
+        print(" \n\nWarning! EM-MAP not specified. Setting apix = 1 and unit cell as (1,1,1) \n\n")
+        apix = 1
         unitcell = (1,1,1)
     
     points = []
     for chain in gemmi_model:
         for residue in chain:
             for atom in residue:
-                position = np.array([atom.pos.x/voxelsize,atom.pos.y/voxelsize,atom.pos.z/voxelsize])
+                position = np.array([atom.pos.x/apix,atom.pos.y/apix,atom.pos.z/apix])
                 point = Atom(position)
-                point.pdb_position = Vector(position*voxelsize)
+                point.pdb_position = Vector(position*apix)
                 point.bfactor = atom.b_iso
                 points.append(point)
     points_list = Model(points)
