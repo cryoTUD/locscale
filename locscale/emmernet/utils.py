@@ -91,7 +91,7 @@ def check_and_download_emmernet_model(verbose=False):
 
     if not emmernet_downloaded:
         if verbose:
-            print("Emmernet model folder does not exist. Downloading model...\n")
+            print("\nEmmernet model folder does not exist. Downloading model...\n")
         os.makedirs(emmernet_model_folder, exist_ok=True)
         download_emmernet_model_from_url(emmernet_model_folder)
         if verbose:
