@@ -19,6 +19,7 @@ def get_modmap(modmap_args):
     from locscale.utils.plot_tools import tab_print
     import mrcfile
     import pickle
+    import numpy as np
     import os
     
     ###########################################################################
@@ -143,8 +144,8 @@ def get_modmap(modmap_args):
         print("."*80)
         print("Preparing target map for refinement\n")
     globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
-                                            wilson_cutoff=wilson_cutoff, add_blur=add_blur,
-                                            verbose=verbose,Cref=Cref)
+                                           wilson_cutoff=wilson_cutoff, add_blur=add_blur,
+                                           verbose=verbose,Cref=Cref)
     
     #############################################################################
     # Stage 2b: Run servalcat to refine the reference model (either 
@@ -170,13 +171,17 @@ def get_modmap(modmap_args):
         bfactors = get_bfactors(in_model_path=refined_model_path)
             
         if verbose: 
-            tabbed_print.tprint("B factor range: \t ({:.2f} to {:.2f})".format(min(bfactors),max(bfactors)))
+            tabbed_print.tprint("ADP statistics for the refined model")
+            tabbed_print.tprint("Mean B-factor: {}".format(np.mean(bfactors)))
+            tabbed_print.tprint("Median B-factor: {}".format(np.median(bfactors)))
+            tabbed_print.tprint("Max B-factor: {}".format(np.max(bfactors)))
+            tabbed_print.tprint("Min B-factor: {}".format(np.min(bfactors)))
             ## If range of bfactors is too small then warn the user
             if max(bfactors)-min(bfactors) < 10:
                 tabbed_print.tprint("Warning: The range of B-factors in the refined model is too small. Please check the model.")
                 tabbed_print.tprint("Consider increasing the bfactor of the target map for refinement using the --add_blur option")
                 tabbed_print.tprint("Current value used for add_blur = {}".format(add_blur))
-    
+        
     #############################################################################
     # Stage 3: Convert the refined model to a model-map using the 
     # run_refmap() function
