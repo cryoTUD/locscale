@@ -193,7 +193,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     import os
     import mrcfile
     from locscale.include.emmer.ndimage.fsc_util import plot_fsc_maps
-    from locscale.utils.file_tools import get_fsc_curve_from_arguments
+    from locscale.utils.file_tools import get_fsc_curve_from_arguments, get_cref_from_inputs
     from locscale.utils.general import pad_or_crop_volume
     import matplotlib.pyplot as plt
     
@@ -241,7 +241,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     #2a FSC curve halfmaps
     try:
         fsc_curve = get_fsc_curve_from_arguments(args)
-        cref = parsed_input['Cref']
+        cref = get_cref_from_inputs(vars(args))
         if cref is not None:
             fig, ax = plt.subplots(figsize=(8,8))
             ax.plot(freq, fsc_curve,'b')
