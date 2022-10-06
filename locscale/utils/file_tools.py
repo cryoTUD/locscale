@@ -354,11 +354,8 @@ def check_user_input(args):
     if model_coordinates_present and model_map_present:
         raise UserWarning("Please provide either a model map or a model coordinates. Not both")
     
-    ## If neither model map or model coordinates are provided, then users cannot use --ignore_profiles and --skip_refine flags
+    ## If neither model map or model coordinates are provided, then users cannot use --skip_refine flags
     if model_coordinates_absent and model_map_absent:
-        if args.ignore_profiles:
-            raise UserWarning("You have not provided a Model Map or Model Coordinates. Thus, pseudo-atomic model will be used for \
-                              local sharpening. Please do not raise the --ignore_profiles flag")
         if args.skip_refine:
             raise UserWarning("You have not provided a Model Map or Model Coordinates. Performing REFMAC refinement is essential for \
                               succesful operation of the procedue. Please do not raise the --skip_refine flag")
@@ -378,8 +375,12 @@ def check_user_input(args):
                                       Instead if you think model bfactors are accurate, then raise the --skip_refine flag to ignore bfactor refinement.")
             
 
-   
-    
+    if model_coordinates_present and args.complete_model:
+        if args.skip_refine:
+            raise UserWarning("You have asked to skip REFMAC refinement. \
+                                However, you have asked to complete a partially built model. This requires a refined pseudo-atomic model. \
+                                Please do not raise the --skip_refine flag")
+        
     ## Check for window size < 10 A
     if args.window_size is not None:
         window_size_pixels = int(args.window_size)
@@ -413,7 +414,19 @@ def check_user_input(args):
         ## Pause 
         import time
         time.sleep(2)
-        
+
+def get_cref_from_inputs(parsed_inputs):
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
+    from locscale.include.emmer.ndimage.fsc_util import get_fsc_filter
+    from locscale.include.emmer.ndimage.map_utils import load_map
+
+    softmask = get_cosine_mask(parsed_inputs["xyz_mask"], 5)
+    halfmap_1, apix = load_map(parsed_inputs["halfmap_paths"][0])
+    halfmap_2, apix = load_map(parsed_inputs["halfmap_paths"][1])
+
+    cref = get_fsc_filter(halfmap_1*softmask, halfmap_2*softmask)
+    return cref
+
 def get_cref_from_arguments(args, mask):
     '''
     Get the cref value from the arguments
