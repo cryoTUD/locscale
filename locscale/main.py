@@ -180,7 +180,7 @@ def print_end_banner(time_now, start_time):
 
 def launch_amplitude_scaling(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
-    from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
+    from locscale.utils.scaling_tools import run_window_function_including_scaling
     from locscale.utils.general import write_out_final_volume_window_back_if_required
     from locscale.utils.file_tools import change_directory, check_user_input
     import os 
@@ -188,68 +188,33 @@ def launch_amplitude_scaling(args):
   
     current_directory = os.getcwd()
     
-    if not args.mpi:
-        ## Print start
-        start_time = datetime.now()
-        print_start_banner(start_time, "LocScale")
+    ## Print start
+    start_time = datetime.now()
+    print_start_banner(start_time, "LocScale")
 
-        ## Check input
-        check_user_input(args)   ## Check user inputs    
-        if args.verbose:
-            print_arguments(args)
-        
-        ## Change to output directory
-        copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
-        ## Prepare inputs
-        parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
-        ## Run LocScale non-MPI 
-        LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
-        ## Change to current directory and save output
-        os.chdir(current_directory)
+    ## Check input
+    check_user_input(args)   ## Check user inputs    
+    if args.verbose:
+        print_arguments(args)
+    
+    ## Change to output directory
+    copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+    ## Prepare inputs
+    parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
+    ## Run LocScale non-MPI 
+    LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
+    ## Change to current directory and save output
+    os.chdir(current_directory)
 
-        #### POST PROCESSING
+    #### POST PROCESSING
 
-        LocScale_postprocessed = LocScaleVol
+    LocScale_postprocessed = LocScaleVol
 
-        write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
-        ## Print end
-        print_end_banner(datetime.now(), start_time=start_time)
+    write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
+    ## Print end
+    print_end_banner(datetime.now(), start_time=start_time)
 
-    elif args.mpi:
-        from mpi4py import MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        ## If rank is 0, check and prepare inputs
-        try:
-            if rank==0:
-                ## Print start
-                start_time = datetime.now()
-                print_start_banner(start_time, "LocScale")
-                check_user_input(args)   ## Check user inputs
-                if args.verbose:
-                    print_arguments(args)
-                    copied_args = change_directory(args, args.output_processing_files)
-                parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
-            else:
-                parsed_inputs_dict = None
-            
-            ## Wait for inputs to be prepared by rank 0
-            comm.barrier()
-            ## Broadcast inputs to all ranks
-            parsed_inputs_dict = comm.bcast(parsed_inputs_dict, root=0)           
-            ## Run LocScale MPI
-            LocScaleVol, rank = run_window_function_including_scaling_mpi(parsed_inputs_dict)
-            ## Change to current directory and save output 
-            if rank == 0:
-                os.chdir(current_directory)
-                #### POST PROCESSING
 
-                LocScale_postprocessed = LocScaleVol
-
-                write_out_final_volume_window_back_if_required(copied_args, LocScale_postprocessed, parsed_inputs_dict)
-                print_end_banner(datetime.now(), start_time=start_time)
-        except Exception as e:
-            print(e)
 
 
 def main():

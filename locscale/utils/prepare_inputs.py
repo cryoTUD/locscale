@@ -169,6 +169,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['processing_files_folder'] = processing_files_folder
     parsed_inputs_dict['number_processes'] = number_processes
     parsed_inputs_dict['verbose'] = verbose
+    parsed_inputs_dict['original_map_shape'] = xyz_emmap.shape
     
     #################################################################################
     # Stage 8: Make some common sense checks and return 
