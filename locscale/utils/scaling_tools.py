@@ -111,7 +111,9 @@ def get_central_scaled_pixel_vals_after_scaling_2(scaling_dictionary,verbose=Fal
     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
     freq = frequency_array(profile_size=25//2, apix=1)
 
-    reconstructed_model = keras.models.load_model("/mnt/d/Modules/edited_locscale/locscale/locscale/utils/trained_model")
+    trained_model_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'trained_model_new_refined_models')
+    reconstructed_model = keras.models.load_model(trained_model_path)
+    #reconstructed_model = keras.models.load_model("/mnt/d/Modules/edited_locscale/locscale/locscale/utils/trained_model")
 
     for k, j, i in masked_xyz_locs - wn / 2:
         try:
