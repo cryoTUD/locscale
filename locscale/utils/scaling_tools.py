@@ -521,8 +521,8 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     
     bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
     qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
-    save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
-    save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
+    save_list_as_map(bfactor_vals, masked_indices, scaling_dictionary['original_map_shape'], bfactor_path, scaling_dictionary['apix'])
+    save_list_as_map(qfit_vals, masked_indices, scaling_dictionary['original_map_shape'], qfit_path, scaling_dictionary['apix'])
 
     ###############################################################################
     # Stage 6: Return the scaled map
