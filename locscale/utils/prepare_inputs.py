@@ -344,6 +344,11 @@ def pad_input_maps_if_required(parsed_inputs):
         parsed_inputs["xyz_emmap"] = xyz_emmap_new
         parsed_inputs["xyz_modmap"] = xyz_modmap_new
         parsed_inputs["xyz_mask"] = xyz_mask_new
+        parsed_inputs["original_map_shape"] = xyz_emmap.shape
+        parsed_inputs["padded_map_shape"] = xyz_emmap_new.shape
+    else:
+        parsed_inputs["original_map_shape"] = xyz_emmap.shape
+        parsed_inputs["padded_map_shape"] = xyz_emmap.shape
     
     return parsed_inputs
 
