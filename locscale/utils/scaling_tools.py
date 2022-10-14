@@ -282,23 +282,9 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     ###############################################################################
     # Stage 1a: Create a progress bar 
     ###############################################################################
-    print("wn: {}".format(wn))
-    mpi=False
-    if process_name != 'LocScale':
-        mpi=True
-        from mpi4py import MPI
-        
-        comm = MPI.COMM_WORLD
-        rank=comm.Get_rank()
-        size=comm.Get_size()
-        
-        pbar = {}
-        if rank == 0:
-            description = "LocScale"
-            pbar = tqdm(total=len(masked_xyz_locs)*size,desc=description)
-    else:
-        progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
     
+    progress_bar_assembly = tqdm(total=total, desc='Assembling radial profiles')
+        
     ###############################################################################
     # Stage 2: Perform the scaling in a rolling window fashion
     ###############################################################################
@@ -358,26 +344,18 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
                 print(e)
                 print(e.args)
 
-                if mpi:
-                    print("Error occured at process: {}".format(rank))
+   
 
                 raise
-
-        if mpi:
-            if rank == 0:
-                pbar.update(size)
-        else:
-            progress_bar.update(n=1)
+        
+        progress_bar_assembly.update(1)
 
     em_profiles = np.array(raw_profiles)
     mod_profiles = np.exp(reconstructed_model.predict(np.log(em_profiles.reshape(np.shape(em_profiles)[0], 13, 1))))
 
     number = 0
-    if mpi:
-        if rank == 0:
-            pbar.reset()
-    else:
-        progress_bar.reset()
+
+    progress_bar_scaling = tqdm(total=total, desc='Scaling radial profiles')
 
     for k, j, i in masked_xyz_locs - wn / 2:
         try:
@@ -445,34 +423,22 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
             print(e)
             print(e.args)
             
-            if mpi:
-                print("Error occured at process: {}".format(rank))
             
             raise
 
         #### Progress bar update
-        if mpi:
-            if rank == 0:
-                pbar.update(size)
-        else:
-            progress_bar.update(n=1)
+        progress_bar_scaling.update(1)
+
 
     ###############################################################################
     # Stage 3: Save the processing files (the profile_audit file)
     ###############################################################################
-    if mpi:
-        if rank==0:
-            import os
-            pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
-            with open(pickle_file_output,"wb") as audit:
-                pickle.dump(profiles_audit, audit)
-    else:
-        
-        import os
-            
-        pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
-        with open(pickle_file_output,"wb") as audit:
-            pickle.dump(profiles_audit, audit)
+    import os
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    pickle_output_filename_with_timestamp = os.path.join(temp_folder, "profile_audit_{}.pickle".format(timestamp))
+    with open(pickle_output_filename_with_timestamp,"wb") as audit:
+        pickle.dump(profiles_audit, audit)
 
     ###############################################################################
     # Stage 4: Convert to numpy array and return the values
@@ -481,8 +447,12 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     bfactor_vals_array = np.array(bfactor_voxels, dtype=np.float32)
     qfit_vals_array = np.array(qfit_voxels, dtype=np.float32)
     
-
-    return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
+    results = {
+        'sharpened_vals': sharpened_vals_array,
+        'bfactor_vals': bfactor_vals_array,
+        'qfit_vals': qfit_vals_array,
+    }
+    return results
 
 def run_window_function_including_scaling(parsed_inputs_dict):
     """
@@ -491,39 +461,52 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     """
     from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     from locscale.utils.general import save_list_as_map, put_scaled_voxels_back_in_original_volume_including_padding
+    from locscale.utils.general import merge_sequence_of_sequences, split_sequence_evenly
+    from joblib import Parallel, delayed
     ###############################################################################
     # Stage 1: Collect inputs from the dictionary
     ###############################################################################
-
-    mask = parsed_inputs_dict['mask']
-    emmap = parsed_inputs_dict['emmap']
-    wn = parsed_inputs_dict['wn']
-    modmap = None
-    
-    apix = parsed_inputs_dict['apix']
-    verbose=parsed_inputs_dict['verbose']
-    fsc_resolution = parsed_inputs_dict['fsc_resolution']
-    processing_files_folder=parsed_inputs_dict['processing_files_folder']
+    scaling_dictionary = parsed_inputs_dict
     
     ###############################################################################
     # Stage 2: Extract masked locations and indices from the mask
     ###############################################################################
     
-    masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
+    masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(
+        scaling_dictionary['mask'], scaling_dictionary['wn'])
 
+    masked_xyz_locs_split = split_sequence_evenly(masked_xyz_locs, scaling_dictionary['number_processes'])
+
+    scaling_dictionary["masked_indices"] = masked_indices
+    scaling_dictionary["map_shape"] = map_shape
+
+    scaling_dictionary_split = {}
+    for i in range(scaling_dictionary['number_processes']):
+        scaling_dictionary_split[i] = scaling_dictionary.copy()
+        scaling_dictionary_split[i]["masked_xyz_locs"] = masked_xyz_locs_split[i]
+        scaling_dictionary_split[i]["use_joblib"] = True
     ###############################################################################
     # Stage 3: Run the window function to get sharpened values and bfactor information
     ###############################################################################
-    scaling_dictionary = {}
-    scaling_dictionary['emmap'] = emmap
-    scaling_dictionary['masked_xyz_locs'] = masked_xyz_locs
-    scaling_dictionary['wn'] = wn
-    scaling_dictionary['apix'] = apix
-    scaling_dictionary['fsc_resolution'] = fsc_resolution
-    scaling_dictionary['processing_files_folder'] = processing_files_folder
-    
-    sharpened_vals, bfactor_vals, qfit_vals = get_central_scaled_pixel_vals_after_scaling(
-        scaling_dictionary=scaling_dictionary, verbose=verbose)
+    # use joblib to run the window function in parallel
+    if scaling_dictionary['number_processes'] > 1:
+        results = Parallel(n_jobs=scaling_dictionary['number_processes'])(
+            delayed(get_central_scaled_pixel_vals_after_scaling)(scaling_dictionary_split[i]) for i in range(scaling_dictionary['number_processes'])) 
+    else:
+        scaling_dictionary_split[0]["use_joblib"] = False
+        results = [get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_split[0])]
+        
+    #######################################################################
+    # Stage 4: Merge the results from the parallel processing
+    #######################################################################
+    if scaling_dictionary['number_processes'] > 1:
+        sharpened_vals = merge_sequence_of_sequences([results[i]['sharpened_vals'] for i in range(scaling_dictionary['number_processes'])])
+        bfactor_vals = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
+        qfit_vals = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
+    else:
+        sharpened_vals = results[0]['sharpened_vals']
+        bfactor_vals = results[0]['bfactor_vals']
+        qfit_vals = results[0]['qfit_vals']
     
     ###############################################################################
     # Stage 4: Put the sharpened values back into the original volume
@@ -535,134 +518,20 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     # Stage 5: Save processing files such as bfactor map and qfit maps 
     ###############################################################################
     
-    bfactor_path = os.path.join(processing_files_folder, "bfactor_map.mrc")
-    qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
-    save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
-    save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
+    bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
+    qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
+    save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
+    save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
 
     ###############################################################################
     # Stage 6: Return the scaled map
     ###############################################################################
 
     # ADD post processing
-    map_scaled = postprocess_map(map_scaled, apix)
+    map_scaled = postprocess_map(map_scaled, scaling_dictionary['apix'])
 
     return map_scaled
 
-def run_window_function_including_scaling_mpi(parsed_inputs_dict):
-    """
-    This is a function which performs high level data processing for Locscale in a MPI environment
-
-    """
-
-    from mpi4py import MPI
-    from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
-    from locscale.utils.general import save_list_as_map, merge_sequence_of_sequences, split_sequence_evenly
-    from locscale.utils.general import put_scaled_voxels_back_in_original_volume_including_padding
-                                   
-    ###############################################################################
-    # Stage 1: Collect inputs from the dictionary
-    ###############################################################################
-    mask = parsed_inputs_dict['mask']
-    emmap = parsed_inputs_dict['emmap']
-    fsc_resolution = parsed_inputs_dict['fsc_resolution']
-    wn = parsed_inputs_dict['wn']
-
-    apix = parsed_inputs_dict['apix']
-    verbose=parsed_inputs_dict['verbose']
-    processing_files_folder=parsed_inputs_dict['processing_files_folder']
-    
-    ###############################################################################
-    # Stage 1a: Setup MPI environment
-    ###############################################################################
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    size = comm.Get_size()
-
-    ###############################################################################
-    # Stage 2: Extract masked locations and indices from the mask from root node
-    ###############################################################################
-    if rank == 0:
-        masked_xyz_locs, masked_indices, map_shape = \
-        get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn)
-
-        zs, ys, xs = masked_xyz_locs.T
-        zs = split_sequence_evenly(zs, size)
-        ys = split_sequence_evenly(ys, size)
-        xs = split_sequence_evenly(xs, size)
-    else:
-        zs = None
-        ys = None
-        xs = None
-
-    zs = comm.scatter(zs, root=0)
-    ys = comm.scatter(ys, root=0)
-    xs = comm.scatter(xs, root=0)
-
-    masked_xyz_locs = np.column_stack((zs, ys, xs))
-
-    process_name = 'LocScale process {0} of {1}'.format(rank + 1, size)
-
-    ###############################################################################
-    # Stage 3: Run the window function to get sharpened values and bfactor information
-    ###############################################################################
-    
-    scaling_dictionary = {}
-    scaling_dictionary['emmap'] = emmap
-    scaling_dictionary['masked_xyz_locs'] = masked_xyz_locs
-    scaling_dictionary['wn'] = wn
-    scaling_dictionary['apix'] = apix
-    scaling_dictionary['fsc_resolution'] = fsc_resolution
-    scaling_dictionary['processing_files_folder'] = processing_files_folder
-    
-    sharpened_vals, bfactor_vals, qfit_vals = get_central_scaled_pixel_vals_after_scaling(
-        scaling_dictionary=scaling_dictionary, verbose=verbose,process_name=process_name)
-    
-    ###############################################################################
-    # Stage 4: Put the sharpened values back into the original volume
-    ###############################################################################
-
-    ###############################################################################
-    # Stage 4a: Gather the computed values from all nodes to the root node
-    ###############################################################################
-    sharpened_vals = comm.gather(sharpened_vals, root=0)
-    bfactor_vals = comm.gather(bfactor_vals, root=0)
-    qfit_vals = comm.gather(qfit_vals, root=0)
-
-    if rank == 0:
-        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-        save_as_mrc(emmap, os.path.join(processing_files_folder, "unsharpened_resample_1A.mrc"), apix=1)
-        sharpened_vals = merge_sequence_of_sequences(sharpened_vals)
-        bfactor_vals = merge_sequence_of_sequences(bfactor_vals)
-        qfit_vals = merge_sequence_of_sequences(qfit_vals)
-        
-        map_scaled = put_scaled_voxels_back_in_original_volume_including_padding(np.array(sharpened_vals),
-        masked_indices, map_shape)
-
-        ###########################################################################
-        # Stage 5: Save the processing files 
-        ###########################################################################
-        
-        print("Saving bfactor and qfist maps in here: {}".format(os.getcwd()))
-        bfactor_path = os.path.join(processing_files_folder, "bfactor_map.mrc")
-        qfit_path = os.path.join(processing_files_folder, "qfit_map.mrc")
-        save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, apix)
-        save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, apix)
-
-        save_as_mrc(map_scaled, os.path.join(processing_files_folder, "sharpened_resample_1A.mrc"), apix=1)
-    else:
-
-        map_scaled = None
-
-    ######## Wait for all processes to finish #########
-    comm.barrier()
-    
-    ## Postprocess map
-    map_scaled = postprocess_map(map_scaled, apix)
-    ###############################################################################
-    # Stage 6: Return the scaled map
-    ###############################################################################
-    return map_scaled, rank
 
 def postprocess_map(emmap, apix):
     from locscale.include.emmer.ndimage.map_utils import resample_image

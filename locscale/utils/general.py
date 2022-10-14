@@ -201,7 +201,9 @@ def save_list_as_map(values_list, masked_indices, map_shape, map_path, apix):
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.general import put_scaled_voxels_back_in_original_volume_including_padding
     value_map = put_scaled_voxels_back_in_original_volume_including_padding(values_list, masked_indices, map_shape)
-    save_as_mrc(value_map, output_filename=map_path, apix=apix)
+    from locscale.utils.scaling_tools import postprocess_map
+    postprocessed_map = postprocess_map(value_map, apix)
+    save_as_mrc(postprocessed_map, output_filename=map_path, apix=apix)
 
 def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
     from locscale.utils.general import pad_or_crop_volume
