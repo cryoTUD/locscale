@@ -201,7 +201,7 @@ def prepare_mask_from_inputs(parsed_inputs):
         else:
             fdr_window_size = int(parsed_inputs["fdr_w"])
         
-        if parsed_inputs["fdr_filter"] is None:
+        if parsed_inputs["fdr_filter"] is not None:
             filter_cutoff = float(parsed_inputs["fdr_filter"])
             tabbed_print.tprint("A low pass filter value has been provided. \
                 The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
