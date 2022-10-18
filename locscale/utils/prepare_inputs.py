@@ -167,6 +167,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['processing_files_folder'] = parsed_inputs["processing_files_folder"]
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
+    parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
 
     
     #################################################################################
