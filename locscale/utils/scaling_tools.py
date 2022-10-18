@@ -1,5 +1,7 @@
 import numpy as np
 import os
+
+from locscale.include.emmer.ndimage.map_utils import save_as_mrc
 #import gemmi
 
 
@@ -459,7 +461,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     """
     from locscale.utils.general import get_xyz_locs_and_indices_after_edge_cropping_and_masking
     from locscale.utils.general import save_list_as_map, put_scaled_voxels_back_in_original_volume_including_padding
-    from locscale.utils.general import merge_sequence_of_sequences, split_sequence_evenly
+    from locscale.utils.general import merge_sequence_of_sequences, split_sequence_evenly, write_out_final_volume_window_back_if_required
     from joblib import Parallel, delayed
     ###############################################################################
     # Stage 1: Collect inputs from the dictionary
@@ -521,8 +523,17 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     
     bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
     qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
-    save_list_as_map(bfactor_vals, masked_indices, scaling_dictionary['original_map_shape'], bfactor_path, scaling_dictionary['apix'])
-    save_list_as_map(qfit_vals, masked_indices, scaling_dictionary['original_map_shape'], qfit_path, scaling_dictionary['apix'])
+    bfactor_map = save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
+    qfit_map = save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
+
+    if scaling_dictionary["win_bleed_pad"]:
+        #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
+        from locscale.utils.general import pad_or_crop_volume
+        map_shape = scaling_dictionary["original_map_shape"]
+        bfactor_map = pad_or_crop_volume(bfactor_map, (map_shape))
+        qfit_map = pad_or_crop_volume(qfit_map, (map_shape))
+    save_as_mrc(bfactor_map, bfactor_path, scaling_dictionary['apix'])
+    save_as_mrc(qfit_map, qfit_path, scaling_dictionary['apix'])
 
     ###############################################################################
     # Stage 6: Return the scaled map
