@@ -30,6 +30,7 @@ def run_emmernet(input_dictionary):
     emmernet_model_folder = input_dictionary["emmernet_model_folder"]
 
     emmap, apix = load_map(emmap_path)
+    input_map_shape = emmap.shape
     if verbose:
         print("Emmap loaded from: {}".format(emmap_path))
         print("Emmap shape: {}".format(emmap.shape))
@@ -85,7 +86,7 @@ def run_emmernet(input_dictionary):
     
     ## Postprocess
 
-    predicted_map_postprocessed = postprocess_map(predicted_map, apix)
+    predicted_map_postprocessed = postprocess_map(predicted_map, apix, output_shape=input_map_shape)
     if verbose:
         print("\tPost-processing complete")
         print("\tPost-processed map shape: {}".format(predicted_map_postprocessed.shape))
@@ -172,9 +173,9 @@ def preprocess_map(emmap, apix):
 
     return emmap_standardized
 
-def postprocess_map(predicted_map, apix):
+def postprocess_map(predicted_map, apix, output_shape):
     ## Resample the map to the original pixel size
-    predicted_map_resampled = resample_map(predicted_map, apix=1,apix_new=apix)
+    predicted_map_resampled = resample_map(predicted_map, apix=1,apix_new=apix, assert_shape=output_shape)
 
     ## MinMax normalize the map
     predicted_map_normalized = minmax_normalize_map(predicted_map_resampled)
@@ -183,4 +184,3 @@ def postprocess_map(predicted_map, apix):
 
 
 
-    
