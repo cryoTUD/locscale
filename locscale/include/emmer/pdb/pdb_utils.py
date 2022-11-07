@@ -343,11 +343,20 @@ def test_coordinate_functions(rmsd_magnitude=15):
     print("================== OK =========================")
     
 def get_atomic_point_map(mrc_positions, mask_shape):
-    zero_map = np.zeros(mask_shape)
-    for mrc in mrc_positions:
-        zero_map[mrc[0],mrc[1],mrc[2]] = 1
+    # mrc_positions is a list of positions in mrc format
+    # mask_shape is the shape of the mask
+    # returns a map of the atomic positions in the mask equal to 1
+
+    atomic_point_map = np.zeros(mask_shape)
+    atomic_point_map[mrc_positions[:,0], mrc_positions[:,1], mrc_positions[:,2]] = 1
+    return atomic_point_map
+
+
+    # zero_map = np.zeros(mask_shape)
+    # for mrc in mrc_positions:
+    #     zero_map[mrc[0],mrc[1],mrc[2]] = 1
     
-    return zero_map
+    # return zero_map
 
 def pick_random_point_within_sphere_of_influence(center_atom, binarised_mask_full, radius_of_influence, apix):
     from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, convert_mrc_to_pdb_position, dilate_mask
@@ -779,9 +788,10 @@ def get_residue_ca_coordinates(in_model_path):
 
     return dict_coord
 
-def get_coordinates(in_model_path):
+def get_coordinates(input_pdb):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     list_coord = []
-    structure = gemmi.read_structure(in_model_path)
+    structure = detect_pdb_input(input_pdb)
     for model in structure:
         for chain in model:
             polymer = chain.get_polymer()
