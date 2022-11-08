@@ -429,7 +429,6 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
             if chain.name in chain_letters_pseudo:
                 for res in chain:
                     for atom in res:
-                        atom = cra.atom
                         atom.element = np.random.choice([gemmi.Element("C"), gemmi.Element("O"), gemmi.Element("N")], p=[0.63, 0.2, 0.17])
         
         return gemmi_st
