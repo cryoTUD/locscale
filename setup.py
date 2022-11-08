@@ -68,7 +68,7 @@ class PostInstallCommand(install):
 
 
 setup(name='locscale',
-    version='2.1.4',
+    version='2.1.5',
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     project_urls={
