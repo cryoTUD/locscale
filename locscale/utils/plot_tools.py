@@ -137,16 +137,17 @@ def print_input_arguments(args):
     return fig
    
 def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path, mask_path, fsc_resolution):
-    from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution
+    from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution, get_bfactor_distribution_multiple
     import matplotlib.pyplot as plt
     import seaborn as sns
     
     fig, ax =plt.subplots(figsize=(8,8))
     
-    unsharped_emmap_dist = get_bfactor_distribution(unsharpened_emmap_path, mask_path, fsc_resolution)
-   
-    locscale_dist = get_bfactor_distribution(locscale_map_path, mask_path, fsc_resolution)
-    
+    bfactor_distributions = get_bfactor_distribution_multiple([unsharpened_emmap_path, locscale_map_path], mask_path, fsc_resolution, num_centers=2000, wilson_cutoff="standard")
+
+    unsharped_emmap_dist = list(bfactor_distributions.values())[0]
+    locscale_dist = list(bfactor_distributions.values())[1]
+       
     unsharpened_array = np.array([x[0] for x in unsharped_emmap_dist.values()])
     locscale_array = np.array([x[0] for x in locscale_dist.values()])
    
