@@ -108,14 +108,24 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
       print("Half maps are not of equal dimension.")
 
     
-def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
+def estimate_global_bfactor_map(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None):
     from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
-    
+    from locscale.include.emmer.ndimage.map_utils import load_map
+
+    if emmap_path is not None:
+        emmap, apix = load_map(emmap_path)
+    elif emmap is None or apix is None:
+        raise ValueError("Either emmap_path should be provided or emmap and apix should be provided")
+    assert wilson_cutoff is not None, "wilson_cutoff should be provided"
+    assert fsc_cutoff is not None, "fsc_cutoff should be provided"
+
     rp_unsharp = compute_radial_profile(emmap)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
     num_segments = number_of_segments(fsc_cutoff)
         
-    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, num_segments=num_segments)
+    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, \
+                wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, \
+                num_segments=num_segments, standard_notation=True)
     
     return bfactor, z, slopes, fit
     
