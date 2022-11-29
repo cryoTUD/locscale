@@ -74,7 +74,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("."*80)
         print("Preparing mask \n")
     
-        parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"] = prepare_mask_from_inputs(parsed_inputs)
+    parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"] = prepare_mask_from_inputs(parsed_inputs)
     
     
     #############################################################################
@@ -201,7 +201,7 @@ def prepare_mask_from_inputs(parsed_inputs):
             tabbed_print.tprint("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
         else:
             fdr_window_size = int(parsed_inputs["fdr_w"])
-        
+        averaging_filter_size = parsed_inputs["averaging_filter_size"]    
         if parsed_inputs["fdr_filter"] is not None:
             filter_cutoff = float(parsed_inputs["fdr_filter"])
             tabbed_print.tprint("A low pass filter value has been provided. \
@@ -209,20 +209,21 @@ def prepare_mask_from_inputs(parsed_inputs):
         else:
             filter_cutoff = None
             
-        mask_path = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
+        mask_path = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
         xyz_mask_path = check_axis_order(mask_path)
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
-            xyz_mask = (xyz_mask > 0.99).astype(np.int8)
+            xyz_mask = (xyz_mask > 0.5).astype(np.int8)
         else:
             xyz_mask = get_spherical_mask(parsed_inputs["xyz_emmap"].shape)
     else:
         mask_path = parsed_inputs["mask"]
         xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = load_map(xyz_mask_path)[0]
-        xyz_mask = (xyz_mask > 0.99).astype(np.int8)
+        xyz_mask = (xyz_mask > 0.5).astype(np.int8)
     
+
     return xyz_mask, xyz_mask_path
 
 def get_modmap_from_inputs(parsed_inputs):
@@ -245,11 +246,7 @@ def get_modmap_from_inputs(parsed_inputs):
                                          out_model_path=pdb_path[:-4]+"_shifted.pdb")
             pdb_path = pdb_path[:-4]+"_shifted.pdb"
 
-        if parsed_inputs["halfmap_paths"] is not None:
-            # calculate Cref for filtering the globally sharpened map
-            Cref = get_cref_from_inputs(parsed_inputs)
-        else:
-            Cref = None
+    
     
         #############################################################################
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
@@ -272,10 +269,16 @@ def get_modmap_from_inputs(parsed_inputs):
             'build_ca_only': parsed_inputs["build_ca_only"],
             'verbose': parsed_inputs["verbose"],
             'refmac5_path': parsed_inputs["refmac5_path"],
-            'Cref':Cref,
             'complete_model':parsed_inputs["complete_model"],
             'averaging_window':parsed_inputs["averaging_window"],
         }
+
+        if parsed_inputs["halfmap_paths"] is not None:
+            # If halfmaps are provided, pass them to the modmap pipeline
+            modmap_args["halfmap_paths"] = parsed_inputs["halfmap_paths"]
+        else:
+            modmap_args["halfmap_paths"] = None
+            
         
         #############################################################################
         # Stage 4b: Run the get_modmap pipeline                                 #
@@ -372,7 +375,7 @@ def get_scale_factor_arguments(parsed_inputs):
         num_segments = number_of_segments(parsed_inputs["ref_resolution"])
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(
             freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, 
-            fsc_cutoff=parsed_inputs["ref_resolution"],num_segments=num_segments)
+            fsc_cutoff=parsed_inputs["ref_resolution"],num_segments=num_segments, standard_notation=True)
         
         nyquist = (round(2*parsed_inputs["apix"]*10)+1)/10
         #fsc_cutoff = fsc_resolution

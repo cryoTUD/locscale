@@ -111,7 +111,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     else:                    
         return output_filename_filtered_map
 
-def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
+def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, averaging_filter_size=3):
     '''
     Function to calculate FDR mask for a map
 
@@ -135,6 +135,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     import os, sys
     from subprocess import run, PIPE
     import mrcfile
+    from scipy.ndimage import uniform_filter
     # Preprocessing EM Map Path
     
     # Apply filter if filter_cutoff is not None
@@ -146,6 +147,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     
         
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
     
     current_directory = os.getcwd()
 
@@ -164,6 +166,14 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     emmap_path_without_ext = emmap_path[:-4]
     mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
     
+    # Apply averaging filter to the mask
+
+    if averaging_filter_size > 1:
+        tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
+        #fdr_mask = (fdr_mask > 0.99).astype(np.int_)
+        fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
+        fdr_mask = (fdr_mask > 0.5).astype(np.int_)
+        fdr_mask = get_cosine_mask(fdr_mask, 5)
     save_as_mrc(fdr_mask, output_filename=mask_path, 
                 apix=voxel_size_record.tolist(), origin=0)
     
@@ -429,7 +439,6 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
             if chain.name in chain_letters_pseudo:
                 for res in chain:
                     for atom in res:
-                        atom = cra.atom
                         atom.element = np.random.choice([gemmi.Element("C"), gemmi.Element("O"), gemmi.Element("N")], p=[0.63, 0.2, 0.17])
         
         return gemmi_st
@@ -442,8 +451,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     ----------
     model_path : string
         Path of the model to be refined
-    map_path : string
-        Path of the map to be used for refinement
+    map_path : string or list of two strings
+        Path of the map to be used for refinement (or half maps if present)
     resolution : float
         Resolution of the map
     num_iter : int
@@ -490,8 +499,15 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
     servalcat_command = ["servalcat","refine_spa","--model",servalcat_input,\
-        "--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)),\
+        "--resolution",str(round(resolution, 2)), "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
+
+    ## Add the map path to the command if there is only one map ##
+    if type(map_path) == str:
+        servalcat_command.extend(["--map",map_path])
+    else:
+        assert len(map_path) == 2, "The map_path should be a string or a list of two strings"
+        servalcat_command.extend(["--halfmaps",map_path[0],map_path[1]])
     
     servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
