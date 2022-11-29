@@ -611,8 +611,7 @@ def get_bfactors(in_model_path, return_as_list=True):
     else:
         return dict_chain
 
-def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
-                        additional_biso=None, out_file_path=None):
+def add_atomic_bfactors(input_pdb, additional_biso=None, minimum_biso=0.5, out_file_path=None):
     '''
     Function to modify atomic bfactors uniformly by adding or subtracting b factors to each atom present in the PDB.
     
@@ -631,15 +630,9 @@ def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
     If in_model_path is passed, returns the output model path.. Else returns the gemmi.Structure()
 
     '''
-    
-    if in_model_path is not None:
-        gemmi_st = gemmi.read_pdb(in_model_path)
-    elif input_gemmi_st is not None:
-        gemmi_st = input_gemmi_st.clone()
-    else:
-        print("Pass either the PDB path or the gemmi structure! \n")
-        return 0
-    
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    gemmi_st = detect_pdb_input(input_pdb)
+        
     if additional_biso is not None:
         add_b_iso = additional_biso
     else:
@@ -650,18 +643,14 @@ def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
         for chain in model:
             for res in chain:
                 for atom in res:
-                    atom.b_iso += add_b_iso
+                    original_biso = atom.b_iso
+                    new_biso = original_biso + add_b_iso
+                    if new_biso < minimum_biso:
+                        new_biso = minimum_biso
+                    atom.b_iso = new_biso
     
-    if in_model_path is not None:
-        if out_file_path is not None:
-            output_filepath = out_file_path
-        else:
-            output_filepath = in_model_path[:-4]+'_modified_bfactor.pdb'
-    
-        gemmi_st.write_pdb(output_filepath)
-    
-    else:
-        return gemmi_st
+   
+    return gemmi_st
     
 def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
                         b_iso=None, out_file_path=None):
