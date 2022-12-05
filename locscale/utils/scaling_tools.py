@@ -1,10 +1,15 @@
 import numpy as np
 import os
 import keras
+import tensorflow as tf
 import time
 from locscale.include.emmer.ndimage.map_utils import resample_map
 #import gemmi
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+def dice(rp1,rp2):
+    num = 2*tf.reduce_sum(rp1*rp2)
+    den = tf.reduce_sum(rp1**2) + tf.reduce_sum(rp2**2)
+    return num/den
 
 def compute_radial_profile_proper(vol, frequency_map):
 
@@ -48,195 +53,18 @@ def set_radial_profile(vol, scale_factors, frequencies, frequency_map, shape):
 
     return scaled_map, scaled_map_fft;
 
-def get_central_scaled_pixel_vals_after_scaling_2(scaling_dictionary,verbose=False,process_name='LocScale'):
-
-    """
-    This function performs calls the scaling function in a rolling window fashion.
-    Once the scaled cubes are calculated the central voxels in each cube is extracted
-    into a list. This list is then returned. This function is compatible with
-    both MPI and non-MPI environments.
-    """
-    from tqdm import tqdm
-    from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
-    from locscale.include.emmer.ndimage.profile_tools import frequency_array, estimate_bfactor_standard
-    from locscale.utils.math_tools import true_percent_probability
-    from locscale.include.confidenceMapUtil import FDRutil
-    import pickle
-    from locscale.utils.math_tools import round_up_proper
-
-    ###############################################################################
-    # Stage 1: Initialize and collect variables
-    ###############################################################################
-    emmap = scaling_dictionary['emmap']
-    masked_xyz_locs = scaling_dictionary['masked_xyz_locs']
-    wn = scaling_dictionary['wn']
-    apix = scaling_dictionary['apix']
-    fsc_resolution = scaling_dictionary['fsc_resolution']
-    processing_files_folder = scaling_dictionary['processing_files_folder']
-
-    sharpened_vals = []
-    qfit_voxels = []
-    bfactor_voxels = []
-
-    profiles_audit = {}
-
-    temp_folder = processing_files_folder
-    central_pix = round_up_proper(wn / 2.0)
-    total = (masked_xyz_locs - wn / 2).shape[0]
-    cnt = 1.0
-
-    ###############################################################################
-    # Stage 1a: Create a progress bar
-    ###############################################################################
-
-    mpi=False
-    if process_name != 'LocScale':
-        mpi=True
-        from mpi4py import MPI
-
-        comm = MPI.COMM_WORLD
-        rank=comm.Get_rank()
-        size=comm.Get_size()
-
-        pbar = {}
-        if rank == 0:
-            description = "LocScale"
-            pbar = tqdm(total=len(masked_xyz_locs)*size,desc=description)
-    else:
-        progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
-
-    ###############################################################################
-    # Stage 2: Perform the scaling in a rolling window fashion
-    ###############################################################################
-    frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
-    freq = frequency_array(profile_size=25//2, apix=1)
-
-    trained_model_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'trained_model_new_refined_models')
-    reconstructed_model = keras.models.load_model(trained_model_path)
-    #reconstructed_model = keras.models.load_model("/mnt/d/Modules/edited_locscale/locscale/locscale/utils/trained_model")
-
-    for k, j, i in masked_xyz_locs - wn / 2:
-        try:
-            # k,j,i are indices of the corner voxel in each cube. Ensure it is rounded up to integer.
-            k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
-
-            #######################################################################
-            # Stage 2a: Extract the cube from the EM map and model maps
-            #######################################################################
-            emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
-
-
-            #######################################################################
-            # Stage 2b: Compute the radial profile of the two cubes
-            #######################################################################
-            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window)
-
-            #########################
-            # TO BE COMPLETED
-            #########################
-
-            # print(np.shape(em_profile))
-            # print(em_profile)
-
-            mod_profile = np.exp(reconstructed_model.predict(np.log(em_profile.reshape(1, 13, 1))))[0]
-
-            # Checks scaling operation for 1% of all voxels.
-            check_scaling=true_percent_probability(1)
-
-            #######################################################################
-            # Stage 2c: Compute the scale factors given the two radial profiles
-            #######################################################################
-
-            scale_factors = compute_scale_factors(em_profile, mod_profile)
-
-            #######################################################################
-            # Stage 2d: Get the scaled cube by applying the scale factors
-            #######################################################################
-            map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape)
-
-            #######################################################################
-            # Stage 2e: For each cube, get the central voxel value of the scaled cube
-            # and the bfactor information along with quality of fit
-            #######################################################################
-
-            bfactor, amplitude, qfit = estimate_bfactor_standard(
-                        freq, em_profile, wilson_cutoff=10, fsc_cutoff=fsc_resolution, \
-                        return_amplitude=True, return_fit_quality=True, standard_notation=True)
-            if check_scaling:
-                temp_dictionary = {}
-                temp_dictionary['em_profile'] = em_profile
-                temp_dictionary['ref_profile'] = mod_profile
-                temp_dictionary['bfactor'] = bfactor
-                temp_dictionary['amplitude'] = amplitude
-                temp_dictionary['qfit'] = qfit
-                temp_dictionary['scale_factors'] = scale_factors
-                profiles_audit[tuple([k,j,i])] = temp_dictionary
-
-            sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
-            bfactor_voxels.append(bfactor)
-            qfit_voxels.append(qfit)
-
-        except Exception as e:
-
-            #######################################################################
-            # ERROR: If any error occurs, print the error and stop the operation
-            #######################################################################
-            print("Rogue voxel detected!  \n")
-            print("Location (kji): {},{},{} \n".format(k,j,i))
-            print("Skipping this voxel for calculation \n")
-            k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
-
-            emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
-
-
-            em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window)
-
-
-            print(em_profile)
-
-
-            print(e)
-            print(e.args)
-
-            if mpi:
-                print("Error occured at process: {}".format(rank))
-
-            raise
-
-        #### Progress bar update
-        if mpi:
-            if rank == 0:
-                pbar.update(size)
-        else:
-            progress_bar.update(n=1)
-
-
-    ###############################################################################
-    # Stage 3: Save the processing files (the profile_audit file)
-    ###############################################################################
-    if mpi:
-        if rank==0:
-            import os
-            pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
-            with open(pickle_file_output,"wb") as audit:
-                pickle.dump(profiles_audit, audit)
-    else:
-
-        import os
-
-        pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
-        with open(pickle_file_output,"wb") as audit:
-            pickle.dump(profiles_audit, audit)
-
-    ###############################################################################
-    # Stage 4: Convert to numpy array and return the values
-    ###############################################################################
-    sharpened_vals_array = np.array(sharpened_vals, dtype=np.float32)
-    bfactor_vals_array = np.array(bfactor_voxels, dtype=np.float32)
-    qfit_vals_array = np.array(qfit_voxels, dtype=np.float32)
-
-
-    return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
+def predict_profile(rp_input):
+    import pandas as pd
+    lin_reg = pd.read_pickle('/home/abharadwaj1/dev/current_focus/predict_profile_2/linear_regression_model.pickle')
+    # convert to log
+    rp_input = np.log(rp_input)
+    # reshape
+    rp_input = rp_input.reshape(1, -1)
+    # predict
+    rp_pred = lin_reg.predict(rp_input)
+    # convert back to linear
+    rp_pred = np.exp(rp_pred)
+    return rp_pred
 
 def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False,process_name='LocScale'):
 
@@ -249,7 +77,8 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     import os
     from tqdm import tqdm
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
-    from locscale.include.emmer.ndimage.profile_tools import frequency_array, estimate_bfactor_standard
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array, estimate_bfactor_standard, scale_profiles
+
     from locscale.utils.math_tools import true_percent_probability
     from locscale.include.confidenceMapUtil import FDRutil
     import pickle
@@ -271,6 +100,8 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     sharpened_vals = []
     qfit_voxels = []
     bfactor_voxels = []
+    bfactor_em_voxels = []
+    qfit_em_voxels = []
     
     profiles_audit = {}
 
@@ -289,11 +120,15 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     # Stage 2: Perform the scaling in a rolling window fashion
     ###############################################################################
     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
-    freq = frequency_array(profile_size=13, apix=1)
+    freq = frequency_array(profile_size=14, apix=1)
 
-    trained_model_path = os.path.join(os.path.dirname(locscale.__file__),'utils','trained_model')
-    reconstructed_model = keras.models.load_model(trained_model_path)
+    #trained_model_path = os.path.join(os.path.dirname(locscale.__file__),'utils','trained_model')
+    trained_model_path = "/home/abharadwaj1/dev/current_focus/predict_profile_2/models/model_5.h5"
 
+    reconstructed_model = keras.models.load_model(trained_model_path, custom_objects={'dice':dice})
+    print("Loaded model from disk")
+    print(trained_model_path)
+    print("=====================================")
     raw_profiles = []
     
     
@@ -351,7 +186,28 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
         progress_bar_assembly.update(1)
 
     em_profiles = np.array(raw_profiles)
-    mod_profiles = np.exp(reconstructed_model.predict(np.log(em_profiles.reshape(np.shape(em_profiles)[0], 13, 1))))
+
+    # em_profiles_log = np.log(em_profiles)
+    # em_profiles_tensor = tf.convert_to_tensor(em_profiles_log)
+    # em_profiles_tensor_reshaped = tf.reshape(em_profiles_tensor, (em_profiles_tensor.shape[0], 14))
+    # predictions = reconstructed_model.predict(em_profiles_tensor_reshaped)
+    # mod_profiles = np.exp(predictions)
+
+    # save the profiles as numpy array
+    # np.save("em_profiles.npy", em_profiles)
+    # np.save("mod_profiles.npy", mod_profiles)
+    mod_profiles = []
+    for em_profile in raw_profiles:
+        mod_profile_pred = predict_profile(em_profile)[0]
+        mod_profiles.append(mod_profile_pred)
+    
+    mod_profiles = np.array(mod_profiles)
+    #print(raw_profiles[0])
+    #print(mod_profiles[0])
+
+
+
+    #mod_profiles = np.exp(reconstructed_model.predict(np.log(em_profiles.reshape(np.shape(em_profiles)[0], 14, 1))))
 
     number = 0
 
@@ -371,7 +227,22 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
             mod_profile = mod_profiles[number]
             em_profile = raw_profiles[number]
             number = number + 1
-            scale_factors = compute_scale_factors(em_profile, mod_profile)
+            use_bfactors_only = True
+            if use_bfactors_only:
+                reference_profile_tuple = (freq, mod_profile)
+                target_profile_tuple = (freq, em_profile)
+                wilson_cutoff = 10
+                fsc_cutoff = fsc_resolution
+
+                scaled_em_profile_tuple, (bfactor_preds_scaled, amp, qfit) = scale_profiles(
+                    reference_profile_tuple, target_profile_tuple, 
+                    wilson_cutoff, fsc_cutoff, return_bfactor_properties=True)
+                
+                reference_profile_for_locscale = scaled_em_profile_tuple[1]
+            else:
+                reference_profile_for_locscale = mod_profile
+            
+            scale_factors = compute_scale_factors(em_profile, reference_profile_for_locscale)
             
             #######################################################################
             # Stage 2d: Get the scaled cube by applying the scale factors
@@ -383,23 +254,36 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
             # and the bfactor information along with quality of fit
             #######################################################################
             
-            bfactor, amplitude, qfit = estimate_bfactor_standard(
+            bfactor_em, amplitude_em, qfit_em = estimate_bfactor_standard(
                         freq, em_profile, wilson_cutoff=10, fsc_cutoff=fsc_resolution, \
                         return_amplitude=True, return_fit_quality=True, standard_notation=True)
+            
+            bfactor_pred, amplitude_pred, qfit_pred = estimate_bfactor_standard(
+                        freq, reference_profile_for_locscale, wilson_cutoff=10, fsc_cutoff=fsc_resolution, \
+                        return_amplitude=True, return_fit_quality=True, standard_notation=True)
+
+            bfactor_tuple = (bfactor_em, bfactor_pred)
+            amplitude_tuple = (amplitude_em, amplitude_pred)
+            qfit_tuple = (qfit_em, qfit_pred)
             if check_scaling:    
                 temp_dictionary = {}
                 temp_dictionary['em_profile'] = em_profile
                 temp_dictionary['ref_profile'] = mod_profile
-                temp_dictionary['bfactor'] = bfactor
-                temp_dictionary['amplitude'] = amplitude
+                temp_dictionary['bfactor'] = bfactor_pred
+                temp_dictionary['bfactor_em'] = bfactor_em
+                temp_dictionary['amplitude'] = amplitude_pred
+                temp_dictionary['amplitude_em'] = amplitude_em
                 temp_dictionary['freq'] = freq
-                temp_dictionary['qfit'] = qfit
+                temp_dictionary['qfit'] = qfit_pred
+                temp_dictionary['qfit_em'] = qfit_em
                 temp_dictionary['scale_factors'] = scale_factors
                 profiles_audit[tuple([k,j,i])] = temp_dictionary
                 
             sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
-            bfactor_voxels.append(bfactor)
-            qfit_voxels.append(qfit)
+            bfactor_voxels.append(bfactor_pred)
+            qfit_voxels.append(qfit_pred)
+            bfactor_em_voxels.append(bfactor_em)
+            qfit_em_voxels.append(qfit_em)
             
         except Exception as e:
 
@@ -446,11 +330,15 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     sharpened_vals_array = np.array(sharpened_vals, dtype=np.float32)
     bfactor_vals_array = np.array(bfactor_voxels, dtype=np.float32)
     qfit_vals_array = np.array(qfit_voxels, dtype=np.float32)
+    bfactor_em_vals_array = np.array(bfactor_em_voxels, dtype=np.float32)
+    qfit_em_vals_array = np.array(qfit_em_voxels, dtype=np.float32)
     
     results = {
         'sharpened_vals': sharpened_vals_array,
         'bfactor_vals': bfactor_vals_array,
         'qfit_vals': qfit_vals_array,
+        'bfactor_em_vals': bfactor_em_vals_array,
+        'qfit_em_vals': qfit_em_vals_array,
     }
     return results
 
@@ -501,12 +389,16 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     #######################################################################
     if scaling_dictionary['number_processes'] > 1:
         sharpened_vals = merge_sequence_of_sequences([results[i]['sharpened_vals'] for i in range(scaling_dictionary['number_processes'])])
-        bfactor_vals = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
-        qfit_vals = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
+        bfactor_vals_em = merge_sequence_of_sequences([results[i]['bfactor_em_vals'] for i in range(scaling_dictionary['number_processes'])])
+        bfactor_vals_pred = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
+        qfit_vals_em = merge_sequence_of_sequences([results[i]['qfit_em_vals'] for i in range(scaling_dictionary['number_processes'])])
+        qfit_vals_pred = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
     else:
         sharpened_vals = results[0]['sharpened_vals']
-        bfactor_vals = results[0]['bfactor_vals']
-        qfit_vals = results[0]['qfit_vals']
+        bfactor_vals_em = results[0]['bfactor_em_vals']
+        bfactor_vals_pred = results[0]['bfactor_vals']
+        qfit_vals_em = results[0]['qfit_em_vals']
+        qfit_vals_pred = results[0]['qfit_vals']
     
     ###############################################################################
     # Stage 4: Put the sharpened values back into the original volume
@@ -518,10 +410,14 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     # Stage 5: Save processing files such as bfactor map and qfit maps 
     ###############################################################################
     
-    bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
-    qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
-    save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
-    save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
+    bfactor_path_em = os.path.join(scaling_dictionary['processing_files_folder'], "em_bfactor_map.mrc")
+    bfactor_path_pred = os.path.join(scaling_dictionary['processing_files_folder'], "pred_bfactor_map.mrc")
+    qfit_path_em = os.path.join(scaling_dictionary['processing_files_folder'], "em_qfit_map.mrc")
+    qfit_path_pred = os.path.join(scaling_dictionary['processing_files_folder'], "pred_qfit_map.mrc")
+    save_list_as_map(bfactor_vals_em, masked_indices, map_shape, bfactor_path_em, scaling_dictionary['apix'])
+    save_list_as_map(bfactor_vals_pred, masked_indices, map_shape, bfactor_path_pred, scaling_dictionary['apix'])
+    save_list_as_map(qfit_vals_em, masked_indices, map_shape, qfit_path_em, scaling_dictionary['apix'])
+    save_list_as_map(qfit_vals_pred, masked_indices, map_shape, qfit_path_pred, scaling_dictionary['apix'])
 
     ###############################################################################
     # Stage 6: Return the scaled map
@@ -543,3 +439,205 @@ def postprocess_map(emmap, apix):
     return emmap
 
 # locscale run_locscale -em /mnt/d/mapdata/0038_6gml/EMDBmaps/unsharpened_maps/emd_0038_unsharpened.map -res 3.2 -v -o /mnt/d/temp.mrc
+
+
+
+
+# def get_central_scaled_pixel_vals_after_scaling_2(scaling_dictionary,verbose=False,process_name='LocScale'):
+
+#     """
+#     This function performs calls the scaling function in a rolling window fashion.
+#     Once the scaled cubes are calculated the central voxels in each cube is extracted
+#     into a list. This list is then returned. This function is compatible with
+#     both MPI and non-MPI environments.
+#     """
+#     from tqdm import tqdm
+#     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
+#     from locscale.include.emmer.ndimage.profile_tools import frequency_array, estimate_bfactor_standard
+#     from locscale.utils.math_tools import true_percent_probability
+#     from locscale.include.confidenceMapUtil import FDRutil
+#     import pickle
+#     from locscale.utils.math_tools import round_up_proper
+
+#     ###############################################################################
+#     # Stage 1: Initialize and collect variables
+#     ###############################################################################
+#     emmap = scaling_dictionary['emmap']
+#     masked_xyz_locs = scaling_dictionary['masked_xyz_locs']
+#     wn = scaling_dictionary['wn']
+#     apix = scaling_dictionary['apix']
+#     fsc_resolution = scaling_dictionary['fsc_resolution']
+#     processing_files_folder = scaling_dictionary['processing_files_folder']
+
+#     sharpened_vals = []
+#     qfit_voxels = []
+#     bfactor_voxels = []
+
+#     profiles_audit = {}
+
+#     temp_folder = processing_files_folder
+#     central_pix = round_up_proper(wn / 2.0)
+#     total = (masked_xyz_locs - wn / 2).shape[0]
+#     cnt = 1.0
+
+#     ###############################################################################
+#     # Stage 1a: Create a progress bar
+#     ###############################################################################
+
+#     mpi=False
+#     if process_name != 'LocScale':
+#         mpi=True
+#         from mpi4py import MPI
+
+#         comm = MPI.COMM_WORLD
+#         rank=comm.Get_rank()
+#         size=comm.Get_size()
+
+#         pbar = {}
+#         if rank == 0:
+#             description = "LocScale"
+#             pbar = tqdm(total=len(masked_xyz_locs)*size,desc=description)
+#     else:
+#         progress_bar=tqdm(total=len(masked_xyz_locs), desc=process_name)
+
+#     ###############################################################################
+#     # Stage 2: Perform the scaling in a rolling window fashion
+#     ###############################################################################
+#     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
+#     freq = frequency_array(profile_size=25//2, apix=1)
+
+#     trained_model_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'trained_model')
+#     #reconstructed_model = keras.models.load_model(trained_model_path)
+#     #reconstructed_model = keras.models.load_model("/mnt/d/Modules/edited_locscale/locscale/locscale/utils/trained_model")
+#     #trained_model_path = "/home/abharadwaj1/dev/current_focus/predict_profile_2/models/model_hybrid_locscale_predict_profile"
+#     reconstructed_model = keras.models.load_model(trained_model_path, custom_objects={'dice':dice})
+#     for k, j, i in masked_xyz_locs - wn / 2:
+#         try:
+#             # k,j,i are indices of the corner voxel in each cube. Ensure it is rounded up to integer.
+#             k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
+
+#             #######################################################################
+#             # Stage 2a: Extract the cube from the EM map and model maps
+#             #######################################################################
+#             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
+
+
+#             #######################################################################
+#             # Stage 2b: Compute the radial profile of the two cubes
+#             #######################################################################
+#             em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window)
+
+#             #########################
+#             # TO BE COMPLETED
+#             #########################
+
+#             # print(np.shape(em_profile))
+#             # print(em_profile)
+
+#             mod_profile = np.exp(reconstructed_model.predict(np.log(em_profile.reshape(1, 13, 1))))[0]
+
+#             # Checks scaling operation for 1% of all voxels.
+#             check_scaling=true_percent_probability(1)
+
+#             #######################################################################
+#             # Stage 2c: Compute the scale factors given the two radial profiles
+#             #######################################################################
+
+#             scale_factors = compute_scale_factors(em_profile, mod_profile)
+
+#             #######################################################################
+#             # Stage 2d: Get the scaled cube by applying the scale factors
+#             #######################################################################
+#             map_b_sharpened, map_b_sharpened_fft = set_radial_profile(emmap_wn, scale_factors, frequencies_map, frequency_map_window, emmap_wn.shape)
+
+#             #######################################################################
+#             # Stage 2e: For each cube, get the central voxel value of the scaled cube
+#             # and the bfactor information along with quality of fit
+#             #######################################################################
+
+#             bfactor_em, amplitude_em, qfit_em = estimate_bfactor_standard(
+#                         freq, em_profile, wilson_cutoff=10, fsc_cutoff=fsc_resolution, \
+#                         return_amplitude=True, return_fit_quality=True, standard_notation=True)
+            
+#             bfactor_pred, amplitude_pred, qfit_pred = estimate_bfactor_standard(
+#                         freq, mod_profile, wilson_cutoff=10, fsc_cutoff=fsc_resolution, \
+#                         return_amplitude=True, return_fit_quality=True, standard_notation=True)
+
+#             bfactor_tuple = (bfactor_em, bfactor_pred)
+#             qfit_tuple = (qfit_em, qfit_pred)
+#             amplitude_tuple = (amplitude_em, amplitude_pred)
+#             if check_scaling:
+#                 temp_dictionary = {}
+#                 temp_dictionary['em_profile'] = em_profile
+#                 temp_dictionary['ref_profile'] = mod_profile
+#                 temp_dictionary['bfactor'] = (bfactor_em, bfactor_pred)
+#                 temp_dictionary['amplitude'] = (amplitude_em, amplitude_pred)
+#                 temp_dictionary['qfit'] = (qfit_em, qfit_pred)
+#                 temp_dictionary['scale_factors'] = scale_factors
+#                 profiles_audit[tuple([k,j,i])] = temp_dictionary
+
+#             sharpened_vals.append(map_b_sharpened[central_pix, central_pix, central_pix])
+#             bfactor_voxels.append(bfactor_tuple)
+#             qfit_voxels.append(qfit_tuple)
+
+#         except Exception as e:
+
+#             #######################################################################
+#             # ERROR: If any error occurs, print the error and stop the operation
+#             #######################################################################
+#             print("Rogue voxel detected!  \n")
+#             print("Location (kji): {},{},{} \n".format(k,j,i))
+#             print("Skipping this voxel for calculation \n")
+#             k,j,i,wn = round_up_proper(k), round_up_proper(j), round_up_proper(i), round_up_proper(wn)
+
+#             emmap_wn = emmap[k: k+wn, j: j+wn, i: i+ wn]
+
+
+#             em_profile, frequencies_map = compute_radial_profile_proper(emmap_wn, frequency_map_window)
+
+
+#             print(em_profile)
+
+
+#             print(e)
+#             print(e.args)
+
+#             if mpi:
+#                 print("Error occured at process: {}".format(rank))
+
+#             raise
+
+#         #### Progress bar update
+#         if mpi:
+#             if rank == 0:
+#                 pbar.update(size)
+#         else:
+#             progress_bar.update(n=1)
+
+
+#     ###############################################################################
+#     # Stage 3: Save the processing files (the profile_audit file)
+#     ###############################################################################
+#     if mpi:
+#         if rank==0:
+#             import os
+#             pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
+#             with open(pickle_file_output,"wb") as audit:
+#                 pickle.dump(profiles_audit, audit)
+#     else:
+
+#         import os
+
+#         pickle_file_output = os.path.join(temp_folder,"profiles_audit.pickle")
+#         with open(pickle_file_output,"wb") as audit:
+#             pickle.dump(profiles_audit, audit)
+
+#     ###############################################################################
+#     # Stage 4: Convert to numpy array and return the values
+#     ###############################################################################
+#     sharpened_vals_array = np.array(sharpened_vals, dtype=np.float32)
+#     bfactor_vals_array = np.array(bfactor_voxels, dtype=np.float32)
+#     qfit_vals_array = np.array(qfit_voxels, dtype=np.float32)
+
+
+#     return sharpened_vals_array , bfactor_vals_array, qfit_vals_array
