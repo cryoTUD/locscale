@@ -1,4 +1,4 @@
-
+import numpy as np
 ## PLOT FUNCTIONS
 def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
     from matplotlib.offsetbox import AnchoredText
@@ -200,13 +200,10 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     if window_bleed_and_pad:
         from locscale.utils.general import pad_or_crop_volume
         emmap = pad_or_crop_volume(parsed_input['emmap'], locscale_map.shape)
-        modmap = pad_or_crop_volume(parsed_input['modmap'], locscale_map.shape)
     else:
         emmap = parsed_input['emmap']
-        modmap = parsed_input['modmap']
   
     rp_emmap = compute_radial_profile(emmap)
-    rp_modmap = compute_radial_profile(modmap)
     rp_locscale = compute_radial_profile(locscale_map)
     freq = frequency_array(rp_emmap, apix=parsed_input['apix'])
     
@@ -222,7 +219,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     #2 Radial Profiles
 
     try:
-        radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],legends=['input_emmap', 'model_map','locscale_map'])
+        radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_locscale],legends=['input_emmap','locscale_map'])
         pdf.savefig(radial_profile_fig)
     except Exception as e:
         print("Could not print radial profiles")
