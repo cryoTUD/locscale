@@ -398,8 +398,8 @@ def get_local_bfactor_emmap(emmap_path, center, fsc_resolution, boxsize=None, st
             
     return bfactor, qfit
 
-def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="singer"):
-    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array, plot_radial_profile
+def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None, num_centers=1000, standard_notation=True, wilson_cutoff="singer"):
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
