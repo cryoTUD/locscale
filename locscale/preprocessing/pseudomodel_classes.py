@@ -270,6 +270,7 @@ class Model:
 
     def write_pdb(self,output_string,apix,unitcell=None):
           self.update_unitcell(apix,unitcell)
+          self.update_pdb_positions(apix)
           gemmi_model = self.convert_to_gemmi_model()
           
           structure = gemmi.Structure()
