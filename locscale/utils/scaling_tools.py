@@ -92,7 +92,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     ###############################################################################
     emmap = scaling_dictionary['emmap']
     masked_xyz_locs = scaling_dictionary['masked_xyz_locs']
-    wn = scaling_dictionary['wn']
+    wn = 25
     apix = scaling_dictionary['apix']
     fsc_resolution = scaling_dictionary['fsc_resolution']
     processing_files_folder = scaling_dictionary['processing_files_folder']
@@ -120,10 +120,10 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
     # Stage 2: Perform the scaling in a rolling window fashion
     ###############################################################################
     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
-    freq = frequency_array(profile_size=14, apix=1)
+    freq = frequency_array(profile_size=13, apix=1)
 
-    #trained_model_path = os.path.join(os.path.dirname(locscale.__file__),'utils','trained_model')
-    trained_model_path = "/home/abharadwaj1/dev/current_focus/predict_profile_2/models/model_5.h5"
+    trained_model_path = os.path.join(os.path.dirname(locscale.__file__),'utils','trained_model_epsilon_modelbased_fixedatomic_v2')
+    #trained_model_path = "/home/abharadwaj1/dev/current_focus/predict_profile_2/models/model_5.h5"
 
     reconstructed_model = keras.models.load_model(trained_model_path, custom_objects={'dice':dice})
     print("Loaded model from disk")
@@ -187,22 +187,22 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary,verbose=False
 
     em_profiles = np.array(raw_profiles)
 
-    # em_profiles_log = np.log(em_profiles)
-    # em_profiles_tensor = tf.convert_to_tensor(em_profiles_log)
-    # em_profiles_tensor_reshaped = tf.reshape(em_profiles_tensor, (em_profiles_tensor.shape[0], 14))
-    # predictions = reconstructed_model.predict(em_profiles_tensor_reshaped)
-    # mod_profiles = np.exp(predictions)
+    em_profiles_log = np.log(em_profiles)
+    em_profiles_tensor = tf.convert_to_tensor(em_profiles_log)
+    em_profiles_tensor_reshaped = tf.reshape(em_profiles_tensor, (em_profiles_tensor.shape[0], 13))
+    predictions = reconstructed_model.predict(em_profiles_tensor_reshaped)
+    mod_profiles = np.exp(predictions)
 
     # save the profiles as numpy array
-    # np.save("em_profiles.npy", em_profiles)
-    # np.save("mod_profiles.npy", mod_profiles)
-    mod_profiles = []
-    for em_profile in raw_profiles:
-        mod_profile_pred = predict_profile(em_profile)[0]
-        mod_profiles.append(mod_profile_pred)
+    np.save("em_profiles.npy", em_profiles)
+    np.save("mod_profiles.npy", mod_profiles)
+    # mod_profiles = []
+    # for em_profile in raw_profiles:
+    #     mod_profile_pred = predict_profile(em_profile)[0]
+    #     mod_profiles.append(mod_profile_pred)
     
-    mod_profiles = np.array(mod_profiles)
-    #print(raw_profiles[0])
+    # mod_profiles = np.array(mod_profiles)
+    # #print(raw_profiles[0])
     #print(mod_profiles[0])
 
 
