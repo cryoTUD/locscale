@@ -5,9 +5,6 @@ import gc
 import os
 import sys
 
-
-#Author: Maximilian Beckers, EMBL Heidelberg, Sachse Group
-
 #-------------------------------------------------------------------------------------
 def estimateNoiseFromMap(map, windowSize, boxCoord):
 
