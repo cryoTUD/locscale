@@ -11,7 +11,7 @@ from locscale.utils.plot_tools import tab_print
 
 tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,return_processed_files=False, output_file_path=None,verbose=True,Cref=None):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,target_bfactor=20, output_file_path=None,verbose=True,Cref=None, apply_filter=True):
     '''
     Function to prepare target map for refinement 
 
@@ -23,7 +23,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
         Wilson cutoff for determining the B factor of the EM map
     fsc_resolution : float
         Resolution at which FSC curve is computed used to compute B factor
-    add_blur : float, optional
+    target_bfactor : float, optional
         Additional blur to be added to the EM map. The default is 20   
     
     Returns
@@ -36,7 +36,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
 
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, check_oversharpening
-    from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
+    from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map_standard
     from locscale.include.emmer.ndimage.filter import apply_filter_to_map, low_pass_filter
     from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
     import mrcfile
@@ -51,65 +51,42 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     
     ### Estimate global B-factor ### 
     
-    bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix,
+    bfactor = estimate_global_bfactor_map_standard(emmap=emmap_unsharpened, apix=apix,
                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Global bfactor: {:.3f}\n".format(-1*bfactor))
-        tprint("Breakpoints: {}".format(1/np.sqrt(z)))
-        tprint("Slopes: {}".format(slopes))
+        tprint("Global bfactor: {:.3f}\n".format(bfactor))
     
     if verbose:
         tprint("Calculating final b-factor of target map")
-    if add_blur != 0:
-        bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
+    if target_bfactor != 0:
+        sharpening_bfactor = bfactor - target_bfactor
+    else:
+        sharpening_bfactor = bfactor
     if verbose:
-        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(add_blur))
+        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(target_bfactor))
+        tprint("Using bfactor of {:.2f} for sharpening".format(sharpening_bfactor))
+        tprint("If this number is negative then the map will be blurred to achieve the target bfactor\n Else it will be sharpened")
+
     
 
     ### Globally sharpen EM Map ###
-    sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
+    sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=sharpening_bfactor)
        
-    bfactor_final, z_final, slopes_final, fit_final = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, 
-                                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    bfactor_final = estimate_global_bfactor_map_standard(emmap=sharpened_map, apix=apix, 
+                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(-1*bfactor_final))
-        tprint("Breakpoints: {}".format(1/np.sqrt(z_final)))
-        tprint("Slopes: {}".format(slopes_final))
-        
-    
-    output_filename = emmap_path[:-4] +"_global_sharpened.mrc"
-    output_filename_filtered_map = emmap_path[:-4] +"_global_sharpened_filtered.mrc"
-    
-    save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix)
-    if Cref is not None:
-        tprint("Applying Cref filter to final sharpened map")
-        fsc_filtered_map, _ = apply_fsc_filter(sharpened_map, apix=apix, Cref=Cref)
-        oversharpening_check = check_oversharpening(fsc_filtered_map, apix=apix, fsc_cutoff=fsc_resolution)
-        if oversharpening_check:
-            print("WARNING: Oversharpening detected in the target map for refinement. Please check the FSC curve")
-            output_filename_fsc_filtered = emmap_path[:-4] +"_global_sharpened_Cref_filtered_temp.mrc"
-            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_fsc_filtered, apix=apix)
-            
-            # Low pass filter the FSC filtered map at the resolution of the map
-            print("Low pass filtering the map at FSC resolution {}".format(fsc_resolution))
-            fsc_filtered_low_pass_filtered = low_pass_filter(fsc_filtered_map, cutoff=fsc_resolution, apix=apix)
-            save_as_mrc(map_data=fsc_filtered_low_pass_filtered, output_filename=output_filename_filtered_map, apix=apix)
-
-        else:
-            print("No oversharpening detected in the target map for refinement")
-            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_filtered_map, apix=apix)
+        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
+           
+    if output_file_path is None:
+        sharpened_map_path = emmap_path[:-4] +"_global_sharpened.mrc"
     else:
-        tprint("Applying filter at FSC resolution to final sharpened map")
-        apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
+        sharpened_map_path = output_file_path
     
-    if return_processed_files:
-        if verbose:
-            tprint("Returning: sharpend_map_path (filtered at FSC), [rp_unsharp, rp_sharp, bfactor]")
-        return output_filename_filtered_map, fit
-    else:                    
-        return output_filename_filtered_map
+    save_as_mrc(map_data=sharpened_map, output_filename=sharpened_map_path, apix=apix)
+
+    return sharpened_map_path
 
 def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, averaging_filter_size=3):
     '''
@@ -549,6 +526,68 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     else:
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
+
+
+def run_profile_prediction_refinement(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
+    '''
+    Function to run Refmac to refine the model and generate a new model with refined B-factors.
+
+    Parameters
+    ----------
+    model_path : string
+        Path of the model to be refined
+    map_path : string or list of two strings
+        Path of the map to be used for refinement (or half maps if present)
+    resolution : float
+        Resolution of the map
+    num_iter : int
+        Number of iterations to run Refmac
+    pseudomodel_refinement : bool
+        If True, bfactor refinement is performed without any restraints
+    refmac5_path : string
+        Path of the refmac5 executable. If None, the default path will be used.
+    verbose : bool
+        If True, the output of Refmac will be printed.
+    
+    Returns
+    -------
+    refined_model_path : string
+        Path of the refined model
+    
+    '''
+    
+    import os
+    from subprocess import run, PIPE, Popen
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors, get_coordinates
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, frequency_array, compute_radial_profile
+    from locscale.include.emmer.ndimage.map_utils import convert_mrc_to_pdb_position, convert_pdb_to_mrc_position, extract_window, load_map
+    import gemmi
+    import mrcfile
+    
+    # Get the current working directory
+    current_directory = os.getcwd()
+    processing_files_directory = os.path.dirname(os.path.abspath(model_path))
+    os.chdir(processing_files_directory)
+    if verbose:
+        tprint("Changing to directory: "+processing_files_directory)
+
+    #### Input ####
+    st = gemmi.read_structure(model_path)
+    emmap, apix = load_map(map_path)
+    pdb_positions = get_coordinates(st)
+    
+    mrc_positions = convert_pdb_to_mrc_position(pdb_positions, apix=apix)
+    radial_profiles = []
+    for i, mrc_position in enumerate(mrc_positions):
+        center = mrc_position
+        window = extract_window(emmap, center, size=26)
+        rp_window = compute_radial_profile(window)
+        radial_profiles.append(rp_window)
+    
+    radial_profiles = np.array(radial_profiles)
+    # TBC
+
+    return None
 
 def average_atomic_bfactors_window(input_pdb, window_radius, hybrid_model_refinement=False, final_chain_counts=None):
     '''
