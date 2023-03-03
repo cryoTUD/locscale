@@ -214,14 +214,14 @@ def prepare_mask_from_inputs(parsed_inputs):
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
-            xyz_mask = (xyz_mask > 0.5).astype(np.int8)
+            xyz_mask = (xyz_mask > 0.99).astype(np.int8)
         else:
             xyz_mask = get_spherical_mask(parsed_inputs["xyz_emmap"].shape)
     else:
         mask_path = parsed_inputs["mask"]
         xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = load_map(xyz_mask_path)[0]
-        xyz_mask = (xyz_mask > 0.5).astype(np.int8)
+        xyz_mask = (xyz_mask > 0.99).astype(np.int8)
     
 
     return xyz_mask, xyz_mask_path
