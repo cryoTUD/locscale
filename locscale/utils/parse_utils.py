@@ -97,10 +97,11 @@ emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbos
 
 ## Emmernet main function parameters
 emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of emmernet model to use', \
-                            choices=['model_based', 'model_free', 'ensemble'], default='model_based')
+                            choices=['hybrid','model_based', 'model_free', 'ensemble','model_based_no_freqaug'], default='hybrid')
 emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
 emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
+emmernet_parser.add_argument('-target', '--target_map_path', type=str, help='Path to the target map for phase correlations', default=None)
 emmernet_parser.add_argument('-download', '--download', help='Download the model weights', action='store_true', default=False)
 
 ############################################################################################
