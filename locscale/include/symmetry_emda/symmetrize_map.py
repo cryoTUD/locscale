@@ -82,7 +82,7 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     #print("Double the axes: {}".format(arr2.shape))
     f1 = fftshift(fftn(fftshift(emmap)))
     nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
-    frs_sum = f1
+    frs_sum = np.zeros(f1.shape, f1.dtype)
     i=0
     for op in ops:
         frs = apply_op(f1, op,bin_idx,nbin)
