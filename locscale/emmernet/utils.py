@@ -1,3 +1,5 @@
+import numpy as np
+
 def download_emmernet_model_from_url(download_folder):
     import wget
    
@@ -19,6 +21,52 @@ def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
             tar = tarfile.open(os.path.join(tar_folder,file))
             tar.extractall(target_folder)
             tar.close()
+
+def compute_local_phase_correlations(target_cubes, predicted_cubes, apix, temp_folder=None):
+    import os
+    from tqdm import tqdm
+    from locscale.include.emmer.ndimage.fsc_util import calculate_phase_correlation_maps
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array
+    phase_correlations_all = []
+    for i in tqdm(range(len(predicted_cubes)), desc="Calculating phase correlations"):
+        predicted_cube = predicted_cubes[i]
+        target_cube = target_cubes[i]
+        if target_cube.sum() > 6000:
+            phase_correlation_cube = calculate_phase_correlation_maps(predicted_cube, target_cube)
+            phase_correlations_all.append(phase_correlation_cube[1:])
+    phase_correlations_all = np.array(phase_correlations_all)
+    freq = frequency_array(phase_correlation_cube, apix)
+    # save the numpy arrays 
+    if temp_folder is not None:
+        np.save(os.path.join(temp_folder, "target_cubes.npy"), target_cubes)
+        np.save(os.path.join(temp_folder, "predicted_cubes.npy"), predicted_cubes)
+        np.save(os.path.join(temp_folder, "phase_correlations_all.npy"), phase_correlations_all)
+        np.save(os.path.join(temp_folder, "freq.npy"), freq)
+    
+    return phase_correlations_all, freq
+
+def plot_phase_correlations(phase_correlations_all, freq):
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.grid(False)
+    ax2 = ax1.twiny()
+    for phase_correlation in phase_correlations_all:
+        ax1.plot(freq[1:], phase_correlation, color="black", alpha=0.1)
+    # Plot the mean
+    ax1.plot(freq[1:], phase_correlations_all.mean(axis=0), color="red", linewidth=2)
+    ax1.set_xlabel("Spatial frequency 1/$\AA$")
+    ax1.set_ylabel("Phase correlation")
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/x,1) for x in ax1.get_xticks()])
+    ax2.set_xlabel(r'Resolution $(\AA)$')
+    plt.ylim(-0.5,1.2)
+    # add Y tick labels as [0, 0.5, 1]
+    ax1.set_yticks([0, 0.5, 1])
+    plt.tight_layout()
+    return fig
+
 
 def check_emmernet_inputs(args):
     '''

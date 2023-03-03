@@ -25,6 +25,7 @@ def prepare_inputs(args):
     outputfile = args.outfile
     batch_size = args.batch_size
     gpu_ids = args.gpu_ids
+    target_map_path = args.target_map_path
     
 
 
@@ -40,6 +41,7 @@ def prepare_inputs(args):
         "gpu_ids": gpu_ids,
         "emmap_folder": emmap_folder,
         "emmernet_model_folder": emmernet_model_folder,
+        "target_map_path": target_map_path
         }
     
     if verbose:
