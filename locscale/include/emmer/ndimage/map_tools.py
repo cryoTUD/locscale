@@ -108,7 +108,7 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
       print("Half maps are not of equal dimension.")
 
     
-def estimate_global_bfactor_map(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None):
+def estimate_global_bfactor_map(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None, plot_profiles=False):
     from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
     from locscale.include.emmer.ndimage.map_utils import load_map
 
@@ -127,7 +127,39 @@ def estimate_global_bfactor_map(emmap_path=None, emmap=None, apix=None, wilson_c
                 wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, \
                 num_segments=num_segments, standard_notation=True)
     
+    if plot_profiles:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        x_array = freq**2
+        y_array = np.log(rp_unsharp)
+        plt.plot(x_array, y_array, "b")
+        # draw a vertical line for each z
+        for z_value in z:
+            plt.axvline(x=z_value, color="k", linestyle="--")
+
+    
     return bfactor, z, slopes, fit
+
+def estimate_global_bfactor_map_standard(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None, plot_profiles=False):
+    from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_standard
+    from locscale.include.emmer.ndimage.map_utils import load_map
+
+    if emmap_path is not None:
+        emmap, apix = load_map(emmap_path)
+    elif emmap is None or apix is None:
+        raise ValueError("Either emmap_path should be provided or emmap and apix should be provided")
+    assert wilson_cutoff is not None, "wilson_cutoff should be provided"
+    assert fsc_cutoff is not None, "fsc_cutoff should be provided"
+
+    rp_unsharp = compute_radial_profile(emmap)
+    freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
+        
+    bfactor = estimate_bfactor_standard(freq,rp_unsharp, \
+                wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, \
+                standard_notation=True)
+
+    
+    return bfactor
     
 def compute_scale_factors(em_profile, ref_profile):
     scale_factor = np.sqrt(ref_profile**2/em_profile**2)
@@ -222,7 +254,7 @@ def sharpen_maps(vol, apix, global_bfactor=0):
     emmap_profile, radii = compute_radial_profile(vol,return_indices=True)
     freq = frequency_array(amplitudes=emmap_profile, apix=apix)
     
-    sharpened_profile = emmap_profile * np.exp(-1*global_bfactor/4 * freq**2)
+    sharpened_profile = emmap_profile * np.exp(global_bfactor/4 * freq**2)
 
     scale_factors = compute_scale_factors(emmap_profile, sharpened_profile)
     sharpened_map = set_radial_profile(vol, scale_factors, radii)
