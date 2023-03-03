@@ -466,14 +466,14 @@ class LocScaleMultiple:
             if self.resume_scaling:
                 print("Resuming scaling from stored state")
             else:
-                joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=2*3600)(
+                joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=6*3600)(
                     joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
 
             ## Run the scaling in parallel
-            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=2*3600)(
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
                 joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
         else:
-            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=4*3600)(
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
                 joblib.delayed(self.launch_locscale)(job_id) for job_id in job_list)
 
         
