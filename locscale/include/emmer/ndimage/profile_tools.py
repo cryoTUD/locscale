@@ -638,7 +638,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
             
     if num_segments < 2:
         print("Number of segments = 1 using standard method of evaluating bfactor")
-        bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True)
+        bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True, standard_notation=standard_notation)
         piecewise_linfit = amplitude_zero_freq * np.exp(0.25 * bfactor * freq**2)
         z = [(1/wilson_cutoff)**2, (1/fsc_cutoff)**2]
         slopes = [bfactor / 4]
