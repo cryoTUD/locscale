@@ -14,11 +14,12 @@ def get_modmap(modmap_args):
     '''
     from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel, run_servalcat_iterative
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
-    from locscale.include.emmer.ndimage.map_tools import estimate_global_bfactor_map
+    from locscale.include.emmer.ndimage.map_tools import estimate_global_bfactor_map, estimate_global_bfactor_map_standard
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff, add_pseudoatoms_to_input_pdb
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, add_atomic_bfactors
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, add_atomic_bfactors, shift_bfactors_by_probability
     from locscale.utils.plot_tools import tab_print
     import mrcfile
+    from scipy.stats import norm
     import pickle
     import numpy as np
     import os
@@ -178,7 +179,7 @@ def get_modmap(modmap_args):
             return None
         
     if os.path.exists(refined_model_path):
-        bfactors = get_bfactors(in_model_path=refined_model_path)
+        bfactors = get_bfactors(refined_model_path)
             
         if verbose: 
             tabbed_print.tprint("ADP statistics for the refined model")
@@ -194,31 +195,21 @@ def get_modmap(modmap_args):
         
         ## Now shift the refined bfactors to sharpen the emmap if required
         if not skip_refine:
-            bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap_path=emmap_path, 
-                                        wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
 
-            if verbose:
-                tabbed_print.tprint("Estimated global B-factor: {}".format(bfactor))
             
-            # Calculate the shift required to sharpen the map using the RANSAC regression line
-            # determined based on the Emmernet dataset 
-            # y = -0.53 x + 16.2   (include source)
-            # y -> shift in B-factor
-            # x -> global B-factor
-            # shift = -0.53*bfactor + 16.2
-            shift = -1 * bfactor
-            # shift = -0.74 * bfactor + 31
-
+                
+            shifted_bfactors_structure, shift_value = shift_bfactors_by_probability(
+                                        input_pdb=refined_model_path, probability_threshold=0.01, minimum_bfactor=20)
             if verbose:
-                tabbed_print.tprint("Shift in B-factor to sharpen the map: {}".format(shift))
-            shifted_bfactors_structure = add_atomic_bfactors(input_pdb=refined_model_path, additional_biso=shift, minimum_biso=20)
+                tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is 20 (default)")
+                tabbed_print.tprint("Shifted B-factor by {}".format(shift_value))
             shifted_model_path = refined_model_path[:-4] + '_shifted_bfactors.pdb'
             shifted_bfactors_structure.write_pdb(shifted_model_path)
 
             if verbose:
                 tabbed_print.tprint("Writing the shifted model to {}".format(shifted_model_path))
                 # Print the statistics of the shifted model
-                bfactors = get_bfactors(in_model_path=shifted_model_path)
+                bfactors = get_bfactors(shifted_model_path)
                 tabbed_print.tprint("ADP statistics for the shifted model")
                 tabbed_print.tprint("Mean B-factor: {}".format(np.mean(bfactors)))
                 tabbed_print.tprint("Median B-factor: {}".format(np.median(bfactors)))

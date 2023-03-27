@@ -583,12 +583,13 @@ def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     
     return input_gemmi_st
 
-def get_bfactors(in_model_path, return_as_list=True):
+def get_bfactors(input_pdb, return_as_list=True):
     """
     Get B-factors of atoms
     """
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     dict_chain = {}
-    structure = gemmi.read_structure(in_model_path)
+    structure = detect_pdb_input(input_pdb)
     list_bfact = []
     for model in structure:
         for chain in model:
@@ -651,7 +652,27 @@ def add_atomic_bfactors(input_pdb, additional_biso=None, minimum_biso=0.5, out_f
     
    
     return gemmi_st
-    
+
+def get_lower_bound_threshold(bfactor_array, probability_threshold=0.01, minimum_bfactor=0.5):
+    from scipy.stats import skewnorm
+    # fit a skewnorm distribution to the bfactor distribution
+    skewnorm_pdf = skewnorm.fit(bfactor_array)
+    # find the lower bound threshold
+    lower_bound_threshold = skewnorm.ppf(probability_threshold, skewnorm_pdf[0], skewnorm_pdf[1], skewnorm_pdf[2])
+    return lower_bound_threshold
+
+def shift_bfactors_by_probability(input_pdb, probability_threshold=0.01, minimum_bfactor=0.5, return_shift_values=True):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+
+    bfactor_array = get_bfactors(input_pdb=input_pdb)
+    lower_bound_threshold = get_lower_bound_threshold(bfactor_array, probability_threshold=probability_threshold)
+    shifted_pdb = add_atomic_bfactors(input_pdb=input_pdb, additional_biso=-1*lower_bound_threshold, minimum_biso=minimum_bfactor)
+
+    if return_shift_values:
+        return shifted_pdb, lower_bound_threshold
+    else:
+        return shifted_pdb
+
 def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
                         b_iso=None, out_file_path=None):
     '''
