@@ -16,7 +16,6 @@ import mrcfile
 import gemmi
 import numpy as np
 import json
-import pypdb
 import os
 import sys
 from scipy import signal
@@ -487,8 +486,44 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
         return combined_structure
     else:
         return tuple(return_elements)
+def get_coordinate_bfactors(st):
+    atom_info = []
+    for cra in st[0].all():
+        atom = cra.atom
+        atom_info.append((atom.pos, atom.b_iso))
+    
+    return atom_info
 
-        
+def neighborhood_bfactor_correlation_sample(input_pdb, min_radius=1, max_radius=10, num_steps=10, sample_size=1000):
+    import gemmi
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from locscale.include.emmer.pdb.pdb_utils import get_coordinates, get_bfactors
+    from tqdm import tqdm
+    import random
+    from scipy.stats import pearsonr
+    st = detect_pdb_input(input_pdb)
+
+    atom_info = get_coordinate_bfactors(st)
+    sample_atom_info = random.sample(atom_info, sample_size)
+
+    bfactor_correlation_with_distance = {}
+    for r in tqdm(np.linspace(min_radius,max_radius,num_steps), total=num_steps, desc="Finding neighborhood bfactor correlation"):
+        sample_bfactors = []
+        sample_coordinates = []
+        ns_pseudo = gemmi.NeighborSearch(st[0], st.cell, r).populate()
+        neighborhood_bfactor_list = []
+        for sample_info in sample_atom_info:
+            sample_bfactors.append(sample_info[1])
+            sample_coordinates.append(sample_info[0].tolist())
+            gemmi_coord = sample_info[0]
+            neighbors = ns_pseudo.find_atoms(gemmi_coord, '\0', radius=r)
+            if len(neighbors) > 0:
+                neighborhood_bfactor_list.append(np.mean([n.to_cra(st[0]).atom.b_iso for n in neighbors]))
+                
+        bfactor_correlation_at_r = pearsonr(sample_bfactors, neighborhood_bfactor_list)
+        bfactor_correlation_with_distance[r] = [sample_bfactors, neighborhood_bfactor_list, bfactor_correlation_at_r, sample_coordinates]
+
+    return bfactor_correlation_with_distance
 
 def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10):
     import gemmi

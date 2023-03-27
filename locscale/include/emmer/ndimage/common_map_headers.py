@@ -13,5 +13,4 @@ import numpy as np
 
 import mrcfile
 import gemmi
-import pypdb
 import matplotlib.pyplot as plt
