@@ -494,17 +494,32 @@ def get_coordinate_bfactors(st):
     
     return atom_info
 
-def neighborhood_bfactor_correlation_sample(input_pdb, min_radius=1, max_radius=10, num_steps=10, sample_size=1000):
+def check_if_atomic_position_in_mask(atomic_pos, mask, apix):
+    x, y, z = atomic_pos
+    int_x, int_y, int_z = int(round(x/apix)), int(round(y/apix)), int(round(z/apix))
+    return mask[int_z, int_y, int_x]
+
+
+def neighborhood_bfactor_correlation_sample(input_pdb, min_radius=1, max_radius=10, num_steps=10, sample_size=1000, mask_path=None, invert=False):
     import gemmi
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     from locscale.include.emmer.pdb.pdb_utils import get_coordinates, get_bfactors
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, load_map
     from tqdm import tqdm
     import random
     from scipy.stats import pearsonr
     st = detect_pdb_input(input_pdb)
-
     atom_info = get_coordinate_bfactors(st)
-    sample_atom_info = random.sample(atom_info, sample_size)
+    if mask_path is not None:
+        mask, apix = load_map(mask_path)
+        mask = (mask > 0.5).astype(bool)   
+        if invert:
+            mask = np.logical_not(mask) 
+        atom_info_filtered = [atom for atom in atom_info if check_if_atomic_position_in_mask(atom[0], mask, apix)] 
+    else:
+        atom_info_filtered = atom_info
+
+    sample_atom_info = random.sample(atom_info_filtered, sample_size)
 
     bfactor_correlation_with_distance = {}
     for r in tqdm(np.linspace(min_radius,max_radius,num_steps), total=num_steps, desc="Finding neighborhood bfactor correlation"):
@@ -525,13 +540,20 @@ def neighborhood_bfactor_correlation_sample(input_pdb, min_radius=1, max_radius=
 
     return bfactor_correlation_with_distance
 
-def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10):
+def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num_steps=10, mask_path=None, invert=False):
     import gemmi
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, load_map
     from tqdm import tqdm
     from scipy.stats import pearsonr
     st = detect_pdb_input(input_pdb)
     model = st[0]
+    if mask_path is not None:
+        mask, apix = load_map(mask_path)
+        mask = (mask > 0.5).astype(bool)
+        if invert:
+            mask = np.logical_not(mask)
+
 
     bfactor_correlation_with_distance = {}
     for r in tqdm(np.linspace(min_radius,max_radius,num_steps), total=num_steps, desc="Finding neighborhood bfactor correlation"):
@@ -541,6 +563,9 @@ def neighborhood_bfactor_correlation(input_pdb, min_radius=1, max_radius=10, num
         atomic_position_list = []
         for cra in model.all():
             atom = cra.atom
+            if mask_path is not None:
+                if not check_if_atomic_position_in_mask(atom.pos, mask, apix):
+                    continue
             atomic_biso = atom.b_iso
             neighbors = ns_pseudo.find_atoms(atom.pos, '\0', radius=r)
             neigbor_atoms = [x.to_cra(model).atom for x in neighbors]
