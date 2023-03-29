@@ -123,7 +123,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
                  "Filter cutoff: "+str(filter_cutoff))
     
         
-    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc, binarise_map
     from locscale.include.emmer.ndimage.filter import get_cosine_mask
     
     current_directory = os.getcwd()
@@ -147,10 +147,10 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
 
     if averaging_filter_size > 1:
         tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
-        #fdr_mask = (fdr_mask > 0.99).astype(np.int_)
+        fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
         fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
-        fdr_mask = (fdr_mask > 0.5).astype(np.int_)
-        fdr_mask = get_cosine_mask(fdr_mask, 5)
+        
+
     save_as_mrc(fdr_mask, output_filename=mask_path, 
                 apix=voxel_size_record.tolist(), origin=0)
     
@@ -510,7 +510,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     refmac_output = run(servalcat_command, stdout=servalcat_log_file)
     refined_model_path = output_prefix+".pdb"
-    bfactors = get_bfactors(in_model_path=refined_model_path)
+    bfactors = get_bfactors(refined_model_path)
 
     refined_model_path = os.path.join(processing_files_directory, os.path.basename(refined_model_path))
     

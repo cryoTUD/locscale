@@ -460,14 +460,14 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
 
     mask, apix = load_map(mask_path)
     # Get the difference mask 
-    difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = 0.99, \
+    difference_mask = find_unmodelled_mask_region(fdr_mask_path = mask_path, pdb_path = pdb_path, fdr_threshold = mask_threshold, \
         atomic_mask_threshold = 0.5, averaging_window_size = averaging_window, fsc_resolution = fsc_resolution)
     
     difference_mask_path_filename = mask_path[:-4] + "_difference_mask.mrc"
     difference_mask_path = os.path.join(os.path.dirname(mask_path), difference_mask_path_filename)
     save_as_mrc(difference_mask, difference_mask_path, apix)
 
-    num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=0.5, verbose=False)
+    num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=mask_threshold, verbose=False)
     pdb_filename = os.path.basename(pdb_path)
     print("Adding {} pseudoatoms to {}".format(num_atoms, pdb_filename))
 

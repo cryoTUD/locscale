@@ -565,7 +565,7 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     Finds the unmodelled regions in the input pdb file.
     """
     from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
-    from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.ndimage.map_utils import load_map, binarise_map
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     import os
     from scipy.ndimage import uniform_filter
@@ -584,8 +584,8 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     # Binarise 
     # Binarise the atomic model mask and FDR confidence mask at X threshold 
     
-    atomic_model_mask_binarised = (atomic_mask >= atomic_mask_threshold).astype(np.int_)
-    fdr_mask_binarised = (fdr_mask >= fdr_threshold).astype(np.int_)
+    atomic_model_mask_binarised = binarise_map(atomic_mask, atomic_mask_threshold, return_type='int', threshold_type='gteq')
+    fdr_mask_binarised = binarise_map(fdr_mask, fdr_threshold, return_type='int', threshold_type='gteq')
 
     # Compute the difference 
     difference_mask = fdr_mask_binarised - atomic_model_mask_binarised

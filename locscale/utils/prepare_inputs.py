@@ -181,10 +181,10 @@ def prepare_mask_and_maps_for_scaling(args):
     ## No element of the mask should be negative
     assert (parsed_inputs_dict['mask']>=0).any(), "Negative numbers found in mask"
     
-    # Dump the parsed inputs to a pickle file in the input folder
-    import pickle
-    with open(os.path.join(parsed_inputs_dict['processing_files_folder'], 'parsed_inputs.pickle'), 'wb') as f:
-        pickle.dump(parsed_inputs_dict, f)
+    # # Dump the parsed inputs to a pickle file in the input folder
+    # import pickle
+    # with open(os.path.join(parsed_inputs_dict['processing_files_folder'], 'parsed_inputs.pickle'), 'wb') as f:
+    #     pickle.dump(parsed_inputs_dict, f)
         
     return parsed_inputs_dict
 
@@ -193,6 +193,7 @@ def prepare_mask_from_inputs(parsed_inputs):
     from locscale.utils.math_tools import round_up_to_even
     from locscale.utils.general import get_spherical_mask
     from locscale.preprocessing.headers import run_FDR, check_axis_order
+    from locscale.include.emmer.ndimage.map_utils import binarise_map
     if parsed_inputs["mask"] is None:
         if parsed_inputs["verbose"]:
             tabbed_print.tprint("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
@@ -214,14 +215,15 @@ def prepare_mask_from_inputs(parsed_inputs):
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
-            xyz_mask = (xyz_mask > 0.99).astype(np.int8)
+            xyz_mask = binarise_map(xyz_mask, 0.5, return_type='int', threshold_type='gteq')
         else:
             xyz_mask = get_spherical_mask(parsed_inputs["xyz_emmap"].shape)
     else:
         mask_path = parsed_inputs["mask"]
+        mask_threshold = parsed_inputs["mask_threshold"]
         xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = load_map(xyz_mask_path)[0]
-        xyz_mask = (xyz_mask > 0.99).astype(np.int8)
+        xyz_mask = binarise_map(xyz_mask, mask_threshold, return_type='int', threshold_type='gteq')
     
 
     return xyz_mask, xyz_mask_path
@@ -271,6 +273,7 @@ def get_modmap_from_inputs(parsed_inputs):
             'refmac5_path': parsed_inputs["refmac5_path"],
             'complete_model':parsed_inputs["complete_model"],
             'averaging_window':parsed_inputs["averaging_window"],
+            'mask_threshold':parsed_inputs["mask_threshold"],
         }
 
         if parsed_inputs["halfmap_paths"] is not None:

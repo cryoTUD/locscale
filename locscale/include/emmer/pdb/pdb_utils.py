@@ -290,12 +290,12 @@ def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True, ret
         return np.mean(atomic_distance)
 
 def check_mrc_indexing(input_mask, threshold=0.9):
-    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input, binarise_map
     from locscale.include.emmer.ndimage.map_utils import get_all_voxels_inside_mask
 
     mask_data = parse_input(input_mask)
     
-    binary_mask = (mask_data>=threshold).astype(np.int_)
+    binary_mask = binarise_map(mask_data, threshold, return_type='int', threshold_type='gteq')
     
     zero_data = np.zeros(mask_data.shape)
     voxels_inside_mask = set([tuple(x) for x in get_all_voxels_inside_mask(mask_input=mask_data, mask_threshold=threshold)])  ## ZYX format
@@ -409,7 +409,7 @@ def pick_random_point_within_range_kdtree(center_atom, list_of_points_in_mask, r
     
 def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True, masking="strict", threshold=0.5):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
-    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input, binarise_map
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions, set_all_atomic_positions
     from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
     from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
@@ -426,7 +426,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     else:
         mask = parse_input(mask_path)
     
-    outside_mask = np.logical_not(mask>=threshold)
+    outside_mask = np.logical_not(binarise_map(mask, threshold=threshold))
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
     
     
@@ -453,7 +453,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     
     shaken_mrc_position_list = [tuple(x) for x in convert_pdb_to_mrc_position(shaken_atomic_position, apix)]  ## ZYX
     
-    binarised_mask = (mask>=threshold).astype(np.int_)
+    binarised_mask = binarise_map(mask, threshold=threshold)
     mrc_point_map = get_atomic_point_map(shaken_mrc_position_list, binarised_mask.shape)
     available_voxels = get_all_voxels_inside_mask(binarised_mask - mrc_point_map, 1)  
        
@@ -516,7 +516,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
 
 def test_pdb_within_mask(input_pdb, mask_path, mask_threshold):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
-    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position, binarise_map
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
     import mrcfile
 
@@ -524,7 +524,7 @@ def test_pdb_within_mask(input_pdb, mask_path, mask_threshold):
     mask_data = mrcfile.open(mask_path).data
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
         
-    binarised_mask = (mask_data>=mask_threshold).astype(np.int_)
+    binarised_mask = binarise_map(mask_data, mask_threshold)
     
     pdb_positions = get_all_atomic_positions(st)
     mrc_positions = convert_pdb_to_mrc_position(pdb_positions, apix)

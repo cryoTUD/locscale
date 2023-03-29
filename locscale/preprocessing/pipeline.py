@@ -49,6 +49,7 @@ def get_modmap(modmap_args):
     #Cref = modmap_args['Cref']
     complete_model = modmap_args['complete_model']
     averaging_window = modmap_args['averaging_window']
+    mask_threshold = modmap_args['mask_threshold']
 
     if verbose:
         print("."*80)
@@ -83,7 +84,7 @@ def get_modmap(modmap_args):
     # Stage 1: Check the required number of atoms for the pseudomodel
     ###########################################################################
     if molecular_weight is None:
-        num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=False)
+        num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=False, edge_threshold=mask_threshold)
     else:
         avg_mass_per_atom = 13.14  #amu
         num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
@@ -105,7 +106,7 @@ def get_modmap(modmap_args):
         if verbose:
             print("."*80)
             print("You have not entered a PDB path, running pseudo-atomic model generator!")
-        input_pdb_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=0.5, num_atoms=num_atoms, 
+        input_pdb_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=mask_threshold, num_atoms=num_atoms, 
                                    method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
@@ -117,8 +118,10 @@ def get_modmap(modmap_args):
             if verbose:
                 print("."*80)
                 print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
-            integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
-                averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=pam_iteration, mask_threshold=0.5, fsc_resolution=fsc_resolution, \
+            integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(
+                pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
+                averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=pam_iteration, \
+                mask_threshold=mask_threshold, fsc_resolution=fsc_resolution, \
                 return_chain_counts=True, return_difference_mask=True) 
 
             input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
@@ -199,7 +202,7 @@ def get_modmap(modmap_args):
             
                 
             shifted_bfactors_structure, shift_value = shift_bfactors_by_probability(
-                                        input_pdb=refined_model_path, probability_threshold=0.01, minimum_bfactor=20)
+                                        input_pdb=refined_model_path, probability_threshold=0.01, minimum_bfactor=0)
             if verbose:
                 tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is 20 (default)")
                 tabbed_print.tprint("Shifted B-factor by {}".format(shift_value))
