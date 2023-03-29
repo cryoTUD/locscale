@@ -293,6 +293,20 @@ def is_input_path_valid(list_of_test_paths):
     is_test_path_valid = True
     return is_test_path_valid
 
+def simple_test_model_to_map_fit(args):
+    '''
+    Test the model to map fit
+    '''
+    from locscale.include.emmer.pdb.fitting_tools import compute_model_to_map_correlation
+    unsharpened_emmap_path, _  = get_emmap_path_from_args(args)
+    model_path = args.model_coordinates
+
+    correlation = compute_model_to_map_correlation(emmap_path=unsharpened_emmap_path, pdb_path=model_path)
+
+    return correlation
+
+
+
 def check_user_input(args):
     '''
     Check user inputs for errors and conflicts
@@ -364,7 +378,14 @@ def check_user_input(args):
             raise UserWarning("You have not provided a Model Map or Model Coordinates. To use REFMAC refinement, resolution target is necessary. \
                               Please provide a target resolution using -res or --ref_resolution")
                             
-    
+    if model_coordinates_present:
+        # Check the model to map fit
+        correlation = simple_test_model_to_map_fit(args)
+        correlation_threshold = 0.3
+        if correlation < correlation_threshold:
+            print(f"Warning: The model to map correlation is {correlation:.2f}. This is below the threshold of {correlation_threshold}")
+        
+
     if model_coordinates_present and model_map_absent:
         if args.skip_refine:
             print("You have asked to skip REFMAC refinement. Atomic bfactors from the input model will be used for simulating Model Map")

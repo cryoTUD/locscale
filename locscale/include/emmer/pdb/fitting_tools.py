@@ -106,6 +106,21 @@ def check_pdb_fit_with_map(pdb_path, emmap_path):
 
     
 
+def compute_model_to_map_correlation(pdb_path, emmap_path):
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask, compute_real_space_correlation
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input, pdb2map
+
+    atomic_model_mask = get_atomic_model_mask(emmap_path=emmap_path, pdb_path=pdb_path, save_files=False)
+    atomic_mask_binarised = (atomic_model_mask > 0.5).astype(bool)
+    emmap, apix = load_map(emmap_path)
+
+    simmap = pdb2map(pdb_path, apix=apix, size=emmap.shape)
+
+    # compute the correlation
+    rscc = compute_real_space_correlation(emmap[atomic_mask_binarised], simmap[atomic_mask_binarised])
+
+    return rscc
 
 
 
