@@ -36,7 +36,8 @@ def calculate_surface_area(binary_data, spacing, origin):
     return surface_area
 
 def calculate_surface_area_at_threshold(emmap, apix, reference_threshold):
-    binarised_emmap = (emmap>=reference_threshold).astype(np.int_)
+    from locscale.include.emmer.ndimage.map_utils import binarise_map
+    binarised_emmap = binarise_map(emmap, reference_threshold, return_type='int', threshold_type="gteq")
     surface_area = mesh_surface_area(binarised_emmap, 0.9999999, apix)
     return surface_area
 
