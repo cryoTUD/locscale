@@ -313,7 +313,9 @@ def is_pseudomodel(input_pdb_path):
     else:
         return False
     
-def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, hybrid_model_refinement=False, final_chain_counts=None):
+def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, \
+                            refmac5_path=None, verbose=True, hybrid_model_refinement=False, \
+                            final_chain_counts=None, cif_info=None):
     import os
     from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
@@ -329,7 +331,7 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
         servalcat_refined_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
             num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
-            refmac5_path=refmac5_path, verbose=verbose)
+            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info)
         
         return servalcat_refined_path
         
@@ -420,7 +422,9 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
         
         return gemmi_st
         
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, \
+                         refmac5_path=None, verbose=True, initialise_bfactors=True, \
+                         hybrid_model_refinement=False, cif_info=None):
     '''
     Function to run Refmac to refine the model and generate a new model with refined B-factors.
 
@@ -490,6 +494,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     servalcat_command += ["--hydrogen","no"]
     servalcat_command += ["--no_mask"]
     
+    if cif_info is not None:
+        servalcat_command += ["--ligand",cif_info]
     use_unrestrained_refinement = pseudomodel_refinement and not hybrid_model_refinement 
        
     if use_unrestrained_refinement:

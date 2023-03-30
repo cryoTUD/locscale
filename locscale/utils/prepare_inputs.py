@@ -274,6 +274,7 @@ def get_modmap_from_inputs(parsed_inputs):
             'complete_model':parsed_inputs["complete_model"],
             'averaging_window':parsed_inputs["averaging_window"],
             'mask_threshold':parsed_inputs["mask_threshold"],
+            'cif_info':parsed_inputs["cif_info"],
         }
 
         if parsed_inputs["halfmap_paths"] is not None:

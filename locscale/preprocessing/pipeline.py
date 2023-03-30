@@ -50,6 +50,7 @@ def get_modmap(modmap_args):
     complete_model = modmap_args['complete_model']
     averaging_window = modmap_args['averaging_window']
     mask_threshold = modmap_args['mask_threshold']
+    cif_info = modmap_args['cif_info']
 
     if verbose:
         print("."*80)
@@ -174,8 +175,9 @@ def get_modmap(modmap_args):
             target_map = halfmap_paths
         nyquist_resolution = 2*apix + 0.1
         refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=target_map,\
-                    pseudomodel_refinement=pseudomodel_refinement, resolution=nyquist_resolution, num_iter=refmac_iter,
-                    refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, final_chain_counts=final_chain_counts)
+                    pseudomodel_refinement=pseudomodel_refinement, resolution=nyquist_resolution, num_iter=refmac_iter,\
+                    refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, \
+                    final_chain_counts=final_chain_counts, cif_info=cif_info)
         
         if refined_model_path is None:
             tabbed_print.tprint("Problem running servalcat. Returning None")
