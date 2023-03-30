@@ -51,6 +51,7 @@ locscale_parser.add_argument('-p', '--apix', type=float, help='pixel size in Ang
 locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=20)
 locscale_parser.add_argument('--refmac5_path', type=str, help='Path to refmac5 executable', default=None)
 locscale_parser.add_argument('--cref_pickle', type=str, help='Path for Cref filter for the target map of bfactor refinement', default=None)
+locscale_parser.add_argument('-cif_info','--cif_info', type=str, help='Path to provide restrain information for refining the atomic model', default=None)
 
 
 ## Model map parameters
