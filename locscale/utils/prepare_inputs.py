@@ -74,7 +74,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("."*80)
         print("Preparing mask \n")
     
-    parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"] = prepare_mask_from_inputs(parsed_inputs)
+    parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"], parsed_inputs["mask_path_raw"] = prepare_mask_from_inputs(parsed_inputs)
     
     
     #############################################################################
@@ -210,8 +210,9 @@ def prepare_mask_from_inputs(parsed_inputs):
         else:
             filter_cutoff = None
             
-        mask_path = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
+        mask_path, mask_path_raw = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
         xyz_mask_path = check_axis_order(mask_path)
+                
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
@@ -223,9 +224,9 @@ def prepare_mask_from_inputs(parsed_inputs):
         xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = load_map(xyz_mask_path)[0]
         xyz_mask = binarise_map(xyz_mask,0.5, return_type='int', threshold_type='gteq') # For scaling mask, threshold is always 0.5
-    
+        mask_path_raw = mask_path
 
-    return xyz_mask, xyz_mask_path
+    return xyz_mask, xyz_mask_path, mask_path_raw
 
 def get_modmap_from_inputs(parsed_inputs):
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
@@ -253,9 +254,10 @@ def get_modmap_from_inputs(parsed_inputs):
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
         #############################################################################
         
+        # Raw mask refers to the FDR mask without any averaging filter applied this is used for estimating num_atoms
         modmap_args = {
             'emmap_path': parsed_inputs["xyz_emmap_path"],
-            'mask_path': parsed_inputs["xyz_mask_path"],
+            'mask_path_raw': parsed_inputs["mask_path_raw"], 
             'pdb_path':pdb_path,
             'pseudomodel_method': parsed_inputs["pseudomodel_method"],
             'pam_distance': parsed_inputs["distance"],
