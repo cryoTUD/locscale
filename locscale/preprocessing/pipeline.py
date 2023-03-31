@@ -31,7 +31,7 @@ def get_modmap(modmap_args):
     
     emmap_path = modmap_args['emmap_path']
     halfmap_paths = modmap_args['halfmap_paths']
-    mask_path = modmap_args['mask_path']
+    mask_path = modmap_args['mask_path_raw']
     pdb_path = modmap_args['pdb_path']
     pseudomodel_method = modmap_args['pseudomodel_method']
     pam_distance = modmap_args['pam_distance']

@@ -142,9 +142,9 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
     
     emmap_path_without_ext = emmap_path[:-4]
     mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
-    
+    mask_path_raw = emmap_path_without_ext + "_confidenceMap_raw.mrc"
     # Apply averaging filter to the mask
-
+    save_as_mrc(fdr_mask, output_filename=mask_path.replace(".mrc","_raw.mrc"), apix=voxel_size_record.tolist(), origin=0)
     if averaging_filter_size > 1:
         tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
         #fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
@@ -153,16 +153,16 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
         #fdr_mask = get_cosine_mask(fdr_mask, 3)
         
 
-    save_as_mrc(fdr_mask, output_filename=mask_path, 
-                apix=voxel_size_record.tolist(), origin=0)
+        
+    save_as_mrc(fdr_mask, output_filename=mask_path, apix=voxel_size_record.tolist(), origin=0)
     
     os.chdir(current_directory)
-    if os.path.exists(mask_path):
+    if os.path.exists(mask_path) and os.path.exists(mask_path_raw) :
         if verbose:
             tprint("FDR Procedure completed. \n"+
                     "Mask path: "+mask_path+"\n")
         
-        return mask_path
+        return mask_path , mask_path_raw
     else:
         tprint("FDR process failed. Returning none")
         return None
