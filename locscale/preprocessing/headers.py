@@ -351,8 +351,9 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 initialise_bfactors = False
             
             servalcat_refined_once_path = run_refmac_servalcat(
-                model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,
-                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, hybrid_model_refinement=hybrid_model_refinement)
+                model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,\
+                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, \
+                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
             
             servalcat_refinement_next_cycle_path = os.path.join(
                 os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
