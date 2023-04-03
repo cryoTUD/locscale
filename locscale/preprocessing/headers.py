@@ -696,7 +696,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     ## Simulate a reference map from the input atomic model in the pdb_structure variable
     
     refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
-                                          return_grid=True, align_output=True, verbose=False, set_refmac_blur=True, blur=add_blur)
+                                          return_grid=True, align_output=True, verbose=verbose, set_refmac_blur=True, blur=add_blur)
     
 
     refmap_data_normalised = refmap_data
