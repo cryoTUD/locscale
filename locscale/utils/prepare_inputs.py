@@ -366,7 +366,7 @@ def get_scale_factor_arguments(parsed_inputs):
     from locscale.include.emmer.ndimage.map_tools import compute_radial_profile_simple
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, number_of_segments, estimate_bfactor_through_pwlf
 
-    wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["xyz_mask_path"], verbose=False)
+    wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["xyz_mask_path_raw"], verbose=False)
 
     if parsed_inputs["ref_resolution"] >= 6:
         high_frequency_cutoff = wilson_cutoff
