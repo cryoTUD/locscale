@@ -481,7 +481,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
-    servalcat_command = ["servalcat","refine_spa_norefmac","--model",servalcat_input,\
+    servalcat_command = ["servalcat","refine_spa","--model",servalcat_input,\
         "--resolution",str(round(resolution, 2)), "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
 
