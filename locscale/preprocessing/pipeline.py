@@ -202,11 +202,11 @@ def get_modmap(modmap_args):
         if not skip_refine:
 
             
-                
+            minimum_bfactor = 0    
             shifted_bfactors_structure, shift_value = shift_bfactors_by_probability(
-                                        input_pdb=refined_model_path, probability_threshold=0.01, minimum_bfactor=0)
+                                        input_pdb=refined_model_path, probability_threshold=0.01, minimum_bfactor=minimum_bfactor)
             if verbose:
-                tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is 20 (default)")
+                tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is {} (default)".format(minimum_bfactor))
                 tabbed_print.tprint("Shifted B-factor by {}".format(shift_value))
             shifted_model_path = refined_model_path[:-4] + '_shifted_bfactors.pdb'
             shifted_bfactors_structure.write_pdb(shifted_model_path)
