@@ -1,17 +1,22 @@
 from __future__ import division, absolute_import, print_function
-import setuptools
 from setuptools import find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from numpy.distutils.core import Extension, setup
 import unittest
 import pathlib
+
 locscale_path=pathlib.Path(__file__).parent.resolve()
 
 ex1 = Extension(name = 'fcodes_fast',
                 sources = ['locscale/include/symmetry_emda/fcodes_fast.f90'])
 
 long_description = (locscale_path / "README.md").read_text()
+
+def get_version():
+  version_text = (locscale_path / "locscale" / "__version__.py").read_text()
+  version = version_text.split("__")[3]
+  return version
 
 def locscale_test_suite():
   test_loader = unittest.TestLoader()
@@ -68,7 +73,7 @@ class PostInstallCommand(install):
 
 
 setup(name='locscale',
-    version='2.1.4',
+    version=get_version(),
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     project_urls={

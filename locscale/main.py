@@ -3,11 +3,11 @@ import sys
 from locscale.utils.startup_utils import print_start_banner, print_end_banner, print_arguments
 from locscale.utils.parse_utils import main_parser
 from datetime import datetime
+import locscale
 
-
-progname = os.path.basename(sys.argv[0])
+progname = 'locscale'
 author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft) \n\n'
-version = progname + '  2.0'
+version = locscale.__version__
 
 def launch_emmernet(args):
     from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
