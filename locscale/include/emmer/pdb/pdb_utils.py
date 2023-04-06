@@ -346,7 +346,7 @@ def get_atomic_point_map(mrc_positions, mask_shape):
     # mrc_positions is a list of positions in mrc format
     # mask_shape is the shape of the mask
     # returns a map of the atomic positions in the mask equal to 1
-
+    mrc_positions = np.array(mrc_positions)
     atomic_point_map = np.zeros(mask_shape)
     atomic_point_map[mrc_positions[:,0], mrc_positions[:,1], mrc_positions[:,2]] = 1
     return atomic_point_map
@@ -451,7 +451,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     
     shaken_atomic_position= shaken_atomic_position_native.copy()
     
-    shaken_mrc_position_list = [tuple(x) for x in convert_pdb_to_mrc_position(shaken_atomic_position, apix)]  ## ZYX
+    shaken_mrc_position_list = convert_pdb_to_mrc_position(shaken_atomic_position, apix)  ## ZYX
     
     binarised_mask = binarise_map(mask, threshold=threshold)
     mrc_point_map = get_atomic_point_map(shaken_mrc_position_list, binarised_mask.shape)
