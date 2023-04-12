@@ -37,7 +37,6 @@ def launch_emmernet(args):
 
 def launch_locscale(args):
     from locscale.utils.startup_utils import launch_locscale_no_mpi, launch_locscale_mpi
-
     if args.mpi:
         launch_locscale_mpi(args)
     else:
