@@ -1,6 +1,8 @@
 import os
 import pyfiglet
 from datetime import datetime
+import sys
+import locscale 
 
 def print_arguments(args):
     print("."*80)
@@ -27,7 +29,7 @@ def print_start_banner(start_time, text="Map Sharpening"):
     if text == "LocScale":
         author_list = ["Arjen J. Jakobi (TU Delft)", "Alok Bharadwaj (TU Delft)"]
         contributor_list = ["Carsten Sachse (EMBL)"]
-        version = "2.0"
+        version = locscale.__version__
     elif text == "EMmerNet":
         author_list = ["Arjen J. Jakobi (TU Delft)",  "Alok Bharadwaj (TU Delft)", "Reinier de Bruin (TU Delft)"]
         contributor_list = None
