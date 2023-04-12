@@ -6,7 +6,7 @@ from datetime import datetime
 import locscale
 
 progname = 'locscale'
-author = '\n\nAuthors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft) \n\n'
+author = 'Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)'
 version = locscale.__version__
 
 def launch_emmernet(args):
@@ -58,7 +58,11 @@ def main():
         launch_locscale(main_args)
     elif launch_command == "test":
         test_everything()
-    
+    elif launch_command == "version":
+        print("LocScale")
+        print("Version: ", version)
+        print(author)
+        print("Python version: ", sys.version)    
 
 if __name__ == '__main__':
     main()
