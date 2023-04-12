@@ -1,6 +1,7 @@
 
 ## PLOT FUNCTIONS
 import numpy as np
+import os
 
 def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
     from matplotlib.offsetbox import AnchoredText
@@ -113,7 +114,7 @@ class tab_print():
 def print_input_arguments(args):
     import matplotlib.pyplot as plt
     
-    fig, ax =plt.subplots(figsize=(16,16))
+    fig, ax =plt.subplots()
     
     ax.axis('off')
     
@@ -125,9 +126,13 @@ def print_input_arguments(args):
         if arg in path_arguments and val is not None:
             full_path = val
             filename = full_path.split("/")[-1]
-            text.append([arg, filename])
+            text.append([arg, os.path.basename(filename)])
         else:
-            text.append([arg, val])
+            # if value is a numpy array or a list, just skip it
+            if type(val) == list or type(val) == np.ndarray:
+                continue
+            else:
+                text.append([arg, str(val)])
     
     
     table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
