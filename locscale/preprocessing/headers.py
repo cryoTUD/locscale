@@ -363,19 +363,19 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
             window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
         
-        tprint("Setting the element composition of the model to match a typical protein composition")
-        tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
+        # tprint("Setting the element composition of the model to match a typical protein composition")
+        # tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
 
-        if hybrid_model_refinement:
-            starting_chain_count = final_chain_counts[0]
-        else:
-            starting_chain_count = None
+        # if hybrid_model_refinement:
+        #     starting_chain_count = final_chain_counts[0]
+        # else:
+        #     starting_chain_count = None
             
-        proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
-        proper_element_composition_structure.write_pdb(proper_element_composition_filename)
+        # proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
+        # proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
+        # proper_element_composition_structure.write_pdb(proper_element_composition_filename)
         
-        return proper_element_composition_filename
+        return servalcat_refinement_next_cycle_path
         
 def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percentage=0.17, oxygen_percentage=0.2, starting_chain_count=None):
     '''
