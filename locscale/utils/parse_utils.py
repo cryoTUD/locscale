@@ -15,6 +15,7 @@ description="".join(description))
 sub_parser = main_parser.add_subparsers(dest='command')
 locscale_parser = sub_parser.add_parser('run_locscale', help='Run LocScale')
 emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMMERNET')
+version_parser = sub_parser.add_parser('version', help='Print version')
 test_parser = sub_parser.add_parser('test', help='Run tests')
 
 # **************************************************************************************
