@@ -234,28 +234,30 @@ class Model:
     
     def add_atom(self,model, chain_num, res_num, atom_num, pseudoAtom):
          
-         if pseudoAtom.pdb_position.magnitude() == 0:
-              position = pseudoAtom.position.get()
-         else:
-              position = pseudoAtom.pdb_position.get()
-         atom = gemmi.Atom()
-         atom.element = gemmi.Element('O')
-         atom.pos = gemmi.Position(position[0],position[1],position[2])
-         atom.b_iso = pseudoAtom.bfactor
-         atom.occ = pseudoAtom.occ
-         atom.name = "O"
-         
-         model[chain_num][res_num].add_atom(atom,atom_num)
-         
-         return model
+        if pseudoAtom.pdb_position.magnitude() == 0:
+            position = pseudoAtom.position.get()
+        else:
+            position = pseudoAtom.pdb_position.get()
+        atom = gemmi.Atom()
+        element_choice = np.random.choice(["C","O","N"], p=[0.63,0.2,0.17])
+        atom.element = gemmi.Element(element_choice)
+        atom.pos = gemmi.Position(position[0],position[1],position[2])
+        atom.b_iso = pseudoAtom.bfactor
+        atom.occ = pseudoAtom.occ
+        atom.name = element_choice
+        
+        model[chain_num][res_num].add_atom(atom,atom_num)
+        
+        return model
         
              
     def add_residue(self,model, chain_num, res_num):
-         model[chain_num].add_residue(gemmi.Residue(),res_num)
-         model[chain_num][res_num].name = 'HOH'
-         model[chain_num][res_num].seqid.num = res_num
-     
-         return model
+        model[chain_num].add_residue(gemmi.Residue(),res_num)
+        amino_acid_residues = ['TYR','THR','SER','PRO','PHE','MET','LEU','ILE','HIS','GLY','GLU','GLN','ASP','ASN','ALA','ARG','TRP','CYS']
+        model[chain_num][res_num].name = np.random.choice(amino_acid_residues)
+        model[chain_num][res_num].seqid.num = res_num
+    
+        return model
 
     def update_unitcell(self,apix,unitcell=None):
         from locscale.include.emmer.pdb.pdb_tools import get_unit_cell_estimate
@@ -269,18 +271,18 @@ class Model:
         self.apix = apix
 
     def write_pdb(self,output_string,apix,unitcell=None):
-          self.update_unitcell(apix,unitcell)
-          self.update_pdb_positions(apix)
-          gemmi_model = self.convert_to_gemmi_model()
-          
-          structure = gemmi.Structure()
-          structure.add_model(gemmi_model)
-          structure.cell = self.unitcell
-          structure.write_pdb(output_string)
-          
+        self.update_unitcell(apix,unitcell)
+        self.update_pdb_positions(apix)
+        gemmi_model = self.convert_to_gemmi_model()
+        
+        structure = gemmi.Structure()
+        structure.add_model(gemmi_model)
+        structure.cell = self.unitcell
+        structure.write_pdb(output_string)
+        
     def update_pdb_positions(self,apix=1):
-         for atom in self.list:
-              atom.pdb_position = atom.position.scale(apix)
+        for atom in self.list:
+            atom.pdb_position = atom.position.scale(apix)
 
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     from locscale.preprocessing.pseudomodel_classes import Atom

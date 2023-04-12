@@ -109,12 +109,13 @@ def get_modmap(modmap_args):
             print("You have not entered a PDB path, running pseudo-atomic model generator!")
         input_pdb_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=mask_threshold, num_atoms=num_atoms, 
                                    method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
+        pseudomodel_refinement = True
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
         final_chain_counts = None
     else:
-        
+        pseudomodel_refinement = False
         if complete_model:
             if verbose:
                 print("."*80)
@@ -136,10 +137,6 @@ def get_modmap(modmap_args):
     ###########################################################################
     # Stage 2: Refine the reference model usign servalcat
     ###########################################################################
-    if is_pseudomodel(input_pdb_path):
-        pseudomodel_refinement = True
-    else:
-        pseudomodel_refinement = False
             
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
