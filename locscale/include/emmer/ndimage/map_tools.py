@@ -74,7 +74,7 @@ def get_center_of_mass(emmap_data, apix):
     
     return com_real
     
-def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
+def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename, fsc_filter=False):
     '''
     Function to add two half maps
 
@@ -99,8 +99,10 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
        full_map = (halfmap1 + halfmap2)/2
        full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
-       full_header = mrcfile.open(halfmap_1_path).header
-       #print(full_voxel_size)
+       if fsc_filter:
+           from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
+           full_map = apply_fsc_filter(full_map, apix=full_voxel_size, halfmap_1 = halfmap1, halfmap_2 = halfmap2)[0]
+        
        save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
        return output_filename
