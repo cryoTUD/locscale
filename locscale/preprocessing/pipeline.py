@@ -192,8 +192,8 @@ def get_modmap(modmap_args):
             ## If range of bfactors is too small then warn the user
             if max(bfactors)-min(bfactors) < 10:
                 tabbed_print.tprint("Warning: The range of B-factors in the refined model is too small. Please check the model.")
-                tabbed_print.tprint("Consider increasing the bfactor of the target map for refinement using the --add_blur option")
-                tabbed_print.tprint("Current value used for add_blur = {}".format(add_blur))
+                #tabbed_print.tprint("Consider increasing the bfactor of the target map for refinement using the --add_blur option") # Not required 
+                #tabbed_print.tprint("Current value used for add_blur = {}".format(add_blur))
         
         ## Now shift the refined bfactors to sharpen the emmap if required
         if not skip_refine:
