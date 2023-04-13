@@ -4,7 +4,6 @@ Created on Wed Jul 14 10:06:12 2021
 """
 
 import numpy as np
-import pypdb
 import gemmi
 from locscale.include.emmer.pdb.pdb_tools import get_unit_cell_estimate, set_to_center_of_unit_cell
 from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
@@ -177,7 +176,7 @@ def pdb2map(input_pdb=None, unitcell=None, size=None, apix=None, return_grid=Fal
     if set_refmac_blur:
         if verbose:
             print("Applying a unblur for the sampled density equal to: {:.2f}".format(-inv_d2))
-        emmap = sharpen_maps(emmap, apix=apix_gemmi[0], global_bfactor=-inv_d2)
+        emmap = sharpen_maps(emmap, apix=apix_gemmi[0], global_bfactor=inv_d2)
         
     
     if align_output:

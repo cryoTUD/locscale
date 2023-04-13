@@ -73,13 +73,13 @@ def calculateConfidenceMap(em_map, apix, noiseBox, testProc, ecdf, lowPassFilter
 		pp = mapUtil.makeDiagnosticPlot(em_map, wn, False, boxCoord);
 		print(
 			"Generating diagnostic plot of noise estimation. Please have a look in 'diag_image.pdf' that the molecule does not fall into the region used for background noise estimation.");
-		pp.savefig("diag_image.pdf");
+		pp.savefig("diag_image.png");
 		pp.close();
 	else:
 		pp = mapUtil.makeDiagnosticPlot(em_map, wn, True, boxCoord);
 		print(
 			"Generating diagnostic plot of noise estimation. Please have a look in 'diag_image.pdf' that the molecule does not fall into the region used for background noise estimation.");
-		pp.savefig("diag_image.pdf");
+		pp.savefig("diag_image.png");
 		pp.close();
 
 

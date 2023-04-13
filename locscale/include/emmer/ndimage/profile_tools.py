@@ -605,7 +605,7 @@ def crop_profile_between_frequency(freq, amplitude, start_cutoff, end_cutoff):
     
     return crop_freq, crop_amplitude
     
-def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=None):
+def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, return_all=True, num_segments=None, standard_notation=True):
     '''
     Function to automatically find out linear region in a given radial profile 
 
@@ -638,7 +638,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
             
     if num_segments < 2:
         print("Number of segments = 1 using standard method of evaluating bfactor")
-        bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True)
+        bfactor, amplitude_zero_freq = estimate_bfactor_standard(freq, amplitudes, wilson_cutoff, fsc_cutoff, return_amplitude=True, standard_notation=standard_notation)
         piecewise_linfit = amplitude_zero_freq * np.exp(0.25 * bfactor * freq**2)
         z = [(1/wilson_cutoff)**2, (1/fsc_cutoff)**2]
         slopes = [bfactor / 4]
@@ -668,6 +668,11 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
             slopes = piecewise_linfit.calc_slopes()
         
         bfactor = slopes[-1] * 4
+
+        if standard_notation:
+            bfactor = -1 * bfactor
+        else:
+            bfactor = bfactor
         
         
         amplitude_zero_freq = piecewise_linfit.predict(0)

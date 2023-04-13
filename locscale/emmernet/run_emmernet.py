@@ -3,8 +3,11 @@
 
 from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
 from locscale.emmernet.emmernet_functions import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
+from locscale.emmernet.utils import compute_local_phase_correlations, plot_phase_correlations
+
 import numpy as np
 import os
+from tqdm import tqdm
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 
@@ -28,6 +31,13 @@ def run_emmernet(input_dictionary):
     gpu_ids = input_dictionary["gpu_ids"]
     verbose = input_dictionary["verbose"]
     emmernet_model_folder = input_dictionary["emmernet_model_folder"]
+    target_map_path = input_dictionary["target_map_path"]
+    if target_map_path is not None:
+        target_map, _ = load_map(target_map_path)
+        target_map_present = True
+    else:
+        target_map_present = False
+    
 
     emmap, apix = load_map(emmap_path)
     input_map_shape = emmap.shape
@@ -41,12 +51,17 @@ def run_emmernet(input_dictionary):
     ## Preprocess
 
     emmap_preprocessed = preprocess_map(emmap, apix)
+    if target_map_present:
+        target_map_preprocessed = preprocess_map(target_map, apix)
     if verbose:
         print("\tPreprocessing complete")
         print("\tPre-processed map shape: {}".format(emmap_preprocessed.shape))
         print("2) Prediction commencing...")
 
     cubes, cubecenters = get_cubes(emmap_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride)
+    if target_map_present:
+        target_cubes, _ = get_cubes(target_map_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride)
+        
     if verbose:
         print("\tCubes extracted")
         print("\tNumber of cubes: {}".format(len(cubes)))
@@ -65,6 +80,8 @@ def run_emmernet(input_dictionary):
         print("This may take a while...")
         mirrored_strategy = tf.distribute.MirroredStrategy()
     else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+        print("Setting CUDA_VISIBLE_DEVICES to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
         if verbose:
             print("\tGPU ids: {}".format(gpu_id_list))
@@ -72,6 +89,14 @@ def run_emmernet(input_dictionary):
     
     predicted_cubes = run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size=batch_size)
 
+    if target_map_present:
+        # Compute phase correlations between predicted and target cubes
+        processing_files_folder = os.path.dirname(emmap_path)
+        phase_correlations, freq = compute_local_phase_correlations(target_cubes=target_cubes, predicted_cubes=predicted_cubes, apix=apix, temp_folder=processing_files_folder)
+        phase_correlations_fig_path = os.path.join(processing_files_folder, "phase_correlations.png")
+        fig = plot_phase_correlations(phase_correlations, freq)
+        fig.savefig(phase_correlations_fig_path)
+        
     if verbose:
         print("\tEMmerNet prediction complete")
         print("\tNumber of predicted cubes: {}".format(len(predicted_cubes)))
@@ -121,6 +146,10 @@ def load_emmernet_model(emmernet_type, emmernet_model_folder=None):
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MFfa.hdf5")
     elif emmernet_type == "ensemble":
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MBMF.hdf5")
+    elif emmernet_type == "hybrid":
+        emmernet_model_path = os.path.join(emmernet_folder_path, "epsilon_hybrid_model_4_final_epoch_15.hdf5")
+    elif emmernet_type == "model_based_no_freqaug":
+        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
     else:
         raise ValueError("Invalid emmernet_type")
     

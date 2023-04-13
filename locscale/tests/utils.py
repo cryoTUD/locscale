@@ -5,7 +5,7 @@ def download_test_data_from_url(download_folder):
     print("\nDownloading test data... \n")
     #url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
    # url_test_data = "https://surfdrive.surf.nl/files/index.php/s/lk9CdNO5gszFll1/download"
-    url_test_data = "https://data.4tu.nl/ndownloader/files/35988275/download=1"
+    url_test_data = "https://data.4tu.nl/file/ebf034e4-a348-4094-b03a-3c15c6eebd66/78f706b7-4a8b-4192-99dd-825ec1d9aaef"
     wget.download(url_test_data, download_folder, bar=None)
     
 

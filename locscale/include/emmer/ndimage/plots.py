@@ -8,6 +8,107 @@ Created on Tue Apr 19 13:53:12 2022
 
 import numpy as np
 
+def pretty_plot_radial_profile(freq,list_of_profiles_native, plot_type="make_log", \
+                                legends=None,figsize_cm=(14,8), fontsize=10,linewidth=1, \
+                                marker="o", markersize=5,font="Helvetica",fontscale=1, showlegend=True, showPoints=False, \
+                                alpha=1, variation=None, yticks=None, ylims=None, xlims=None, crop_freq=None, labelsize=None, title=None):
+    import matplotlib.pyplot as plt
+    from matplotlib.pyplot import cm
+    from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency
+    import seaborn as sns
+    import matplotlib 
+    matplotlib.rcParams['pdf.fonttype'] = 42
+    matplotlib.rcParams['ps.fonttype'] = 42
+    # set the global font size for the plot
+
+        
+    plt.rcParams.update({'font.size': fontsize})
+    figsize = (figsize_cm[0]/2.54, figsize_cm[1]/2.54) # convert cm to inches
+    
+    fig, ax1 = plt.subplots(figsize=figsize, dpi=600)  # DPI is fixed to 600 for publication quality
+    sns.set_theme(context="paper", font=font, font_scale=fontscale)
+    # Set font size for all text in the figure
+    sns.set_style("white")
+
+    
+    
+    # Crop frequencies if required
+    if crop_freq is not None:
+        cropped_frequency = crop_profile_between_frequency(freq, list_of_profiles_native[0], crop_freq[0], crop_freq[1])[0]
+        cropped_profiles = [crop_profile_between_frequency(freq, profile, crop_freq[0], crop_freq[1])[1] for profile in list_of_profiles_native]
+    else:
+        cropped_frequency = freq
+        cropped_profiles = list_of_profiles_native
+    
+    final_list_of_profiles = []
+
+    for profile in cropped_profiles:
+        if plot_type=="make_log":
+            profile = np.log(profile)
+            plot_frequency_axis = cropped_frequency**2
+        elif plot_type=="squared_amp":
+            profile = np.log(profile**2)
+            plot_frequency_axis = cropped_frequency**2
+        elif plot_type=="normalise":
+            profile = profile/profile.max()
+            plot_frequency_axis = cropped_frequency
+        else:
+            plot_frequency_axis = cropped_frequency        
+    
+        final_list_of_profiles.append(profile)
+        
+    
+    # Add labels to the plot
+    xlabel_top = r'Resolution, $d (\AA)$'
+    if plot_type=="normalise":
+        xlabel = r'Spatial Frequency, $d^{-1} (\AA^{-1})$'
+        ylabel = r'Normalised $ \langle \mid F \mid \rangle $'
+    elif plot_type=="squared_amp":
+        xlabel = r'Spatial Frequency, $d^{-2} (\AA^{-2})$'
+        ylabel = r'$ln  \langle \mid F \mid ^{2} \rangle $ '
+    elif plot_type=="make_log":
+        xlabel = r'Spatial Frequency, $d^{-2} (\AA^{-2})$'
+        ylabel = r'$ln  \langle \mid F \mid \rangle $'
+    else:
+        xlabel = r'Spatial Frequency, $d^{-1} (\AA^{-1})$'
+        ylabel = r'$ \langle \mid F \mid \rangle $'
+    # Map the colors
+    
+    colors = cm.rainbow(np.linspace(0,1,len(final_list_of_profiles)))
+    
+    ax1.grid(False)
+    ax2 = ax1.twiny()
+
+    for i, profile in enumerate(final_list_of_profiles):
+        if showPoints:
+            ax1.plot(plot_frequency_axis, profile, marker=marker, markersize=markersize, color=colors[i], alpha=alpha, \
+                        linewidth=linewidth, label=legends[i])
+        else:
+            ax1.plot(plot_frequency_axis, profile, color=colors[i], alpha=alpha, linewidth=linewidth, label=legends[i])
+                
+    ax2.set_xticks(ax1.get_xticks())
+    ax2.set_xbound(ax1.get_xbound())
+    ax2.set_xticklabels([round(1/np.sqrt(x),1) for x in ax1.get_xticks()])
+    #ax2.tick_params(axis="both", which="both", labelsize=labelsize)
+
+    if showlegend:
+        ax1.legend(loc="best")
+    ax1.set_xlabel(xlabel)#, fontsize=fontsize)
+    ax1.set_ylabel(ylabel)#, fontsize=fontsize)
+    #ax1.tick_params(axis="both", which="both", labelsize=labelsize)
+    ax2.set_xlabel(xlabel_top)#, fontsize=fontsize)
+    
+    if ylims is not None:
+        plt.ylim(ylims)
+    if yticks is not None:
+        plt.yticks(yticks)
+    if xlims is not None:
+        plt.xlim(xlims)
+
+    if title is not None:
+        plt.title(title)
+    plt.tight_layout()
+    return fig
 
 def plot_radial_profile(freq,list_of_profiles, squared_amplitudes=False, legends=None, normalise=False, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt

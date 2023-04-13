@@ -1,6 +1,7 @@
 
 ## PLOT FUNCTIONS
 import numpy as np
+import os
 
 def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
     from matplotlib.offsetbox import AnchoredText
@@ -113,7 +114,7 @@ class tab_print():
 def print_input_arguments(args):
     import matplotlib.pyplot as plt
     
-    fig, ax =plt.subplots(figsize=(16,16))
+    fig, ax =plt.subplots()
     
     ax.axis('off')
     
@@ -125,9 +126,13 @@ def print_input_arguments(args):
         if arg in path_arguments and val is not None:
             full_path = val
             filename = full_path.split("/")[-1]
-            text.append([arg, filename])
+            text.append([arg, os.path.basename(filename)])
         else:
-            text.append([arg, val])
+            # if value is a numpy array or a list, just skip it
+            if type(val) == list or type(val) == np.ndarray:
+                continue
+            else:
+                text.append([arg, str(val)])
     
     
     table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
@@ -137,16 +142,17 @@ def print_input_arguments(args):
     return fig
    
 def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path, mask_path, fsc_resolution):
-    from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution
+    from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution, get_bfactor_distribution_multiple
     import matplotlib.pyplot as plt
     import seaborn as sns
     
     fig, ax =plt.subplots(figsize=(8,8))
     
-    unsharped_emmap_dist = get_bfactor_distribution(unsharpened_emmap_path, mask_path, fsc_resolution)
-   
-    locscale_dist = get_bfactor_distribution(locscale_map_path, mask_path, fsc_resolution)
-    
+    bfactor_distributions = get_bfactor_distribution_multiple([unsharpened_emmap_path, locscale_map_path], mask_path, fsc_resolution, num_centers=2000, wilson_cutoff="standard")
+
+    unsharped_emmap_dist = list(bfactor_distributions.values())[0]
+    locscale_dist = list(bfactor_distributions.values())[1]
+       
     unsharpened_array = np.array([x[0] for x in unsharped_emmap_dist.values()])
     locscale_array = np.array([x[0] for x in locscale_dist.values()])
    

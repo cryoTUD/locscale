@@ -310,7 +310,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
     # Stage 2: Perform the scaling in a rolling window fashion
     ###############################################################################
     frequency_map_window = FDRutil.calculate_frequency_map(np.zeros((wn, wn, wn)));
-
+    
     for k, j, i in scaling_dictionary['masked_xyz_locs'] - wn / 2:
         try:
             # k,j,i are indices of the corner voxel in each cube. Ensure it is rounded up to integer.
@@ -343,6 +343,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
                 use_theoretical_profile = central_voxel_inside_mask
             else:
                 use_theoretical_profile = scaling_dictionary['use_theoretical_profile']
+
 
             scale_factor_result = compute_scale_factors(
                 em_profile,mod_profile, apix=apix, check_scaling=check_scaling, \
@@ -444,6 +445,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
             with open(pickle_file_output,"wb") as audit:
                 pickle.dump(profiles_audit, audit)
 
+    
     ###############################################################################
     # Stage 4: Convert to numpy array and return the values
     ###############################################################################                                
@@ -486,7 +488,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     for i in range(scaling_dictionary['number_processes']):
         scaling_dictionary_split[i] = scaling_dictionary.copy()
         scaling_dictionary_split[i]["masked_xyz_locs"] = masked_xyz_locs_split[i]
-        scaling_dictionary_split[i]["use_mpi"] = True
+        scaling_dictionary_split[i]["use_mpi"] = False
     ###############################################################################
     # Stage 3: Run the window function to get sharpened values and bfactor information
     ###############################################################################

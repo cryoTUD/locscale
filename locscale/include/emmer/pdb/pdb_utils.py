@@ -290,12 +290,12 @@ def compute_rmsd_two_pdb(input_pdb_1, input_pdb_2, use_gemmi_structure=True, ret
         return np.mean(atomic_distance)
 
 def check_mrc_indexing(input_mask, threshold=0.9):
-    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input, binarise_map
     from locscale.include.emmer.ndimage.map_utils import get_all_voxels_inside_mask
 
     mask_data = parse_input(input_mask)
     
-    binary_mask = (mask_data>=threshold).astype(np.int_)
+    binary_mask = binarise_map(mask_data, threshold, return_type='int', threshold_type='gteq')
     
     zero_data = np.zeros(mask_data.shape)
     voxels_inside_mask = set([tuple(x) for x in get_all_voxels_inside_mask(mask_input=mask_data, mask_threshold=threshold)])  ## ZYX format
@@ -346,7 +346,7 @@ def get_atomic_point_map(mrc_positions, mask_shape):
     # mrc_positions is a list of positions in mrc format
     # mask_shape is the shape of the mask
     # returns a map of the atomic positions in the mask equal to 1
-
+    mrc_positions = np.array(mrc_positions)
     atomic_point_map = np.zeros(mask_shape)
     atomic_point_map[mrc_positions[:,0], mrc_positions[:,1], mrc_positions[:,2]] = 1
     return atomic_point_map
@@ -409,7 +409,7 @@ def pick_random_point_within_range_kdtree(center_atom, list_of_points_in_mask, r
     
 def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True, masking="strict", threshold=0.5):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
-    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.map_utils import parse_input, binarise_map
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions, set_all_atomic_positions
     from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
     from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
@@ -426,7 +426,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     else:
         mask = parse_input(mask_path)
     
-    outside_mask = np.logical_not(mask>=threshold)
+    outside_mask = np.logical_not(binarise_map(mask, threshold=threshold))
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
     
     
@@ -451,9 +451,9 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
     
     shaken_atomic_position= shaken_atomic_position_native.copy()
     
-    shaken_mrc_position_list = [tuple(x) for x in convert_pdb_to_mrc_position(shaken_atomic_position, apix)]  ## ZYX
+    shaken_mrc_position_list = convert_pdb_to_mrc_position(shaken_atomic_position, apix)  ## ZYX
     
-    binarised_mask = (mask>=threshold).astype(np.int_)
+    binarised_mask = binarise_map(mask, threshold=threshold)
     mrc_point_map = get_atomic_point_map(shaken_mrc_position_list, binarised_mask.shape)
     available_voxels = get_all_voxels_inside_mask(binarised_mask - mrc_point_map, 1)  
        
@@ -516,7 +516,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
 
 def test_pdb_within_mask(input_pdb, mask_path, mask_threshold):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
-    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position
+    from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position, get_all_voxels_inside_mask, convert_mrc_to_pdb_position, binarise_map
     from locscale.include.emmer.pdb.pdb_tools import get_all_atomic_positions
     import mrcfile
 
@@ -524,7 +524,7 @@ def test_pdb_within_mask(input_pdb, mask_path, mask_threshold):
     mask_data = mrcfile.open(mask_path).data
     apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
         
-    binarised_mask = (mask_data>=mask_threshold).astype(np.int_)
+    binarised_mask = binarise_map(mask_data, mask_threshold)
     
     pdb_positions = get_all_atomic_positions(st)
     mrc_positions = convert_pdb_to_mrc_position(pdb_positions, apix)
@@ -583,12 +583,13 @@ def shake_pdb(input_pdb, magnitude, randomisation="uniform", mean=None):
     
     return input_gemmi_st
 
-def get_bfactors(in_model_path, return_as_list=True):
+def get_bfactors(input_pdb, return_as_list=True):
     """
     Get B-factors of atoms
     """
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     dict_chain = {}
-    structure = gemmi.read_structure(in_model_path)
+    structure = detect_pdb_input(input_pdb)
     list_bfact = []
     for model in structure:
         for chain in model:
@@ -611,8 +612,7 @@ def get_bfactors(in_model_path, return_as_list=True):
     else:
         return dict_chain
 
-def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
-                        additional_biso=None, out_file_path=None):
+def add_atomic_bfactors(input_pdb, additional_biso=None, minimum_biso=0.5, out_file_path=None):
     '''
     Function to modify atomic bfactors uniformly by adding or subtracting b factors to each atom present in the PDB.
     
@@ -631,15 +631,9 @@ def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
     If in_model_path is passed, returns the output model path.. Else returns the gemmi.Structure()
 
     '''
-    
-    if in_model_path is not None:
-        gemmi_st = gemmi.read_pdb(in_model_path)
-    elif input_gemmi_st is not None:
-        gemmi_st = input_gemmi_st.clone()
-    else:
-        print("Pass either the PDB path or the gemmi structure! \n")
-        return 0
-    
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+    gemmi_st = detect_pdb_input(input_pdb)
+        
     if additional_biso is not None:
         add_b_iso = additional_biso
     else:
@@ -650,19 +644,44 @@ def add_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
         for chain in model:
             for res in chain:
                 for atom in res:
-                    atom.b_iso += add_b_iso
+                    original_biso = atom.b_iso
+                    new_biso = original_biso + add_b_iso
+                    if new_biso < minimum_biso:
+                        new_biso = minimum_biso
+                    atom.b_iso = new_biso
     
-    if in_model_path is not None:
-        if out_file_path is not None:
-            output_filepath = out_file_path
-        else:
-            output_filepath = in_model_path[:-4]+'_modified_bfactor.pdb'
+   
+    return gemmi_st
+
+def get_lower_bound_threshold(bfactor_array, probability_threshold=0.01):
+    # Using a Gaussian Kernel Density Estimation to get the lower bound threshold for the B-factors
+    from scipy.stats import invgamma
     
-        gemmi_st.write_pdb(output_filepath)
+    bfactor_array = np.array(bfactor_array)
+    # fit a invgamma distribution to the data
+    param = invgamma.fit(bfactor_array)
+    # calculate the lower bound threshold
+    lower_bound_threshold = invgamma.ppf(probability_threshold, *param)
     
+    return lower_bound_threshold
+
+def shift_bfactors_by_probability(input_pdb, probability_threshold=0.01, minimum_bfactor=0.5, return_shift_values=True):
+    from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
+
+    bfactor_array = get_bfactors(input_pdb=input_pdb)
+    lower_bound_threshold = get_lower_bound_threshold(bfactor_array, probability_threshold=probability_threshold)
+    if lower_bound_threshold < minimum_bfactor:
+        print(f"Lower bound threshold {lower_bound_threshold} is less than the minimum bfactor. Setting lower bound threshold to {minimum_bfactor}")
+        lower_bound_threshold = minimum_bfactor
+        print(f"Lower bound threshold is now {lower_bound_threshold}")
+        
+    shifted_pdb = add_atomic_bfactors(input_pdb=input_pdb, additional_biso=-1*lower_bound_threshold, minimum_biso=minimum_bfactor)
+
+    if return_shift_values:
+        return shifted_pdb, lower_bound_threshold
     else:
-        return gemmi_st
-    
+        return shifted_pdb
+
 def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
                         b_iso=None, out_file_path=None):
     '''

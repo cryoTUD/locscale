@@ -50,37 +50,36 @@ def map_quality_kurtosis(emmap_path, mask_path=None):
     print("Map kurtosis is: {}".format(round(k,2)))
     return k
 
-def map_quality_pdb_multiple(list_of_emmap_path, mask_path, pdb_path):
+def map_quality_pdb_multiple(list_of_emmap_path, pdb_path):
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rscc
     from locscale.include.emmer.ndimage.fsc_util import calculate_fsc_maps
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
-    from locscale.include.emmer.pdb.pdb_to_map import pdb2map
+    from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.pdb.pdb_to_map import pdb2map, detect_pdb_input
     from locscale.include.emmer.ndimage.profile_tools import frequency_array
     
     metrics_per_emmap = {}
-    mask = mrcfile.open(mask_path).data
-    apix = mrcfile.open(mask_path).voxel_size.tolist()[0]
-    size=mask.shape
+    
+    emmap, apix = load_map(list_of_emmap_path[0])
+    size = emmap.shape
+
     st = gemmi.read_structure(pdb_path)
     st_0 = set_atomic_bfactors(input_gemmi_st=st, b_iso=0)
     simmap = pdb2map(st_0, apix=apix, size=size, verbose=False, set_refmac_blur=True)
-    masked_simmap = simmap * mask
+    mask = get_atomic_model_mask(list_of_emmap_path[0], pdb_path, save_files=False)
+    boolean_mask = (mask > 0.5).astype(bool)
         
     for emmap_path in list_of_emmap_path:
         metric_dictionary = {}
         emmap = mrcfile.open(emmap_path).data
-
         
-        masked_emmap = emmap * mask
-        
-        
-        metric_dictionary['rscc'] = rscc(masked_emmap, masked_simmap)
- 
-        fsc_curve = calculate_fsc_maps(masked_emmap, masked_simmap)
-        freq = frequency_array(fsc_curve, apix=apix)
+        metric_dictionary['rscc'] = rscc(emmap[boolean_mask], simmap[boolean_mask])
+        fsc_curve = calculate_fsc_maps(mask*emmap, mask*simmap)
         metric_dictionary['fsc'] = fsc_curve.mean()
+
         metrics_per_emmap[emmap_path] = metric_dictionary
-        print(emmap_path.split("/")[-1], metrics_per_emmap[emmap_path])
+        
 
     return metrics_per_emmap
 
