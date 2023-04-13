@@ -80,6 +80,8 @@ def run_emmernet(input_dictionary):
         print("This may take a while...")
         mirrored_strategy = tf.distribute.MirroredStrategy()
     else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+        print("Setting CUDA_VISIBLE_DEVICES to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
         if verbose:
             print("\tGPU ids: {}".format(gpu_id_list))
