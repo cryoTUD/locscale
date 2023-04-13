@@ -74,7 +74,7 @@ def get_center_of_mass(emmap_data, apix):
     
     return com_real
     
-def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
+def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename, fsc_filter=False):
     '''
     Function to add two half maps
 
@@ -99,8 +99,10 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
        full_map = (halfmap1 + halfmap2)/2
        full_voxel_size = mrcfile.open(halfmap_1_path).voxel_size.tolist()
     
-       full_header = mrcfile.open(halfmap_1_path).header
-       #print(full_voxel_size)
+       if fsc_filter:
+           from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
+           full_map = apply_fsc_filter(full_map, apix=full_voxel_size, halfmap_1 = halfmap1, halfmap_2 = halfmap2)[0]
+        
        save_as_mrc(map_data=full_map, output_filename=output_filename, apix=full_voxel_size, verbose=True) 
     
        return output_filename
@@ -108,16 +110,58 @@ def add_half_maps(halfmap_1_path, halfmap_2_path, output_filename):
       print("Half maps are not of equal dimension.")
 
     
-def estimate_global_bfactor_map(emmap, apix, wilson_cutoff, fsc_cutoff):
+def estimate_global_bfactor_map(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None, plot_profiles=False):
     from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_through_pwlf
-    
+    from locscale.include.emmer.ndimage.map_utils import load_map
+
+    if emmap_path is not None:
+        emmap, apix = load_map(emmap_path)
+    elif emmap is None or apix is None:
+        raise ValueError("Either emmap_path should be provided or emmap and apix should be provided")
+    assert wilson_cutoff is not None, "wilson_cutoff should be provided"
+    assert fsc_cutoff is not None, "fsc_cutoff should be provided"
+
     rp_unsharp = compute_radial_profile(emmap)
     freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
     num_segments = number_of_segments(fsc_cutoff)
         
-    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, num_segments=num_segments)
+    bfactor,_,(fit,z,slopes) = estimate_bfactor_through_pwlf(freq,rp_unsharp, \
+                wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, \
+                num_segments=num_segments, standard_notation=True)
+    
+    if plot_profiles:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        x_array = freq**2
+        y_array = np.log(rp_unsharp)
+        plt.plot(x_array, y_array, "b")
+        # draw a vertical line for each z
+        for z_value in z:
+            plt.axvline(x=z_value, color="k", linestyle="--")
+
     
     return bfactor, z, slopes, fit
+
+def estimate_global_bfactor_map_standard(emmap_path=None, emmap=None, apix=None, wilson_cutoff=None, fsc_cutoff=None, plot_profiles=False):
+    from locscale.include.emmer.ndimage.profile_tools import number_of_segments, frequency_array, compute_radial_profile, estimate_bfactor_standard
+    from locscale.include.emmer.ndimage.map_utils import load_map
+
+    if emmap_path is not None:
+        emmap, apix = load_map(emmap_path)
+    elif emmap is None or apix is None:
+        raise ValueError("Either emmap_path should be provided or emmap and apix should be provided")
+    assert wilson_cutoff is not None, "wilson_cutoff should be provided"
+    assert fsc_cutoff is not None, "fsc_cutoff should be provided"
+
+    rp_unsharp = compute_radial_profile(emmap)
+    freq = frequency_array(amplitudes=rp_unsharp, apix=apix)
+        
+    bfactor = estimate_bfactor_standard(freq,rp_unsharp, \
+                wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_cutoff, \
+                standard_notation=True)
+
+    
+    return bfactor
     
 def compute_scale_factors(em_profile, ref_profile):
     scale_factor = np.sqrt(ref_profile**2/em_profile**2)
@@ -212,7 +256,7 @@ def sharpen_maps(vol, apix, global_bfactor=0):
     emmap_profile, radii = compute_radial_profile(vol,return_indices=True)
     freq = frequency_array(amplitudes=emmap_profile, apix=apix)
     
-    sharpened_profile = emmap_profile * np.exp(-1*global_bfactor/4 * freq**2)
+    sharpened_profile = emmap_profile * np.exp(global_bfactor/4 * freq**2)
 
     scale_factors = compute_scale_factors(emmap_profile, sharpened_profile)
     sharpened_map = set_radial_profile(vol, scale_factors, radii)
@@ -523,7 +567,7 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     Finds the unmodelled regions in the input pdb file.
     """
     from locscale.include.emmer.ndimage.map_tools import get_atomic_model_mask
-    from locscale.include.emmer.ndimage.map_utils import load_map
+    from locscale.include.emmer.ndimage.map_utils import load_map, binarise_map
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     import os
     from scipy.ndimage import uniform_filter
@@ -542,8 +586,8 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     # Binarise 
     # Binarise the atomic model mask and FDR confidence mask at X threshold 
     
-    atomic_model_mask_binarised = (atomic_mask >= atomic_mask_threshold).astype(np.int_)
-    fdr_mask_binarised = (fdr_mask >= fdr_threshold).astype(np.int_)
+    atomic_model_mask_binarised = binarise_map(atomic_mask, atomic_mask_threshold, return_type='int', threshold_type='gteq')
+    fdr_mask_binarised = binarise_map(fdr_mask, fdr_threshold, return_type='int', threshold_type='gteq')
 
     # Compute the difference 
     difference_mask = fdr_mask_binarised - atomic_model_mask_binarised

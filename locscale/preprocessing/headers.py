@@ -11,7 +11,7 @@ from locscale.utils.plot_tools import tab_print
 
 tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
-def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,return_processed_files=False, output_file_path=None,verbose=True,Cref=None):
+def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,target_bfactor=20, output_file_path=None,verbose=True,Cref=None, apply_filter=True):
     '''
     Function to prepare target map for refinement 
 
@@ -23,7 +23,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
         Wilson cutoff for determining the B factor of the EM map
     fsc_resolution : float
         Resolution at which FSC curve is computed used to compute B factor
-    add_blur : float, optional
+    target_bfactor : float, optional
         Additional blur to be added to the EM map. The default is 20   
     
     Returns
@@ -36,7 +36,7 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
 
     from locscale.include.emmer.ndimage.profile_tools import compute_radial_profile, estimate_bfactor_through_pwlf, frequency_array
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size, save_as_mrc, check_oversharpening
-    from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map
+    from locscale.include.emmer.ndimage.map_tools import sharpen_maps, estimate_global_bfactor_map_standard
     from locscale.include.emmer.ndimage.filter import apply_filter_to_map, low_pass_filter
     from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
     import mrcfile
@@ -51,67 +51,44 @@ def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,add_blur=20,retu
     
     ### Estimate global B-factor ### 
     
-    bfactor, z, slopes, fit = estimate_global_bfactor_map(emmap=emmap_unsharpened, apix=apix,
+    bfactor = estimate_global_bfactor_map_standard(emmap=emmap_unsharpened, apix=apix,
                                     wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Global bfactor: {:.3f}\n".format(-1*bfactor))
-        tprint("Breakpoints: {}".format(1/np.sqrt(z)))
-        tprint("Slopes: {}".format(slopes))
+        tprint("Global bfactor: {:.3f}\n".format(bfactor))
     
     if verbose:
         tprint("Calculating final b-factor of target map")
-    if add_blur != 0:
-        bfactor  += add_blur  ## Use add_blur if you wanna add blur to the emmap before refining
+    if target_bfactor != 0:
+        sharpening_bfactor = bfactor - target_bfactor
+    else:
+        sharpening_bfactor = bfactor
     if verbose:
-        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(add_blur))
+        tprint("Final overall bfactor of emmap expected to be {:.2f}".format(target_bfactor))
+        tprint("Using bfactor of {:.2f} for sharpening".format(sharpening_bfactor))
+        tprint("If this number is negative then the map will be blurred to achieve the target bfactor\n Else it will be sharpened")
+
     
 
     ### Globally sharpen EM Map ###
-    sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=bfactor)
+    sharpened_map = sharpen_maps(emmap_unsharpened, apix=apix, global_bfactor=sharpening_bfactor)
        
-    bfactor_final, z_final, slopes_final, fit_final = estimate_global_bfactor_map(emmap=sharpened_map, apix=apix, 
-                                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
+    bfactor_final = estimate_global_bfactor_map_standard(emmap=sharpened_map, apix=apix, 
+                                    wilson_cutoff=wilson_cutoff, fsc_cutoff=fsc_resolution)
     
     if verbose:
-        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(-1*bfactor_final))
-        tprint("Breakpoints: {}".format(1/np.sqrt(z_final)))
-        tprint("Slopes: {}".format(slopes_final))
-        
-    
-    output_filename = emmap_path[:-4] +"_global_sharpened.mrc"
-    output_filename_filtered_map = emmap_path[:-4] +"_global_sharpened_filtered.mrc"
-    
-    save_as_mrc(map_data=sharpened_map, output_filename=output_filename, apix=apix)
-    if Cref is not None:
-        tprint("Applying Cref filter to final sharpened map")
-        fsc_filtered_map, _ = apply_fsc_filter(sharpened_map, apix=apix, Cref=Cref)
-        oversharpening_check = check_oversharpening(fsc_filtered_map, apix=apix, fsc_cutoff=fsc_resolution)
-        if oversharpening_check:
-            print("WARNING: Oversharpening detected in the target map for refinement. Please check the FSC curve")
-            output_filename_fsc_filtered = emmap_path[:-4] +"_global_sharpened_Cref_filtered_temp.mrc"
-            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_fsc_filtered, apix=apix)
-            
-            # Low pass filter the FSC filtered map at the resolution of the map
-            print("Low pass filtering the map at FSC resolution {}".format(fsc_resolution))
-            fsc_filtered_low_pass_filtered = low_pass_filter(fsc_filtered_map, cutoff=fsc_resolution, apix=apix)
-            save_as_mrc(map_data=fsc_filtered_low_pass_filtered, output_filename=output_filename_filtered_map, apix=apix)
-
-        else:
-            print("No oversharpening detected in the target map for refinement")
-            save_as_mrc(map_data=fsc_filtered_map, output_filename=output_filename_filtered_map, apix=apix)
+        tprint("Final overall bfactor of emmap computed to be {:.2f}".format(bfactor_final))
+           
+    if output_file_path is None:
+        sharpened_map_path = emmap_path[:-4] +"_global_sharpened.mrc"
     else:
-        tprint("Applying filter at FSC resolution to final sharpened map")
-        apply_filter_to_map(output_filename, dmin=fsc_resolution, output_filename=output_filename_filtered_map)
+        sharpened_map_path = output_file_path
     
-    if return_processed_files:
-        if verbose:
-            tprint("Returning: sharpend_map_path (filtered at FSC), [rp_unsharp, rp_sharp, bfactor]")
-        return output_filename_filtered_map, fit
-    else:                    
-        return output_filename_filtered_map
+    save_as_mrc(map_data=sharpened_map, output_filename=sharpened_map_path, apix=apix)
 
-def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
+    return sharpened_map_path
+
+def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, averaging_filter_size=3):
     '''
     Function to calculate FDR mask for a map
 
@@ -135,6 +112,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     import os, sys
     from subprocess import run, PIPE
     import mrcfile
+    from scipy.ndimage import uniform_filter
     # Preprocessing EM Map Path
     
     # Apply filter if filter_cutoff is not None
@@ -145,7 +123,8 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
                  "Filter cutoff: "+str(filter_cutoff))
     
         
-    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc
+    from locscale.include.emmer.ndimage.map_utils import average_voxel_size, compute_FDR_confidenceMap_easy, save_as_mrc, binarise_map
+    from locscale.include.emmer.ndimage.filter import get_cosine_mask
     
     current_directory = os.getcwd()
 
@@ -163,17 +142,27 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None):
     
     emmap_path_without_ext = emmap_path[:-4]
     mask_path = emmap_path_without_ext + "_confidenceMap.mrc"
-    
-    save_as_mrc(fdr_mask, output_filename=mask_path, 
-                apix=voxel_size_record.tolist(), origin=0)
+    mask_path_raw = emmap_path_without_ext + "_confidenceMap_raw.mrc"
+    # Apply averaging filter to the mask
+    save_as_mrc(fdr_mask, output_filename=mask_path.replace(".mrc","_raw.mrc"), apix=voxel_size_record.tolist(), origin=0)
+    if averaging_filter_size > 1:
+        tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
+        #fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
+        fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
+        #fdr_mask = binarise_map(fdr_mask, threshold=0.5, return_type='int',threshold_type='gteq')
+        #fdr_mask = get_cosine_mask(fdr_mask, 3)
+        
+
+        
+    save_as_mrc(fdr_mask, output_filename=mask_path, apix=voxel_size_record.tolist(), origin=0)
     
     os.chdir(current_directory)
-    if os.path.exists(mask_path):
+    if os.path.exists(mask_path) and os.path.exists(mask_path_raw) :
         if verbose:
             tprint("FDR Procedure completed. \n"+
                     "Mask path: "+mask_path+"\n")
         
-        return mask_path
+        return mask_path , mask_path_raw
     else:
         tprint("FDR process failed. Returning none")
         return None
@@ -326,7 +315,9 @@ def is_pseudomodel(input_pdb_path):
     else:
         return False
     
-def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, hybrid_model_refinement=False, final_chain_counts=None):
+def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomodel_refinement, \
+                            refmac5_path=None, verbose=True, hybrid_model_refinement=False, \
+                            final_chain_counts=None, cif_info=None):
     import os
     from subprocess import run, PIPE, Popen
     from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
@@ -342,7 +333,7 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
         servalcat_refined_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
             num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
-            refmac5_path=refmac5_path, verbose=verbose)
+            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info)
         
         return servalcat_refined_path
         
@@ -360,8 +351,9 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 initialise_bfactors = False
             
             servalcat_refined_once_path = run_refmac_servalcat(
-                model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,
-                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, hybrid_model_refinement=hybrid_model_refinement)
+                model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,\
+                refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, \
+                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
             
             servalcat_refinement_next_cycle_path = os.path.join(
                 os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
@@ -371,19 +363,19 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
             window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
         
-        tprint("Setting the element composition of the model to match a typical protein composition")
-        tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
+        # tprint("Setting the element composition of the model to match a typical protein composition")
+        # tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
 
-        if hybrid_model_refinement:
-            starting_chain_count = final_chain_counts[0]
-        else:
-            starting_chain_count = None
+        # if hybrid_model_refinement:
+        #     starting_chain_count = final_chain_counts[0]
+        # else:
+        #     starting_chain_count = None
             
-        proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
-        proper_element_composition_structure.write_pdb(proper_element_composition_filename)
+        # proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
+        # proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
+        # proper_element_composition_structure.write_pdb(proper_element_composition_filename)
         
-        return proper_element_composition_filename
+        return servalcat_refinement_next_cycle_path
         
 def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percentage=0.17, oxygen_percentage=0.2, starting_chain_count=None):
     '''
@@ -433,7 +425,9 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
         
         return gemmi_st
         
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, \
+                         refmac5_path=None, verbose=True, initialise_bfactors=True, \
+                         hybrid_model_refinement=False, cif_info=None):
     '''
     Function to run Refmac to refine the model and generate a new model with refined B-factors.
 
@@ -441,8 +435,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     ----------
     model_path : string
         Path of the model to be refined
-    map_path : string
-        Path of the map to be used for refinement
+    map_path : string or list of two strings
+        Path of the map to be used for refinement (or half maps if present)
     resolution : float
         Resolution of the map
     num_iter : int
@@ -489,13 +483,22 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
     servalcat_command = ["servalcat","refine_spa","--model",servalcat_input,\
-        "--resolution",str(round(resolution, 2)), "--map", map_path, "--ncycle",str(int(num_iter)),\
+        "--resolution",str(round(resolution, 2)), "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
+
+    ## Add the map path to the command if there is only one map ##
+    if type(map_path) == str:
+        servalcat_command.extend(["--map",map_path])
+    else:
+        assert len(map_path) == 2, "The map_path should be a string or a list of two strings"
+        servalcat_command.extend(["--halfmaps",map_path[0],map_path[1]])
     
     servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
     servalcat_command += ["--no_mask"]
     
+    if cif_info is not None:
+        servalcat_command += ["--ligand",cif_info]
     use_unrestrained_refinement = pseudomodel_refinement and not hybrid_model_refinement 
        
     if use_unrestrained_refinement:
@@ -516,7 +519,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     refmac_output = run(servalcat_command, stdout=servalcat_log_file)
     refined_model_path = output_prefix+".pdb"
-    bfactors = get_bfactors(in_model_path=refined_model_path)
+    bfactors = get_bfactors(refined_model_path)
 
     refined_model_path = os.path.join(processing_files_directory, os.path.basename(refined_model_path))
     
@@ -532,6 +535,68 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     else:
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
+
+
+def run_profile_prediction_refinement(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
+    '''
+    Function to run Refmac to refine the model and generate a new model with refined B-factors.
+
+    Parameters
+    ----------
+    model_path : string
+        Path of the model to be refined
+    map_path : string or list of two strings
+        Path of the map to be used for refinement (or half maps if present)
+    resolution : float
+        Resolution of the map
+    num_iter : int
+        Number of iterations to run Refmac
+    pseudomodel_refinement : bool
+        If True, bfactor refinement is performed without any restraints
+    refmac5_path : string
+        Path of the refmac5 executable. If None, the default path will be used.
+    verbose : bool
+        If True, the output of Refmac will be printed.
+    
+    Returns
+    -------
+    refined_model_path : string
+        Path of the refined model
+    
+    '''
+    
+    import os
+    from subprocess import run, PIPE, Popen
+    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors, get_coordinates
+    from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, frequency_array, compute_radial_profile
+    from locscale.include.emmer.ndimage.map_utils import convert_mrc_to_pdb_position, convert_pdb_to_mrc_position, extract_window, load_map
+    import gemmi
+    import mrcfile
+    
+    # Get the current working directory
+    current_directory = os.getcwd()
+    processing_files_directory = os.path.dirname(os.path.abspath(model_path))
+    os.chdir(processing_files_directory)
+    if verbose:
+        tprint("Changing to directory: "+processing_files_directory)
+
+    #### Input ####
+    st = gemmi.read_structure(model_path)
+    emmap, apix = load_map(map_path)
+    pdb_positions = get_coordinates(st)
+    
+    mrc_positions = convert_pdb_to_mrc_position(pdb_positions, apix=apix)
+    radial_profiles = []
+    for i, mrc_position in enumerate(mrc_positions):
+        center = mrc_position
+        window = extract_window(emmap, center, size=26)
+        rp_window = compute_radial_profile(window)
+        radial_profiles.append(rp_window)
+    
+    radial_profiles = np.array(radial_profiles)
+    # TBC
+
+    return None
 
 def average_atomic_bfactors_window(input_pdb, window_radius, hybrid_model_refinement=False, final_chain_counts=None):
     '''
@@ -632,7 +697,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     ## Simulate a reference map from the input atomic model in the pdb_structure variable
     
     refmap_data, grid_simulated = pdb2map(input_pdb=pdb_structure, unitcell=unitcell, size=emmap_data.shape,
-                                          return_grid=True, align_output=True, verbose=False, set_refmac_blur=True, blur=add_blur)
+                                          return_grid=True, align_output=True, verbose=verbose, set_refmac_blur=True, blur=add_blur)
     
 
     refmap_data_normalised = refmap_data

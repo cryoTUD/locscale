@@ -215,9 +215,37 @@ def extract_window(im, center, size):
     window = im[z-size//2:z+size//2, y-size//2:y+size//2, x-size//2:x+size//2]
     return window
 
-def binarizeMap(emmap, threshold):
-    binary_map = (emmap>=threshold).astype(np.int_)
+def binarize_map(emmap, threshold, return_type="int", threshold_type="gteq"):
+    '''
+    Function to binarize a map
+    '''
+    if threshold_type == "gteq":
+        binary_map = emmap >= threshold
+    elif threshold_type == "gt":
+        binary_map = emmap > threshold
+    elif threshold_type == "lteq":
+        binary_map = emmap <= threshold
+    elif threshold_type == "lt":
+        binary_map = emmap < threshold
+    else:
+        print("Please provide a valid threshold_type")
+        valid_threshold_types = ["gteq (>=)", "gt (>)", "lteq (<=)", "lt (<)"]
+        raise ValueError(f"Invalid threshold_type provided {threshold_type}. Valid threshold_types are {valid_threshold_types}")
+
+    if return_type == "int":
+        binary_map = binary_map.astype(np.int_)
+    elif return_type == "float":
+        binary_map = binary_map.astype(np.float_)
+    elif return_type == "bool":
+        binary_map = binary_map.astype(bool)
+    else:
+        print("Please provide a valid return_type")
+        valid_return_types = ["int", "float", "bool"]
+        raise ValueError(f"Invalid return_type provided {return_type}. Valid return_types are {valid_return_types}")
     return binary_map
+
+def binarise_map(*args, **kwargs):
+    return binarize_map(*args, **kwargs)
 
 def average_voxel_size(voxel_size_record):
     apix_x = voxel_size_record.x
@@ -434,7 +462,7 @@ def measure_mask_parameters(mask_path=None, mask=None,apix=None,edge_threshold=0
     
     ang_to_cm = 1e-8
     
-    mask = (mask>=edge_threshold).astype(np.int_)
+    mask = binarise_map(mask, edge_threshold, return_type='int',threshold_type='gteq')
     
     mask_vol = mask.sum()*(voxelsize*ang_to_cm)**3
     mask_vol_A3 = mask.sum()*voxelsize**3
@@ -681,13 +709,13 @@ def get_model_mask(input_pdb, mask_shape, apix, threshold_factor=5, bfactor=100,
     simmap_array = simmap.flatten()
     nonzero_array = simmap_array[simmap_array>0]
     threshold = np.percentile(nonzero_array, threshold_factor)
-    binarised_map = (simmap>=threshold).astype(np.int_)
+    binarised_map = binarise_map(simmap, threshold, return_type='int', threshold_type='gteq')
     
     kernel = np.ones((smoothen,smoothen, smoothen))
     smoothened_map = fftconvolve(in1=binarised_map, in2=kernel, mode="same")
     smoothened_map = smoothened_map/smoothened_map.max()
     
-    binarised_map = (smoothened_map>=tight).astype(np.int_)
+    binarised_map = binarise_map(smoothened_map, tight, return_type='int', threshold_type='gteq')
     
     return binarised_map
     

@@ -74,7 +74,7 @@ def prepare_mask_and_maps_for_scaling(args):
         print("."*80)
         print("Preparing mask \n")
     
-        parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"] = prepare_mask_from_inputs(parsed_inputs)
+    parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"], parsed_inputs["mask_path_raw"] = prepare_mask_from_inputs(parsed_inputs)
     
     
     #############################################################################
@@ -181,10 +181,10 @@ def prepare_mask_and_maps_for_scaling(args):
     ## No element of the mask should be negative
     assert (parsed_inputs_dict['mask']>=0).any(), "Negative numbers found in mask"
     
-    # Dump the parsed inputs to a pickle file in the input folder
-    import pickle
-    with open(os.path.join(parsed_inputs_dict['processing_files_folder'], 'parsed_inputs.pickle'), 'wb') as f:
-        pickle.dump(parsed_inputs_dict, f)
+    # # Dump the parsed inputs to a pickle file in the input folder
+    # import pickle
+    # with open(os.path.join(parsed_inputs_dict['processing_files_folder'], 'parsed_inputs.pickle'), 'wb') as f:
+    #     pickle.dump(parsed_inputs_dict, f)
         
     return parsed_inputs_dict
 
@@ -193,6 +193,7 @@ def prepare_mask_from_inputs(parsed_inputs):
     from locscale.utils.math_tools import round_up_to_even
     from locscale.utils.general import get_spherical_mask
     from locscale.preprocessing.headers import run_FDR, check_axis_order
+    from locscale.include.emmer.ndimage.map_utils import binarise_map
     if parsed_inputs["mask"] is None:
         if parsed_inputs["verbose"]:
             tabbed_print.tprint("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
@@ -201,7 +202,7 @@ def prepare_mask_from_inputs(parsed_inputs):
             tabbed_print.tprint("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
         else:
             fdr_window_size = int(parsed_inputs["fdr_w"])
-        
+        averaging_filter_size = parsed_inputs["averaging_filter_size"]    
         if parsed_inputs["fdr_filter"] is not None:
             filter_cutoff = float(parsed_inputs["fdr_filter"])
             tabbed_print.tprint("A low pass filter value has been provided. \
@@ -209,21 +210,23 @@ def prepare_mask_from_inputs(parsed_inputs):
         else:
             filter_cutoff = None
             
-        mask_path = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff)
+        mask_path, mask_path_raw = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
         xyz_mask_path = check_axis_order(mask_path)
+                
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
-            xyz_mask = (xyz_mask > 0.99).astype(np.int8)
+            xyz_mask = binarise_map(xyz_mask, 0.5, return_type='int', threshold_type='gteq')
         else:
             xyz_mask = get_spherical_mask(parsed_inputs["xyz_emmap"].shape)
     else:
         mask_path = parsed_inputs["mask"]
         xyz_mask_path = check_axis_order(mask_path)
         xyz_mask = load_map(xyz_mask_path)[0]
-        xyz_mask = (xyz_mask > 0.99).astype(np.int8)
-    
-    return xyz_mask, xyz_mask_path
+        xyz_mask = binarise_map(xyz_mask,0.5, return_type='int', threshold_type='gteq') # For scaling mask, threshold is always 0.5
+        mask_path_raw = mask_path
+
+    return xyz_mask, xyz_mask_path, mask_path_raw
 
 def get_modmap_from_inputs(parsed_inputs):
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
@@ -245,19 +248,16 @@ def get_modmap_from_inputs(parsed_inputs):
                                          out_model_path=pdb_path[:-4]+"_shifted.pdb")
             pdb_path = pdb_path[:-4]+"_shifted.pdb"
 
-        if parsed_inputs["halfmap_paths"] is not None:
-            # calculate Cref for filtering the globally sharpened map
-            Cref = get_cref_from_inputs(parsed_inputs)
-        else:
-            Cref = None
+    
     
         #############################################################################
         # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
         #############################################################################
         
+        # Raw mask refers to the FDR mask without any averaging filter applied this is used for estimating num_atoms
         modmap_args = {
             'emmap_path': parsed_inputs["xyz_emmap_path"],
-            'mask_path': parsed_inputs["xyz_mask_path"],
+            'mask_path_raw': parsed_inputs["mask_path_raw"], 
             'pdb_path':pdb_path,
             'pseudomodel_method': parsed_inputs["pseudomodel_method"],
             'pam_distance': parsed_inputs["distance"],
@@ -272,10 +272,18 @@ def get_modmap_from_inputs(parsed_inputs):
             'build_ca_only': parsed_inputs["build_ca_only"],
             'verbose': parsed_inputs["verbose"],
             'refmac5_path': parsed_inputs["refmac5_path"],
-            'Cref':Cref,
             'complete_model':parsed_inputs["complete_model"],
             'averaging_window':parsed_inputs["averaging_window"],
+            'mask_threshold':parsed_inputs["mask_threshold"],
+            'cif_info':parsed_inputs["cif_info"],
         }
+
+        if parsed_inputs["halfmap_paths"] is not None:
+            # If halfmaps are provided, pass them to the modmap pipeline
+            modmap_args["halfmap_paths"] = parsed_inputs["halfmap_paths"]
+        else:
+            modmap_args["halfmap_paths"] = None
+            
         
         #############################################################################
         # Stage 4b: Run the get_modmap pipeline                                 #
@@ -358,7 +366,7 @@ def get_scale_factor_arguments(parsed_inputs):
     from locscale.include.emmer.ndimage.map_tools import compute_radial_profile_simple
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, number_of_segments, estimate_bfactor_through_pwlf
 
-    wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["xyz_mask_path"], verbose=False)
+    wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["mask_path_raw"], verbose=False)
 
     if parsed_inputs["ref_resolution"] >= 6:
         high_frequency_cutoff = wilson_cutoff
@@ -372,7 +380,7 @@ def get_scale_factor_arguments(parsed_inputs):
         num_segments = number_of_segments(parsed_inputs["ref_resolution"])
         bfactor, amp, (fit,z,slope) = estimate_bfactor_through_pwlf(
             freq=freq, amplitudes=rp_emmap, wilson_cutoff=wilson_cutoff, 
-            fsc_cutoff=parsed_inputs["ref_resolution"],num_segments=num_segments)
+            fsc_cutoff=parsed_inputs["ref_resolution"],num_segments=num_segments, standard_notation=True)
         
         nyquist = (round(2*parsed_inputs["apix"]*10)+1)/10
         #fsc_cutoff = fsc_resolution

@@ -161,17 +161,31 @@ class test_locscale(unittest.TestCase):
             from subprocess import run
             
             # copy emmap
-            copied_emmap_path = self.copy_files(self.emmap_path_full, tempDir)
-            copied_mask_path = self.copy_files(self.mask_path_full, tempDir)
+            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
+            copied_mask_path = self.copy_files(self.mask_path, tempDir)
             copied_model_coordinates = self.copy_files(self.model_coordinates, tempDir)
+
+            # delete first few residues 
+            st = gemmi.read_structure(copied_model_coordinates)
+            num_atoms_original = st[0].count_atom_sites()
+            chain = st[0][0]
+            for i in range(250):
+                chain.__delitem__(0)
             
+            num_atoms_trimmed = st[0].count_atom_sites()
+            print("Number of atoms in original model: ",num_atoms_original)
+            print("Number of atoms in trimmed model: ",num_atoms_trimmed)
+            print("Difference: ",num_atoms_original-num_atoms_trimmed)
+            copied_model_coordinates_trimmed = copied_model_coordinates.replace(".pdb","_trimmed.pdb")
+            st.write_pdb(copied_model_coordinates_trimmed)
+                        
             os.chdir(tempDir)
 
             output_locscale_path = os.path.join(tempDir, "locscale_MBI_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
             locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
-                copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
+                copied_emmap_path, "--model_coordinates",copied_model_coordinates_trimmed,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
             
             locscale_test_run = run(locscale_command)

@@ -15,6 +15,7 @@ description="".join(description))
 sub_parser = main_parser.add_subparsers(dest='command')
 locscale_parser = sub_parser.add_parser('run_locscale', help='Run LocScale')
 emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMMERNET')
+version_parser = sub_parser.add_parser('version', help='Print version')
 test_parser = sub_parser.add_parser('test', help='Run tests')
 
 # **************************************************************************************
@@ -51,6 +52,7 @@ locscale_parser.add_argument('-p', '--apix', type=float, help='pixel size in Ang
 locscale_parser.add_argument('--add_blur', type=int, help='Globally sharpen the target map for REFMAC refinement', default=20)
 locscale_parser.add_argument('--refmac5_path', type=str, help='Path to refmac5 executable', default=None)
 locscale_parser.add_argument('--cref_pickle', type=str, help='Path for Cref filter for the target map of bfactor refinement', default=None)
+locscale_parser.add_argument('-cif_info','--cif_info', type=str, help='Path to provide restrain information for refining the atomic model', default=None)
 
 
 ## Model map parameters
@@ -59,7 +61,9 @@ locscale_parser.add_argument('-sym', '--symmetry', default='C1', type=str, help=
 
 ## FDR parameters
 locscale_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
+locscale_parser.add_argument('--averaging_filter_size', '--averaging_filter_size', type=int, help='window size in pixels for FDR thresholding', default=3)
 locscale_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
+locscale_parser.add_argument('-th', '--mask_threshold', type=float, help='Threshold used to calculate the number of atoms and to decide the envelope for initial placement of pseudo-atoms', default=0.99)
 
 ## Integrated pseudo-atomic model method parameters
 locscale_parser.add_argument('--complete_model', help='Add pseudo-atoms to areas of the map which are not modelled', action='store_true')
@@ -96,10 +100,11 @@ emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbos
 
 ## Emmernet main function parameters
 emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of emmernet model to use', \
-                            choices=['model_based', 'model_free', 'ensemble'], default='model_based')
+                            choices=['hybrid','model_based', 'model_free', 'ensemble','model_based_no_freqaug'], default='hybrid')
 emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
 emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
+emmernet_parser.add_argument('-target', '--target_map_path', type=str, help='Path to the target map for phase correlations', default=None)
 emmernet_parser.add_argument('-download', '--download', help='Download the model weights', action='store_true', default=False)
 
 ############################################################################################

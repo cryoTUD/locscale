@@ -10,7 +10,6 @@ import mrcfile
 import gemmi
 import numpy as np
 import json
-import pypdb
 #from Bio.PDB import PDBList
 #from Bio.PDB.DSSP import DSSP
 #from Bio.PDB import PDBParser

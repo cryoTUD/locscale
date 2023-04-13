@@ -7,7 +7,7 @@ import os
 from socket import timeout
 import sys
 from subprocess import PIPE
-from locscale.main import launch_amplitude_scaling
+from locscale.utils.startup_utils import launch_locscale_no_mpi
 import json
 import pickle
 
@@ -15,7 +15,7 @@ def get_defaults_dictionary():
     """
     Get the default input dictionary.
     """
-    from locscale.main import locscale_parser
+    from locscale.utils.parse_utils import locscale_parser
     defaults_dictionary = {}
     variables = locscale_parser._actions
     for variable in variables:
@@ -179,7 +179,7 @@ class LocScaleRun:
         self.locscale_run_type = locscale_run_type
         self.job_file_path = None
         self.job = None
-        self.timeout = 4*3600 # 4 hours
+        self.timeout = 8*3600
         self.mpi_jobs = mpi_jobs
         self.input.check_is_halfmap_input()
         if data_folder is not None:
@@ -258,7 +258,7 @@ class LocScaleRun:
         args.__dict__.update(self.job["args"])
 
         # Run LocScale
-        launch_amplitude_scaling(args)
+        launch_locscale_no_mpi(args)
 
         print("Job {} submitted".format(self.job_name))
     
@@ -289,7 +289,7 @@ class LocScaleMultiple:
     
     def launch_locscale(self, job_id):
         from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
-        from locscale.main import print_arguments, print_end_banner, print_start_banner, launch_amplitude_scaling
+        from locscale.utils.startup_utils import print_arguments, print_end_banner, print_start_banner, launch_locscale_no_mpi
         from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
         from datetime import datetime
         from contextlib import redirect_stdout
@@ -306,7 +306,7 @@ class LocScaleMultiple:
             with redirect_stdout(f):
                 if not self.dry_run:
                     try:
-                        launch_amplitude_scaling(args)
+                        launch_locscale_no_mpi(args)
                     except Exception as e:
                         print("Error in job {}: {}".format(job_name, e))
                         with open(log_file_path, "a") as f:
@@ -339,7 +339,7 @@ class LocScaleMultiple:
         
     def get_parsed_inputs_dict(self, job_id):
         from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
-        from locscale.main import print_arguments, print_end_banner, print_start_banner
+        from locscale.utils.startup_utils import print_arguments, print_end_banner, print_start_banner
         from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
         from datetime import datetime
         from contextlib import redirect_stdout
@@ -466,14 +466,14 @@ class LocScaleMultiple:
             if self.resume_scaling:
                 print("Resuming scaling from stored state")
             else:
-                joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=2*3600)(
+                joblib.Parallel(n_jobs=self.num_process_preparation, backend="loky", timeout=6*3600)(
                     joblib.delayed(self.get_parsed_inputs_dict)(job_id) for job_id in job_list)
 
             ## Run the scaling in parallel
-            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=2*3600)(
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
                 joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
         else:
-            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=4*3600)(
+            result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
                 joblib.delayed(self.launch_locscale)(job_id) for job_id in job_list)
 
         
