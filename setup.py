@@ -16,7 +16,7 @@ long_description = (locscale_path / "README.md").read_text()
 
 def get_version():
     version_text = (locscale_path / "locscale" / "__version__.py").read_text()
-    version = version_text.split("=")[1]
+    version = version_text.split("=")[1][1:-1]
     return version
 
 
