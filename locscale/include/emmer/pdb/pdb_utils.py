@@ -481,7 +481,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
                 #                                                                                   apix=apix)
                 
                 
-                neighborhood_indices_list = tree.query_radius(shaken_atomic_position[i:i+1], r=rmsd_magnitude*2)
+                neighborhood_indices_list = tree.query_radius(shaken_atomic_position[i:i+1], r=rmsd_magnitude*3)
                 
                 random_index = random.choice(list(neighborhood_indices_list)[0])
                 random_position = np_array_mask_pdb[random_index] + np.random.uniform(0,apix/2,3)
