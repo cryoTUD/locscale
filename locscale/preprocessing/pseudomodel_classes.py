@@ -239,7 +239,8 @@ class Model:
         else:
             position = pseudoAtom.pdb_position.get()
         atom = gemmi.Atom()
-        element_choice = np.random.choice(["C","O","N"], p=[0.63,0.2,0.17])
+        #element_choice = np.random.choice(["C","O","N"], p=[0.63,0.2,0.17])
+        element_choice = "O"
         atom.element = gemmi.Element(element_choice)
         atom.pos = gemmi.Position(position[0],position[1],position[2])
         atom.b_iso = pseudoAtom.bfactor
@@ -253,8 +254,9 @@ class Model:
              
     def add_residue(self,model, chain_num, res_num):
         model[chain_num].add_residue(gemmi.Residue(),res_num)
-        amino_acid_residues = ['TYR','THR','SER','PRO','PHE','MET','LEU','ILE','HIS','GLY','GLU','GLN','ASP','ASN','ALA','ARG','TRP','CYS']
-        model[chain_num][res_num].name = np.random.choice(amino_acid_residues)
+        #amino_acid_residues = ['TYR','THR','SER','PRO','PHE','MET','LEU','ILE','HIS','GLY','GLU','GLN','ASP','ASN','ALA','ARG','TRP','CYS']
+        #model[chain_num][res_num].name = np.random.choice(amino_acid_residues)
+        model[chain_num][res_num].name = "HOH"
         model[chain_num][res_num].seqid.num = res_num
     
         return model
