@@ -369,7 +369,10 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     dilation_radius_int = round(dilation_radius / apix)
     dilated_mask = dilate_mask(mask, radius=dilation_radius_int)
     
-    softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
+    if softening_parameter > 1:
+        softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
+    else:
+        softened_mask = dilated_mask
     
     if save_files:
         if output_filename is None:
