@@ -86,7 +86,7 @@ def get_modmap(modmap_args):
     ###########################################################################
     if molecular_weight is None:
         num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=False, edge_threshold=mask_threshold)
-        num_atoms = num_atoms / 1.55 # adding correction factor based on comparison with atomic models within modelled regions
+        num_atoms = int(round(num_atoms / 1.55)) # adding correction factor based on comparison with atomic models within modelled regions
     else:
         avg_mass_per_atom = 13.14  #amu
         num_atoms = int(molecular_weight * 1000.0 / avg_mass_per_atom)
