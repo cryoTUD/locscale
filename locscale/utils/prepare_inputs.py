@@ -228,6 +228,9 @@ def parse_inputs_from_processing_files(args):
     
     parsed_inputs["apix"] = apix
     parsed_inputs["original_map_shape"] = original_map_shape
+    parsed_inputs["xyz_emmap"] = xyz_emmap
+    parsed_inputs["xyz_mask"] = xyz_mask
+    parsed_inputs["xyz_modmap"] = xyz_modmap
     
     parsed_inputs["pseudomodel_required"] = True if parsed_inputs["model_coordinates"] is None else False
     parsed_inputs["use_theoretical_profile"] = parsed_inputs["pseudomodel_required"]
