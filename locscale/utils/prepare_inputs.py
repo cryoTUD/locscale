@@ -228,13 +228,11 @@ def parse_inputs_from_processing_files(args):
 
     
     parsed_inputs["apix"] = apix
-    parsed_inputs["original_map_shape"]
+    parsed_inputs["original_map_shape"] = original_map_shape
     
     parsed_inputs["pseudomodel_required"] = True if parsed_inputs["model_coordinates"] is None else False
     parsed_inputs["use_theoretical_profile"] = parsed_inputs["pseudomodel_required"]
     parsed_inputs["wn"] = set_window_size(parsed_inputs["window_size"], apix, parsed_inputs["verbose"])
-
-    parsed_inputs["processing_files_folder"] = os.path.dirname(parsed_inputs["xyz_emmap_path"])
     
     parsed_inputs = pad_input_maps_if_required(parsed_inputs)
 
@@ -259,6 +257,15 @@ def parse_inputs_from_processing_files(args):
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
     parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
+
+    assert parsed_inputs_dict["emmap"].shape == parsed_inputs_dict["modmap"].shape == parsed_inputs_dict['mask'].shape, "The input maps and mask do not have the same shape"
+    ## emmap and modmap should not be zeros
+    assert abs(parsed_inputs_dict["emmap"].sum()) > 0 and abs(parsed_inputs_dict["modmap"].sum()) > 0, "Emmap and Modmap should not be zeros!"
+    ## No element of the mask should be negative
+    assert (parsed_inputs_dict['mask']>=0).any(), "Negative numbers found in mask"
+
+    return parsed_inputs_dict
+
 
 def prepare_mask_from_inputs(parsed_inputs):
     from locscale.utils.math_tools import round_up_to_even
