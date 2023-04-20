@@ -58,9 +58,9 @@ def add_cryst1_line(pdb_path,unitcell=None,emmap_path=None,new_pdb_path=None):
     gemmi_structure = gemmi.read_structure(pdb_path)
     gemmi_structure.cell = unitcell
     if new_pdb_path is None:
-        gemmi_structure.write_pdb(pdb_path)
+        gemmi_structure.make_mmcif_document().write_file(pdb_path)
     else:
-        gemmi_structure.write_pdb(new_pdb_path)
+        gemmi_structure.make_mmcif_document().write_file(new_pdb_path)
         
 def set_to_center_of_unit_cell(pdb_structure, unitcell):
     '''
@@ -111,7 +111,7 @@ def get_unit_cell_estimate(pdb_struct,vsize):
 
 def find_radius_of_gyration(model_path=None, input_gemmi_st=None):
     if model_path is not None:
-        gemmi_st = gemmi.read_pdb(model_path)
+        gemmi_st = gemmi.read_structure(model_path)
     elif input_gemmi_st is not None:
         gemmi_st = input_gemmi_st.clone()
     else:
@@ -167,7 +167,7 @@ Reference:
     
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters
     if model_path is not None:
-        gemmi_st = gemmi.read_pdb(model_path)
+        gemmi_st = gemmi.read_structure(model_path)
         num_atoms = gemmi_st[0].count_atom_sites()
         Rg = find_radius_of_gyration(input_gemmi_st=gemmi_st)
         molecular_weight = gemmi_st[0].calculate_mass()
@@ -378,7 +378,10 @@ def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False
 
     def add_chains(combined_model, model_to_add, starting_chain_num):
         import string
-        chain_letters = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        chain_letters_1 = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        # for longer chains, make chain letters as AA, AB, AC, etc.
+        chain_letters_2 = [x+y for x in chain_letters_1 for y in chain_letters_1]
+        chain_letters = chain_letters_1 + chain_letters_2
         chain_count = starting_chain_num
         for chain in model_to_add:
             combined_model.add_chain(chain_letters[chain_count])

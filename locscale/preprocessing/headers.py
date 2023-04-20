@@ -261,14 +261,14 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             returnPointsOnly=True,integration='verlet',verbose=False, myoutput=output_file)
 
         mask_name = mask_path[:-4]
-        pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
+        pseudomodel_path = mask_name+"_gradient_pseudomodel.cif"
 
     elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
                 pseudomodel,min_dist_in_angst=bl,apix=apix,total_iterations=total_iterations,
                 returnPointsOnly=True,verbose=False, myoutput=output_file)
         mask_name = mask_path[:-4]
-        pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
+        pseudomodel_path = mask_name+"_kick_pseudomodel.cif"
     
 
     ### Save the pseudo-atomic model ###    
@@ -356,12 +356,12 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
             
             servalcat_refinement_next_cycle_path = os.path.join(
-                os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
+                os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".cif")
             
             tprint("Averaging the bfactors with radius of 3 angstroms")
             window_averaged_bfactors_structure = average_atomic_bfactors_window(
                 input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
-            window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
+            window_averaged_bfactors_structure.make_mmcif_document().write_file(servalcat_refinement_next_cycle_path)
         
         tprint("Setting the element composition of the model to match a typical protein composition")
         tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
@@ -372,8 +372,8 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             starting_chain_count = None
             
         proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
-        proper_element_composition_structure.write_pdb(proper_element_composition_filename)
+        proper_element_composition_filename = model_path.replace(".cif", "_proper_element_composition.cif")
+        proper_element_composition_structure.make_mmcif_document().write_file(proper_element_composition_filename)
         
         return proper_element_composition_filename
         
@@ -473,7 +473,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
 
     #### Set the starting bfactor of the atomic model to 40 before refinement ####
     if initialise_bfactors:
-        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.cif"
         set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
         servalcat_input = servalcat_uniform_bfactor_input_path
     else:
@@ -518,8 +518,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     servalcat_log_file = open(servalcat_log_path,"w")
     
     refmac_output = run(servalcat_command, stdout=servalcat_log_file)
-    refined_model_path = output_prefix+".pdb"
-    bfactors = get_bfactors(refined_model_path)
+    #possible_file_extensions = [".pdb", ".cif", ".mmcif", ".ent"]
+    refined_model_path = output_prefix+".mmcif"
 
     refined_model_path = os.path.join(processing_files_directory, os.path.basename(refined_model_path))
     

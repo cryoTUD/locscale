@@ -52,6 +52,26 @@ def get_modmap(modmap_args):
     mask_threshold = modmap_args['mask_threshold']
     cif_info = modmap_args['cif_info']
 
+    if modmap_args['dev_mode']:
+        preprocessing_pipeline_directory = os.path.dirname(emmap_path)
+        intermediate_output_pickle = os.path.join(preprocessing_pipeline_directory, "intermediate_outputs.pickle")
+        assert os.path.exists(intermediate_output_pickle), "Intermediate output pickle file not found! Do not use dev_mode!"
+        with open(intermediate_output_pickle, "rb") as f:
+            intermediate_outputs = pickle.load(f)
+        
+        pseudomodel_modmap = intermediate_outputs['pseudomodel_modmap']
+
+        assert os.path.exists(pseudomodel_modmap), "Pseudomodel modmap not found! Do not use dev_mode!"
+
+        print("Using dev_mode! Skipping model-map generation pipeline!")
+        print("Found pseudomodel modmap at: {}".format(pseudomodel_modmap))
+        print("Using this for LocScale analysis")
+        return pseudomodel_modmap
+            
+        
+
+
+
     if verbose:
         print("."*80)
         print("Running model-map generation pipeline \n")
@@ -127,8 +147,8 @@ def get_modmap(modmap_args):
                 mask_threshold=mask_threshold, fsc_resolution=fsc_resolution, \
                 return_chain_counts=True, return_difference_mask=True) 
 
-            input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.pdb'
-            integrated_structure.write_pdb(input_pdb_path)
+            input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.cif'
+            integrated_structure.make_mmcif_document().write_file(input_pdb_path)
         else:
             final_chain_counts = None
             if verbose:
@@ -206,8 +226,9 @@ def get_modmap(modmap_args):
             if verbose:
                 tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is {} (default)".format(minimum_bfactor))
                 tabbed_print.tprint("Shifted B-factor by {}".format(shift_value))
-            shifted_model_path = refined_model_path[:-4] + '_shifted_bfactors.pdb'
-            shifted_bfactors_structure.write_pdb(shifted_model_path)
+            extension = os.path.splitext(refined_model_path)[-1]
+            shifted_model_path = refined_model_path.replace(extension, f"_shifted_bfactors.{extension}")
+            shifted_bfactors_structure.make_mmcif_document().write_file(shifted_model_path)
 
             if verbose:
                 tabbed_print.tprint("Writing the shifted model to {}".format(shifted_model_path))

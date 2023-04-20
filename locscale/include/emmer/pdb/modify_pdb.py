@@ -10,7 +10,7 @@ import mrcfile
 import gemmi
 from locscale.include.emmer.ndimage.map_utils import convert_pdb_to_mrc_position
 
-def set_pdb_cell_based_on_gradient(gemmi_st, emmap, apix, outpdb_name="modified.pdb", cell='occ'):
+def set_pdb_cell_based_on_gradient(gemmi_st, emmap, apix, outpdb_name="modified.cif", cell='occ'):
     gz, gx, gy = np.gradient(emmap)
     gradient_magnitude = np.sqrt(gx**2 + gy**2 + gz**2)
     gradient_magnitude_norm = gradient_magnitude / gradient_magnitude.max() * 100
@@ -23,5 +23,5 @@ def set_pdb_cell_based_on_gradient(gemmi_st, emmap, apix, outpdb_name="modified.
                     grad = gradient_magnitude_norm[mrc_pos[0], mrc_pos[1], mrc_pos[2]]
                     atom.occ = grad
     
-    gemmi_st.write_pdb(outpdb_name)
+    gemmi_st.make_mmcif_document().write_file(outpdb_name)
                     

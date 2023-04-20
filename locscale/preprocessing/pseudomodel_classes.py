@@ -280,7 +280,7 @@ class Model:
         structure = gemmi.Structure()
         structure.add_model(gemmi_model)
         structure.cell = self.unitcell
-        structure.write_pdb(output_string)
+        structure.make_mmcif_document().write_file(output_string)
         
     def update_pdb_positions(self,apix=1):
         for atom in self.list:
@@ -311,7 +311,7 @@ def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
 
 
 def get_model_from_gemmi_pdb(pdb_path,emmap_path=None):
-    gemmi_model = gemmi.read_pdb(pdb_path)[0]
+    gemmi_model = gemmi.read_structure(pdb_path)[0]
     
     if emmap_path is not None:
         mrc = mrcfile.open(emmap_path)

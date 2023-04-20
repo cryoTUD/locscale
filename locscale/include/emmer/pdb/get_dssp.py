@@ -93,7 +93,7 @@ def split_gemmi_model_based_on_dssp(pdbid,pdb_path):
      dssp = get_dssp(pdbid,pdb_path)
      secondary_structure_res_list,_ = get_secondary_structure_residues_content(pdbid,pdb_path)
      
-     gemmi_model = gemmi.read_pdb(pdb_path)[0]
+     gemmi_model = gemmi.read_structure(pdb_path)[0]
      helix_model = gemmi.Model('H')
      sheet_model = gemmi.Model('S')
      skipped_residues = 0
