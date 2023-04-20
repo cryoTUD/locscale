@@ -206,7 +206,7 @@ def parse_inputs_from_processing_files(args):
     original_map_shape = original_emmap.shape
 
     parsed_inputs = vars(args)
-    processing_files_folder = parsed_inputs["processing_files_folder"]
+    processing_files_folder = parsed_inputs["output_processing_files"]
 
     intermediate_output_pickle = os.path.join(processing_files_folder, "intermediate_outputs.pickle")
     assert os.path.exists(intermediate_output_pickle), "Intermediate output pickle file not found! Do not use dev_mode!"
@@ -253,7 +253,7 @@ def parse_inputs_from_processing_files(args):
     parsed_inputs_dict['PWLF_fit'] = parsed_inputs["scale_factor_args"]["pwlf_fit_quality"]
     parsed_inputs_dict['emmap_path'] = parsed_inputs["xyz_emmap_path"]
     parsed_inputs_dict['mask_path'] = parsed_inputs["xyz_mask_path"]
-    parsed_inputs_dict['processing_files_folder'] = parsed_inputs["processing_files_folder"]
+    parsed_inputs_dict['processing_files_folder'] = parsed_inputs["output_processing_files"]
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
     parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
