@@ -220,7 +220,6 @@ def parse_inputs_from_processing_files(args):
     parsed_inputs["mask_path_raw"] = intermediate_outputs["mask_path"]
     parsed_inputs["pseudomodel_modmap"] = intermediate_outputs["pseudomodel_modmap"]
     parsed_inputs["difference_mask_path"] = intermediate_outputs["difference_mask_path"]
-    parsed_inputs["difference_map_path"] = intermediate_outputs["difference_map_path"]
 
     xyz_emmap, apix = load_map(parsed_inputs["xyz_emmap_path"])
     xyz_mask, _ = load_map(parsed_inputs["xyz_mask_path"])
