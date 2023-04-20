@@ -346,10 +346,8 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
     emmap = mrcfile.open(emmap_path).data
     map_shape = emmap.shape
-    
-    
+        
     gemmi_st = gemmi.read_structure(pdb_path)
-    
     
     mask = np.zeros(map_shape)
     pdb_positions = []

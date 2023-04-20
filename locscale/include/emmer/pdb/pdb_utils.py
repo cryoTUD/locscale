@@ -129,7 +129,7 @@ def shift_coordinates(in_model_path=None, out_model_path=None,\
                         if atom.charge != 0:
                             atom.charge = 0
     if input_structure is None:
-        structure.write_pdb(out_model_path)
+        structure.make_mmcif_document().write_file(out_model_path)
     else:
         return structure
   
@@ -704,7 +704,7 @@ def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
     '''
     
     if in_model_path is not None:
-        gemmi_st = gemmi.read_pdb(in_model_path)
+        gemmi_st = gemmi.read_structure(in_model_path)
     elif input_gemmi_st is not None:
         gemmi_st = input_gemmi_st.clone()
     else:
@@ -729,7 +729,7 @@ def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
         else:
             output_filepath = in_model_path[:-4]+'_modified_bfactor.pdb'
     
-        gemmi_st.write_pdb(output_filepath)
+        gemmi_st.make_mmcif_document().write_file(output_filepath)
     
     else:
         return gemmi_st
@@ -835,7 +835,7 @@ def remove_atomic_charges(in_model_path,out_model_path):
                 for atom in residue:
                     if atom.charge != 0:
                         atom.charge = 0
-    structure.write_pdb(out_model_path)
+    structure.make_mmcif_document().write_file(out_model_path)
     return 1
 
 

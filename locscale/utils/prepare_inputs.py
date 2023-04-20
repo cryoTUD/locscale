@@ -23,6 +23,12 @@ def prepare_mask_and_maps_for_scaling(args):
     print("Preparing your inputs for LocScale")
 
     #########################################################################
+    # If dev_mode is True, then the program will run in the development mode
+    #########################################################################
+    if args.dev_mode:
+        return parse_inputs_from_processing_files(args)
+
+    #########################################################################
     # Import necessary modules
     #########################################################################
     import os
@@ -188,6 +194,71 @@ def prepare_mask_and_maps_for_scaling(args):
         
     return parsed_inputs_dict
 
+def parse_inputs_from_processing_files(args):
+    from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
+    from locscale.utils.file_tools import get_emmap_path_from_args
+    from locscale.preprocessing.headers import check_axis_order
+    import os
+    import pickle
+
+    original_emmap, _ = get_emmap_path_from_args(args)
+    original_emmap = load_map(original_emmap)[0]
+    original_map_shape = original_emmap.shape
+
+    parsed_inputs = vars(args)
+    processing_files_folder = parsed_inputs["processing_files_folder"]
+
+    intermediate_output_pickle = os.path.join(processing_files_folder, "intermediate_outputs.pickle")
+    assert os.path.exists(intermediate_output_pickle), "Intermediate output pickle file not found! Do not use dev_mode!"
+    with open(intermediate_output_pickle, "rb") as f:
+        intermediate_outputs = pickle.load(f)
+
+    parsed_inputs["unsharpened_emmap_path"], parsed_inputs["shift_vector"]  = get_emmap_path_from_args(args)
+
+    parsed_inputs["xyz_emmap_path"] = intermediate_outputs["emmap_path"]
+    parsed_inputs["xyz_mask_path"] = intermediate_outputs["mask_path"]
+    parsed_inputs["mask_path_raw"] = intermediate_outputs["mask_path"]
+    parsed_inputs["pseudomodel_modmap"] = intermediate_outputs["pseudomodel_modmap"]
+    parsed_inputs["difference_mask_path"] = intermediate_outputs["difference_mask_path"]
+    parsed_inputs["difference_map_path"] = intermediate_outputs["difference_map_path"]
+
+    xyz_emmap, apix = load_map(parsed_inputs["xyz_emmap_path"])
+    xyz_mask, _ = load_map(parsed_inputs["xyz_mask_path"])
+    xyz_modmap, _ = load_map(parsed_inputs["pseudomodel_modmap"])
+
+    
+    parsed_inputs["apix"] = apix
+    parsed_inputs["original_map_shape"]
+    
+    parsed_inputs["pseudomodel_required"] = True if parsed_inputs["model_coordinates"] is None else False
+    parsed_inputs["use_theoretical_profile"] = parsed_inputs["pseudomodel_required"]
+    parsed_inputs["wn"] = set_window_size(parsed_inputs["window_size"], apix, parsed_inputs["verbose"])
+
+    parsed_inputs["processing_files_folder"] = os.path.dirname(parsed_inputs["xyz_emmap_path"])
+    
+    parsed_inputs = pad_input_maps_if_required(parsed_inputs)
+
+    parsed_inputs["scale_factor_args"] = get_scale_factor_arguments(parsed_inputs)
+
+    parsed_inputs_dict = {}
+    parsed_inputs_dict['emmap'] = xyz_emmap
+    parsed_inputs_dict['modmap'] = xyz_modmap
+    parsed_inputs_dict['mask'] = xyz_mask
+    parsed_inputs_dict['wn'] = parsed_inputs["wn"]
+    parsed_inputs_dict['apix'] = apix
+    parsed_inputs_dict['use_theoretical_profile'] = parsed_inputs["use_theoretical_profile"]
+    parsed_inputs_dict['scale_factor_arguments'] = parsed_inputs["scale_factor_args"]
+    parsed_inputs_dict['verbose'] = parsed_inputs["verbose"]
+    parsed_inputs_dict['win_bleed_pad'] = parsed_inputs["window_bleed_and_pad"]
+    parsed_inputs_dict['bfactor_info'] = parsed_inputs["scale_factor_args"]["bfactor_info"]
+    parsed_inputs_dict['fsc_resolution'] = parsed_inputs["ref_resolution"]
+    parsed_inputs_dict['PWLF_fit'] = parsed_inputs["scale_factor_args"]["pwlf_fit_quality"]
+    parsed_inputs_dict['emmap_path'] = parsed_inputs["xyz_emmap_path"]
+    parsed_inputs_dict['mask_path'] = parsed_inputs["xyz_mask_path"]
+    parsed_inputs_dict['processing_files_folder'] = parsed_inputs["processing_files_folder"]
+    parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
+    parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
+    parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
 
 def prepare_mask_from_inputs(parsed_inputs):
     from locscale.utils.math_tools import round_up_to_even
@@ -245,8 +316,8 @@ def get_modmap_from_inputs(parsed_inputs):
             ## we do not need to use the theoretical profile for scaling
             
             shift_coordinates(in_model_path=pdb_path, trans_matrix=parsed_inputs["shift_vector"],
-                                         out_model_path=pdb_path[:-4]+"_shifted.pdb")
-            pdb_path = pdb_path[:-4]+"_shifted.pdb"
+                                         out_model_path=pdb_path[:-4]+"_shifted.cif")
+            pdb_path = pdb_path[:-4]+"_shifted.cif"
 
     
     

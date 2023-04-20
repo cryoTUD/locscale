@@ -110,7 +110,6 @@ def launch_locscale_no_mpi(args):
     
     ## Change to output directory
     copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
-    ## Prepare inputs
     parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
     ## Run LocScale non-MPI 
     LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)

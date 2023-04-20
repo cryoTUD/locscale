@@ -167,7 +167,10 @@ def copy_file_to_folder(full_path_to_file, new_folder):
     source = full_path_to_file
     file_name = os.path.basename(source)
     destination = os.path.join(new_folder, file_name)
-    shutil.copyfile(source, destination)
+    if not os.path.exists(destination):
+        shutil.copyfile(source, destination)
+    else:
+        print(f"File {destination} already exists")
     
     return destination
 
