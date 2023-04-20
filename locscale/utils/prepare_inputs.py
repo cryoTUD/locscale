@@ -207,6 +207,7 @@ def parse_inputs_from_processing_files(args):
 
     parsed_inputs = vars(args)
     processing_files_folder = parsed_inputs["output_processing_files"]
+    parsed_inputs['processing_files_folder'] = processing_files_folder
 
     intermediate_output_pickle = os.path.join(processing_files_folder, "intermediate_outputs.pickle")
     assert os.path.exists(intermediate_output_pickle), "Intermediate output pickle file not found! Do not use dev_mode!"
