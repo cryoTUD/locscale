@@ -52,25 +52,6 @@ def get_modmap(modmap_args):
     mask_threshold = modmap_args['mask_threshold']
     cif_info = modmap_args['cif_info']
 
-    if modmap_args['dev_mode']:
-        preprocessing_pipeline_directory = os.path.dirname(emmap_path)
-        intermediate_output_pickle = os.path.join(preprocessing_pipeline_directory, "intermediate_outputs.pickle")
-        assert os.path.exists(intermediate_output_pickle), "Intermediate output pickle file not found! Do not use dev_mode!"
-        with open(intermediate_output_pickle, "rb") as f:
-            intermediate_outputs = pickle.load(f)
-        
-        pseudomodel_modmap = intermediate_outputs['pseudomodel_modmap']
-
-        assert os.path.exists(pseudomodel_modmap), "Pseudomodel modmap not found! Do not use dev_mode!"
-
-        print("Using dev_mode! Skipping model-map generation pipeline!")
-        print("Found pseudomodel modmap at: {}".format(pseudomodel_modmap))
-        print("Using this for LocScale analysis")
-        return pseudomodel_modmap
-            
-        
-
-
 
     if verbose:
         print("."*80)
