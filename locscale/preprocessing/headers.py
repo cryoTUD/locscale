@@ -495,14 +495,15 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
-    servalcat_command += ["--no_mask"]
     
     if cif_info is not None:
         servalcat_command += ["--ligand",cif_info]
     use_unrestrained_refinement = pseudomodel_refinement and not hybrid_model_refinement 
        
     if use_unrestrained_refinement:
+        servalcat_command += ["--no_mask"]
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
+        
     else:
         servalcat_command += ["--keywords","refi bonly"]
 
