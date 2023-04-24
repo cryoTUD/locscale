@@ -653,16 +653,31 @@ def add_atomic_bfactors(input_pdb, additional_biso=None, minimum_biso=0.5, out_f
    
     return gemmi_st
 
+def compute_cdf(kde, xmin, xmax, nbins=1000):
+    cdf = []
+    xarray = np.linspace(xmin, xmax, nbins)
+    for x in xarray:
+        cdf.append(kde.integrate_box_1d(xmin,x))
+    
+    cdf = np.array(cdf)
+    return cdf, xarray
+
+def probe_cdf_threshold(cdf, xarray, probe_cdf):
+    from scipy.interpolate import interp1d
+    f = interp1d(cdf, xarray)
+    return f(probe_cdf)
+
 def get_lower_bound_threshold(bfactor_array, probability_threshold=0.01):
     # Using a Gaussian Kernel Density Estimation to get the lower bound threshold for the B-factors
-    from scipy.stats import invgamma
+    from scipy.stats import gaussian_kde
     
     bfactor_array = np.array(bfactor_array)
-    # fit a invgamma distribution to the data
-    param = invgamma.fit(bfactor_array)
-    # calculate the lower bound threshold
-    lower_bound_threshold = invgamma.ppf(probability_threshold, *param)
-    
+    kde = gaussian_kde(bfactor_array, bw_method="silverman")
+    xmin = np.min(bfactor_array)
+    xmax = np.max(bfactor_array)
+    cdf, xarray = compute_cdf(kde, xmin, xmax)
+    lower_bound_threshold = probe_cdf_threshold(cdf, xarray, probability_threshold)
+       
     return lower_bound_threshold
 
 def shift_bfactors_by_probability(input_pdb, probability_threshold=0.01, minimum_bfactor=0.5, return_shift_values=True):
