@@ -27,7 +27,7 @@
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
 
 
-Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/). Note that currently the GUI implementations only support an older version of Locscale (Locscale 1.0, with only model-based sharpening). 
+Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; LocScale2 is also implemented in [Scipion](http://scipion.i2pc.es/)(thanks to Grigory Sharov, MRC-LMB). Note that currently the CCPEM GUI implementations only supports an older version of Locscale (Locscale 1.0, with only model-based sharpening). 
 
 ## Installation 
 
