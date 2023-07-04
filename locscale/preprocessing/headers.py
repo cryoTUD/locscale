@@ -330,13 +330,11 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
     normal_refinement = not pseudomodel_refinement and not hybrid_model_refinement
     if normal_refinement:
         tprint("This is a refinement of a real atomic model")
-        servalcat_refined_path = run_refmac_servalcat(
+        servalcat_refined_model_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
             num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
             refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info)
-        
-        return servalcat_refined_path
-        
+                
     else:
         tprint("This is a refinement of a pseudo-atomic model")
         tprint("Running iterative refinement of the model")
@@ -355,6 +353,15 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                 refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, \
                 hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
             
+            # Copy the servalcat_refined_once_path for the next cycle of refinement
+            # servalcat_refinement_next_cycle_path = os.path.join(os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+"_no_average.cif")
+            # os.rename(servalcat_refined_once_path, servalcat_refinement_next_cycle_path)
+            
+            # print("WARNING: This is a temporary fix. Please fix the code to run multiple cycles of refinement")
+            # print("Current cycle: "+str(cycle))
+            # print("Next cycle: "+str(cycle+1))
+            # print("Model input for next cycle: "+servalcat_refinement_next_cycle_path)
+            
             servalcat_refinement_next_cycle_path = os.path.join(
                 os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".cif")
             
@@ -372,10 +379,17 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             starting_chain_count = None
             
         proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        proper_element_composition_filename = model_path.replace(".cif", "_proper_element_composition.cif")
-        proper_element_composition_structure.make_mmcif_document().write_file(proper_element_composition_filename)
+        servalcat_refined_model_path = model_path.replace(".cif", "_proper_element_composition.cif")
+        proper_element_composition_structure.make_mmcif_document().write_file(servalcat_refined_model_path)
         
-        return proper_element_composition_filename
+    # Average the ADPs for 25 angstroms
+    tprint("Averaging the bfactors with radius of 25 angstroms")
+    ADP_averaged_structure = average_atomic_bfactors_window(servalcat_refined_model_path, window_radius=25)   
+    
+    refined_averaged_structure_path = servalcat_refined_model_path.replace(".cif", "_averaged.cif")
+    ADP_averaged_structure.make_mmcif_document().write_file(refined_averaged_structure_path)
+    
+    return refined_averaged_structure_path
         
 def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percentage=0.17, oxygen_percentage=0.2, starting_chain_count=None):
     '''
