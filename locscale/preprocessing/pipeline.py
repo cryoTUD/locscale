@@ -208,7 +208,7 @@ def get_modmap(modmap_args):
                 tabbed_print.tprint("Shifting B-factor such that bfactor of p(<0.01) is {} (default)".format(minimum_bfactor))
                 tabbed_print.tprint("Shifted B-factor by {}".format(shift_value))
             extension = os.path.splitext(refined_model_path)[-1]
-            shifted_model_path = refined_model_path.replace(extension, f"_shifted_bfactors.{extension}")
+            shifted_model_path = refined_model_path.replace(extension, f"_shifted_bfactors{extension}")
             shifted_bfactors_structure.make_mmcif_document().write_file(shifted_model_path)
 
             if verbose:
