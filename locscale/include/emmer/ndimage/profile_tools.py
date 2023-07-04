@@ -40,7 +40,10 @@ def frequency_array(amplitudes=None,apix=None,profile_size=None):
         print("Warning: voxelsize parameter not entered. \n Using apix = 1")
         apix = 1
         
-    freq = np.linspace(1/(apix*n),1/(apix*2),n,endpoint=True)
+    #freq = np.linspace(1/(apix*n*2),1/(apix*2),n,endpoint=True)
+    start_freq = 0
+    end_freq = 1/(apix*2)
+    freq = np.linspace(start_freq,end_freq,n,endpoint=True)
     return freq
    
     
@@ -684,7 +687,7 @@ def estimate_bfactor_through_pwlf(freq,amplitudes,wilson_cutoff,fsc_cutoff, retu
 
 def get_theoretical_profile(length,apix, profile_type='helix'):
     import pickle
-    from locscale.include.emmer.ndimage.profile_tools import resample_1d
+    from locscale.include.emmer.ndimage.profile_tools import resample_1d, frequency_array
     from locscale.utils.file_tools import get_locscale_path
     import os
     
@@ -694,11 +697,13 @@ def get_theoretical_profile(length,apix, profile_type='helix'):
     with open(location_of_theoretical_profiles,'rb') as f:
         profiles = pickle.load(f)
     
-    frequency_limits = (float(1/(apix*length)),float(1/(apix*2)))
-    helix_profile = profiles[profile_type]
-    resampled_helix_profile = resample_1d(helix_profile['freq'], helix_profile['profile'],num=length,xlims=frequency_limits)
-    return resampled_helix_profile
-      
+    theoretical_profile = profiles[profile_type]
+    freq_old = theoretical_profile['freq']
+    freq_limits = (0, 1/(2*apix))
+    resampled_theoretical_profile = resample_1d(freq_old, theoretical_profile['profile'],num=length, xlims=freq_limits)
+    freq_resampled = resampled_theoretical_profile[0]
+    return resampled_theoretical_profile
+
 
 def generate_no_debye_profile(freq, amplitudes, wilson_cutoff=10, smooth=1):
     from locscale.include.emmer.ndimage.profile_tools import merge_two_profiles, estimate_bfactor_standard
