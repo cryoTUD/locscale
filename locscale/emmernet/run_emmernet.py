@@ -32,6 +32,8 @@ def run_emmernet(input_dictionary):
     verbose = input_dictionary["verbose"]
     emmernet_model_folder = input_dictionary["emmernet_model_folder"]
     target_map_path = input_dictionary["target_map_path"]
+    model_path = input_dictionary["model_path"]
+
     if target_map_path is not None:
         target_map, _ = load_map(target_map_path)
         target_map_present = True
@@ -67,9 +69,12 @@ def run_emmernet(input_dictionary):
         print("\tNumber of cubes: {}".format(len(cubes)))
     ## Load the model
 
-    emmernet_model = load_emmernet_model(emmernet_type, emmernet_model_folder)
+    emmernet_model = load_emmernet_model(emmernet_type, emmernet_model_folder, model_path)
     if verbose:
-        print("\tEMmerNet model loaded: {}".format(emmernet_type))
+        if model_path is None:
+            print("\tEMmerNet model loaded: {}".format(emmernet_type))
+        else:
+            print("\tEMmerNet model loaded from: {}".format(model_path))
 
     ## Run EMmerNet using GPUs
     
@@ -85,7 +90,7 @@ def run_emmernet(input_dictionary):
         gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
         if verbose:
             print("\tGPU ids: {}".format(gpu_id_list))
-        mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_id_list)
+        mirrored_strategy = tf.distribute.MirroredStrategy()
     
     predicted_cubes = run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size=batch_size)
 
@@ -123,7 +128,7 @@ def run_emmernet(input_dictionary):
     return emmernet_output_dictionary
 
 
-def load_emmernet_model(emmernet_type, emmernet_model_folder=None):
+def load_emmernet_model(emmernet_type, emmernet_model_folder=None, model_path=None):
     import os
     ## Ignore DeprecationWarning
     import warnings
@@ -153,9 +158,12 @@ def load_emmernet_model(emmernet_type, emmernet_model_folder=None):
     else:
         raise ValueError("Invalid emmernet_type")
     
-    emmernet_model = load_model(emmernet_model_path)
-    
-    return emmernet_model
+    if model_path is not None:
+        emmernet_model = load_model(model_path)
+        return emmernet_model
+    else:
+        emmernet_model = load_model(emmernet_model_path)
+        return emmernet_model
 
 def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size):
     ## Run the model on the cube
@@ -176,6 +184,9 @@ def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size):
     cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
     with mirrored_strategy.scope():
         for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+            if i+batch_size > len(cubes):
+                i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
+            
             cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
             cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
 
@@ -207,9 +218,9 @@ def postprocess_map(predicted_map, apix, output_shape):
     predicted_map_resampled = resample_map(predicted_map, apix=1,apix_new=apix, assert_shape=output_shape)
 
     ## MinMax normalize the map
-    predicted_map_normalized = minmax_normalize_map(predicted_map_resampled)
+    #predicted_map_normalized = minmax_normalize_map(predicted_map_resampled)
 
-    return predicted_map_normalized
+    return predicted_map_resampled
 
 
 
