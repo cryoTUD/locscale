@@ -26,9 +26,7 @@ def prepare_inputs(args):
     batch_size = args.batch_size
     gpu_ids = args.gpu_ids
     target_map_path = args.target_map_path
-    
-
-
+    model_path = args.model_path
 
     inputs_dictionary = {
         "emmap_path": emmap_path,
@@ -41,7 +39,8 @@ def prepare_inputs(args):
         "gpu_ids": gpu_ids,
         "emmap_folder": emmap_folder,
         "emmernet_model_folder": emmernet_model_folder,
-        "target_map_path": target_map_path
+        "target_map_path": target_map_path,
+        "model_path": model_path
         }
     
     if verbose:
