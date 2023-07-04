@@ -14,7 +14,7 @@ from Bio.PDB import PDBList
 #%% functions
 
 def get_dssp(pdbid,pdb_path):     
-    dsspfile_location = '/home/alok/soft/ccp4-7.1/ccp4-7.1/bin/mkdssp'
+    dsspfile_location = '/home/abharadwaj1/soft/ccp4-8.0/bin/mkdssp'
     parser = PDBParser()
     structure = parser.get_structure(pdbid,pdb_path)
     model = structure[0]
@@ -24,9 +24,10 @@ def get_dssp(pdbid,pdb_path):
          print("Successfully performed DSSP! \n")
          
          
-    except:
+    except Exception as e:
          print("Problem with DSSP")
-         return 0
+         raise e
+
     
     return dssp
  
