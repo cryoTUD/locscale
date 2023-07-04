@@ -91,7 +91,10 @@ def calculate_phase_correlation(ps1,ps2,radii,map_shape):
     list_nsf = []
     ps1_phase = np.angle(ps1)
     ps2_phase = np.angle(ps2)
-    for r in np.unique(radii)[0:map_shape[0]//2]:
+    radius_array = np.unique(radii)[0:map_shape[0]//2] 
+    if radius_array[0] == 0:
+        radius_array = radius_array[1:]
+    for r in radius_array:
         idx = radii == r
         fsc = calculate_shell_correlation(ps1_phase[idx],ps2_phase[idx])
         list_fsc.append(fsc)
