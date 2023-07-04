@@ -107,6 +107,25 @@ class EMDB:
                print("Coudl not download the XML file :( ")
                return 0
      
+     def parse_pdb_info(self):
+          from xml.dom import minidom
+          import os
+
+          header_file = self.get_header_file()
+          header = minidom.parse(header_file)
+          associated_pdbid = (
+               header.getElementsByTagName("crossreferences")[0]
+               .getElementsByTagName("pdb_list")[0]
+               .getElementsByTagName("pdb_reference")[0]
+               .getElementsByTagName("pdb_id")[0]
+               .childNodes[0]
+               .nodeValue
+          )
+          os.remove(header_file)
+
+          self.fitted_pdbs = associated_pdbid
+          return associated_pdbid
+     
      def parse_properties(self,header_file=None,delete_xml=True):
           from xml.dom import minidom
           import os
@@ -122,6 +141,7 @@ class EMDB:
           self.header_info_xml = xmldoc
           self.parse_deposition()
           self.parse_processing()
+          self.parse_pdb_info()
           if delete_xml:
                # print("Deleting XML file. Set delete_xml=False to disable this!")
                os.remove(header_file)
