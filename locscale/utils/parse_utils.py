@@ -101,6 +101,7 @@ emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbos
 ## Emmernet main function parameters
 emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of emmernet model to use', \
                             choices=['hybrid','model_based', 'model_free', 'ensemble','model_based_no_freqaug'], default='hybrid')
+emmernet_parser.add_argument('-model_path', '--model_path', type=str, help='Path to a custom trained model', default=None)
 emmernet_parser.add_argument('-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 emmernet_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
 emmernet_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
