@@ -27,6 +27,7 @@ def prepare_inputs(args):
     gpu_ids = args.gpu_ids
     target_map_path = args.target_map_path
     model_path = args.model_path
+    cube_size = args.cube_size
 
     inputs_dictionary = {
         "emmap_path": emmap_path,
@@ -40,7 +41,8 @@ def prepare_inputs(args):
         "emmap_folder": emmap_folder,
         "emmernet_model_folder": emmernet_model_folder,
         "target_map_path": target_map_path,
-        "model_path": model_path
+        "model_path": model_path,
+        "cube_size": cube_size
         }
     
     if verbose:

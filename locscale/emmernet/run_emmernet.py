@@ -2,7 +2,7 @@
 ## import the necessary packages from locscale.include.emmer
 
 from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
-from locscale.emmernet.emmernet_functions import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
+from locscale.emmernet.emmernet_functions_new import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
 from locscale.emmernet.utils import compute_local_phase_correlations, plot_phase_correlations
 
 import numpy as np
@@ -21,7 +21,7 @@ def run_emmernet(input_dictionary):
         from tensorflow.keras.models import load_model
     
     from locscale.utils.general import merge_sequence_of_sequences
-    EMMERNET_CUBE_SIZE=32
+    EMMERNET_CUBE_SIZE=input_dictionary["cube_size"]
     
     ## Get the input map path
     emmap_path = input_dictionary["emmap_path"]
