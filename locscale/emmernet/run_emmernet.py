@@ -2,7 +2,9 @@
 ## import the necessary packages from locscale.include.emmer
 
 from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
-from locscale.emmernet.emmernet_functions_new import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes
+from locscale.emmernet.emmernet_functions_new import standardize_map, minmax_normalize_map, get_cubes, assemble_cubes, replace_cubes_in_dictionary,\
+                                                    load_smoothened_mask, show_signal_cubes
+                                                    
 from locscale.emmernet.utils import compute_local_phase_correlations, plot_phase_correlations
 
 import numpy as np
@@ -25,7 +27,9 @@ def run_emmernet(input_dictionary):
     
     ## Get the input map path
     emmap_path = input_dictionary["emmap_path"]
-    emmernet_type = input_dictionary["emmernet_type"]
+    processing_files_folder = os.path.dirname(emmap_path)
+    mask_path = input_dictionary["xyz_mask_path"]
+    emmernet_type = input_dictionary["trained_model"]
     stride = input_dictionary["stride"]
     batch_size = input_dictionary["batch_size"]
     gpu_ids = input_dictionary["gpu_ids"]
@@ -42,6 +46,8 @@ def run_emmernet(input_dictionary):
     
 
     emmap, apix = load_map(emmap_path)
+    mask, _ = load_smoothened_mask(mask_path)
+    
     input_map_shape = emmap.shape
     if verbose:
         print("Emmap loaded from: {}".format(emmap_path))
@@ -53,6 +59,7 @@ def run_emmernet(input_dictionary):
     ## Preprocess
 
     emmap_preprocessed = preprocess_map(emmap, apix)
+    mask_preprocessed = preprocess_map(mask, apix, standardize=False)
     if target_map_present:
         target_map_preprocessed = preprocess_map(target_map, apix)
     if verbose:
@@ -60,13 +67,15 @@ def run_emmernet(input_dictionary):
         print("\tPre-processed map shape: {}".format(emmap_preprocessed.shape))
         print("2) Prediction commencing...")
 
-    cubes, cubecenters = get_cubes(emmap_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride)
+    cubes_dictionary, cubes_array, signal_cubes = get_cubes(emmap_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride, mask=mask_preprocessed)
+    show_signal_cubes(signal_cubes, emmap_preprocessed.shape, save_path=os.path.join(processing_files_folder, "signal_cubes_resampled.mrc"), apix=1)
+
     if target_map_present:
-        target_cubes, _ = get_cubes(target_map_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride)
+        target_cubes_dictionary, target_cubes_array = get_cubes(target_map_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride, mask=mask_preprocessed)
         
     if verbose:
         print("\tCubes extracted")
-        print("\tNumber of cubes: {}".format(len(cubes)))
+        print("\tNumber of cubes: {}".format(len(cubes_array)))
     ## Load the model
 
     emmernet_model = load_emmernet_model(emmernet_type, emmernet_model_folder, model_path)
@@ -92,11 +101,12 @@ def run_emmernet(input_dictionary):
             print("\tGPU ids: {}".format(gpu_id_list))
         mirrored_strategy = tf.distribute.MirroredStrategy()
     
-    predicted_cubes = run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size=batch_size)
+    predicted_cubes = run_emmernet_batch(cubes_array, emmernet_model, mirrored_strategy, batch_size=batch_size)
 
+    predicted_cubes_dictionary = replace_cubes_in_dictionary(predicted_cubes, cubes_dictionary)
     if target_map_present:
         # Compute phase correlations between predicted and target cubes
-        processing_files_folder = os.path.dirname(emmap_path)
+        
         phase_correlations, freq = compute_local_phase_correlations(target_cubes=target_cubes, predicted_cubes=predicted_cubes, apix=apix, temp_folder=processing_files_folder)
         phase_correlations_fig_path = os.path.join(processing_files_folder, "phase_correlations.png")
         fig = plot_phase_correlations(phase_correlations, freq)
@@ -107,7 +117,8 @@ def run_emmernet(input_dictionary):
         print("\tNumber of predicted cubes: {}".format(len(predicted_cubes)))
     ## Merge the predicted cubes sequence
     
-    predicted_map = assemble_cubes(predicted_cubes, cubecenters, emmap_preprocessed.shape[0],EMMERNET_CUBE_SIZE)
+    predicted_map = assemble_cubes(predicted_cubes_dictionary, emmap_preprocessed.shape[0])
+    
     if verbose:
         print("\tPredicted map assembled")
         print("\tPredicted map shape: {}".format(predicted_map.shape))
@@ -204,14 +215,16 @@ def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size):
 
 
 ## Preprocess the map
-def preprocess_map(emmap, apix):
+def preprocess_map(emmap, apix, standardize=True):
     ## Resample the map to 1A per pixel
     emmap_resampled = resample_map(emmap, apix=apix,apix_new=1)
 
     ## standardize the map
-    emmap_standardized = standardize_map(emmap_resampled)
-
-    return emmap_standardized
+    if standardize:
+        emmap_standardized = standardize_map(emmap_resampled)
+        return emmap_standardized
+    else:
+        return emmap_resampled
 
 def postprocess_map(predicted_map, apix, output_shape):
     ## Resample the map to the original pixel size

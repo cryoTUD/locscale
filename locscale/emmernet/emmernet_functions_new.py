@@ -35,7 +35,7 @@ def load_smoothened_mask(mask_path):
     from locscale.include.emmer.ndimage.filter import get_cosine_mask 
     
     mask, apix = load_map(mask_path)
-    mask_binarize = (mask >= 0.99).astype(np.int_)
+    mask_binarize = (mask >= 0.5).astype(np.int_)
     mask_smooth = get_cosine_mask(mask_binarize, 3)
     mask_binarize = (mask_smooth >= 0.5).astype(np.int_)
     
@@ -161,7 +161,16 @@ def get_cubes(emmap, step_size, cube_size, mask):
     
     cubes_dictionary, cubes_array = extract_cubes_from_cubecenters(emmap, filtered_signal_cubecenters, cube_size)
     
-    return cubes_dictionary, cubes_array
+    return cubes_dictionary, cubes_array, filtered_signal_cubecenters
+
+def replace_cubes_in_dictionary(cubes_array, cubes_dictionary):
+    
+    for i, cube_info in enumerate(cubes_dictionary.values()):
+        new_cube = cubes_array[i]
+        cube_info['cube'] = new_cube
+    
+    return cubes_dictionary
+
     
 def assemble_cubes(cubes_dictionary, im_shape, average=True):
     '''
@@ -179,9 +188,9 @@ def assemble_cubes(cubes_dictionary, im_shape, average=True):
     for cubes in cubes_dictionary.values():
         center_ijk = cubes['center']
         ci, cj, ck = center_ijk
-        else:
-            cube = cubes['cube']
-            ni, nj, nk = cube.shape
+
+        cube = cubes['cube']
+        ni, nj, nk = cube.shape
 
         im[ci-ni//2:ci+ni//2, cj-nj//2:cj+nj//2, ck-nk//2:ck+nk//2] += cube
         average_map[ci-ni//2:ci+ni//2, cj-nj//2:cj+nj//2, ck-nk//2:ck+nk//2] += 1
@@ -191,3 +200,14 @@ def assemble_cubes(cubes_dictionary, im_shape, average=True):
         im[nonzero_indices] /= average_map[nonzero_indices]
 
     return im
+
+def show_signal_cubes(signal_cubes, im_shape, save_path, apix):
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    emmap = np.zeros(im_shape)
+    for cube in signal_cubes:
+        emmap[cube[0], cube[1], cube[2]] = 1
+    
+    save_as_mrc(emmap, save_path, apix=apix)
+        
+        
+        

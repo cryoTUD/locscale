@@ -98,7 +98,14 @@ emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default=
 emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 
+## FDR parameters
+emmernet_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
+emmernet_parser.add_argument('--averaging_filter_size', '--averaging_filter_size', type=int, help='window size in pixels for FDR thresholding', default=3)
+emmernet_parser.add_argument('-fdr_f', '--fdr_filter', type=float, help='Pre-filter for FDR thresholding', default=None)
+emmernet_parser.add_argument('-th', '--mask_threshold', type=float, help='Threshold used to calculate the number of atoms and to decide the envelope for initial placement of pseudo-atoms', default=0.99)
+
 ## Emmernet main function parameters
+emmernet_parser.add_argument('-ma', '--mask', type=str, help='Path to mask for the input map', default=None)
 emmernet_parser.add_argument('-trained_model','--trained_model', help='Type of emmernet model to use', \
                             choices=['hybrid','model_based', 'model_free', 'ensemble','model_based_no_freqaug'], default='hybrid')
 emmernet_parser.add_argument('-cube_size','--cube_size', type=int, help='Size of the input cube for EMMERNET', default=32)
