@@ -61,7 +61,10 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"])
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
     # Check if pseudo-model is required
-    parsed_inputs["pseudomodel_required"] = True if parsed_inputs["model_coordinates"] is None else False
+    model_coordinates_present = True if parsed_inputs["model_coordinates"] is not None else False
+    model_map_present = True if parsed_inputs["model_map"] is not None else False
+    reference_present = model_coordinates_present or model_map_present
+    parsed_inputs["pseudomodel_required"] = True if not reference_present else False
     parsed_inputs["use_theoretical_profile"] = parsed_inputs["pseudomodel_required"]
     ##########################################################################
     ## use_theoretical_profile is the flag used to determine 
