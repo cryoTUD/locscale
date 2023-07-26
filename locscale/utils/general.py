@@ -204,7 +204,7 @@ def save_list_as_map(values_list, masked_indices, map_shape, map_path, apix):
     return value_map
 
 def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
-    from locscale.utils.general import pad_or_crop_volume
+    from locscale.utils.general import pad_or_crop_volume, try_to
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.plot_tools import make_locscale_report
     import mrcfile
@@ -238,17 +238,20 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     else:
         save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     
+    if args.skip_report:
+        return LocScaleVol
+    else: 
+        try_to(make_locscale_report, args, parsed_inputs_dict, output_filename, window_bleed_and_pad)    
+        return LocScaleVol
+
+def try_to(func, *args, **kwargs):
     try:
-        make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
-    except Exception as e:
-        print("LocScale successfully completed, but failed to generate a report")
-        print("Error: \n{}".format(e))
-        
-        
+        return func(*args, **kwargs)
+    except:
+        print("Failed to run {}".format(func.__name__))
+        print("with args: {}".format(args))
         
     
-    return LocScaleVol
-
 ##### MPI related functions #####
 
 def split_sequence_evenly(seq, size):
@@ -275,3 +278,4 @@ def merge_sequence_of_sequences(seq):
     newseq = [number for sequence in seq for number in sequence]
 
     return newseq
+
