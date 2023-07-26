@@ -14,7 +14,7 @@ description="".join(description))
 ## Add subparsers
 sub_parser = main_parser.add_subparsers(dest='command')
 locscale_parser = sub_parser.add_parser('run_locscale', help='Run LocScale')
-emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMMERNET')
+emmernet_parser = sub_parser.add_parser('run_emmernet', help='Run EMmerNet')
 version_parser = sub_parser.add_parser('version', help='Print version')
 test_parser = sub_parser.add_parser('test', help='Run tests')
 
@@ -37,6 +37,7 @@ locscale_parser.add_argument('-ma', '--mask', help='Input filename mask')
 ## Output arguments
 locscale_parser.add_argument('-o', '--outfile', help='Output filename', default="locscale_output.mrc")
 locscale_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
+locscale_parser.add_argument('--skip_report', help='Skip report generation', action='store_true', default=False)
 locscale_parser.add_argument('--report_filename', type=str, help='Filename for storing PDF output and statistics', default="locscale_report")
 locscale_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 
@@ -70,6 +71,7 @@ locscale_parser.add_argument('--complete_model', help='Add pseudo-atoms to areas
 locscale_parser.add_argument('-avg_w', '--averaging_window', type=int, help='Window size for filtering the fdr difference map for integrated pseudo-model', default=3)
 
 ## Pseudo-atomic model method parameters
+locscale_parser.add_argument('--build_using_pseudomodel', help='Add pseudo-atoms to the map', action='store_true', default=False)
 locscale_parser.add_argument('-pm', '--pseudomodel_method', help='For pseudo-atomic model: method', default='gradient')
 locscale_parser.add_argument('-pm_it', '--total_iterations', type=int, help='For pseudo-atomic model: total iterations', default=50)
 locscale_parser.add_argument('-dst', '--distance', type=float, help='For pseudo-atomic model: typical distance between atoms', default=1.2)
@@ -80,12 +82,18 @@ locscale_parser.add_argument('--boost_secondary_structure', type=float, help='Am
 locscale_parser.add_argument('--no_reference', action='store_true', default=False,help='Run locscale without using any reference information')
 locscale_parser.add_argument('--set_local_bfactor', type=float, default=20,help='For reference-less sharpening. Use this value to set the local b-factor of the maps')
 
+## Predict model map arguments 
+locscale_parser.add_argument('-model_path', '--model_path', type=str, help='Path to a custom trained model', default=None)
+locscale_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
+locscale_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
+
 ## non-default arguments
 locscale_parser.add_argument('--dev_mode', action='store_true', default=False,help='If true, this will force locscale to use the theoretical profile even if model map present and will not check for user input consistency')
 locscale_parser.add_argument('--skip_refine', help='Ignore REFMAC refinement', action='store_true')
 
+
 # **************************************************************************************
-# ************************ Command line arguments EMMERNET *******************************
+# ************************ Command line arguments EMMERNET *****************************
 # **************************************************************************************
 
 ## Input either unsharpened EM map or two halfmaps
@@ -97,6 +105,8 @@ emmernet_emmap_input.add_argument('-hm', '--halfmap_paths', nargs=2, help='Paths
 emmernet_parser.add_argument('-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
 emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help='Path to store processing files', default=None)
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
+emmernet_parser.add_argument('-monte_carlo','--monte_carlo', action='store_true',help='Monte Carlo sampling of the output')
+emmernet_parser.add_argument('-mc_it','--monte_carlo_iterations', type=int, help='Number of Monte Carlo iterations', default=15)
 
 ## FDR parameters
 emmernet_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
