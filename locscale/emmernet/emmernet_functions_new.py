@@ -164,12 +164,18 @@ def get_cubes(emmap, step_size, cube_size, mask):
     return cubes_dictionary, cubes_array, filtered_signal_cubecenters
 
 def replace_cubes_in_dictionary(cubes_array, cubes_dictionary):
-    
-    for i, cube_info in enumerate(cubes_dictionary.values()):
+    cubes_dictionary_new = {}
+    cubes_min = []
+    cubes_max = []
+    for i in range(len(cubes_array)):
         new_cube = cubes_array[i]
-        cube_info['cube'] = new_cube
+        if i > len(cubes_dictionary):
+            continue
+        cubes_dictionary_new[i] = {'cube': new_cube, 'center': cubes_dictionary[i]['center']}
+        cubes_min.append(new_cube.min())
+        cubes_max.append(new_cube.max())
     
-    return cubes_dictionary
+    return cubes_dictionary_new
 
     
 def assemble_cubes(cubes_dictionary, im_shape, average=True):
