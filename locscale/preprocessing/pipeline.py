@@ -13,6 +13,7 @@ def get_modmap(modmap_args):
 
     '''
     from locscale.preprocessing.headers import run_FDR, run_pam, run_refmac_servalcat, run_refmap, prepare_sharpen_map, is_pseudomodel, run_servalcat_iterative
+    from locscale.preprocessing.prediction import predict_model_map_from_input_map
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, average_voxel_size
     from locscale.include.emmer.ndimage.map_tools import estimate_global_bfactor_map, estimate_global_bfactor_map_standard
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff, add_pseudoatoms_to_input_pdb
@@ -29,19 +30,19 @@ def get_modmap(modmap_args):
     ###########################################################################
     tabbed_print = tab_print(2)
     
-    emmap_path = modmap_args['emmap_path']
+    emmap_path = modmap_args['xyz_emmap_path']
     halfmap_paths = modmap_args['halfmap_paths']
     mask_path = modmap_args['mask_path_raw']
-    pdb_path = modmap_args['pdb_path']
+    pdb_path = modmap_args['model_coordinates']
     pseudomodel_method = modmap_args['pseudomodel_method']
-    pam_distance = modmap_args['pam_distance']
-    pam_iteration = modmap_args['pam_iteration']
-    fsc_resolution = modmap_args['fsc_resolution']
-    refmac_iter = modmap_args['refmac_iter']
+    distance = modmap_args['distance']
+    total_iterations = modmap_args['total_iterations']
+    ref_resolution = modmap_args['ref_resolution']
+    refmac_iterations = modmap_args['refmac_iterations']
     add_blur = modmap_args['add_blur']
     skip_refine = modmap_args['skip_refine']
     refmac5_path = modmap_args['refmac5_path']
-    pg_symmetry = modmap_args['pg_symmetry']
+    symmetry = modmap_args['symmetry']
     model_resolution = modmap_args['model_resolution']
     molecular_weight = modmap_args['molecular_weight']
     build_ca_only = modmap_args['build_ca_only']
@@ -51,7 +52,7 @@ def get_modmap(modmap_args):
     averaging_window = modmap_args['averaging_window']
     mask_threshold = modmap_args['mask_threshold']
     cif_info = modmap_args['cif_info']
-
+    modality = modmap_args['modality']
 
     if verbose:
         print("."*80)
@@ -62,6 +63,9 @@ def get_modmap(modmap_args):
         tabbed_print.tprint("Model map arguments: \n")
         ## Print keys and values of dictionary in a nice format
         for key, value in modmap_args.items():
+            # if a value is numpy array then print its shape
+            if isinstance(value, np.ndarray):
+                value = value.shape
             if key == "Cref":
                 # Print Cref shape
                 if value is not None:
@@ -77,10 +81,10 @@ def get_modmap(modmap_args):
     emmap_mrc = mrcfile.open(emmap_path)
     apix = average_voxel_size(emmap_mrc.voxel_size)
     
-    pam_bond_length = pam_distance
+    pam_bond_length = distance
     pam_method = pseudomodel_method
-    pam_iteration = pam_iteration
-    resolution = fsc_resolution
+    total_iterations = total_iterations
+    resolution = ref_resolution
     verbose = verbose
     ###########################################################################
     # Stage 1: Check the required number of atoms for the pseudomodel
@@ -105,59 +109,52 @@ def get_modmap(modmap_args):
     # Stage 1b: If user has not provided a PDB path then build a 
     # pseudomodel using the run_pam() routine else use the PDB path directly
     ###########################################################################
-    if pdb_path is None:
+    if modality == "pseudo_model_build_and_refine":
         if verbose:
             print("."*80)
             print("You have not entered a PDB path, running pseudo-atomic model generator!")
         input_pdb_path = run_pam(emmap_path=emmap_path, mask_path=mask_path, threshold=mask_threshold, num_atoms=num_atoms, 
-                                   method=pam_method, bl=pam_bond_length,total_iterations=pam_iteration,verbose=verbose)
+                                method=pam_method, bl=pam_bond_length,total_iterations=total_iterations,verbose=verbose)
         pseudomodel_refinement = True
         if input_pdb_path is None:
             print("Problem running pseudo-atomic model generator. Returning None")
             return None
         final_chain_counts = None
-    else:
+    elif modality == "partial_model_input_build_and_refine":
         pseudomodel_refinement = False
-        if complete_model:
-            if verbose:
-                print("."*80)
-                print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
-            integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(
-                pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
-                averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=pam_iteration, \
-                mask_threshold=mask_threshold, fsc_resolution=fsc_resolution, \
-                return_chain_counts=True, return_difference_mask=True) 
+        if verbose:
+            print("."*80)
+            print("Adding pseudo-atoms to the regions of the mask that are not modelled by the user-provided PDB")
+        integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(
+            pdb_path=pdb_path, mask_path=mask_path, emmap_path=emmap_path,\
+            averaging_window=averaging_window, pseudomodel_method=pam_method, pseudomodel_iteration=total_iterations, \
+            mask_threshold=mask_threshold, fsc_resolution=ref_resolution, \
+            return_chain_counts=True, return_difference_mask=True) 
 
-            input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.cif'
-            integrated_structure.make_mmcif_document().write_file(input_pdb_path)
-        else:
-            final_chain_counts = None
-            if verbose:
-                print("."*80)
-                print("Using user-provided PDB path: {}".format(pdb_path))    
-            input_pdb_path = pdb_path
+        input_pdb_path = pdb_path[:-4] + '_integrated_pseudoatoms.cif'
+        integrated_structure.make_mmcif_document().write_file(input_pdb_path)
+    elif modality == "full_model_input_refine_and_map" or modality == "full_model_input_no_refine":
+        pseudomodel_refinement = False
+        final_chain_counts = None
+        if verbose:
+            print("."*80)
+            print("Using user-provided PDB path: {}".format(pdb_path))    
+        input_pdb_path = pdb_path
+    elif modality == "predict_model_map":
+        pseudomodel_modmap = predict_model_map_from_input_map(modmap_args)
+        return pseudomodel_modmap
+    else:
+        raise ValueError("Unknown modality: {}".format(modality))
+        
+        
     ###########################################################################
     # Stage 2: Refine the reference model usign servalcat
     ###########################################################################
             
     wilson_cutoff = find_wilson_cutoff(mask_path=mask_path, return_as_frequency=False, verbose=False)
     
-    # #############################################################################
-    # # Stage 2a: Prepare the target map for refinement by globally sharpening
-    # # the input map
-    # #############################################################################
-    # if verbose:
-    #     print("."*80)
-    #     print("Preparing target map for refinement\n")
-    # globally_sharpened_map = prepare_sharpen_map(emmap_path,fsc_resolution=fsc_resolution,
-    #                                        wilson_cutoff=wilson_cutoff, add_blur=add_blur,
-    #                                        verbose=verbose,Cref=Cref)
-    # 
-
-    # Using the original emmap for refinement 
-    
     #############################################################################
-    # Stage 2b: Run servalcat to refine the reference model (either 
+    # Stage 2a: Run servalcat to refine the reference model (either 
     # using the input PDB or the pseudo-atomic model)
     #############################################################################
     if verbose:
@@ -174,7 +171,7 @@ def get_modmap(modmap_args):
             target_map = halfmap_paths
         nyquist_resolution = 2*apix + 0.1
         refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=target_map,\
-                    pseudomodel_refinement=pseudomodel_refinement, resolution=nyquist_resolution, num_iter=refmac_iter,\
+                    pseudomodel_refinement=pseudomodel_refinement, resolution=nyquist_resolution, num_iter=refmac_iterations,\
                     refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, \
                     final_chain_counts=final_chain_counts, cif_info=cif_info)
         
@@ -237,13 +234,13 @@ def get_modmap(modmap_args):
     #############################################################################
     # Stage 3a: If the user has specified symmetry, then apply the PG symmetry
     #############################################################################
-    if pg_symmetry != "C1":
+    if symmetry != "C1":
         if verbose:
-            tabbed_print.tprint("Imposing a symmetry condition of {}".format(pg_symmetry))
+            tabbed_print.tprint("Imposing a symmetry condition of {}".format(symmetry))
         from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-        sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=pg_symmetry)
-        symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(pg_symmetry)
+        sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=symmetry)
+        symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(symmetry)
         save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=False)
         pseudomodel_modmap = symmetrised_modmap
     else:

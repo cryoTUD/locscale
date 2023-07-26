@@ -1,3 +1,12 @@
+#
+# Delft University of Technology (TU Delft) hereby disclaims all copyright interest in the program 'LocScale'
+# written by the Author(s).
+# Copyright (C) 2021 Alok Bharadwaj and Arjen J. Jakobi
+# This software may be modified and distributed under the terms of the BSD license. 
+# You should have received a copy of the BSD 3-clause license along with this program (see LICENSE file file for details).
+# If not see https://opensource.org/license/bsd-3-clause/.
+#
+
 from json import load
 import numpy as np
 import locscale.include.emmer as emmer
@@ -60,12 +69,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs["xyz_emmap_path"] = check_axis_order(parsed_inputs["unsharpened_emmap_path"])
     parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"])
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
-    # Check if pseudo-model is required
-    model_coordinates_present = True if parsed_inputs["model_coordinates"] is not None else False
-    model_map_present = True if parsed_inputs["model_map"] is not None else False
-    reference_present = model_coordinates_present or model_map_present
-    parsed_inputs["pseudomodel_required"] = True if not reference_present else False
-    parsed_inputs["use_theoretical_profile"] = parsed_inputs["pseudomodel_required"]
+    
     ##########################################################################
     ## use_theoretical_profile is the flag used to determine 
     ## if scale factors are computed using the theoretical profile 
@@ -316,8 +320,34 @@ def get_modmap_from_inputs(parsed_inputs):
     from locscale.include.emmer.pdb.pdb_utils import shift_coordinates
     from locscale.utils.file_tools import get_cref_from_inputs
     from locscale.preprocessing.pipeline import get_modmap
+    from locscale.include.emmer.ndimage.filter import low_pass_filter
+    from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
     
-    if parsed_inputs["model_map"] is None:  
+    modality = parsed_inputs["modality"]
+    
+    if modality == "map_input_use_directly":
+        ## If a model map is provide 
+        ## we do not need to use the theoretical profile for scaling
+        modmap_path = parsed_inputs["model_map"]
+        model_resolution = parsed_inputs["model_resolution"]
+        
+        if model_resolution is not None:
+            if parsed_inputs["verbose"]:
+                tabbed_print.tprint("Performing low pass filter on the Model Map \
+                    with a cutoff: {} based on user input".format(model_resolution))
+            
+            pseudo_map_unfiltered_data = load_map(modmap_path)[0]
+            pseudo_map_filtered_data = low_pass_filter(im=pseudo_map_unfiltered_data, cutoff=model_resolution, apix=parsed_inputs["apix"])
+            
+            filename = modmap_path[:-4]+"_filtered.mrc"
+            save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, apix=parsed_inputs["apix"])
+            
+            modmap_path = filename
+        
+        xyz_modmap_path = check_axis_order(modmap_path)
+        xyz_modmap = load_map(xyz_modmap_path)[0]
+
+    else:
         # Collect model map arguments and pass it to get_modmap pipeline
         
         pdb_path = parsed_inputs["model_coordinates"]
@@ -342,16 +372,16 @@ def get_modmap_from_inputs(parsed_inputs):
         modmap_args = {
             'emmap_path': parsed_inputs["xyz_emmap_path"],
             'mask_path_raw': parsed_inputs["mask_path_raw"], 
-            'pdb_path':pdb_path,
+            'pdb_path':parsed_inputs["model_coordinates"],
             'pseudomodel_method': parsed_inputs["pseudomodel_method"],
-            'pam_distance': parsed_inputs["distance"],
-            'pam_iteration': parsed_inputs["total_iterations"],
-            'fsc_resolution': parsed_inputs["ref_resolution"],
-            'refmac_iter': parsed_inputs["refmac_iterations"],
+            'distance': parsed_inputs["distance"],
+            'total_iterations': parsed_inputs["total_iterations"],
+            'ref_resolution': parsed_inputs["ref_resolution"],
+            'refmac_iterations': parsed_inputs["refmac_iterations"],
             'add_blur': parsed_inputs["add_blur"],
             'skip_refine': parsed_inputs["skip_refine"],
             'model_resolution': parsed_inputs["model_resolution"],
-            'pg_symmetry': parsed_inputs["symmetry"],
+            'symmetry': parsed_inputs["symmetry"],
             'molecular_weight': parsed_inputs["molecular_weight"],
             'build_ca_only': parsed_inputs["build_ca_only"],
             'verbose': parsed_inputs["verbose"],
@@ -360,6 +390,7 @@ def get_modmap_from_inputs(parsed_inputs):
             'averaging_window':parsed_inputs["averaging_window"],
             'mask_threshold':parsed_inputs["mask_threshold"],
             'cif_info':parsed_inputs["cif_info"],
+            'modality':parsed_inputs["modality"],
         }
 
         if parsed_inputs["halfmap_paths"] is not None:
@@ -372,32 +403,8 @@ def get_modmap_from_inputs(parsed_inputs):
         #############################################################################
         # Stage 4b: Run the get_modmap pipeline                                 #
         #############################################################################
-        modmap_path = get_modmap(modmap_args)
+        modmap_path = get_modmap(parsed_inputs)
         xyz_modmap_path = check_axis_order(modmap_path, return_same_path=True)
-        xyz_modmap = load_map(xyz_modmap_path)[0]
-    
-    ## If the user has provided the model map, then we use it directly for computation
-    else:
-        ## If a model map is provide 
-        ## we do not need to use the theoretical profile for scaling
-        modmap_path = parsed_inputs["model_map"]
-        model_resolution = parsed_inputs["model_resolution"]
-        if model_resolution is not None:
-            if parsed_inputs["verbose"]:
-                tabbed_print.tprint("Performing low pass filter on the Model Map \
-                    with a cutoff: {} based on user input".format(model_resolution))
-
-            from locscale.include.emmer.ndimage.filter import low_pass_filter
-            from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-            
-            pseudo_map_unfiltered_data = load_map(modmap_path)[0]
-            pseudo_map_filtered_data = low_pass_filter(im=pseudo_map_unfiltered_data, cutoff=model_resolution, apix=parsed_inputs["apix"])
-            
-            filename = modmap_path[:-4]+"_filtered.mrc"
-            save_as_mrc(map_data=pseudo_map_filtered_data, output_filename=filename, apix=parsed_inputs["apix"])
-            
-            modmap_path = filename
-        xyz_modmap_path = check_axis_order(modmap_path)
         xyz_modmap = load_map(xyz_modmap_path)[0]
 
     return xyz_modmap, xyz_modmap_path     
@@ -451,8 +458,10 @@ def get_scale_factor_arguments(parsed_inputs):
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, number_of_segments, estimate_bfactor_through_pwlf
 
     wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["mask_path_raw"], verbose=False)
-
-    if parsed_inputs["ref_resolution"] >= 6:
+    
+    resolution_given = parsed_inputs["ref_resolution"] is not None
+    poor_resolution = parsed_inputs["ref_resolution"] >= 6 if resolution_given else True
+    if (not resolution_given) or poor_resolution:
         high_frequency_cutoff = wilson_cutoff
         nyquist = (round(2*parsed_inputs["apix"]*10)+1)/10
         #fsc_cutoff = fsc_resolution
@@ -472,7 +481,7 @@ def get_scale_factor_arguments(parsed_inputs):
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
         pwlf_fit_quality = fit.r_squared()
     
-   
+
     ###############################################################################
     # Stage 6a: Pack into a dictionary
     ###############################################################################
