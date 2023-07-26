@@ -326,7 +326,6 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
     if hybrid_model_refinement: 
         assert final_chain_counts is not None, "Please provide the final chain counts for the hybrid model refinement"
 
-    tprint(" Running iterative refinement of the model using One Cycle ServalCat")
     normal_refinement = not pseudomodel_refinement and not hybrid_model_refinement
     if normal_refinement:
         tprint("This is a refinement of a real atomic model")
@@ -719,7 +718,8 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     
     
     ## Output filename
-    reference_map_path = model_path[:-4]+"_4locscale.mrc"
+    extension_model = os.path.splitext(os.path.basename(model_path))[1]
+    reference_map_path = model_path.replace(extension_model,"_4locscale.mrc")
     save_as_mrc(map_data=refmap_data_normalised,output_filename=reference_map_path, apix=grid_simulated.spacing, origin=0)   
     
     ## Checklist: 
