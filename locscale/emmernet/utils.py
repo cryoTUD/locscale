@@ -176,19 +176,36 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     input_emmap_folder = os.path.dirname(input_emmap_path)
     output_emmap_filename = parsed_inputs["outfile"]
     verbose = parsed_inputs["verbose"]
+    monte_carlo = parsed_inputs["monte_carlo"]
     
     emmap, apix = load_map(input_emmap_path)
 
-    emmernet_output_map = emmernet_output["output"]
-
-    assert emmap.shape == emmernet_output_map.shape, "Emmernet output map shape does not match input map shape"
+    if monte_carlo:
+        emmernet_output_mean = emmernet_output["output_mean"]
+        emmernet_output_var = emmernet_output["output_var"]
+        
+        assert emmap.shape == emmernet_output_mean.shape, "Emmernet output mean map shape does not match input map shape"
+        assert emmap.shape == emmernet_output_var.shape, "Emmernet output var map shape does not match input map shape"
+    else:
+        emmernet_output_map = emmernet_output["output"]
+        #emmernet_output_charge_density = emmernet_output["output_charge_density"]
+        assert emmap.shape == emmernet_output_map.shape, "Emmernet output map shape does not match input map shape"
 
     if verbose:
         print("."*80)
         print("Saving Emmernet output to {}".format(output_emmap_filename))
         
-
-    save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
+    if monte_carlo:
+        extension_output_filename = os.path.splitext(output_emmap_filename)[1]
+        output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_mean"+extension_output_filename)
+        output_filename_var = output_emmap_filename.replace(extension_output_filename, "_var"+extension_output_filename)
+        save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
+        save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
+    else:
+        save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
+        #extension_output_filename = os.path.splitext(output_emmap_filename)[1]
+        #charge_density_filename = output_emmap_filename.replace(extension_output_filename, "_charge_density"+extension_output_filename)
+        #save_as_mrc(emmernet_output_charge_density, charge_density_filename, apix, verbose=verbose)
 
 
     
