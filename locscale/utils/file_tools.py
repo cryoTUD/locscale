@@ -266,7 +266,83 @@ def get_emmap_path_from_args(args):
     
     return emmap_path, shift_vector
         
-        ## TBC
+def set_modality_based_on_input(args):
+    '''
+    This function compares all the different ways to get a model map and returns the best option based on the inputs provided
+    Different cases available are: 
+    1) Complete atomic model provided (or the model map is provided)
+    2) Partial atomic model provided
+    3) No atomic model provided 
+    
+    Case 1: Complete atomic model provided
+    - if the input is a coordinate file, then refine the model by default and generate a model map
+    - if the input is a map file, then use the map file as the model map
+    
+    Case 2: Partial atomic model provided
+    - complete the atomic model using pseudo-atomic model building. Then refine the integrated model and generate model map
+    
+    Case 3: No atomic model provided
+    - Predict the model map using a neural network and return the predicted model map
+    - If specified, build a pseudo-atomic model, refine and generate model map   
+    '''
+    modalities = ["full_atomic_model_refine_and_map", "map_input_use_directly", "partial_atomic_model_build_and_refine", "no_model_predict", "no_model_build_and_refine"]
+    
+    ## Check input files
+    emmap_absent = True
+    if args.emmap_path is not None:
+        if is_input_path_valid([args.emmap_path]):
+            emmap_absent = False
+    
+    half_maps_absent = True
+    if args.halfmap_paths is not None:
+        if is_input_path_valid([args.halfmap_paths[0], args.halfmap_paths[1]]):
+            half_maps_absent = False
+    
+    mask_absent = True
+    if args.mask is not None:
+        if is_input_path_valid([args.mask]):
+            mask_absent = False
+    
+    model_map_absent = True
+    if args.model_map is not None:
+        if is_input_path_valid([args.model_map]):
+            model_map_absent = False
+    
+    model_coordinates_absent = True
+    if args.model_coordinates is not None:
+        if is_input_path_valid([args.model_coordinates]):
+            model_coordinates_absent = False
+    
+    emmap_present, half_maps_present = not(emmap_absent), not(half_maps_absent)
+    model_map_present, model_coordinates_present = not(model_map_absent), not(model_coordinates_absent)
+    
+    pseudomodel_not_required = ["map_input_use_directly", "full_model_input_no_refine","full_model_input_refine_and_map", "no_reference","predict_model_map"]
+    pseudomodel_required = ["partial_model_input_build_and_refine", "pseudo_model_build_and_refine"]
+    if model_map_present:
+        modality = "map_input_use_directly"
+    elif model_coordinates_present:
+        if args.complete_model:
+            modality = "partial_model_input_build_and_refine"
+        else:
+            if args.skip_refine:
+                modality = "full_model_input_no_refine"
+            else:
+                modality = "full_model_input_refine_and_map"
+    else:
+        if args.no_reference:
+            modality = "no_reference"
+        else:
+            if args.build_using_pseudomodel:
+                modality = "pseudo_model_build_and_refine"
+            else:
+                modality = "predict_model_map"
+    
+    args.modality = modality
+    args.use_theoretical_profile = modality in pseudomodel_required 
+    
+    print("Running LocScale with modality: {}".format(modality))
+    return args
+    
 
 def is_input_path_valid(list_of_test_paths):
     '''
@@ -373,13 +449,11 @@ def check_user_input(args):
     
     ## If neither model map or model coordinates are provided, then users cannot use --skip_refine flags
     if model_coordinates_absent and model_map_absent:
-        if args.skip_refine:
-            raise UserWarning("You have not provided a Model Map or Model Coordinates. Performing REFMAC refinement is essential for \
-                              succesful operation of the procedue. Please do not raise the --skip_refine flag")
-        
-        if args.ref_resolution is None:
-            raise UserWarning("You have not provided a Model Map or Model Coordinates. To use REFMAC refinement, resolution target is necessary. \
-                              Please provide a target resolution using -res or --ref_resolution")
+        warn_against_skip_refine(args, tolerate=False)
+
+        if args.build_using_pseudomodel:
+            check_and_warn_about_ref_resolution(args)
+
                             
     if model_coordinates_present:
         # Check the model to map fit
@@ -390,20 +464,11 @@ def check_user_input(args):
         
 
     if model_coordinates_present and model_map_absent:
-        if args.skip_refine:
-            print("You have asked to skip REFMAC refinement. Atomic bfactors from the input model will be used for simulating Model Map")
-        else:
-            if args.ref_resolution is None:
-                raise UserWarning("You have provided Model Coordinates. By default, the model bfactors will be refined using REFMAC. \
-                                  For this, a target resolution is required. Please provide this resolution target using -res or --ref_resolution. \
-                                      Instead if you think model bfactors are accurate, then raise the --skip_refine flag to ignore bfactor refinement.")
-            
-
+        warn_against_skip_refine(args, tolerate=True)
+        
     if model_coordinates_present and args.complete_model:
-        if args.skip_refine:
-            raise UserWarning("You have asked to skip REFMAC refinement. \
-                                However, you have asked to complete a partially built model. This requires a refined pseudo-atomic model. \
-                                Please do not raise the --skip_refine flag")
+        warn_against_skip_refine(args, tolerate=False)
+        check_and_warn_about_ref_resolution(args)
         
     ## Check for window size < 10 A
     if args.window_size is not None:
@@ -438,6 +503,24 @@ def check_user_input(args):
         ## Pause 
         import time
         time.sleep(2)
+        
+    ## Find the modalities to generate reference map based on user inputs 
+
+def warn_against_skip_refine(args, tolerate):
+    if args.skip_refine:
+        if not tolerate:
+            raise UserWarning("You have asked to skip REFMAC refinement. \
+                                However, you have asked to complete a partially built model. This requires a refined pseudo-atomic model. \
+                                Please do not raise the --skip_refine flag")
+
+        if tolerate: 
+            print("Warning: You have asked to skip REFMAC refinement. \
+                    Please make sure that the atomic ADPs are refined. LocScale performance maybe severely affected if the ADPs are not refined")
+                
+def check_and_warn_about_ref_resolution(args):
+    if args.ref_resolution is None:
+        raise UserWarning("Please provide a reference resolution using the --ref_resolution flag")
+                
 
 def get_cref_from_inputs(parsed_inputs):
     from locscale.include.emmer.ndimage.filter import get_cosine_mask

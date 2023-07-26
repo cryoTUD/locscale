@@ -1,3 +1,10 @@
+#
+# Delft University of Technology (TU Delft) hereby disclaims all copyright interest in the program 'LocScale'
+# written by the Author(s).
+# Copyright (C) 2021 Alok Bharadwaj and Arjen J. Jakobi
+# This software may be modified and distributed under the terms of the BSD license.  You should have received a copy of the BSD 3-clause license along with this program (see LICENSE file file for details). If not see https://opensource.org/license/bsd-3-clause/.
+#
+
 import os
 import pyfiglet
 from datetime import datetime
@@ -94,7 +101,7 @@ def launch_locscale_no_mpi(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input
     import os 
 
     input_file_directory = get_input_file_directory(args) ## Get input file directory
@@ -105,6 +112,7 @@ def launch_locscale_no_mpi(args):
 
     ## Check input
     check_user_input(args)   ## Check user inputs  
+    args=set_modality_based_on_input(args) ## Set modality based on input
     if args.verbose:
         print_arguments(args)
     
@@ -123,7 +131,7 @@ def launch_locscale_mpi(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input
     import os 
 
     input_file_directory = get_input_file_directory(args) ## Get input file directory
@@ -139,6 +147,7 @@ def launch_locscale_mpi(args):
             start_time = datetime.now()
             print_start_banner(start_time, "LocScale")
             check_user_input(args)   ## Check user inputs
+            args=set_modality_based_on_input(args) ## Set modality based on input
             if args.verbose:
                 print_arguments(args)
             copied_args = change_directory(args, args.output_processing_files)
