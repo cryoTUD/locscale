@@ -7,8 +7,11 @@
 # You should have received a copy of the BSD 3-clause license along with this program (see LICENSE file file for details).
 # If not see https://opensource.org/license/bsd-3-clause/.
 #
-
+import os
 from .__version__ import __version__
+__colab_environment__ = os.getenv('LOCSCALE_COLAB_ENV') 
+__ccpem_environment__ = os.getenv('LOCSCALE_CCPEM_ENV') 
+
 # -*- coding: utf-8 -*-
 #                                      ....                                         
 #                            :-=+======----======+=-:                               
