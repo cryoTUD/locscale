@@ -17,7 +17,10 @@ def predict_model_map_from_input_map(parsed_inputs):
     cube_size = 32 
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]
-    trained_model = "hybrid_model_map_target"
+    if parsed_inputs["prefer_low_context_model"]:
+        trained_model = "atomic_model_map_target"
+    else:
+        trained_model = "hybrid_model_map_target"
     stride = 16 
     batch_size = parsed_inputs["batch_size"]
     gpu_ids = parsed_inputs["gpu_ids"]
@@ -46,7 +49,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     emmap, apix = load_map(emmap_path)
     
     emmernet_output = run_emmernet(input_dictionary)
-    model_map_predicted = emmernet_output["output"]
+    model_map_predicted = emmernet_output["output_predicted_map_mean"]
     tprint("Predicted model map shape: {}".format(model_map_predicted.shape))
     emmap_extension = os.path.splitext(emmap_path)[1]
     model_map_path_filename = emmap_path.replace(emmap_extension, "_model_map_predicted.mrc")
