@@ -31,30 +31,19 @@ def run_emmernet(input_dictionary):
         import tensorflow as tf
         from tensorflow.keras.models import load_model
     
-    EMMERNET_CUBE_SIZE=input_dictionary["cube_size"]
+    input_dictionary = start_preprocessing_data(input_dictionary)
     
-    ## Get the input map path
+    input_dictionary = prepare_inputs_for_network(input_dictionary)
+    
+    output_dictionary = predict_cubes_and_assemble(input_dictionary)
+    
+    return output_dictionary
+
+def start_preprocessing_data(input_dictionary):
     emmap_path = input_dictionary["emmap_path"]
-    processing_files_folder = os.path.dirname(emmap_path)
     mask_path = input_dictionary["xyz_mask_path"]
-    emmernet_type = input_dictionary["trained_model"]
-    stride = input_dictionary["stride"]
-    batch_size = input_dictionary["batch_size"]
-    gpu_ids = input_dictionary["gpu_ids"]
     verbose = input_dictionary["verbose"]
-    emmernet_model_folder = input_dictionary["emmernet_model_folder"]
-    target_map_path = input_dictionary["target_map_path"]
-    model_path = input_dictionary["model_path"]
-    monte_carlo = input_dictionary["monte_carlo"]
-    monte_carlo_iterations = input_dictionary["monte_carlo_iterations"]
-
-    if target_map_path is not None:
-        target_map, _ = load_map(target_map_path)
-        target_map_present = True
-    else:
-        target_map_present = False
-    
-
+    processing_files_folder = os.path.dirname(emmap_path)
     emmap, apix = load_map(emmap_path)
     mask, _ = load_smoothened_mask(mask_path)
     
@@ -64,129 +53,111 @@ def run_emmernet(input_dictionary):
         print("Emmap shape: {}".format(emmap.shape))
         print("Pixelsize read as: {:.2f}".format(apix))
 
-        print("1) Pre-processing commencing...")
+        print("1) Preprocessing the data...")
     
-    ## Preprocess
-
     emmap_preprocessed = preprocess_map(emmap, apix)
     mask_preprocessed = preprocess_map(mask, apix, standardize=False)
-    if target_map_present:
-        target_map_preprocessed = preprocess_map(target_map, apix)
+    
     if verbose:
         print("\tPreprocessing complete")
         print("\tPre-processed map shape: {}".format(emmap_preprocessed.shape))
         print("2) Prediction commencing...")
 
-    cubes_dictionary, cubes_array, signal_cubes = get_cubes(emmap_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride, mask=mask_preprocessed)
+    input_dictionary["emmap_preprocessed"] = emmap
+    input_dictionary["mask_preprocessed"] = mask_preprocessed
+    input_dictionary["input_map_shape"] = input_map_shape
+    input_dictionary["preprocessed_map_shape"] = emmap_preprocessed.shape
+    input_dictionary["apix_raw"] = apix
+    input_dictionary["processing_files_folder"] = processing_files_folder
+    
+    return input_dictionary
+    
+    
+def prepare_inputs_for_network(input_dictionary):
+    emmap_preprocessed = input_dictionary["emmap_preprocessed"]
+    cube_size = input_dictionary["cube_size"]
+    stride = input_dictionary["stride"]
+    mask_preprocessed = input_dictionary["mask_preprocessed"]
+    processing_files_folder = input_dictionary["processing_files_folder"]
+    verbose = input_dictionary["verbose"]
+    
+    cubes_dictionary, cubes_array, signal_cubes = get_cubes(emmap_preprocessed, cube_size=cube_size, step_size=stride, mask=mask_preprocessed)
     show_signal_cubes(signal_cubes, emmap_preprocessed.shape, save_path=os.path.join(processing_files_folder, "signal_cubes_resampled.mrc"), apix=1)
 
-    if target_map_present:
-        target_cubes_dictionary, target_cubes_array = get_cubes(target_map_preprocessed, cube_size=EMMERNET_CUBE_SIZE, step_size=stride, mask=mask_preprocessed)
+    input_dictionary["preprocessed_map_shape"] = emmap_preprocessed.shape
+    input_dictionary["cubes_dictionary"] = cubes_dictionary
+    input_dictionary["cubes_array"] = cubes_array
         
     if verbose:
         print("\tCubes extracted")
         print("\tNumber of cubes: {}".format(len(cubes_array)))
-    ## Load the model
     
-    # prepare GPU id list
+    return input_dictionary    
+
+def predict_cubes_and_assemble(input_dictionary):
+    
+    verbose = input_dictionary["verbose"]
+
+    mirrored_strategy, cuda_visible_devices_string = get_strategy(input_dictionary)
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+    
+    if verbose:
+        print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
+
+    emmernet_model = load_emmernet_model(input_dictionary)
+
+    input_dictionary = run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy)
+
+    if input_dictionary["monte_carlo"]:
+        predicted_map_mean = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_mean"])
+        predicted_map_var = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_var"])
+    else: 
+        predicted_map_mean = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_mean"])
+        predicted_map_var = None
+
+    emmernet_output_dictionary = {
+        "output_predicted_map_mean":predicted_map_mean, 
+        "output_predicted_map_var":predicted_map_var
+    }
+    
+    return emmernet_output_dictionary
+
+def assemble_cubes_in_right_place(input_dictionary, predicted_cubes):
+        predicted_cubes_dictionary = replace_cubes_in_dictionary(predicted_cubes, input_dictionary["cubes_dictionary"])
+        predicted_map_potential = assemble_cubes(predicted_cubes_dictionary,input_dictionary["preprocessed_map_shape"],average=True)
+        predicted_map_postprocessed = postprocess_map(predicted_map_potential, input_dictionary["apix_raw"], output_shape=input_dictionary["input_map_shape"])
+        
+        return predicted_map_postprocessed
+    
+def get_strategy(input_dictionary):
+        # prepare GPU id list
+    gpu_ids = input_dictionary["gpu_ids"]
+    verbose = input_dictionary["verbose"]
     if gpu_ids is None:
         print("No GPU id specified, running on CPU")
         print("If you want to use GPUs, please specify the GPU id(s) using the --gpu_ids flag")
         print("This may take a while...")
-        # set device to CPU
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-        device = "/cpu:0"
-        print("Setting CUDA_VISIBLE_DEVICES to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
-        print("Using device: {}".format(device))
+        cuda_visible_devices_string = ""
         mirrored_strategy = "cpu"
     else:
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(gpu_id) for gpu_id in gpu_ids])
-        print("Setting CUDA_VISIBLE_DEVICES to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
-        gpu_id_list = ["/gpu:"+str(gpu_id) for gpu_id in gpu_ids]
+        cuda_visible_devices_string = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+        #print("Setting CUDA_VISIBLE_DEVICES to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         if verbose:
-            print("\tGPU ids: {}".format(gpu_id_list))
-        
+            print("\tGPU ids: {}".format(cuda_visible_devices_string))
         mirrored_strategy = tf.distribute.MirroredStrategy()
-
-    emmernet_model = load_emmernet_model(emmernet_type, emmernet_model_folder, model_path)
-    if verbose:
-        if model_path is None:
-            print("\tEMmerNet model loaded: {}".format(emmernet_type))
-        else:
-            print("\tEMmerNet model loaded from: {}".format(model_path))
-
-    ## Run EMmerNet using GPUs
     
-
-    
-    if monte_carlo:
-        predicted_cubes_mean, predicted_cubes_var = run_emmernet_batch(cubes_array, emmernet_model, mirrored_strategy, \
-                                                        batch_size=batch_size, monte_carlo_iterations=monte_carlo_iterations)
-        predicted_cubes_mean_dictionary = replace_cubes_in_dictionary(predicted_cubes_mean, cubes_dictionary)
-        predicted_cubes_var_dictionary = replace_cubes_in_dictionary(predicted_cubes_var, cubes_dictionary)
-        length_of_predicted_cubes = len(predicted_cubes_mean)
-    else:
-        predicted_cubes_potential = run_emmernet_batch(cubes_array, emmernet_model, mirrored_strategy, batch_size=batch_size)
-        predicted_cubes_dictionary = replace_cubes_in_dictionary(predicted_cubes_potential, cubes_dictionary)
-        # predicted_cubes_charge_density_dictionary = replace_cubes_in_dictionary(predicted_cubes_charge_density, cubes_dictionary)
-        length_of_predicted_cubes = len(predicted_cubes_potential)
-    if target_map_present:
-        # Compute phase correlations between predicted and target cubes
-        
-        phase_correlations, freq = compute_local_phase_correlations(target_cubes=target_cubes, predicted_cubes=predicted_cubes, apix=apix, temp_folder=processing_files_folder)
-        phase_correlations_fig_path = os.path.join(processing_files_folder, "phase_correlations.png")
-        fig = plot_phase_correlations(phase_correlations, freq)
-        fig.savefig(phase_correlations_fig_path)
-        
-    if verbose:
-        print("\tEMmerNet prediction complete")
-        print("\tNumber of predicted cubes: {}".format(length_of_predicted_cubes))
-    ## Merge the predicted cubes sequence
-    
-    if monte_carlo:
-        predicted_map_mean = assemble_cubes(predicted_cubes_mean_dictionary, emmap_preprocessed.shape[0])
-        predicted_map_var = assemble_cubes(predicted_cubes_var_dictionary, emmap_preprocessed.shape[0])
-        final_shape_prediction = predicted_map_mean.shape
-    else:
-        predicted_map_potential = assemble_cubes(predicted_cubes_dictionary, emmap_preprocessed.shape[0])
-        #predicted_map_charge_density = assemble_cubes(predicted_cubes_charge_density_dictionary, emmap_preprocessed.shape[0])
-        final_shape_prediction = predicted_map_potential.shape
-    
-    if verbose:
-        print("\tPredicted map assembled")
-        print("\tPredicted map shape: {}".format(final_shape_prediction))
-        print("3) Post-processing commencing...")
+    return mirrored_strategy, cuda_visible_devices_string
     
     
-    ## Postprocess
-    if monte_carlo:
-        predicted_map_mean_postprocessed = postprocess_map(predicted_map_mean, apix, output_shape=input_map_shape)
-        predicted_map_var_postprocessed = postprocess_map(predicted_map_var, apix, output_shape=input_map_shape)
-        post_processed_map_shape = predicted_map_mean_postprocessed.shape
-    else:
-        predicted_map_postprocessed = postprocess_map(predicted_map_potential, apix, output_shape=input_map_shape)
-        #predicted_map_charge_density_postprocessed = postprocess_map(predicted_map_charge_density, apix, output_shape=input_map_shape)
-        post_processed_map_shape = predicted_map_postprocessed.shape
-        
-    if verbose:
-        print("\tPost-processing complete")
-        print("\tPost-processed map shape: {}".format(post_processed_map_shape))
-
-    #return predicted_map_postprocessed
-
-    if monte_carlo:
-        emmernet_output_dictionary = {"output_mean":predicted_map_mean_postprocessed, "output_var":predicted_map_var_postprocessed}
-    else:
-        emmernet_output_dictionary = {"output":predicted_map_postprocessed}#, "output_charge_density":predicted_map_charge_density_postprocessed}
-
-    return emmernet_output_dictionary
-
-
-def load_emmernet_model(emmernet_type, emmernet_model_folder=None, model_path=None):
+def load_emmernet_model(input_dictionary):
     import os
     ## Ignore DeprecationWarning
     import warnings
-
+    emmernet_type = input_dictionary["trained_model"]
+    emmernet_model_folder = input_dictionary["emmernet_model_folder"]
+    model_path = input_dictionary["model_path"]
+    verbose = input_dictionary["verbose"]
+    
     if emmernet_model_folder is None:
         import locscale
         emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
@@ -211,6 +182,8 @@ def load_emmernet_model(emmernet_type, emmernet_model_folder=None, model_path=No
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
     elif emmernet_type == "hybrid_model_map_target":
         emmernet_model_path = os.path.join(emmernet_folder_path, "hybrid_model_map_target_noaugmentation_30k_bs2_dropout_epoch_15.hdf5")
+    elif emmernet_type == "atomic_model_map_target":
+        emmernet_model_path = os.path.join(emmernet_folder_path, "atomic_model_map_target_noaugmentation_30k_bs2_dropout_epoch_15.hdf5")
     else:
         raise ValueError("Invalid emmernet_type")
     
@@ -220,118 +193,99 @@ def load_emmernet_model(emmernet_type, emmernet_model_folder=None, model_path=No
                                 'reducePhysicsBasedLoss': reducePhysicsBasedLoss,
                                 'PhysicsBasedMetric': PhysicsBasedMetric,
                                 'DataBasedMetric': DataBasedMetric})
-        return emmernet_model
+        
     else:
         emmernet_model = load_model(emmernet_model_path)
-        return emmernet_model
+        
+    if verbose:
+        if model_path is None:
+            print("\tEMmerNet model loaded: {}".format(emmernet_type))
+        else:
+            print("\tEMmerNet model loaded from: {}".format(model_path))
+    
+    return emmernet_model
 
-def run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations=None):
-    ## Run the model on the cube
-    ## Ignore DeprecationWarning
+    
+def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
+    # collect inputs from input dictionary
+    monte_carlo = input_dictionary["monte_carlo"]
+    monte_carlo_iterations = input_dictionary["monte_carlo_iterations"]
+    batch_size = input_dictionary["batch_size"]
+    cubes = input_dictionary["cubes_array"]
+    
+    if mirrored_strategy == "cpu":
+        return run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations)
+    
+    print("Running EMmerNet on {} cubes".format(len(cubes)))
+    
+    if monte_carlo:
+        cubes_predicted_mean, cubes_predicted_var = run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy)
+        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
+    else:
+        cubes_predicted_mean = run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy)
+        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+        cubes_predicted_var = None
+        
+    input_dictionary["cubes_predicted_mean"] = cubes_predicted_mean
+    input_dictionary["cubes_predicted_var"] = cubes_predicted_var
+    
+    return input_dictionary
+
+def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy):
     import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         import tensorflow_datasets as tfds
         import atexit
+    
     from tqdm import tqdm
-    import os
     
-    print("Running EMmerNet on {} cubes using CPU".format(len(cubes)))
-    monte_carlo = monte_carlo_iterations is not None
-
     tfds.disable_progress_bar()
+    
     cube_size = cubes[0].shape[0]
-    cubes = np.array(cubes)
+    cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
+    cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
     cubes_x = np.expand_dims(cubes, axis=4)
-    if monte_carlo:
-        cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
-        cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
-    else:
-        cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
-    mean_values = []
-    var_values = []
-    
-    split_potential = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[0]
-    split_charge_density = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[1]
-    cubes_charge_density = np.empty((0, cube_size, cube_size, cube_size, 1))
-    
-    
-    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
-        if i+batch_size > len(cubes):
-            #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
-            batch_size = len(cubes)-i
+    with mirrored_strategy.scope():
+        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+            if i+batch_size > len(cubes):
+                #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
+                batch_size = len(cubes)-i
+                
+                assert batch_size > 0, "Batch size is less than 0"
+                assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
             
-            assert batch_size > 0, "Batch size is less than 0"
-            assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
-        
-        cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
-        cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
-
-        if monte_carlo:
+            cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
+            cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
             cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
+            
             # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
             cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
             cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
             cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
 
-            mean_values.append(cubes_batch_predicted_mean.mean())
-            var_values.append(cubes_batch_predicted_var.mean())
             cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
             cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
-        else:
-            cubes_batch_predicted = emmernet_model.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
-            
-            cubes_batch_predicted_first_channel = split_potential(cubes_batch_predicted)
-            cubes_batch_second_channel = split_charge_density(cubes_batch_predicted)
-            cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted_first_channel, axis=0)
-            cubes_charge_density = np.append(cubes_charge_density, cubes_batch_second_channel, axis=0)
     
-    # squeeze cubes to 3 dimensions
-    if monte_carlo:
-        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
-        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
-        return cubes_predicted_mean, cubes_predicted_var
-    else:
-        cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
-        cubes_charge_density = np.squeeze(cubes_charge_density, axis=-1)
-        return cubes_predicted, cubes_charge_density
+    atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
     
-    
-    
-def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size, monte_carlo_iterations=None):
-    ## Run the model on the cube
-    ## Ignore DeprecationWarning
-    
-    if mirrored_strategy == "cpu":
-        return run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations)
-    
+    return cubes_predicted_mean, cubes_predicted_var
+
+def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy):
     import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         import tensorflow_datasets as tfds
         import atexit
+    
     from tqdm import tqdm
-    import os
     
-    print("Running EMmerNet on {} cubes".format(len(cubes)))
-    monte_carlo = monte_carlo_iterations is not None
-
     tfds.disable_progress_bar()
+
     cube_size = cubes[0].shape[0]
-    cubes = np.array(cubes)
+    cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
     cubes_x = np.expand_dims(cubes, axis=4)
-    if monte_carlo:
-        cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
-        cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
-    else:
-        cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
-    mean_values = []
-    var_values = []
-    
-    split_potential = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[0]
-    split_charge_density = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[1]
-    cubes_charge_density = np.empty((0, cube_size, cube_size, cube_size, 1))
-    
     
     with mirrored_strategy.scope():
         for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
@@ -344,41 +298,14 @@ def run_emmernet_batch(cubes, emmernet_model, mirrored_strategy, batch_size, mon
             
             cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
             cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
-
-            if monte_carlo:
-                cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
-                # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
-                cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
-                cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
-                cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
+            cubes_batch_predicted = emmernet_model(cubes_batch_X, training=True)
+            cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
     
-                mean_values.append(cubes_batch_predicted_mean.mean())
-                var_values.append(cubes_batch_predicted_var.mean())
-                cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
-                cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
-            else:
-                cubes_batch_predicted = emmernet_model.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
-                
-                #cubes_batch_predicted_first_channel = split_potential(cubes_batch_predicted)
-                #cubes_batch_second_channel = split_charge_density(cubes_batch_predicted)
-                cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
-                #cubes_charge_density = np.append(cubes_charge_density, cubes_batch_second_channel, axis=0)
-        
-        
-    # close the mirrored strategy's multiprocessing ThreadPool explicitly
     atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
-
-    # squeeze cubes to 3 dimensions
-    if monte_carlo:
-        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
-        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
-        return cubes_predicted_mean, cubes_predicted_var
-    else:
-        cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
-        #cubes_charge_density = np.squeeze(cubes_charge_density, axis=-1)
-        return cubes_predicted#, cubes_charge_density
-
-
+    
+    return cubes_predicted
+    
+    
 ## Preprocess the map
 def preprocess_map(emmap, apix, standardize=True):
     ## Resample the map to 1A per pixel
@@ -393,8 +320,6 @@ def preprocess_map(emmap, apix, standardize=True):
 def postprocess_map(predicted_map, apix, output_shape):
     ## Resample the map to the original pixel size
     predicted_map_resampled = resample_map(predicted_map, apix=1,apix_new=apix, assert_shape=output_shape)
-    ## MinMax normalize the map
-    #predicted_map_normalized = minmax_normalize_map(predicted_map_resampled)
     return predicted_map_resampled
 
 class reducePhysicsBasedLoss(tf.keras.losses.Loss):
@@ -478,3 +403,78 @@ class DataBasedMetric(tf.keras.metrics.Metric):
 
     def result(self):
         return self.data_based_loss
+
+
+
+def run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations=None):
+    ## Run the model on the cube
+    ## Ignore DeprecationWarning
+    import warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        import tensorflow_datasets as tfds
+        import atexit
+    from tqdm import tqdm
+    import os
+    
+    print("Running EMmerNet on {} cubes using CPU".format(len(cubes)))
+    monte_carlo = monte_carlo_iterations is not None
+
+    tfds.disable_progress_bar()
+    cube_size = cubes[0].shape[0]
+    cubes = np.array(cubes)
+    cubes_x = np.expand_dims(cubes, axis=4)
+    if monte_carlo:
+        cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
+        cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
+    else:
+        cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
+    mean_values = []
+    var_values = []
+    
+    split_potential = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[0]
+    split_charge_density = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[1]
+    cubes_charge_density = np.empty((0, cube_size, cube_size, cube_size, 1))
+    
+    
+    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+        if i+batch_size > len(cubes):
+            #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
+            batch_size = len(cubes)-i
+            
+            assert batch_size > 0, "Batch size is less than 0"
+            assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
+        
+        cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
+        cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
+
+        if monte_carlo:
+            cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
+            # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
+            cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
+            cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
+            cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
+
+            mean_values.append(cubes_batch_predicted_mean.mean())
+            var_values.append(cubes_batch_predicted_var.mean())
+            cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
+            cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
+        else:
+            cubes_batch_predicted = emmernet_model.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
+            
+            cubes_batch_predicted_first_channel = split_potential(cubes_batch_predicted)
+            cubes_batch_second_channel = split_charge_density(cubes_batch_predicted)
+            cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted_first_channel, axis=0)
+            cubes_charge_density = np.append(cubes_charge_density, cubes_batch_second_channel, axis=0)
+    
+    # squeeze cubes to 3 dimensions
+    if monte_carlo:
+        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
+        return cubes_predicted_mean, cubes_predicted_var
+    else:
+        cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
+        cubes_charge_density = np.squeeze(cubes_charge_density, axis=-1)
+        return cubes_predicted, cubes_charge_density
+    
+    

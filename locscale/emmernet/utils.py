@@ -181,14 +181,13 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     emmap, apix = load_map(input_emmap_path)
 
     if monte_carlo:
-        emmernet_output_mean = emmernet_output["output_mean"]
-        emmernet_output_var = emmernet_output["output_var"]
+        emmernet_output_mean = emmernet_output["output_predicted_map_mean"]
+        emmernet_output_var = emmernet_output["output_predicted_map_var"]
         
         assert emmap.shape == emmernet_output_mean.shape, "Emmernet output mean map shape does not match input map shape"
         assert emmap.shape == emmernet_output_var.shape, "Emmernet output var map shape does not match input map shape"
     else:
-        emmernet_output_map = emmernet_output["output"]
-        #emmernet_output_charge_density = emmernet_output["output_charge_density"]
+        emmernet_output_map = emmernet_output["output_predicted_map_mean"]
         assert emmap.shape == emmernet_output_map.shape, "Emmernet output map shape does not match input map shape"
 
     if verbose:
