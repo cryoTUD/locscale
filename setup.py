@@ -95,14 +95,12 @@ if os.getenv('LOCSCALE_CCPEM_ENV'):
     install_requires=['matplotlib>=3.3.4', 'biopython>=1.78', 'numpy==1.19.2', 'scipy>=1.5.4', 'pandas>=1.1.5',
                         'mrcfile>=1.3.0', 'gemmi>=0.4.8', 'pypdb==2.0', 'scikit-learn', 'pwlf>=2.0.4', 'tqdm>=4.62.3',
                         'more_itertools>=8.10.0', 'servalcat>=0.2.23', 'pyfiglet>=0.8.post1', 'wget>=3.2', 'seaborn>=0.11', 'locscale']
-    extras_require = {}
 else:
     install_requires=['matplotlib>=3.3.4', 'biopython>=1.78', 'numpy==1.19.2', 'scipy>=1.5.4', 'pandas>=1.1.5',
                         'mrcfile>=1.3.0', 'gemmi>=0.4.8', 'pypdb==2.0', 'scikit-learn', 'pwlf>=2.0.4', 'tqdm>=4.62.3',
                         'more_itertools>=8.10.0', 'servalcat>=0.2.23', 'tensorflow==2.6', 'tensorflow-addons==0.14.0',
                         'keras==2.6.0', 'tensorflow_datasets==4.5.2', 'pyfiglet>=0.8.post1', 'wget>=3.2', 'seaborn>=0.11', 'locscale']
-    extras_require = {'mac': ['tensorflow-macos==2.7', 'tensorflow-metal']},
-
+    
     
 setup(name='locscale',
     version=get_version(),
@@ -129,7 +127,7 @@ setup(name='locscale',
     package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90',
                                 'emmernet/emmernet_models/*.tar.gz', 'emmernet/emmernet_models/*.hdf5']},
     install_requires=install_requires,
-    extras_require=extras_require,
+    extras_require = {'mac': ['tensorflow-macos==2.7', 'tensorflow-metal']},
     entry_points={
         'console_scripts': [
             'locscale = locscale.main:main',
