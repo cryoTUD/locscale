@@ -134,7 +134,7 @@ setup(name='locscale',
         ],
     },
     test_suite='setup.locscale_test_suite',
-    ext_modules=[ex1],
+    ext_modules=ext_modules,
     cmdclass={'develop': PostDevelopCommand,
                 'install': PostInstallCommand},
 
