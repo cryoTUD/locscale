@@ -213,20 +213,22 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
     batch_size = input_dictionary["batch_size"]
     cubes = input_dictionary["cubes_array"]
     
-    if mirrored_strategy == "cpu":
-        return run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations)
-    
     print("Running EMmerNet on {} cubes".format(len(cubes)))
     
-    if monte_carlo:
-        cubes_predicted_mean, cubes_predicted_var = run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy)
-        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
-        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
-    else:
-        cubes_predicted_mean = run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy)
-        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+    if mirrored_strategy == "cpu":
+        cubes_predicted_mean = run_emmernet_cpu(cubes, emmernet_model, batch_size)
         cubes_predicted_var = None
         
+    else:     
+        if monte_carlo:
+            cubes_predicted_mean, cubes_predicted_var = run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy)
+            cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+            cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
+        else:
+            cubes_predicted_mean = run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy)
+            cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
+            cubes_predicted_var = None
+            
     input_dictionary["cubes_predicted_mean"] = cubes_predicted_mean
     input_dictionary["cubes_predicted_var"] = cubes_predicted_var
     
@@ -406,7 +408,7 @@ class DataBasedMetric(tf.keras.metrics.Metric):
 
 
 
-def run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations=None):
+def run_emmernet_cpu(cubes, emmernet_model, batch_size):
     ## Run the model on the cube
     ## Ignore DeprecationWarning
     import warnings
@@ -418,25 +420,15 @@ def run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations=N
     import os
     
     print("Running EMmerNet on {} cubes using CPU".format(len(cubes)))
-    monte_carlo = monte_carlo_iterations is not None
 
     tfds.disable_progress_bar()
+    
     cube_size = cubes[0].shape[0]
     cubes = np.array(cubes)
     cubes_x = np.expand_dims(cubes, axis=4)
-    if monte_carlo:
-        cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
-        cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
-    else:
-        cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
-    mean_values = []
-    var_values = []
     
-    split_potential = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[0]
-    split_charge_density = lambda x: tf.split(x, num_or_size_splits=2, axis=-1)[1]
-    cubes_charge_density = np.empty((0, cube_size, cube_size, cube_size, 1))
-    
-    
+    cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
+
     for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
         if i+batch_size > len(cubes):
             #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
@@ -448,33 +440,10 @@ def run_emmernet_cpu(cubes, emmernet_model, batch_size, monte_carlo_iterations=N
         cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
         cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
 
-        if monte_carlo:
-            cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
-            # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
-            cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
-            cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
-            cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
+        cubes_batch_predicted = emmernet_model.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
+        cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
+    
+    cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
+    return cubes_predicted
 
-            mean_values.append(cubes_batch_predicted_mean.mean())
-            var_values.append(cubes_batch_predicted_var.mean())
-            cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
-            cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
-        else:
-            cubes_batch_predicted = emmernet_model.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
-            
-            cubes_batch_predicted_first_channel = split_potential(cubes_batch_predicted)
-            cubes_batch_second_channel = split_charge_density(cubes_batch_predicted)
-            cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted_first_channel, axis=0)
-            cubes_charge_density = np.append(cubes_charge_density, cubes_batch_second_channel, axis=0)
-    
-    # squeeze cubes to 3 dimensions
-    if monte_carlo:
-        cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
-        cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
-        return cubes_predicted_mean, cubes_predicted_var
-    else:
-        cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
-        cubes_charge_density = np.squeeze(cubes_charge_density, axis=-1)
-        return cubes_predicted, cubes_charge_density
-    
     
