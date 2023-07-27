@@ -84,6 +84,7 @@ locscale_parser.add_argument('--set_local_bfactor', type=float, default=20,help=
 
 ## Predict model map arguments 
 locscale_parser.add_argument('-model_path', '--model_path', type=str, help='Path to a custom trained model', default=None)
+locscale_parser.add_argument('--prefer_low_context_model', action='store_true', default=False,help='Use a network which is trained on low context data (Model-Based LocScale targets)')
 locscale_parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for EMMERNET', default=8)
 locscale_parser.add_argument("-gpus", "--gpu_ids", nargs='+', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False)
 
