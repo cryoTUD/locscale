@@ -501,7 +501,8 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     
     return bfactor_distributions
 
-def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="local"):
+def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, \
+                                    standard_notation=True, wilson_cutoff="local", verbose=True):
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
@@ -553,8 +554,9 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
                 
                 temp_distribution[tuple(center)] = tuple([bfactor, qfit])
             except Exception as e:
-                print("Error at {}".format(center))
-                print(e)
+                if verbose:
+                    print("Error at {}".format(center))
+                    print(e)
                 raise
         bfactor_distributions[emmap_name] = temp_distribution
             

@@ -3,14 +3,14 @@
 import numpy as np
 import os
 
-def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None, figsize=(8.27, 11.69)):
     from matplotlib.offsetbox import AnchoredText
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
     from locscale.utils.math_tools import general_quadratic, r2
     
     
-    f, ax = plt.subplots(1,1)
+    f, ax = plt.subplots(1,1, figsize=figsize)
 
     def get_sign(x, leading=False):
         if x < 0:
@@ -52,13 +52,13 @@ def plot_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_
     
     return f
     
-def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None):
+def plot_linear_regression(data_input, x_col, y_col, x_label=None, y_label=None, title_text=None, figsize=(8.27, 11.69)):
     from matplotlib.offsetbox import AnchoredText
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
     from locscale.utils.math_tools import linear, r2
     
-    f, ax = plt.subplots(1,1)
+    f, ax = plt.subplots(1,1, figsize=figsize)
 
     def get_sign(x, leading=False):
         if x < 0:
@@ -111,45 +111,61 @@ class tab_print():
     
 
 
-def print_input_arguments(args):
+def print_input_arguments(args, figsize=(8.27, 11.69)):
+    import pandas as pd
+    import locscale 
     import matplotlib.pyplot as plt
+    import textwrap
+    import warnings
+    # Filter out any warnings 
+    warnings.filterwarnings("ignore")
     
-    fig, ax =plt.subplots()
+    locscale_version = locscale.__version__
     
-    ax.axis('off')
-    
-    text = []
+    data = {}
     path_arguments = [x for x in vars(args) if x in ["emmap_path","half_map1","half_map2","model_map",
                                                   "mask","model_coordinates","outfile"]]
     for arg in vars(args):
         val = getattr(args, arg)
+        # if val is float or int, just round it
+        if type(val) == float or type(val) == int:
+            val = round(val, 2)
         if arg in path_arguments and val is not None:
             full_path = val
             filename = full_path.split("/")[-1]
-            text.append([arg, os.path.basename(filename)])
+            data[arg] = os.path.basename(filename)
         else:
             # if value is a numpy array or a list, just skip it
             if type(val) == list or type(val) == np.ndarray:
                 continue
             else:
-                text.append([arg, str(val)])
+                data[arg] = textwrap.fill(str(val), width=50)
     
-    
-    table= ax.table(cellText=text, loc="center", colLabels=["Parameter","Values"], cellLoc='center')
-    table.auto_set_font_size(False)
-    table.set_fontsize(16)
-    table.scale(1,2)
-    return fig
-   
-def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path, mask_path, fsc_resolution):
+    tabspace = "-"*8
+    # Convert the dictionary to a pretty string
+    data_str = "LocScale version: {}\n".format(locscale_version)
+    data_str += '\n'.join(f"{k}: {tabspace} {v}" for k, v in data.items())
+
+    # Create a figure with the dictionary string as text
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.axis('off')
+    plt.text(0.01, 0.99, data_str, fontsize=10, ha='left', va='top')
+
+    return fig  # return the figure
+
+
+def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path, mask_path, fsc_resolution, figsize=(8.27, 11.69)):
     from locscale.include.emmer.ndimage.map_tools import get_bfactor_distribution, get_bfactor_distribution_multiple
     import matplotlib.pyplot as plt
     import seaborn as sns
     
-    fig, ax =plt.subplots(figsize=(8,8))
+    fig, ax =plt.subplots(figsize=figsize)
     
-    bfactor_distributions = get_bfactor_distribution_multiple([unsharpened_emmap_path, locscale_map_path], mask_path, fsc_resolution, num_centers=2000, wilson_cutoff="standard")
-
+    try:
+        bfactor_distributions = get_bfactor_distribution_multiple([unsharpened_emmap_path, locscale_map_path], mask_path, \
+                                                                fsc_resolution, num_centers=2000, wilson_cutoff="standard", verbose=False)
+    except:
+        pass 
     unsharped_emmap_dist = list(bfactor_distributions.values())[0]
     locscale_dist = list(bfactor_distributions.values())[1]
        
@@ -163,7 +179,7 @@ def plot_bfactor_distribution_standard(unsharpened_emmap_path, locscale_map_path
     plt.legend(["unsharpened map","Locscale map"])
     return fig
 
-def plot_pickle_output(folder):
+def plot_pickle_output(folder, figsize=(8.27, 11.69)):
     import pickle
     import random
     from locscale.include.emmer.ndimage.plots import plot_radial_profile
@@ -202,10 +218,12 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
     from locscale.utils.file_tools import get_fsc_curve_from_arguments, get_cref_from_inputs
     from locscale.utils.general import pad_or_crop_volume
     import matplotlib.pyplot as plt
+    import warnings
+    # Filter out any warnings 
+    warnings.filterwarnings("ignore")
     
     ## Input-Output characteristics
     locscale_map = mrcfile.open(locscale_path).data
-    
     
     processing_files_folder = parsed_input['processing_files_folder']
     pdffile = os.path.join(processing_files_folder, args.report_filename+"_general.pdf")
@@ -232,8 +250,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
         input_table = print_input_arguments(args)
         pdf.savefig(input_table)
     except Exception as e:
-        print("Could not print input table ! \n")
-        print(e)
+        pass
     
     #2 Radial Profiles
 
@@ -241,15 +258,14 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
         radial_profile_fig = plot_radial_profile(freq, [rp_emmap, rp_modmap, rp_locscale],legends=['input_emmap', 'model_map','locscale_map'])
         pdf.savefig(radial_profile_fig)
     except Exception as e:
-        print("Could not print radial profiles")
-        print(e)
+        pass
     
     #2a FSC curve halfmaps
     try:
         fsc_curve = get_fsc_curve_from_arguments(args)
         cref = get_cref_from_inputs(vars(args))
         if cref is not None:
-            fig, ax = plt.subplots(figsize=(8,8))
+            fig, ax = plt.subplots(figsize=(8.27, 11.69))
             ax.plot(freq, fsc_curve,'b')
             ax.plot(freq, cref, 'r')
             ax.set_xlabel("Frequency (1/A)")
@@ -257,19 +273,20 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
             ax.legend(["FSC curve","Cref"])
             # Set title
             ax.set_title("FSC curve of halfmaps")
+            plt.tight_layout()
             pdf.savefig(fig)
         else:
-            fig, ax = plt.subplots(figsize=(8,8))
+            fig, ax = plt.subplots(figsize=(8.27, 11.69))
             ax.plot(freq, fsc_curve,'b')
             ax.set_xlabel("Frequency (1/A)")
             ax.set_ylabel("FSC")
             ax.legend(["FSC curve"])
             # Set title
             ax.set_title("FSC curve of halfmaps")
+            plt.tight_layout()
             pdf.savefig(fig)
     except Exception as e:
-        print("Could not print FSC curve")
-        print(e)
+        pass
     #3 Sections
     
     try:
@@ -293,8 +310,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
         fsc_figure = plot_fsc_maps(emmap, locscale_map, apix=parsed_input['apix'], title="FSC curve unsharpened input and sharpened map", font=12)
         pdf.savefig(fsc_figure)
     except Exception as e:
-        print("Could not print fsc_figure")
-        print(e)
+        pass
     
     #5 Bfactor distributions
     try:
@@ -302,8 +318,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
                                                  mask_path=parsed_input['mask_path'], locscale_map_path=locscale_path, fsc_resolution=parsed_input['fsc_resolution'])
         pdf.savefig(bfactor_kde_fig)
     except Exception as e:
-        print("Could not print bfactor_kde_fig")
-        print(e)
+        pass
         
     #try:
     #    stats_table = get_map_characteristics(parsed_input)
@@ -317,8 +332,7 @@ def make_locscale_report(args, parsed_input, locscale_path, window_bleed_and_pad
             pickle_output_sample_fig = plot_pickle_output(processing_files_folder)
             pdf.savefig(pickle_output_sample_fig)
     except Exception as e:
-        print("Could not print pickle_output_sample_fig")
-        print(e)
+        pass
                 
     
     pdf.close()  
