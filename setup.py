@@ -8,29 +8,50 @@
 #
 
 from __future__ import division, absolute_import, print_function
-from setuptools import find_packages
 from setuptools.command.install import install
 from setuptools.command.develop import develop
 from numpy.distutils.core import Extension, setup
-import unittest
 import pathlib
 import os
+import sys 
 
-locscale_path = pathlib.Path(__file__).parent.resolve()
-long_description = (locscale_path / "README.md").read_text()
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 
 def get_version():
+    import pathlib    
+    locscale_path = pathlib.Path(__file__).parent.resolve()
     version_text = (locscale_path / "locscale" / "__version__.py").read_text()
     version = version_text.split("=")[1][1:-1]
     return version
 
+def add_installation_date():
+    import pathlib    
+    from datetime import datetime
+    import os
+    locscale_path = pathlib.Path(__file__).parent.resolve()
+    # add installation date to __init__.py
+    init_path = os.path.join(locscale_path, "locscale", "__init__.py")
+    with open(init_path, "a") as f:
+        f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
 
+def add_current_environment_to_init():
+    import pathlib
+    import os 
+    locscale_path = pathlib.Path(__file__).parent.resolve()
+    init_path = os.path.join(locscale_path, "locscale", "__init__.py")
+    colab_env_str = str(os.environ.get('LOCSCALE_COLAB_ENV'))
+    with open(init_path, "a") as f:
+        f.write(f'\n__LOCSCALE_COLAB_ENV__ = {colab_env_str}\n')
+        
 def locscale_test_suite():
+    import unittest
     test_loader = unittest.TestLoader()
     test_suite = test_loader.discover('tests', pattern='test_*.py')
     return test_suite
 
 def check_for_refmac():
+    import os
     from shutil import which
     if not os.environ.get('LOCSCALE_COLAB_ENV'):
         refmac5_path = which("refmac5")
@@ -42,24 +63,36 @@ def check_for_refmac():
             print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
     else:
         pass 
-    
+
+def install_conda_packages():
+    from subprocess import run
+    run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1", "--yes"])
+    run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1", "--yes"])
+    run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2", "--yes"])
+    run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1", "--yes"]) 
+
+
+locscale_path = pathlib.Path(__file__).parent.resolve()
+long_description = (locscale_path / "README.md").read_text()
+
 class PostDevelopCommand(develop):
     """ Post-installation for development mode. """
 
     def run(self):
         develop.run(self)
 
-        from subprocess import run
-        from shutil import which
-
         # Install conda packages
-        run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1", "--yes"])
-        run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1", "--yes"])
-        run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2", "--yes"])
-        run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1", "--yes"])
+        install_conda_packages()
 
         # Check if refmac5 is installed
         check_for_refmac()
+        
+        # Add installation date to __init__.py
+        add_installation_date()
+        
+        # Add current environment to __init__.py
+        add_current_environment_to_init()
+        
             
 
 class PostInstallCommand(install):
@@ -67,18 +100,18 @@ class PostInstallCommand(install):
 
     def run(self):
         install.run(self)
-
-        from subprocess import run
-        from shutil import which
-
+        
         # Install conda packages
-        run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1", "--yes"], check=True)
-        run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1", "--yes"], check=True)
-        run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2", "--yes"], check=True)
-        run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1", "--yes"], check=True)
+        install_conda_packages()    
 
         # Check if refmac5 is installed
         check_for_refmac()
+        
+        # Add installation date to __init__.py
+        add_installation_date()
+        
+        # Add current environment to __init__.py
+        add_current_environment_to_init()
         
 ## Modify installation structure based on environment variables for different platforms
 # LOCSCALE_COLAB_ENV
@@ -89,19 +122,6 @@ else:
                     sources=['locscale/include/symmetry_emda/fcodes_fast.f90'])
     ext_modules = [ex1]
 
-# LOCSCALE CCPEM ENV
-if os.getenv('LOCSCALE_CCPEM_ENV'):
-    # Exclude TensorFlow package from dependencies
-    install_requires=['matplotlib>=3.3.4', 'biopython>=1.78', 'numpy==1.19.2', 'scipy>=1.5.4', 'pandas>=1.1.5',
-                        'mrcfile>=1.3.0', 'gemmi>=0.4.8', 'pypdb==2.0', 'scikit-learn', 'pwlf>=2.0.4', 'tqdm>=4.62.3',
-                        'more_itertools>=8.10.0', 'servalcat>=0.2.23', 'pyfiglet>=0.8.post1', 'wget>=3.2', 'seaborn>=0.11', 'locscale']
-else:
-    install_requires=['matplotlib>=3.3.4', 'biopython>=1.78', 'numpy==1.19.2', 'scipy>=1.5.4', 'pandas>=1.1.5',
-                        'mrcfile>=1.3.0', 'gemmi>=0.4.8', 'pypdb==2.0', 'scikit-learn', 'pwlf>=2.0.4', 'tqdm>=4.62.3',
-                        'more_itertools>=8.10.0', 'servalcat>=0.2.23', 'tensorflow==2.6', 'tensorflow-addons==0.14.0',
-                        'keras==2.6.0', 'tensorflow_datasets==4.5.2', 'pyfiglet>=0.8.post1', 'wget>=3.2', 'seaborn>=0.11', 'locscale']
-    
-    
 setup(name='locscale',
     version=get_version(),
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
@@ -122,18 +142,12 @@ setup(name='locscale',
     long_description=long_description,
     long_description_content_type="text/markdown",
     license='3-clause BSD',
-    packages=find_packages(),
     include_package_data=True,
-    package_data={'locscale': ['utils/*.pickle', 'include/symmetry_emda/*.f90',
-                                'emmernet/emmernet_models/*.tar.gz', 'emmernet/emmernet_models/*.hdf5']},
-    install_requires=install_requires,
-    extras_require = {'mac': ['tensorflow-macos==2.7', 'tensorflow-metal']},
     entry_points={
         'console_scripts': [
             'locscale = locscale.main:main',
         ],
     },
-    test_suite='setup.locscale_test_suite',
     ext_modules=ext_modules,
     cmdclass={'develop': PostDevelopCommand,
                 'install': PostInstallCommand},
