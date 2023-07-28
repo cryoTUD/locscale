@@ -183,9 +183,11 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     if monte_carlo:
         emmernet_output_mean = emmernet_output["output_predicted_map_mean"]
         emmernet_output_var = emmernet_output["output_predicted_map_var"]
+        emmernet_output_total = emmernet_output["output_predicted_map_total"]
         
         assert emmap.shape == emmernet_output_mean.shape, "Emmernet output mean map shape does not match input map shape"
         assert emmap.shape == emmernet_output_var.shape, "Emmernet output var map shape does not match input map shape"
+        assert emmap.shape == emmernet_output_total.shape, "Emmernet output total map shape does not match input map shape"
     else:
         emmernet_output_map = emmernet_output["output_predicted_map_mean"]
         assert emmap.shape == emmernet_output_map.shape, "Emmernet output map shape does not match input map shape"
@@ -195,11 +197,16 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         print("Saving Emmernet output to {}".format(output_emmap_filename))
         
     if monte_carlo:
+        # check if output filename has extension
+        output_has_extension = len(os.path.splitext(output_emmap_filename)) > 1
+        if not output_has_extension:
+            output_emmap_filename = output_emmap_filename + ".mrc"
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
         output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_mean"+extension_output_filename)
         output_filename_var = output_emmap_filename.replace(extension_output_filename, "_var"+extension_output_filename)
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
         save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
+        #save_as_mrc(emmernet_output_total, output_emmap_filename, apix, verbose=verbose)
     else:
         save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
         #extension_output_filename = os.path.splitext(output_emmap_filename)[1]
