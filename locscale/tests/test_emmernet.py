@@ -44,17 +44,25 @@ class test_emmernet(unittest.TestCase):
     def test_load_emmernet_model(self):
         from locscale.emmernet.run_emmernet import load_emmernet_model
 
-        emmernet_type_1 = "model_based"
-        emmernet_type_2 = "model_free"
-        emmernet_type_3 = "ensemble"
-
-        emmernet_model_1 = load_emmernet_model(emmernet_type_1, self.emmernet_model_folder)
-        emmernet_model_2 = load_emmernet_model(emmernet_type_2, self.emmernet_model_folder)
-        emmernet_model_3 = load_emmernet_model(emmernet_type_3, self.emmernet_model_folder)
+        inputs_dictionary = {
+            "trained_model" : "hybrid_model_map_target",
+            "emmernet_model_folder" : self.emmernet_model_folder,
+            "model_path" : None,
+            "verbose" : True,
+        }
+        
+        inputs_dictionary_2 = {
+            "trained_model" : "atomic_model_map_target",
+            "emmernet_model_folder" : self.emmernet_model_folder,
+            "model_path" : None,
+            "verbose" : True,
+        }
+        
+        emmernet_model_1 = load_emmernet_model(inputs_dictionary)
+        emmernet_model_2 = load_emmernet_model(inputs_dictionary_2)
 
         self.assertTrue(emmernet_model_1 is not None)
         self.assertTrue(emmernet_model_2 is not None)
-        self.assertTrue(emmernet_model_3 is not None)
     
     def test_run_emmernet(self):
         from locscale.emmernet.emmernet_functions import get_cubes, assemble_cubes
@@ -69,7 +77,14 @@ class test_emmernet(unittest.TestCase):
         cubes, cube_centers = get_cubes(emmap, stride, cube_size)
         cube_1 = cubes[0]
 
-        emmernet_model_1 = load_emmernet_model("model_based", self.emmernet_model_folder)
+        inputs_dictionary = {
+            "trained_model" : "hybrid_model_map_target",
+            "emmernet_model_folder" : self.emmernet_model_folder,
+            "model_path" : None,
+            "verbose" : True,
+        }
+        
+        emmernet_model_1 = load_emmernet_model(inputs_dictionary)
         i=0
         cubes = np.array(cubes)
         cubes_x = np.expand_dims(cubes, axis=4)
@@ -84,7 +99,7 @@ class test_emmernet(unittest.TestCase):
         cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
 
         self.assertTrue(cubes_predicted is not None)
-       
+
         for predicted_cube in cubes_predicted:
             mean_predicted_cube = np.mean(predicted_cube)
             self.assertTrue(mean_predicted_cube < 15)
