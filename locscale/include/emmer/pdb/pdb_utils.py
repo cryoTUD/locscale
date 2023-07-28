@@ -676,8 +676,13 @@ def get_lower_bound_threshold(bfactor_array, probability_threshold=0.01):
     xmin = np.min(bfactor_array)
     xmax = np.max(bfactor_array)
     cdf, xarray = compute_cdf(kde, xmin, xmax)
-    lower_bound_threshold = probe_cdf_threshold(cdf, xarray, probability_threshold)
-       
+    # check if the probability threshold is within the range of the cdf
+    probability_threshold_in_range = (probability_threshold > np.min(cdf)) and (probability_threshold < np.max(cdf))
+    if probability_threshold_in_range:
+        lower_bound_threshold = probe_cdf_threshold(cdf, xarray, probability_threshold)
+    else: 
+        lower_bound_threshold = 0
+        
     return lower_bound_threshold
 
 def shift_bfactors_by_probability(input_pdb, probability_threshold=0.01, minimum_bfactor=0.5, return_shift_values=True):
