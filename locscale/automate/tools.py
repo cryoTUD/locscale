@@ -11,13 +11,16 @@ from locscale.utils.startup_utils import launch_locscale_no_mpi
 import json
 import pickle
 
-def get_defaults_dictionary():
+
+def get_defaults_dictionary(program="locscale"):
     """
     Get the default input dictionary.
     """
-    from locscale.utils.parse_utils import locscale_parser
+    from locscale.utils.parse_utils import locscale_parser, emmernet_parser
+    parser_to_choose = locscale_parser if program == "locscale" else emmernet_parser
+    
     defaults_dictionary = {}
-    variables = locscale_parser._actions
+    variables = parser_to_choose._actions
     for variable in variables:
         # if variable.dest is not help then add to dictionary
         if variable.dest != 'help':

@@ -108,6 +108,7 @@ emmernet_parser.add_argument('-op', '--output_processing_files', type=str, help=
 emmernet_parser.add_argument('-v', '--verbose', action='store_true',help='Verbose output')
 emmernet_parser.add_argument('-monte_carlo','--monte_carlo', action='store_true',help='Monte Carlo sampling of the output')
 emmernet_parser.add_argument('-mc_it','--monte_carlo_iterations', type=int, help='Number of Monte Carlo iterations', default=15)
+emmernet_parser.add_argument('-pb','--physics_based', action='store_true',help='Use physics-based model')
 
 ## FDR parameters
 emmernet_parser.add_argument('-fdr_w', '--fdr_window_size', type=int, help='window size in pixels for FDR thresholding', default=None)
