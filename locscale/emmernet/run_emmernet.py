@@ -93,7 +93,7 @@ def predict_cubes_and_assemble(input_dictionary):
 
     mirrored_strategy, cuda_visible_devices_string = get_strategy(input_dictionary)
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
-    
+    input_dictionary["cuda_visible_devices_string"] = cuda_visible_devices_string
     if verbose:
         print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
 
@@ -209,7 +209,7 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
     monte_carlo_iterations = input_dictionary["monte_carlo_iterations"]
     batch_size = input_dictionary["batch_size"]
     cubes = input_dictionary["cubes_array"]
-    
+    cuda_visible_devices_string = input_dictionary["cuda_visible_devices_string"]
     print("Running EMmerNet on {} cubes".format(len(cubes)))
     
     if mirrored_strategy == "cpu":
@@ -218,12 +218,12 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
         
     else:     
         if monte_carlo:
-            cubes_predicted_mean, cubes_predicted_var, cubes_predicted_total = run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy)
+            cubes_predicted_mean, cubes_predicted_var, cubes_predicted_total = run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string)
             cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
             cubes_predicted_var = np.squeeze(cubes_predicted_var, axis=-1)
             cubes_predicted_total = np.squeeze(cubes_predicted_total, axis=-1)
         else:
-            cubes_predicted_mean = run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy)
+            cubes_predicted_mean = run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string)
             cubes_predicted_mean = np.squeeze(cubes_predicted_mean, axis=-1)
             cubes_predicted_var = None
             cubes_predicted_total = None
@@ -234,7 +234,8 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
     
     return input_dictionary
 
-def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy):
+def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string):
+    import os 
     import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -244,6 +245,8 @@ def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carl
     from tqdm import tqdm
     
     tfds.disable_progress_bar()
+    
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
     
     cube_size = cubes[0].shape[0]
     cubes_predicted_full_network = np.empty((0, cube_size, cube_size, cube_size, 1))
@@ -279,7 +282,8 @@ def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carl
     
     return cubes_predicted_mean, cubes_predicted_var, cubes_predicted_full_network
 
-def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy):
+def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string):
+    import os
     import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -290,6 +294,8 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
     
     tfds.disable_progress_bar()
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+    
     cube_size = cubes[0].shape[0]
     cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
     cubes_x = np.expand_dims(cubes, axis=4)
