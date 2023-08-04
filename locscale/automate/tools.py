@@ -16,8 +16,8 @@ def get_defaults_dictionary(program="locscale"):
     """
     Get the default input dictionary.
     """
-    from locscale.utils.parse_utils import locscale_parser, emmernet_parser
-    parser_to_choose = locscale_parser if program == "locscale" else emmernet_parser
+    from locscale.utils.parse_utils import locscale_parser, feature_enhance_parser
+    parser_to_choose = locscale_parser if program == "locscale" else feature_enhance_parser
     
     defaults_dictionary = {}
     variables = parser_to_choose._actions
