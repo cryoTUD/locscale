@@ -1,8 +1,6 @@
 
 ## FILE HANDLING FUNCTIONS
-
-from posixpath import isabs
-
+import sys 
 
 def check_dependencies():
     
@@ -176,6 +174,7 @@ def copy_file_to_folder(full_path_to_file, new_folder):
 
 def change_directory(args, folder_name):
     import os    
+    import locscale
     from locscale.utils.file_tools import copy_file_to_folder
     
     # Get the input folder
@@ -218,8 +217,151 @@ def change_directory(args, folder_name):
                 new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
     
+    # Set the logger file path 
+    log_file_path = os.path.join(new_directory, "locscale.log")
+    setattr(args, "logfile_path", log_file_path)
+    logger = setup_logger(log_file_path)
+    logger.info("Starting LocScale program")
+    logger.info("LocScale version: {}".format(locscale.__version__))
+    logger.info("LocScale installed on: {}".format(locscale.__installation_date__))
+    logger.info("-"*80)
+    setattr(args, "logger", logger)
+    setattr(args, "input_folder", input_folder)
     return args
 
+class RedirectStdoutToLogger:
+    def __init__(self, logger, show_progress=True, wait_message="Please wait"):
+        self.logger = logger
+        self._stdout = sys.stdout
+        self.show_progress = show_progress
+        self.symbols = ['/', '-', '\\', '|']
+        self.index = 0
+        self.wait_message = wait_message
+        self.old_stdout = None
+    def __enter__(self):
+        self.old_stdout = sys.stdout
+        self.old_stdout.flush()
+        sys.stdout = self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self.old_stdout
+        if self.show_progress:
+            sys.stdout.write('\n')
+            sys.stdout.flush()
+            sys.stdout.write('Done!\n')
+            sys.stdout.flush()
+        if exc_type is not None:
+            self.logger.error(f'Exception: {exc_type}, {exc_val}, {exc_tb}')
+            return False
+        
+        
+    def write(self, content):
+        # Print rotating symbol to stderr if show_progress is True
+        if self.show_progress:
+            self.old_stdout.write(f'\r{self.wait_message}... {self.symbols[self.index % len(self.symbols)]}')
+            self.index += 1
+            self.old_stdout.flush()
+
+        # Avoid logging newline characters
+        if content.rstrip():
+            self.logger.info(content.rstrip())
+
+    def flush(self):
+        pass
+
+
+def run_command_with_filtered_output(command, logger, filter_string=""):
+    import subprocess 
+    print("Running command: {}".format(" ".join(command)))
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True, bufsize=1)
+    
+    for line in process.stdout:
+        # Decode the line
+        line = line.strip()
+        # check if the line contains the filter string
+        logger.info(line)
+        if filter_string in line:
+            # Write the line to the log file
+            print(line)
+    
+    return_code = process.wait()
+    return return_code
+
+def print_downward_arrow(tab_level=0):
+    arrow_string = "\u2193"
+    print("\t"*tab_level + arrow_string)
+    
+    
+def print_ADP_statistics(bfactor_array):
+    import numpy as np
+    print("ADP statistics:")
+    print("Mean: {}".format(np.mean(bfactor_array)))
+    print("Median: {}".format(np.median(bfactor_array)))
+    print("Standard deviation: {}".format(np.std(bfactor_array)))
+    print("Minimum: {}".format(np.min(bfactor_array)))
+    print("Maximum: {}".format(np.max(bfactor_array)))
+    print("")
+    
+class RedirectOutputToLogger:
+    def __init__(self, log_func, show_progress=True, wait_message="Please wait"):
+        self.log_func = log_func
+        self._stdout = sys.stdout
+        self._stderr = sys.stderr
+        self.show_progress = show_progress
+        self.symbols = ['/', '-', '\\', '|']
+        self.index = 0
+        self.wait_message = "Processing"
+
+    def __enter__(self):
+        sys.stdout = self
+        sys.stderr = self
+        if self.show_progress:
+            sys.stderr.write(f'\r{self.wait_message}... {self.symbols[0]}')
+            sys.stderr.flush()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout = self._stdout
+        sys.stderr = self._stderr
+        if self.show_progress:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+            sys.stderr.write("Done!           \n")
+            sys.stderr.flush()
+
+    def write(self, content):
+        # Print rotating symbol to stderr if show_progress is True
+        if self.show_progress:
+            sys.stderr.write(f'\r{self.progress_message}... {self.symbols[self.index % len(self.symbols)]}')
+            sys.stderr.flush()
+            self.index += 1
+
+        # Avoid logging newline characters
+        if content.rstrip():
+            self.log_func(content.rstrip())
+
+    def flush(self):
+        pass
+        
+def pretty_print_dictionary(d, indent=1):
+    import numpy as np
+    from textwrap import fill
+    result = ""
+    for key, value in d.items():
+        # Handle large lists, tuples, and NumPy arrays
+        if isinstance(value, (list, tuple)) and len(value) > 10:
+            value_str = f'{type(value).__name__} of length {len(value)}'
+        elif isinstance(value, np.ndarray):
+            value_str = f'numpy array with shape {value.shape}'
+        elif isinstance(value, dict):
+            value_str = '\n' + pretty_print_dictionary(value, indent + 4)
+        else:
+            value_str = str(value)
+        
+        # Wrap the text if it's too long
+        wrapped_value_str = fill(value_str, width=60, subsequent_indent=' ' * (indent + 4)) 
+        result += '\t' * indent + f'{key}: \t {wrapped_value_str}\n'
+    
+    return result
 def generate_filename_from_halfmap_path(in_path):
     ## find filename in the path    
     import os
@@ -384,6 +526,36 @@ def simple_test_model_to_map_fit(args):
 
     return correlation
 
+def check_for_refmac(tolerate=False):
+    import os
+    from shutil import which
+    
+    refmac5_path = which("refmac5")
+    
+    if refmac5_path is None:
+        if not tolerate:
+            raise Exception("Refmac5 is not installed. Please install refmac5 and add it to your path")
+        else:
+            print("Refmac5 is not installed. Please install refmac5 and add it to your path")
+    else:
+        print("Refmac5 is installed at {}".format(refmac5_path))
+        print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
+
+def setup_logger(log_path: str):
+    from loguru import logger
+    try:
+        logger.remove(handler_id=0)  # Remove pre-configured sink to sys.stderror
+    except ValueError:
+        pass
+
+    logger.add(
+        log_path,
+        format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+        backtrace=True,
+        enqueue=True,
+        diagnose=True,
+    )
+    return logger
 
 
 def check_user_input(args):

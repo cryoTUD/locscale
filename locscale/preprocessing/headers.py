@@ -8,8 +8,9 @@ Created on Mon Aug 17 11:31:51 2020
 
 import numpy as np
 from locscale.utils.plot_tools import tab_print
+from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary, setup_logger, run_command_with_filtered_output
 
-tabbed_print = tab_print(2)
+tabbed_print = tab_print(1)
 tprint = tabbed_print.tprint
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,target_bfactor=20, output_file_path=None,verbose=True,Cref=None, apply_filter=True):
     '''
@@ -319,26 +320,29 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                             refmac5_path=None, verbose=True, hybrid_model_refinement=False, \
                             final_chain_counts=None, cif_info=None):
     import os
-    from subprocess import run, PIPE, Popen
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
-    import mrcfile
 
     if hybrid_model_refinement: 
         assert final_chain_counts is not None, "Please provide the final chain counts for the hybrid model refinement"
 
+    ## Create log file for servalcat
+    servalcat_log_path = os.path.join(os.path.dirname(model_path),"servalcat_log.txt")
+    servalcat_logger = setup_logger(servalcat_log_path)
+    servalcat_logger.info("Running servalcat to refine the model")
+    servalcat_logger.info("-"*50)
+    
     normal_refinement = not pseudomodel_refinement and not hybrid_model_refinement
     if normal_refinement:
         tprint("This is a refinement of a real atomic model")
         servalcat_refined_model_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
             num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
-            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info)
+            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info, servalcat_logger=servalcat_logger)
                 
     else:
         tprint("This is a refinement of a pseudo-atomic model")
-        tprint("Running iterative refinement of the model")
+        tprint("Running iterative refinement of the model for {} cycles".format(num_iter))
         for cycle in range(num_iter):
-            print("Cycle: "+str(cycle))
+            tprint("Cycle: "+str(cycle))
             if cycle == 0:
                 model_path_input = model_path
                 initialise_bfactors = True
@@ -350,27 +354,18 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             servalcat_refined_once_path = run_refmac_servalcat(
                 model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,\
                 refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, \
-                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
-            
-            # Copy the servalcat_refined_once_path for the next cycle of refinement
-            # servalcat_refinement_next_cycle_path = os.path.join(os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+"_no_average.cif")
-            # os.rename(servalcat_refined_once_path, servalcat_refinement_next_cycle_path)
-            
-            # print("WARNING: This is a temporary fix. Please fix the code to run multiple cycles of refinement")
-            # print("Current cycle: "+str(cycle))
-            # print("Next cycle: "+str(cycle+1))
-            # print("Model input for next cycle: "+servalcat_refinement_next_cycle_path)
-            
+                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info, servalcat_logger=servalcat_logger)
+
             servalcat_refinement_next_cycle_path = os.path.join(
                 os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".cif")
             
-            tprint("Averaging the bfactors with radius of 3 angstroms")
+            servalcat_logger.info("Averaging the bfactors with radius of 3 angstroms")
             window_averaged_bfactors_structure = average_atomic_bfactors_window(
                 input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
             window_averaged_bfactors_structure.make_mmcif_document().write_file(servalcat_refinement_next_cycle_path)
         
-        tprint("Setting the element composition of the model to match a typical protein composition")
-        tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
+        servalcat_logger.info("Setting the element composition of the model to match a typical protein composition")
+        servalcat_logger.info("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
 
         if hybrid_model_refinement:
             starting_chain_count = final_chain_counts[0]
@@ -382,7 +377,7 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
         proper_element_composition_structure.make_mmcif_document().write_file(servalcat_refined_model_path)
         
     # Average the ADPs for 25 angstroms
-    tprint("Averaging the bfactors with radius of 25 angstroms")
+    servalcat_logger.info("Averaging the bfactors with radius of 25 angstroms")
     ADP_averaged_structure = average_atomic_bfactors_window(servalcat_refined_model_path, window_radius=25)   
     
     refined_averaged_structure_path = servalcat_refined_model_path.replace(".cif", "_averaged.cif")
@@ -438,7 +433,7 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
         
         return gemmi_st
         
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, \
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, servalcat_logger,\
                          refmac5_path=None, verbose=True, initialise_bfactors=True, \
                          hybrid_model_refinement=False, cif_info=None):
     '''
@@ -469,9 +464,12 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     '''
     
     import os
-    from subprocess import run, PIPE, Popen
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
-    import mrcfile
+    from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
+    from locscale.utils.file_tools import check_for_refmac
+    # check for refmac5
+    
+    with servalcat_logger.catch():
+        check_for_refmac(tolerate=False)
     
     # Get the current working directory
     current_directory = os.getcwd()
@@ -523,15 +521,10 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     if refmac5_path is not None:
         servalcat_command += ["--exe",refmac5_path]
 
-    if verbose:       
-        tprint("Command line for servalcat: \n")    
-        tprint(" ".join(servalcat_command))
+    rcode = run_command_with_filtered_output(servalcat_command, servalcat_logger, filter_string="FSCaverage=") 
+    if rcode != 0:
+        servalcat_logger.error("Servalcat failed with return code: "+str(rcode))    
     
-    ## Create log file for servalcat
-    servalcat_log_path = os.path.join(os.path.dirname(model_path),"servalcat_log.txt")
-    servalcat_log_file = open(servalcat_log_path,"w")
-    
-    refmac_output = run(servalcat_command, stdout=servalcat_log_file)
     #possible_file_extensions = [".pdb", ".cif", ".mmcif", ".ent"]
     refined_model_path = output_prefix+".mmcif"
 
@@ -545,9 +538,11 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     if os.path.exists(refined_model_path):
         if verbose: 
             tprint("The refined PDB model is: "+refined_model_path+"\n\n")    
+            servalcat_logger.info("The refined PDB model is: "+refined_model_path+"\n\n")
         return refined_model_path
     else:
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        servalcat_logger.error("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
 
