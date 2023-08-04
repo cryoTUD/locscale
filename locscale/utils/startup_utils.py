@@ -81,6 +81,10 @@ def print_start_banner(start_time, text="Map Sharpening"):
                 +"i.e. the densities predicted by the network may not correspond to real densities. We are trying hard to mitigate "\
                 +"this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. "\
                 +"We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets."\
+                +"In addition, we have provided a measure of confidence in the predicted densities. You can find this in the output "\
+                +"directory as a map called 'p_value_map.mrc'. The voxels corresponding to p-values < 0.05 are likely to be network hallucinations. "\
+                +"Please use this map along with the predicted density map for your model building needs. "+"\n"\
+                +"As a rule: NEVER USE THE PREDICTED MAPS AS A REFINEMENT TARGET. ALWAYS USE THE ORIGINAL MAPS. "+"\n"\
                 +"If you encounter obvious problems, please report this to the authors. "+"\n"\
                 +"Arjen Jakobi: a.jakobi@tudelft.nl  ", width=80))
 
@@ -101,14 +105,15 @@ def launch_locscale_no_mpi(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input, pretty_print_dictionary
     import os 
 
     input_file_directory = get_input_file_directory(args) ## Get input file directory
 
     ## Print start
     start_time = datetime.now()
-    print_start_banner(start_time, "LocScale")
+    if args.verbose:
+        print_start_banner(start_time, "LocScale")
 
     ## Check input
     check_user_input(args)   ## Check user inputs  
@@ -118,20 +123,25 @@ def launch_locscale_no_mpi(args):
     
     ## Change to output directory
     copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+    copied_args.logger.info("Running LocScale")
+    copied_args.logger.info("-"*80)
+    copied_args.logger.info(f"Arguments used: \n{pretty_print_dictionary(vars(copied_args))}")
+    copied_args.logger.info("-"*80)
     parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
     ## Run LocScale non-MPI 
     LocScaleVol = run_window_function_including_scaling(parsed_inputs_dict)
     parsed_inputs_dict["output_directory"] = input_file_directory
     write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
     ## Print end
-    print_end_banner(datetime.now(), start_time=start_time)
+    if args.verbose:
+        print_end_banner(datetime.now(), start_time=start_time)
 
 
 def launch_locscale_mpi(args):
     from locscale.utils.prepare_inputs import prepare_mask_and_maps_for_scaling
     from locscale.utils.scaling_tools import run_window_function_including_scaling, run_window_function_including_scaling_mpi
     from locscale.utils.general import write_out_final_volume_window_back_if_required
-    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input
+    from locscale.utils.file_tools import change_directory, check_user_input, get_input_file_directory, set_modality_based_on_input, setup_logger
     import os 
 
     input_file_directory = get_input_file_directory(args) ## Get input file directory
@@ -145,12 +155,15 @@ def launch_locscale_mpi(args):
         if rank==0:
             ## Print start
             start_time = datetime.now()
-            print_start_banner(start_time, "LocScale")
+            if args.verbose:
+                print_start_banner(start_time, "LocScale")
             check_user_input(args)   ## Check user inputs
             args=set_modality_based_on_input(args) ## Set modality based on input
             if args.verbose:
                 print_arguments(args)
             copied_args = change_directory(args, args.output_processing_files)
+            copied_args.logger.info("Running LocScale MPI")
+            copied_args.logger.info("-"*80)
             parsed_inputs_dict = prepare_mask_and_maps_for_scaling(copied_args)
             
         else:
@@ -166,8 +179,84 @@ def launch_locscale_mpi(args):
         if rank == 0:
             parsed_inputs_dict["output_directory"] = input_file_directory
             write_out_final_volume_window_back_if_required(copied_args, LocScaleVol, parsed_inputs_dict)
-            print_end_banner(datetime.now(), start_time=start_time)
+            if args.verbose:
+                print_end_banner(datetime.now(), start_time=start_time)
     except Exception as e:
         print("Process {} failed with error: {}".format(rank, e))
         comm.Abort()
         raise e
+
+def launch_locscale(args):
+    from locscale.utils.startup_utils import launch_locscale_no_mpi, launch_locscale_mpi
+    if args.mpi:
+        launch_locscale_mpi(args)
+    else:
+        launch_locscale_no_mpi(args)
+
+def launch_emmernet(args):
+    from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
+    from locscale.utils.file_tools import change_directory, pretty_print_dictionary
+    from locscale.emmernet.prepare_inputs import prepare_inputs
+    from locscale.emmernet.run_emmernet import run_emmernet
+    from locscale.emmernet.emmernet_functions import calculate_significance_map_from_emmernet_output
+    
+    ## Print start
+    start_time = datetime.now()
+    print_start_banner(start_time, "EMmerNet")
+    if args.verbose:
+        print_arguments(args)
+    
+    ## Check input
+    check_emmernet_inputs(args)
+    
+    copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+    copied_args.logger.info("Running Feature Enhancement using EMmerNet")
+    copied_args.logger.info("-"*80)
+    copied_args.logger.info(f"Arguments used: \n{pretty_print_dictionary(vars(copied_args))}")
+    copied_args.logger.info("-"*80)
+    
+    ## Prepare inputs
+    input_dictionary = prepare_inputs(copied_args)
+    
+    ## Run EMMERNET
+    emmernet_output_dictionary = run_emmernet(input_dictionary)
+    emmernet_output_dictionary = check_and_save_output(input_dictionary, emmernet_output_dictionary)
+    
+    ## Run LocScale using EMmerNet output
+    locscale_args = get_locscale_inputs_from_emmernet(input_dictionary, emmernet_output_dictionary)
+    launch_locscale(locscale_args)
+    
+    # Calculate the p-values from the output of EMmerNet and LocScale
+    locscale_output_filename = locscale_args.outfile 
+    emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
+    emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
+    calculate_significance_map_from_emmernet_output(
+        locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, n_samples=input_dictionary["monte_carlo_iterations"])
+    
+    print("EMmerNet finished successfully")
+    print("Please check the p_value_map.mrc to check for hallucinated features")
+    ## Print end
+    print_end_banner(datetime.now(), start_time)
+    
+def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
+    from locscale.automate.tools import get_defaults_dictionary
+    import argparse
+    
+    ## Get defaults dictionary for LocScale
+    input_folder = parsed_inputs["input_folder"]
+    output_filename = os.path.basename(emmernet_output["output_filename_for_locscale"])
+    output_path = os.path.join(input_folder, output_filename)
+    defaults_dictionary = get_defaults_dictionary("locscale")
+    defaults_dictionary["emmap_path"] = parsed_inputs["xyz_emmap_path"]
+    defaults_dictionary["mask"] = parsed_inputs["xyz_mask_path"]
+    defaults_dictionary["model_map"] = emmernet_output["reference_map_for_locscale"]
+    defaults_dictionary["verbose"] = False 
+    defaults_dictionary["outfile"] = output_path
+    defaults_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]
+    defaults_dictionary["logger"] = parsed_inputs["logger"]
+    defaults_dictionary["number_processes"] = parsed_inputs["number_processes"]
+    
+    locscale_args = argparse.Namespace(**defaults_dictionary)
+    
+    return locscale_args
+    

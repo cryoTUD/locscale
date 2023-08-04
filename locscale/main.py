@@ -9,7 +9,7 @@
 
 import os
 import sys
-from locscale.utils.startup_utils import launch_emmernet, launch_locscale
+from locscale.utils.startup_utils import launch_feature_enhance, launch_contrast_enhance
 from locscale.utils.parse_utils import main_parser
 import locscale
 
