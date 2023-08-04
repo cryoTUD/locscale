@@ -237,11 +237,12 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
     else:
         save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
+        
     
-    if args.skip_report:
+    if args.print_report:
+        try_to(make_locscale_report, args, parsed_inputs_dict, output_filename, window_bleed_and_pad)    
         return LocScaleVol
     else: 
-        try_to(make_locscale_report, args, parsed_inputs_dict, output_filename, window_bleed_and_pad)    
         return LocScaleVol
 
 def try_to(func, *args, **kwargs):
