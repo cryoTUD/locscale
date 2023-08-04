@@ -4,8 +4,9 @@ def download_emmernet_model_from_url(download_folder):
     import wget
    
     #url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"    # OLD SURFdrive link
-    url_model_based_emmernet = "https://zenodo.org/record/6651995/files/emmernet.tar.gz?download=1"    # NEW Zenodo link
-    wget.download(url_model_based_emmernet, download_folder)
+    #url_model_based_emmernet = "https://zenodo.org/record/6651995/files/emmernet.tar.gz?download=1"    # https://doi.org/10.5281/zenodo.6651995 (16 June 2022)
+    url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1" # https://doi.org/10.5281/zenodo.8211668 (3 Aug 2023)
+    wget.download(url_emmernet_models, download_folder)
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile
@@ -131,11 +132,11 @@ def check_and_download_emmernet_model(verbose=False):
 
     emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
     path_exists = os.path.exists(emmernet_model_folder)
-    MB_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MBfa.hdf5"))
-    MF_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MFfa.hdf5"))
-    ensemble_EMMERNET_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_MBMF.hdf5"))
+    EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_highContext.hdf5"))
+    EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "EMmerNet_lowContext.hdf5"))
+    
 
-    emmernet_downloaded = path_exists and MB_EMMERNET_MODEL_DOWNLOADED and MF_EMMERNET_MODEL_DOWNLOADED and ensemble_EMMERNET_MODEL_DOWNLOADED
+    emmernet_downloaded = path_exists and EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED and EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED
 
     if not emmernet_downloaded:
         if verbose:
@@ -179,6 +180,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     monte_carlo = parsed_inputs["monte_carlo"]
     physics_based = parsed_inputs["physics_based"]
     emmap, apix = load_map(input_emmap_path)
+    output_emmap_folder = os.path.dirname(output_emmap_filename)
 
     if monte_carlo:
         emmernet_output_mean = emmernet_output["output_predicted_map_mean"]
@@ -210,8 +212,13 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
         output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_mean"+extension_output_filename)
         output_filename_var = output_emmap_filename.replace(extension_output_filename, "_var"+extension_output_filename)
+        output_filename_for_locscale = output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename)
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
         save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
+        emmernet_output["output_filename_mean"] = output_filename_mean
+        emmernet_output["output_filename_var"] = output_filename_var
+        emmernet_output["output_filename_for_locscale"] = os.path.join(output_emmap_folder, output_filename_for_locscale)
+        emmernet_output["reference_map_for_locscale"] = output_filename_mean
         #save_as_mrc(emmernet_output_total, output_emmap_filename, apix, verbose=verbose)
     elif physics_based:
         output_has_extension = len(os.path.splitext(output_emmap_filename)) > 1
@@ -222,8 +229,12 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         output_filename_cd = output_emmap_filename.replace(extension_output_filename, "_cd"+extension_output_filename)
         save_as_mrc(emmernet_output_potential, output_filename_potential, apix, verbose=verbose)
         save_as_mrc(emmernet_output_cd, output_filename_cd, apix, verbose=verbose)
+        emmernet_output["output_filename_potential"] = output_filename_potential
+        emmernet_output["output_filename_cd"] = output_filename_cd
     else:
         save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
-        
-
+        emmernet_output["output_filename"] = output_emmap_filename
+    
+    
+    return emmernet_output
     
