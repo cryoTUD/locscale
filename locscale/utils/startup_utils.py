@@ -224,7 +224,7 @@ def launch_feature_enhance(args):
     
     ## Run LocScale using EMmerNet output
     locscale_args = get_locscale_inputs_from_emmernet(input_dictionary, emmernet_output_dictionary)
-    launch_locscale(locscale_args)
+    launch_contrast_enhance(locscale_args)
     
     # Calculate the p-values from the output of EMmerNet and LocScale
     locscale_output_filename = locscale_args.outfile 
