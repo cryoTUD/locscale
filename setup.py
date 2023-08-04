@@ -53,23 +53,13 @@ def locscale_test_suite():
 def check_for_refmac():
     import os
     from shutil import which
-    if not os.environ.get('LOCSCALE_COLAB_ENV'):
-        refmac5_path = which("refmac5")
-        if refmac5_path is None:
-            raise UserWarning(
-                "Refmac5 is not installed. Please install it and try again.")
-        else:
-            print("Refmac5 is installed at {}".format(refmac5_path))
-            print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
+    
+    refmac5_path = which("refmac5")
+    if refmac5_path is None:
+        print("Refmac5 is not installed. Some programs might not work.")
     else:
-        pass 
-
-def install_conda_packages():
-    from subprocess import run
-    run(["conda", "install", "-c", "conda-forge", "cudatoolkit=11.3.1", "--yes"])
-    run(["conda", "install", "-c", "conda-forge", "cudnn=8.2.1", "--yes"])
-    run(["conda", "install", "-c", "conda-forge", "openmpi=4.1.2", "--yes"])
-    run(["conda", "install", "-c", "conda-forge", "mpi4py=3.1", "--yes"]) 
+        print("Refmac5 is installed at {}".format(refmac5_path))
+        print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
 
 
 locscale_path = pathlib.Path(__file__).parent.resolve()
@@ -80,39 +70,22 @@ class PostDevelopCommand(develop):
 
     def run(self):
         develop.run(self)
-
-        # Install conda packages
-        install_conda_packages()
-
         # Check if refmac5 is installed
         check_for_refmac()
-        
         # Add installation date to __init__.py
         add_installation_date()
-        
-        # Add current environment to __init__.py
-        add_current_environment_to_init()
-        
-            
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
 
     def run(self):
         install.run(self)
-        
-        # Install conda packages
-        install_conda_packages()    
-
         # Check if refmac5 is installed
         check_for_refmac()
         
         # Add installation date to __init__.py
         add_installation_date()
-        
-        # Add current environment to __init__.py
-        add_current_environment_to_init()
-        
+    
 ## Modify installation structure based on environment variables for different platforms
 # LOCSCALE_COLAB_ENV
 if os.getenv('LOCSCALE_COLAB_ENV'):
