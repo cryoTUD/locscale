@@ -11,7 +11,8 @@
 ## import the necessary packages from locscale.include.emmer
 
 from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
-from locscale.emmernet.emmernet_functions_new import standardize_map, get_cubes, assemble_cubes, replace_cubes_in_dictionary,\
+from locscale.utils.file_tools import RedirectStdoutToLogger
+from locscale.emmernet.emmernet_functions import standardize_map, get_cubes, assemble_cubes, replace_cubes_in_dictionary,\
                                                     load_smoothened_mask, show_signal_cubes
                                                     
 import tensorflow as tf
@@ -24,10 +25,13 @@ tf.random.set_seed(42)
 
 def run_emmernet(input_dictionary):
     
+    input_dictionary["logger"].info("1) Preprocessing the data...")
     input_dictionary = start_preprocessing_data(input_dictionary)
     
+    input_dictionary["logger"].info("2) Preparing inputs for the network...")
     input_dictionary = prepare_inputs_for_network(input_dictionary)
     
+    input_dictionary["logger"].info("3) Predicting the cubes...")
     output_dictionary = predict_cubes_and_assemble(input_dictionary)
     
     return output_dictionary
@@ -37,24 +41,23 @@ def start_preprocessing_data(input_dictionary):
     mask_path = input_dictionary["xyz_mask_path"]
     verbose = input_dictionary["verbose"]
     processing_files_folder = os.path.dirname(emmap_path)
-    emmap, apix = load_map(emmap_path)
-    mask, _ = load_smoothened_mask(mask_path)
+    
+    with RedirectStdoutToLogger(input_dictionary["logger"], wait_message="Loading input"):
+        emmap, apix = load_map(emmap_path, verbose=True)
+    
+    with RedirectStdoutToLogger(input_dictionary["logger"], wait_message="Loading mask"):
+        mask, _ = load_smoothened_mask(mask_path, verbose=True)
     
     input_map_shape = emmap.shape
-    if verbose:
-        print("Emmap loaded from: {}".format(emmap_path))
-        print("Emmap shape: {}".format(emmap.shape))
-        print("Pixelsize read as: {:.2f}".format(apix))
-
-        print("1) Preprocessing the data...")
     
     emmap_preprocessed = preprocess_map(emmap, apix)
     mask_preprocessed = preprocess_map(mask, apix, standardize=False)
     
     if verbose:
         print("\tPreprocessing complete")
-        print("\tPre-processed map shape: {}".format(emmap_preprocessed.shape))
-        print("2) Prediction commencing...")
+        print_statement = "\tPre-processed map shape: {}".format(emmap_preprocessed.shape)
+        print(print_statement)
+        input_dictionary["logger"].info(print_statement)        
 
     input_dictionary["emmap_preprocessed"] = emmap_preprocessed
     input_dictionary["mask_preprocessed"] = mask_preprocessed
@@ -75,16 +78,20 @@ def prepare_inputs_for_network(input_dictionary):
     verbose = input_dictionary["verbose"]
     
     cubes_dictionary, cubes_array, signal_cubes = get_cubes(emmap_preprocessed, cube_size=cube_size, step_size=stride, mask=mask_preprocessed)
-    show_signal_cubes(signal_cubes, emmap_preprocessed.shape, save_path=os.path.join(processing_files_folder, "signal_cubes_resampled.mrc"), apix=1)
+    cubes_center_save_path = os.path.join(processing_files_folder, "signal_cubes_resampled.mrc")
+    show_signal_cubes(signal_cubes, emmap_preprocessed.shape, \
+            save_path=cubes_center_save_path, apix=input_dictionary["apix_raw"], input_shape=input_dictionary["input_map_shape"])
 
     input_dictionary["cubes_dictionary"] = cubes_dictionary
     input_dictionary["cubes_array"] = cubes_array
         
     if verbose:
         print("\tCubes extracted")
-        print("\tNumber of cubes: {}".format(len(cubes_array)))
-        print("\tNumber of signal cubes: {}".format(len(signal_cubes)))
-    
+        print_statement_cubes = f"\tNumber of cubes: {len(cubes_dictionary)} of which {len(signal_cubes)} are signal cubes"
+        print(print_statement_cubes)
+        input_dictionary["logger"].info(print_statement_cubes)
+        print("\tCheck the centers of the cubes in the file: {}".format(cubes_center_save_path))
+        input_dictionary["logger"].info("\tCheck the centers of the cubes in the file: {}".format(cubes_center_save_path))
     return input_dictionary    
 
 def predict_cubes_and_assemble(input_dictionary):
@@ -96,12 +103,15 @@ def predict_cubes_and_assemble(input_dictionary):
     input_dictionary["cuda_visible_devices_string"] = cuda_visible_devices_string
     if verbose:
         print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
+        input_dictionary["logger"].info("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
 
+    
     emmernet_model = load_emmernet_model(input_dictionary)
-
+    input_dictionary["logger"].info("Prediction start")
     input_dictionary = run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy)
 
     if input_dictionary["monte_carlo"]:
+        input_dictionary["logger"].info("Assembling the cubes in the right place...")
         predicted_map_mean = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_mean"])
         predicted_map_var = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_var"])
         predicted_map_total = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_total"])
@@ -155,6 +165,7 @@ def load_emmernet_model(input_dictionary):
     model_path = input_dictionary["model_path"]
     verbose = input_dictionary["verbose"]
     
+    os.environ["CUDA_VISIBLE_DEVICES"] = input_dictionary["cuda_visible_devices_string"]
     if emmernet_model_folder is None:
         import locscale
         emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
@@ -177,10 +188,10 @@ def load_emmernet_model(input_dictionary):
         emmernet_model_path = os.path.join(emmernet_folder_path, "epsilon_hybrid_model_4_final_epoch_15.hdf5")
     elif emmernet_type == "model_based_no_freqaug":
         emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
-    elif emmernet_type == "hybrid_model_map_target":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "hybrid_model_map_target_noaugmentation_30k_bs2_dropout_epoch_15.hdf5")
-    elif emmernet_type == "atomic_model_map_target":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "atomic_model_map_target_noaugmentation_30k_bs2_dropout_epoch_15.hdf5")
+    elif emmernet_type == "emmernet_high_context":
+        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_highContext.hdf5")
+    elif emmernet_type == "emmernet_low_context":
+        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_lowContext.hdf5")
     else:
         raise ValueError("Invalid emmernet_type")
     
@@ -212,6 +223,12 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
     cuda_visible_devices_string = input_dictionary["cuda_visible_devices_string"]
     physics_based = input_dictionary["physics_based"]
     print("Running EMmerNet on {} cubes".format(len(cubes)))
+    input_dictionary["logger"].info("Running EMmerNet on {} cubes".format(len(cubes)))
+    input_dictionary["logger"].info("Mirrored strategy: {}".format(mirrored_strategy))
+    input_dictionary["logger"].info("CUDA_VISIBLE_DEVICES: {}".format(cuda_visible_devices_string))
+    
+    with RedirectStdoutToLogger(input_dictionary["logger"], show_progress=False):
+        emmernet_model.summary()
     
     if mirrored_strategy == "cpu":
         if monte_carlo:
