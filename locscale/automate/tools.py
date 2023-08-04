@@ -477,7 +477,7 @@ class LocScaleMultiple:
                 joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
         else:
             result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
-                joblib.delayed(self.launch_locscale)(job_id) for job_id in job_list)
+                joblib.delayed(self.launch_contrast_enhance)(job_id) for job_id in job_list)
 
         
         # Print the results for each job
