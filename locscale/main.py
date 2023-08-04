@@ -45,9 +45,9 @@ def main():
         sys.exit(0)
     
     if launch_command == 'contrast_enhance':
-        launch_locscale(main_args)
+        launch_contrast_enhance(main_args)
     elif launch_command == 'feature_enhance':
-        launch_emmernet(main_args)
+        launch_feature_enhance(main_args)
     else:
         raise ValueError("Unknown command: ", launch_command)
         
