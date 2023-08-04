@@ -1,9 +1,0 @@
-channels:
-  - anaconda
-  - conda-forge
-  - defaults
-dependencies:
-  - cudatoolkit
-  - cudnn
-  - mpi4py
-  - openmpi
