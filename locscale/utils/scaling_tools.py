@@ -51,10 +51,11 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         bfactor (float): The local bfactor of the reference map 
         qfit (float): The local qfit of the reference map for bfactor calculation
     """
-    
+    import warnings
     from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, \
         add_deviations_to_reference_profile, frequency_array, estimate_bfactor_standard, get_theoretical_profile
-
+    from locscale.utils.file_tools import RedirectStdoutToLogger
+    
     ################################################################################
     # SCALING WITHOUT REFERENCE
     # Scaling without a reference profile is done by measuring the local bfactor
@@ -62,6 +63,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     # unsharpened cube. This is then used to calculate the scale factors.
     # This method is not recommended since it is not robust to noise.
     ################################################################################
+    warnings.filterwarnings("ignore")
     if scale_factor_arguments['no_reference']:
         use_theoretical_profile = False
         ################################################################################
@@ -479,7 +481,6 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     ###############################################################################
 
     scaling_dictionary = parsed_inputs_dict
-    
     ###############################################################################
     # Stage 2: Extract masked locations and indices from the mask
     ###############################################################################
