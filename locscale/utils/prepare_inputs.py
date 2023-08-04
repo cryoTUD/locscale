@@ -13,6 +13,7 @@ import locscale.include.emmer as emmer
 from locscale.utils.plot_tools import tab_print
 from locscale.preprocessing.headers import check_axis_order
 from locscale.include.emmer.ndimage.map_utils import load_map
+from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary
 tabbed_print = tab_print(2)
 def prepare_mask_and_maps_for_scaling(args):
     '''
@@ -30,6 +31,7 @@ def prepare_mask_and_maps_for_scaling(args):
     '''
     print("."*80)
     print("Preparing your inputs for LocScale")
+    args.logger.info("Preparing your inputs for LocScale")
 
     #########################################################################
     # If dev_mode is True, then the program will run in the development mode
@@ -64,10 +66,13 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs = vars(args)
 
     # Prepare the emmap
+    args.logger.info("1) Parsing the unsharpened map inputs")
     parsed_inputs["unsharpened_emmap_path"], parsed_inputs["shift_vector"]  = get_emmap_path_from_args(args)
     # Check axis orders of the maps
     parsed_inputs["xyz_emmap_path"] = check_axis_order(parsed_inputs["unsharpened_emmap_path"])
-    parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"])
+    with RedirectStdoutToLogger(args.logger, wait_message="Loading inputs"):
+        parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"], verbose=True)
+    
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
     
     ##########################################################################
@@ -86,7 +91,7 @@ def prepare_mask_and_maps_for_scaling(args):
     if parsed_inputs["verbose"]:
         print("."*80)
         print("Preparing mask \n")
-    
+    args.logger.info("2) Preparing mask")
     parsed_inputs["xyz_mask"], parsed_inputs["xyz_mask_path"], parsed_inputs["mask_path_raw"] = prepare_mask_from_inputs(parsed_inputs)
     
     
@@ -101,6 +106,7 @@ def prepare_mask_and_maps_for_scaling(args):
 
     if parsed_inputs["no_reference"]:
         print("Running locscale without using any reference")
+        args.logger.info("3) Running locscale without using any reference")
         ## Running locscale without using any reference means that the bfactors of the 
         ## local window will be set to zero. This is not a recommended option.
         ## This option is only present due to testing purposes and may 
@@ -112,6 +118,7 @@ def prepare_mask_and_maps_for_scaling(args):
     else:
         print("."*80)
         print("Preparing model map \n")
+        args.logger.info("3) Preparing model map")
         parsed_inputs["xyz_modmap"], parsed_inputs["xyz_modmap_path"] = get_modmap_from_inputs(parsed_inputs)
 
 
@@ -156,6 +163,7 @@ def prepare_mask_and_maps_for_scaling(args):
        
     if parsed_inputs["verbose"]:
         print("Preparation completed. Now running LocScale!")
+        parsed_inputs["logger"].info("Preparation completed. Now running LocScale!")
         print("."*80)
     
     
@@ -181,7 +189,9 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
     parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
-
+    
+    
+    parsed_inputs["logger"].info("Parsed inputs dictionary: \n{}".format(pretty_print_dictionary(parsed_inputs_dict)))
     
     #################################################################################
     # Stage 8: Make some common sense checks and return 
@@ -267,6 +277,7 @@ def parse_inputs_from_processing_files(args):
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
     parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
+    
 
     assert parsed_inputs_dict["emmap"].shape == parsed_inputs_dict["modmap"].shape == parsed_inputs_dict['mask'].shape, "The input maps and mask do not have the same shape"
     ## emmap and modmap should not be zeros
@@ -282,25 +293,38 @@ def prepare_mask_from_inputs(parsed_inputs):
     from locscale.utils.general import get_spherical_mask
     from locscale.preprocessing.headers import run_FDR, check_axis_order
     from locscale.include.emmer.ndimage.map_utils import binarise_map
+    from locscale.utils.file_tools import RedirectStdoutToLogger
     if parsed_inputs["mask"] is None:
+        # Printing and logging
+        print_statement = "A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n"
+        parsed_inputs["logger"].info(print_statement)
         if parsed_inputs["verbose"]:
-            tabbed_print.tprint("A mask path has not been provided. False Discovery Rate control (FDR) based confidence map will be calculated at 1% FDR \n")
+            tabbed_print.tprint(print_statement)
+            
+        # Prepare input for FDR
         if parsed_inputs["fdr_window_size"] is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
-            tabbed_print.tprint("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
+            parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
+            
         else:
             fdr_window_size = int(parsed_inputs["fdr_w"])
         averaging_filter_size = parsed_inputs["averaging_filter_size"]    
         if parsed_inputs["fdr_filter"] is not None:
             filter_cutoff = float(parsed_inputs["fdr_filter"])
-            tabbed_print.tprint("A low pass filter value has been provided. \
+            parsed_inputs["logger"].info("A low pass filter value has been provided. \
                 The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
         else:
             filter_cutoff = None
-            
-        mask_path, mask_path_raw = run_FDR(emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01, filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
+        
+        # Run FDR with logging
+        with RedirectStdoutToLogger(parsed_inputs["logger"], wait_message="Calculating FDR confidence map"):            
+            mask_path, mask_path_raw = run_FDR(
+                emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01,\
+                filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
         xyz_mask_path = check_axis_order(mask_path)
                 
+        tabbed_print.tprint("Mask generated at {} \n".format(xyz_mask_path))
+        parsed_inputs["logger"].info("Mask generated at {} \n".format(xyz_mask_path))
         
         if xyz_mask_path is not None:
             xyz_mask = load_map(xyz_mask_path)[0]
@@ -324,12 +348,16 @@ def get_modmap_from_inputs(parsed_inputs):
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
     
     modality = parsed_inputs["modality"]
-    
+    parsed_inputs["logger"].info("Modality: {} \n".format(modality))
     if modality == "map_input_use_directly":
         ## If a model map is provide 
         ## we do not need to use the theoretical profile for scaling
         modmap_path = parsed_inputs["model_map"]
         model_resolution = parsed_inputs["model_resolution"]
+        
+        ## log the model map path
+        parsed_inputs["logger"].info("Model map path: {} \n".format(modmap_path))
+        parsed_inputs["logger"].info("Filter resolution: {} \n".format(model_resolution))
         
         if model_resolution is not None:
             if parsed_inputs["verbose"]:
@@ -349,7 +377,7 @@ def get_modmap_from_inputs(parsed_inputs):
 
     else:
         # Collect model map arguments and pass it to get_modmap pipeline
-        
+        parsed_inputs["logger"].info("Collecting arguments for model map generation \n")
         pdb_path = parsed_inputs["model_coordinates"]
         
         ## Check if the user has provided the atomic model and set the
@@ -357,7 +385,7 @@ def get_modmap_from_inputs(parsed_inputs):
         if pdb_path is not None:
             ## If a PDB_path is provided, assume that it is an atomic model hence 
             ## we do not need to use the theoretical profile for scaling
-            
+            parsed_inputs["logger"].info("Reading coordinate file: {} \n".format(pdb_path))
             shift_coordinates(in_model_path=pdb_path, trans_matrix=parsed_inputs["shift_vector"],
                                          out_model_path=pdb_path[:-4]+"_shifted.cif")
             pdb_path = pdb_path[:-4]+"_shifted.cif"
@@ -365,43 +393,7 @@ def get_modmap_from_inputs(parsed_inputs):
     
     
         #############################################################################
-        # Stage 4a: Pack all the collected arguments into a dictionary and pass it #
-        #############################################################################
-        
-        # Raw mask refers to the FDR mask without any averaging filter applied this is used for estimating num_atoms
-        modmap_args = {
-            'emmap_path': parsed_inputs["xyz_emmap_path"],
-            'mask_path_raw': parsed_inputs["mask_path_raw"], 
-            'pdb_path':parsed_inputs["model_coordinates"],
-            'pseudomodel_method': parsed_inputs["pseudomodel_method"],
-            'distance': parsed_inputs["distance"],
-            'total_iterations': parsed_inputs["total_iterations"],
-            'ref_resolution': parsed_inputs["ref_resolution"],
-            'refmac_iterations': parsed_inputs["refmac_iterations"],
-            'add_blur': parsed_inputs["add_blur"],
-            'skip_refine': parsed_inputs["skip_refine"],
-            'model_resolution': parsed_inputs["model_resolution"],
-            'symmetry': parsed_inputs["symmetry"],
-            'molecular_weight': parsed_inputs["molecular_weight"],
-            'build_ca_only': parsed_inputs["build_ca_only"],
-            'verbose': parsed_inputs["verbose"],
-            'refmac5_path': parsed_inputs["refmac5_path"],
-            'complete_model':parsed_inputs["complete_model"],
-            'averaging_window':parsed_inputs["averaging_window"],
-            'mask_threshold':parsed_inputs["mask_threshold"],
-            'cif_info':parsed_inputs["cif_info"],
-            'modality':parsed_inputs["modality"],
-        }
-
-        if parsed_inputs["halfmap_paths"] is not None:
-            # If halfmaps are provided, pass them to the modmap pipeline
-            modmap_args["halfmap_paths"] = parsed_inputs["halfmap_paths"]
-        else:
-            modmap_args["halfmap_paths"] = None
-            
-        
-        #############################################################################
-        # Stage 4b: Run the get_modmap pipeline                                 #
+        # Stage 4a: Run the get_modmap pipeline                                 #
         #############################################################################
         modmap_path = get_modmap(parsed_inputs)
         xyz_modmap_path = check_axis_order(modmap_path, return_same_path=True)

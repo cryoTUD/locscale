@@ -2,6 +2,7 @@
 import os
 import numpy as np
 from locscale.utils.plot_tools import tab_print
+from locscale.utils.file_tools import RedirectOutputToLogger, pretty_print_dictionary
 from locscale.emmernet.run_emmernet import run_emmernet
 from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
 
@@ -10,7 +11,6 @@ tprint = tabbed_print.tprint
 
 def predict_model_map_from_input_map(parsed_inputs):
     from locscale.emmernet.utils import check_emmernet_dependencies, check_and_download_emmernet_model
-    tprint("Predicting model map from input map")
     emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
     
     # set inputs from parsed_inputs
@@ -18,9 +18,9 @@ def predict_model_map_from_input_map(parsed_inputs):
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]
     if parsed_inputs["prefer_low_context_model"]:
-        trained_model = "atomic_model_map_target"
+        trained_model = "emmernet_low_context"
     else:
-        trained_model = "hybrid_model_map_target"
+        trained_model = "emmernet_high_context"
     stride = 16 
     batch_size = parsed_inputs["batch_size"]
     gpu_ids = parsed_inputs["gpu_ids"]
@@ -29,6 +29,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     model_path = parsed_inputs["model_path"]
     monte_carlo = False
     monte_carlo_iterations = 1
+    physics_based = False
     
     input_dictionary = {}
     input_dictionary["cube_size"] = cube_size
@@ -44,17 +45,32 @@ def predict_model_map_from_input_map(parsed_inputs):
     input_dictionary["model_path"] = model_path
     input_dictionary["monte_carlo"] = monte_carlo
     input_dictionary["monte_carlo_iterations"] = monte_carlo_iterations
+    input_dictionary["physics_based"] = physics_based
+    input_dictionary["logger"] = parsed_inputs["logger"]
+    if gpu_ids is None:
+        cuda_visible_devices_string = ""
+    else:
+        cuda_visible_devices_string = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+    
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+    if verbose:
+        print("\tCUDA_VISIBLE_DEVICES: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
 
+    parsed_inputs["logger"].info("Input dictionary: \n{}".format(pretty_print_dictionary(input_dictionary)))
+    
     # run emmernet
     emmap, apix = load_map(emmap_path)
     
     emmernet_output = run_emmernet(input_dictionary)
     model_map_predicted = emmernet_output["output_predicted_map_mean"]
-    tprint("Predicted model map shape: {}".format(model_map_predicted.shape))
     emmap_extension = os.path.splitext(emmap_path)[1]
     model_map_path_filename = emmap_path.replace(emmap_extension, "_model_map_predicted.mrc")
-    tprint("Saving model map to: {}".format(model_map_path_filename))
     save_as_mrc(model_map_predicted, model_map_path_filename, apix)
+    
+    print_statement = "Predicted model map with shape {} saved to: {}".format(model_map_predicted.shape, model_map_path_filename)
+    parsed_inputs["logger"].info(print_statement)
+    tprint(print_statement)
+    
     
     return model_map_path_filename
     
