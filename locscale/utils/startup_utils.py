@@ -186,14 +186,14 @@ def launch_locscale_mpi(args):
         comm.Abort()
         raise e
 
-def launch_locscale(args):
+def launch_contrast_enhance(args):
     from locscale.utils.startup_utils import launch_locscale_no_mpi, launch_locscale_mpi
     if args.mpi:
         launch_locscale_mpi(args)
     else:
         launch_locscale_no_mpi(args)
 
-def launch_emmernet(args):
+def launch_feature_enhance(args):
     from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
     from locscale.utils.file_tools import change_directory, pretty_print_dictionary
     from locscale.emmernet.prepare_inputs import prepare_inputs
