@@ -10,6 +10,7 @@ tabbed_print = tab_print(2)
 tprint = tabbed_print.tprint
 
 def predict_model_map_from_input_map(parsed_inputs):
+    from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
     from locscale.emmernet.utils import check_emmernet_dependencies, check_and_download_emmernet_model
     emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
     

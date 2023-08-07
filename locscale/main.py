@@ -33,21 +33,15 @@ def print_version():
 def main():
     main_args = main_parser.parse_args()
     launch_command = main_args.command
-    version_command = main_args.version
-    test_command = main_args.test_everything
-
-    if version_command:
-        print_version()
-        # exit()
-        sys.exit(0)
-    elif test_command:
-        test_everything()
-        sys.exit(0)
     
-    if launch_command == 'contrast_enhance':
-        launch_contrast_enhance(main_args)
-    elif launch_command == 'feature_enhance':
+    if launch_command == 'feature_enhance':
         launch_feature_enhance(main_args)
+    elif launch_command == 'version':
+        print_version()
+    elif launch_command == 'test':
+        test_everything()
+    elif launch_command is None:
+        launch_contrast_enhance(main_args)
     else:
         raise ValueError("Unknown command: ", launch_command)
         
