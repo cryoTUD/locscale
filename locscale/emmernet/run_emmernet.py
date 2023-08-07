@@ -110,7 +110,7 @@ def predict_cubes_and_assemble(input_dictionary):
     input_dictionary["logger"].info("Prediction start")
     input_dictionary = run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy)
 
-    if input_dictionary["monte_carlo"]:
+    if input_dictionary["monte_carlo"] or input_dictionary["physics_based"]:
         input_dictionary["logger"].info("Assembling the cubes in the right place...")
         predicted_map_mean = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_mean"])
         predicted_map_var = assemble_cubes_in_right_place(input_dictionary, input_dictionary["cubes_predicted_var"])
@@ -244,7 +244,7 @@ def run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy):
         cubes_predicted_potential, cubes_predicted_cd = run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string)
         cubes_predicted_mean = cubes_predicted_potential
         cubes_predicted_var = cubes_predicted_cd
-        cubes_predicted_total = None
+        cubes_predicted_total = cubes_predicted_potential
     else:     
         if monte_carlo:
             

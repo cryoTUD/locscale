@@ -198,6 +198,8 @@ def assemble_cubes(cubes_dictionary, im_shape, average=True):
         ci, cj, ck = center_ijk
 
         cube = cubes['cube']
+        if len(cube.shape) != 3:
+            cube = cube.squeeze()
         ni, nj, nk = cube.shape
 
         im[ci-ni//2:ci+ni//2, cj-nj//2:cj+nj//2, ck-nk//2:ck+nk//2] += cube
