@@ -266,7 +266,7 @@ def get_modmap(modmap_args):
         with RedirectStdoutToLogger(modmap_args['logger'], wait_message="Applying symmetry"):
             sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=symmetry)
             symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(symmetry)
-            save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=False)
+            save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=True)
             pseudomodel_modmap = symmetrised_modmap
     else:
         if verbose:

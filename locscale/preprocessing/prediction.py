@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from locscale.utils.plot_tools import tab_print
-from locscale.utils.file_tools import RedirectOutputToLogger, pretty_print_dictionary
+from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary
 from locscale.emmernet.run_emmernet import run_emmernet
 from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
 
@@ -15,6 +15,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     
     # set inputs from parsed_inputs
     cube_size = 32 
+    symmetry = parsed_inputs["symmetry"]
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]
     if parsed_inputs["prefer_low_context_model"]:
@@ -66,11 +67,31 @@ def predict_model_map_from_input_map(parsed_inputs):
     emmap_extension = os.path.splitext(emmap_path)[1]
     model_map_path_filename = emmap_path.replace(emmap_extension, "_model_map_predicted.mrc")
     save_as_mrc(model_map_predicted, model_map_path_filename, apix)
+    if symmetry != "C1":
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+        
+        if verbose:
+            print_statement = "b) Applying symmetry: {}".format(symmetry)
+            print(print_statement)
+            parsed_inputs['logger'].info(print_statement)
+        
+        with RedirectStdoutToLogger(parsed_inputs['logger'], wait_message="Applying symmetry"):
+            sym = symmetrize_map_emda(emmap_path=model_map_path_filename,pg=symmetry)
+            symmetrised_modmap = model_map_path_filename[:-4]+"_{}_symmetry.mrc".format(symmetry)
+            save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=True)
+            predicted_modmap = symmetrised_modmap
+    else:
+        predicted_modmap = model_map_path_filename
+        if verbose:
+            print_statement = "b) No symmetry applied"
+            print(print_statement)
+            parsed_inputs['logger'].info(print_statement)
     
     print_statement = "Predicted model map with shape {} saved to: {}".format(model_map_predicted.shape, model_map_path_filename)
     parsed_inputs["logger"].info(print_statement)
     tprint(print_statement)
     
     
-    return model_map_path_filename
+    return predicted_modmap
     
