@@ -10,7 +10,7 @@
 import os
 import sys
 from locscale.utils.startup_utils import launch_feature_enhance, launch_contrast_enhance
-from locscale.utils.parse_utils import main_parser
+from locscale.utils.parse_utils import locscale_parser
 import locscale
 
 progname = 'locscale'
@@ -31,7 +31,7 @@ def print_version():
     print("Python version: ", sys.version)
     
 def main():
-    main_args = main_parser.parse_args()
+    main_args = locscale_parser.parse_args()
     launch_command = main_args.command
     
     if launch_command == 'feature_enhance':
