@@ -14,7 +14,7 @@ description = ["*** Optimisation of contrast in cryo-EM density maps using local
 def add_common_arguments(parser):
     ## Input either unsharpened EM map or two halfmaps
     input_emmap_group = parser.add_argument_group('Map input arguments')
-    locscale_emmap_input = input_emmap_group.add_mutually_exclusive_group(required=True)
+    locscale_emmap_input = input_emmap_group.add_mutually_exclusive_group(required=False)
     locscale_emmap_input.add_argument(
         '-em', '--emmap_path',  help='Path to unsharpened EM map')
     locscale_emmap_input.add_argument(
@@ -166,21 +166,14 @@ def add_emmernet_arguments(emmernet_parser):
         '-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
     
 
-
-
-
-main_parser = argparse.ArgumentParser(prog="locscale",description="".join(description)) 
-main_parser.add_argument(
-    "--version", help="Print version and exit", action="store_true", default=False)
-main_parser.add_argument(
-    "--test_everything", help="Run all tests", action="store_true", default=False)
-## Add subparsers
-sub_parser = main_parser.add_subparsers(dest='command')
-## Add subparsers for locscale
-locscale_parser = sub_parser.add_parser('contrast_enhance', help='Run reference-based sharpening using Local Scaling')
+locscale_parser = argparse.ArgumentParser(prog="locscale",description="".join(description)) 
 add_common_arguments(locscale_parser)
 add_locscale_arguments(locscale_parser) 
+## Add subparsers
+sub_parser = locscale_parser.add_subparsers(dest='command')
 ## Add subparsers for feature_enhance
 feature_enhance_parser = sub_parser.add_parser('feature_enhance', help='Enhance the features present in the input EM map through EMmerNet')
 add_common_arguments(feature_enhance_parser)
 add_emmernet_arguments(feature_enhance_parser)
+version_parser = sub_parser.add_parser('version', help='Print version and exit')
+test_parser = sub_parser.add_parser('test', help='Run all tests')
