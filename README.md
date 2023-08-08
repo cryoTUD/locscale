@@ -169,7 +169,7 @@ locscale --help
 
 Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) for more information. Please note that these pages are still being updated.
 
-#### 3. Run LocScale to perform density modification using EMmerNet:
+#### 4. Confidence-aware density modification:
 
 Instead of a reference-based sharpening procedure, LocScale also supports density modification based on a physics-inspired deep neural network prediction method using  `EMmerNet` that is under development. To mitigate the risk of network inpainting or hallucination, we also calculate a per-pixel confidence score which informs the user how much the predicted density estimate deviates from a pure amplitude based sharpening approach. This score can be accessed using the p_value_map.mrc output file. We strongly recommend the users to use this score to validate the results of the prediction. 
 
