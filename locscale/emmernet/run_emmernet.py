@@ -160,6 +160,7 @@ def load_emmernet_model(input_dictionary):
     import os
     ## Ignore DeprecationWarning
     import warnings
+    warnings.filterwarnings("ignore")
     emmernet_type = input_dictionary["trained_model"]
     emmernet_model_folder = input_dictionary["emmernet_model_folder"]
     model_path = input_dictionary["model_path"]
