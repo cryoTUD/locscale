@@ -10,6 +10,6 @@
 import os
 from .__version__ import __version__
 
-__installation_date__ = "2023-07-27 20:36:25"
-
 __LOCSCALE_COLAB_ENV__ = None
+
+__installation_date__ = "2023-08-08 13:44:14"
