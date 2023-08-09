@@ -52,7 +52,7 @@ def add_common_arguments(parser):
     prediction_argument_group.add_argument(
         '-model_path', '--model_path', help='Path to a custom trained model', default=None, type=str)
     prediction_argument_group.add_argument(
-        '--prefer_low_context_model', help='Use a network which is trained on low context data (Model-Based LocScale targets)', \
+        '--use_low_context_model', help='Use a network which is trained on low context data (Model-Based LocScale targets)', \
                                     action='store_true', default=False,)
     prediction_argument_group.add_argument(
         '-bs', '--batch_size', help='Batch size for EMMERNET', default=8, type=int)
