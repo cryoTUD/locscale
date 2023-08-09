@@ -78,9 +78,9 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     _, _, ops = operators_from_symbol(pg)
     #uc, arr, orig = em.get_data(imap)
     unitcell = np.array([emmap.shape[0]*apix, emmap.shape[1]*apix, emmap.shape[2]*apix, 90, 90, 90])
-    arr2 = double_the_axes(emmap)
-    print("Double the axes: {}".format(arr2.shape))
-    f1 = fftshift(fftn(fftshift(arr2)))
+    #arr2 = double_the_axes(emmap)
+    #print("Double the axes: {}".format(arr2.shape))
+    f1 = fftshift(fftn(fftshift(emmap)))
     nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
     frs_sum = np.zeros(f1.shape, f1.dtype)
     i=0
@@ -90,7 +90,7 @@ def symmetrize_map_known_pg(emmap, apix, pg):
         frs_sum += frs
     avg_f = frs_sum / len(ops)
     avgmap = ifftshift(np.real(ifftn(ifftshift(avg_f))))
-    avgmap = rebox_map(avgmap)
+    #avgmap = rebox_map(avgmap)
     return avgmap
 
 
