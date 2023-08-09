@@ -14,7 +14,8 @@ from locscale.include.emmer.ndimage.map_utils import resample_map, load_map
 from locscale.utils.file_tools import RedirectStdoutToLogger
 from locscale.emmernet.emmernet_functions import standardize_map, get_cubes, assemble_cubes, replace_cubes_in_dictionary,\
                                                     load_smoothened_mask, show_signal_cubes
-                                                    
+
+from locscale.emmernet.utils import symmetrise_if_needed                                                    
 import tensorflow as tf
 import numpy as np
 import os
@@ -33,6 +34,8 @@ def run_emmernet(input_dictionary):
     
     input_dictionary["logger"].info("3) Predicting the cubes...")
     output_dictionary = predict_cubes_and_assemble(input_dictionary)
+    
+    output_dictionary = symmetrise_if_needed(input_dictionary=input_dictionary, output_dictionary=output_dictionary)
     
     return output_dictionary
 
