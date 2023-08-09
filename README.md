@@ -13,20 +13,20 @@
 #### New in LocScale 2.1.6:
 - Completely automated process for local map sharpening 
 
-- Hybrid sharpening: `LocScale` now supports reference-based sharpening when only partial atomic model information is present
+- [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): `LocScale` now supports reference-based sharpening when only partial atomic model information is available.
 
-- Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
+- [Model-free sharpening](#3-run-locscale-without-atomic-model): `LocScale` now supports reference-based sharpening without the need to supply any atomic model information.
 
-- `feature_enhance`: a confidence-aware density modification tool to enhance features in cryo-EM maps using the `EMmerNet` neural network
+- [`feature_enhance`](#4-confidence-aware-density-modification): a confidence-aware density modification tool to enhance features in cryo-EM maps using the `EMmerNet` neural network.
 
-- Full support for point group symmetry (helical symmetry to follow)
+- Full support for point group symmetry (helical symmetry to follow).
 
 <br>
   
 `LocScale` is distributed as a portable stand-alone installation that includes all the needed libraries from: https://gitlab.tudelft.nl/aj-lab/locscale/releases.   
 
 
-Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; it is also implemented in [Scipion](http://scipion.i2pc.es/). Note that currently the GUI implementations only support an older version of Locscale (Locscale 1.0, with only model-based sharpening). 
+Please note that there is a GUI implemented version available as part of the [CCP-EM](http://www.ccpem.ac.uk/) project; LocScale2 is also implemented in [Scipion](http://scipion.i2pc.es/) (thanks to Grigory Sharov, MRC-LMB). Note that currently the CCPEM GUI implementations only supports an older version of Locscale (Locscale 1.0, with only model-based sharpening).
 
 ## Installation 
 
@@ -34,7 +34,7 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 #### Requirements
 
-LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). To run LocScale efficiently in EMmerNet mode requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow. 
+LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). To run LocScale efficiently in EMmerNet mode requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow(er). 
 
 #### Installation instructions:
 
@@ -52,7 +52,7 @@ conda install -c conda-forge gfortran
 ```
 ##### 3. Install REFMAC5 via CCP4/CCPEM
 
-LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
+The model-based and hybrid map sharpening modes of LocScale need a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. For model-free sharpening and confidence-aware density modification REFMAC5 is not required. 
 
 ```bash
 which refmac5
@@ -87,7 +87,7 @@ locscale test
 
 ## How to use
 
-LocScale can generate locally sharpened cryo-EM maps either using model-based sharpening based on available atomic model(s), using model-free sharpening, or using deep neural network-based sharpening method (EMmerNet).
+LocScale can generate locally sharpened cryo-EM maps either using model-based sharpening based on available atomic model(s), using model-free sharpening, or using confidence-aware deep neural network-based density modification method (EMmerNet).
 
 #### 1. Run LocScale using an existing atomic model:
 
@@ -206,10 +206,10 @@ This project is using code from a number of third-party open-source projects. Pr
 
 ## References
 
-If you found `LocScale` useful, please consider citing it:
+If you found `LocScale` useful for your research, please consider citing it:
 
 - A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions D2FD00078D (2022)
+- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
 ---
 
 ## Bugs and questions
