@@ -39,6 +39,33 @@ LocScale should run on any CPU system with Linux, OS X or Windows subsytem for L
 
 #### Installation instructions:
 
+#### Quick installation: 
+##### 1. Install REFMAC5 via CCP4/CCPEM
+LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
+
+```bash
+which refmac5
+```
+
+If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
+
+##### 2. Install LocScale using environment files 
+
+There are two yml files in the repo: environment_cpu.yml and environment_gpu.yml. We recommend you to download and install the GPU version.
+
+Once you download the yml file of your choice: 
+```bash
+conda env create -f /path/to/environment_cpu.yml
+conda activate cpu_locscale
+```
+or 
+```bash
+conda env create -f /path/to/environment_gpu.yml
+conda activate gpu_locscale
+```
+#### Alternatively
+You can also follow these steps to install locscale using pip.
+
 ##### 1. Create and activate a new conda environment
 
 ```bash
