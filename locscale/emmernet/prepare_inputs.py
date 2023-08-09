@@ -41,7 +41,11 @@ def prepare_inputs(args):
     
     parsed_inputs["trained_model"] = trained_model
     
-    cuda_visible_devices_string = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+    if gpu_ids is None:
+        cuda_visible_devices_string = ""
+    else:
+        cuda_visible_devices_string = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+    
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
     if verbose:
         print("\tCUDA_VISIBLE_DEVICES set to {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
