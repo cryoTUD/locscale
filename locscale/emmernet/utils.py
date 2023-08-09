@@ -237,4 +237,32 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     
     
     return emmernet_output
+
+def symmetrise_if_needed(input_dictionary, output_dictionary,):
+    symmetry = input_dictionary["symmetry"]
     
+    if symmetry != "C1":
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
+        from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
+        from locscale.utils.file_tools import RedirectStdoutToLogger
+        
+        verbose = input_dictionary["verbose"]
+        map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
+        _, apix = load_map(map_to_symmetrise)
+        if verbose:
+            print_statement = "Applying symmetry: {}".format(symmetry)
+            print(print_statement)
+            input_dictionary['logger'].info(print_statement)
+        
+        with RedirectStdoutToLogger(input_dictionary['logger'], wait_message="Applying symmetry"):
+            sym = symmetrize_map_emda(emmap_path=map_to_symmetrise,pg=symmetry)
+            symmetrised_map = map_to_symmetrise[:-4]+"_{}_symmetry.mrc".format(symmetry)
+            save_as_mrc(map_data=sym, output_filename=symmetrised_map, apix=apix, origin=0, verbose=True)
+        
+        output_dictionary["output_predicted_map_mean_non_symmetrised"] = map_to_symmetrise
+        output_dictionary["output_predicted_map_mean"] = symmetrised_map
+        
+        return output_dictionary
+    else:
+        return output_dictionary
+            

@@ -60,6 +60,7 @@ def add_common_arguments(parser):
         '-gpus', '--gpu_ids', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False, nargs='+')
     prediction_argument_group.add_argument(
         '-cube_size','--cube_size', help='Size of the input cube for EMMERNET', default=32, type=int)
+
     
 def add_locscale_arguments(locscale_parser):    
     ## Input model map file (mrc file) or atomic model (pdb file)
@@ -153,6 +154,9 @@ def add_emmernet_arguments(emmernet_parser):
         '-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
     emmernet_parser.add_argument(
         '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
+    emmernet_parser.add_argument(
+        '-sym', '--symmetry', help='If not equal to C1, then symmetry averaging will be performed', default='C1', type=str)
+    
     misc_parser = emmernet_parser.add_argument_group('Miscellaneous arguments')
     misc_parser.add_argument(
         '-no_mc','--no_monte_carlo', help='Disable Monte Carlo sampling of the output', action='store_true', default=False)
