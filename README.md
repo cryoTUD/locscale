@@ -182,7 +182,7 @@ locscale feature_enhance -em path/to/emmap.mrc -v -gpus 1 -o feature_enhanced_pr
 ```
 This will output a feature enhanced map together with a p-value map that can be used to assess the quality of the prediction.
 
-A network trained against high context data is used as default. This will result in a prediction that shows even the weakest features in the map as long as the signal is statistically better than the noise (for example, detergent belts for membrane proteins). If you want to use a network trained against low context data, use the flag `--prefer_low_context_model`:
+A network trained against high context data is used as default. This will result in a prediction that shows even the weakest features in the map as long as the signal is statistically better than the noise (for example, detergent belts for membrane proteins). If you want to use a network trained against low context data, use the flag `--use_low_context_model`:
 
 Additional models may become available and will be listed here.
 

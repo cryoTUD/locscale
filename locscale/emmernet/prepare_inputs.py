@@ -34,7 +34,7 @@ def prepare_inputs(args):
     verbose = parsed_inputs["verbose"]
     
     # Model to use
-    if parsed_inputs["prefer_low_context_model"]:
+    if parsed_inputs["use_low_context_model"]:
         trained_model = "emmernet_low_context"
     else:
         trained_model = "emmernet_high_context"

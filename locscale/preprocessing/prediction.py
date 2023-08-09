@@ -19,7 +19,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     symmetry = parsed_inputs["symmetry"]
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]
-    if parsed_inputs["prefer_low_context_model"]:
+    if parsed_inputs["use_low_context_model"]:
         trained_model = "emmernet_low_context"
     else:
         trained_model = "emmernet_high_context"
