@@ -183,19 +183,19 @@ def load_emmernet_model(input_dictionary):
 
     emmernet_folder_path = emmernet_model_folder
     if emmernet_type == "model_based":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MBfa.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path, "emmernet", "EMmerNet_MBfa.hdf5")
     elif emmernet_type == "model_free":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MFfa.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path,"emmernet", "EMmerNet_MFfa.hdf5")
     elif emmernet_type == "ensemble":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MBMF.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path, "emmernet","EMmerNet_MBMF.hdf5")
     elif emmernet_type == "hybrid":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "epsilon_hybrid_model_4_final_epoch_15.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path,"emmernet", "epsilon_hybrid_model_4_final_epoch_15.hdf5")
     elif emmernet_type == "model_based_no_freqaug":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_MB.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path,"emmernet", "EMmerNet_MB.hdf5")
     elif emmernet_type == "emmernet_high_context":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_highContext.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path,"emmernet", "EMmerNet_highContext.hdf5")
     elif emmernet_type == "emmernet_low_context":
-        emmernet_model_path = os.path.join(emmernet_folder_path, "EMmerNet_lowContext.hdf5")
+        emmernet_model_path = os.path.join(emmernet_folder_path,"emmernet", "EMmerNet_lowContext.hdf5")
     else:
         raise ValueError("Invalid emmernet_type")
     
