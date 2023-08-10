@@ -110,6 +110,9 @@ def check_emmernet_inputs(args):
         outfile = [x for x in vars(args) if x=="outfile"]
         
         setattr(args, outfile[0], "emmernet_prediction.mrc")
+    
+    # set an attribute to inform this is a feature_enhance run
+    setattr(args, "run_type", "feature_enhance")
 
 
 def check_emmernet_dependencies(verbose=False):
