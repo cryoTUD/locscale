@@ -287,9 +287,49 @@ def parse_inputs_from_processing_files(args):
 
     return parsed_inputs_dict
 
+def choose_fdr_filter_based_on_inputs(parsed_inputs):
+    if parsed_inputs["fdr_filter"] is not None:
+        filter_cutoff = float(parsed_inputs["fdr_filter"])
+    else:
+        if parsed_inputs["run_type"] == "feature_enhancer": # "feature_enhance" is a key passed when running emmernet prediction
+            filter_cutoff = 5 # default filter cutoff for estimating mask for emmernet prediction
+        else:
+            if parsed_inputs["modality"] == "predict_model_map":
+                filter_cutoff = 5
+            else:
+                filter_cutoff = None
+                
+    parsed_inputs["logger"].info("FDR filter cutoff is set to {} \n".format(str(filter_cutoff)))
+    
+    return filter_cutoff
+
+def prepare_inputs_for_FDR(parsed_inputs):
+    from locscale.utils.math_tools import round_up_to_even
+    
+    # Set fdr_window_size
+    if parsed_inputs["fdr_window_size"] is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
+        fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
+        parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
+    else:
+        fdr_window_size = int(parsed_inputs["fdr_w"])
+
+    # Set averaging_filter_size
+    averaging_filter_size = parsed_inputs["averaging_filter_size"]    
+    
+    # Set fdr_filter
+    filter_cutoff = choose_fdr_filter_based_on_inputs(parsed_inputs)
+    
+    fdr_inputs_dict = {
+        "emmap_path" : parsed_inputs["xyz_emmap_path"],
+        "window_size" : fdr_window_size,
+        "fdr" : parsed_inputs["fdr_threshold"],
+        "filter_cutoff" : filter_cutoff,
+        "averaging_filter_size" : averaging_filter_size,
+    }
+    
+    return fdr_inputs_dict
 
 def prepare_mask_from_inputs(parsed_inputs):
-    from locscale.utils.math_tools import round_up_to_even
     from locscale.utils.general import get_spherical_mask
     from locscale.preprocessing.headers import run_FDR, check_axis_order
     from locscale.include.emmer.ndimage.map_utils import binarise_map
@@ -302,27 +342,12 @@ def prepare_mask_from_inputs(parsed_inputs):
             tabbed_print.tprint(print_statement)
             
         # Prepare input for FDR
-        if parsed_inputs["fdr_window_size"] is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
-            fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
-            parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
-        else:
-            fdr_window_size = int(parsed_inputs["fdr_w"])
-        averaging_filter_size = parsed_inputs["averaging_filter_size"]    
-        if parsed_inputs["fdr_filter"] is not None:
-            filter_cutoff = float(parsed_inputs["fdr_filter"])
-            parsed_inputs["logger"].info("A low pass filter value has been provided. \
-                The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
-        else:
-            if parsed_inputs["run_type"] == "feature_enhancer": # "feature_enhance" is a key passed when running emmernet prediction
-                filter_cutoff = 5 # default filter cutoff for estimating mask for emmernet prediction
-            else:
-                filter_cutoff = None
+        fdr_inputs_dict = prepare_inputs_for_FDR(parsed_inputs)
         
         # Run FDR with logging
         with RedirectStdoutToLogger(parsed_inputs["logger"], wait_message="Calculating FDR confidence map"):            
-            mask_path, mask_path_raw = run_FDR(
-                emmap_path=parsed_inputs["xyz_emmap_path"], window_size = fdr_window_size, fdr=0.01,\
-                filter_cutoff=filter_cutoff, averaging_filter_size=averaging_filter_size)
+            mask_path, mask_path_raw = run_FDR(**fdr_inputs_dict)
+            
         xyz_mask_path = check_axis_order(mask_path)
                 
         tabbed_print.tprint("Mask generated at {} \n".format(xyz_mask_path))
