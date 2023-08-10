@@ -305,7 +305,6 @@ def prepare_mask_from_inputs(parsed_inputs):
         if parsed_inputs["fdr_window_size"] is None:   # if FDR window size is not set, take window size equal to 10% of emmap height
             fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
             parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
-            
         else:
             fdr_window_size = int(parsed_inputs["fdr_w"])
         averaging_filter_size = parsed_inputs["averaging_filter_size"]    
@@ -314,7 +313,10 @@ def prepare_mask_from_inputs(parsed_inputs):
             parsed_inputs["logger"].info("A low pass filter value has been provided. \
                 The EM-map will be low pass filtered to {:.2f} A \n".format(filter_cutoff))
         else:
-            filter_cutoff = None
+            if parsed_inputs["run_type"] == "feature_enhancer": # "feature_enhance" is a key passed when running emmernet prediction
+                filter_cutoff = 5 # default filter cutoff for estimating mask for emmernet prediction
+            else:
+                filter_cutoff = None
         
         # Run FDR with logging
         with RedirectStdoutToLogger(parsed_inputs["logger"], wait_message="Calculating FDR confidence map"):            
