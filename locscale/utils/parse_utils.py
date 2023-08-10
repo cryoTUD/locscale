@@ -38,6 +38,8 @@ def add_common_arguments(parser):
     ## FDR parameters
     fdr_argument_group = parser.add_argument_group('FDR Confidence Mask arguments')
     fdr_argument_group.add_argument(
+        '-fdr', '--fdr_threshold', help='FDR threshold for confidence mask', default=0.01, type=float)
+    fdr_argument_group.add_argument(
         '-fdr_w', '--fdr_window_size', help='window size in pixels for FDR thresholding', default=None, type=int)
     fdr_argument_group.add_argument(
         '-avg_filter', '--averaging_filter_size', help='window size in pixels for FDR thresholding', default=3, type=int)
