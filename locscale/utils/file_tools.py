@@ -481,6 +481,7 @@ def set_modality_based_on_input(args):
     
     args.modality = modality
     args.use_theoretical_profile = modality in pseudomodel_required 
+    args.run_type = "locscale"
     
     print("Running LocScale with modality: {}".format(modality))
     return args
