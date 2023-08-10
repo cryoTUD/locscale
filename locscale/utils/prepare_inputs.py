@@ -291,7 +291,7 @@ def choose_fdr_filter_based_on_inputs(parsed_inputs):
     if parsed_inputs["fdr_filter"] is not None:
         filter_cutoff = float(parsed_inputs["fdr_filter"])
     else:
-        if parsed_inputs["run_type"] == "feature_enhancer": # "feature_enhance" is a key passed when running emmernet prediction
+        if parsed_inputs["run_type"] == "feature_enhance": # "feature_enhance" is a key passed when running emmernet prediction
             filter_cutoff = 5 # default filter cutoff for estimating mask for emmernet prediction
         else:
             if parsed_inputs["modality"] == "predict_model_map":
