@@ -49,6 +49,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     input_dictionary["monte_carlo_iterations"] = monte_carlo_iterations
     input_dictionary["physics_based"] = physics_based
     input_dictionary["logger"] = parsed_inputs["logger"]
+    input_dictionary["symmetry"] = parsed_inputs["symmetry"]
     if gpu_ids is None:
         cuda_visible_devices_string = ""
     else:
