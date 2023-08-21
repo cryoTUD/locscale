@@ -175,7 +175,8 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     '''
     import os
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
-
+    from locscale.emmernet.emmernet_functions import calibrate_variance
+    
     input_emmap_path = parsed_inputs["emmap_path"]
     input_emmap_folder = os.path.dirname(input_emmap_path)
     output_emmap_filename = parsed_inputs["outfile"]
@@ -190,6 +191,8 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         emmernet_output_var = emmernet_output["output_predicted_map_var"]
         emmernet_output_total = emmernet_output["output_predicted_map_total"]
         
+        #emmernet_output_var_calibrated = calibrate_variance(emmernet_output_var)
+            
         assert emmap.shape == emmernet_output_mean.shape, "Emmernet output mean map shape does not match input map shape"
         assert emmap.shape == emmernet_output_var.shape, "Emmernet output var map shape does not match input map shape"
         assert emmap.shape == emmernet_output_total.shape, "Emmernet output total map shape does not match input map shape"
@@ -215,11 +218,14 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
         output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_mean"+extension_output_filename)
         output_filename_var = output_emmap_filename.replace(extension_output_filename, "_var"+extension_output_filename)
+        #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
         output_filename_for_locscale = output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename)
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
         save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
+        #save_as_mrc(emmernet_output_var_calibrated, output_filename_var_calibrated, apix, verbose=verbose)
         emmernet_output["output_filename_mean"] = output_filename_mean
         emmernet_output["output_filename_var"] = output_filename_var
+        #emmernet_output["output_filename_var_calibrated"] = output_filename_var_calibrated
         emmernet_output["output_filename_for_locscale"] = os.path.join(output_emmap_folder, output_filename_for_locscale)
         emmernet_output["reference_map_for_locscale"] = output_filename_mean
         #save_as_mrc(emmernet_output_total, output_emmap_filename, apix, verbose=verbose)
@@ -237,10 +243,21 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     else:
         save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
         emmernet_output["output_filename"] = output_emmap_filename
-    
-    
+
     return emmernet_output
 
+def load_calibrator():
+    from locscale.utils.file_tools import get_locscale_path
+    import pickle 
+    import os 
+    
+    locscale_path = get_locscale_path()
+    regressor_path = os.path.join(locscale_path, "locscale", "utils", "calibrator_locscale_target.pkl")
+    
+    calibrator = pickle.load(open(regressor_path, "rb"))
+    
+    return calibrator
+    
 def symmetrise_if_needed(input_dictionary, output_dictionary,):
     symmetry = input_dictionary["symmetry"]
     
