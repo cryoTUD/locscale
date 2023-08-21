@@ -20,6 +20,7 @@ import tensorflow as tf
 import numpy as np
 import os
 from tqdm import tqdm
+from scipy.stats import norm 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
 tf.random.set_seed(42)
@@ -313,6 +314,7 @@ def run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored
         
 def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string):
     import os 
+    import sys
     import warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -331,7 +333,7 @@ def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carl
     cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
     cubes_x = np.expand_dims(cubes, axis=4)
     with mirrored_strategy.scope():
-        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running MC-EMmerNet", ascii=True, file=sys.stdout):
             if i+batch_size > len(cubes):
                 #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
                 batch_size = len(cubes)-i
@@ -359,6 +361,18 @@ def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carl
     
     return cubes_predicted_mean, cubes_predicted_var, cubes_predicted_full_network
 
+def compute_mle_mean_variance(data):
+    # Reshape data to treat each voxel's values across MC samples as distinct rows
+    reshaped_data = data.reshape(data.shape[0], -1).T
+    
+    # Compute the MLE mean and standard deviation values
+    mle_params = np.array([norm.fit(row) for row in reshaped_data])
+    
+    # Separate and reshape the results back to the original cube shape
+    mean_cube = mle_params[:, 0].reshape(data.shape[1:])
+    variance_cube = (mle_params[:, 1] ** 2).reshape(data.shape[1:])
+    
+    return mean_cube, variance_cube
 def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string):
     import os
     import warnings

@@ -218,10 +218,20 @@ def show_signal_cubes(signal_cubes, im_shape, save_path, apix, input_shape):
         emmap[cube[0], cube[1], cube[2]] = 1
     emmap_resampled = resample_map(emmap, apix=1, apix_new=apix, order=2, assert_shape=input_shape)
     save_as_mrc(emmap_resampled, save_path, apix=apix)
-        
+
+def calibrate_variance(variance_map):
+    from locscale.emmernet.utils import load_calibrator
+    
+    calibrator = load_calibrator()
+    input_map_shape = variance_map.shape
+    calibrated_variance_map = calibrator.predict(variance_map.flatten()).reshape(input_map_shape)
+    
+    return calibrated_variance_map
+            
         
 def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_prediction_path, var_prediction_path, n_samples=15):
     from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
+    from locscale.emmernet.emmernet_functions import calibrate_variance
     from scipy.stats import norm
     import os
     import warnings
@@ -234,21 +244,29 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
 
     standard_deviation = np.sqrt(var_prediction)
     standard_error = standard_deviation / np.sqrt(n_samples)
+    
+    standard_error_calibrated = calibrate_variance(standard_error)
 
-    z_score_map = (locscale_map - mean_prediction) / standard_error
+    z_score_map = (locscale_map - mean_prediction) / standard_error_calibrated
 
     # convert nan values to 1
     z_score_map[np.isnan(z_score_map)] = 0
     # convert the z score map to a p value map
 
-    p_value_map = (1 - norm.cdf(np.abs(z_score_map)))*2
-
+    cdf_map = norm.cdf(z_score_map)
+    # renormalize to -100 and 100
+    probabilities_map = cdf_map * 200 - 100
+    
+    print("Probabilities map min: {}".format(probabilities_map.min()))
+    print("Probabilities map max: {}".format(probabilities_map.max()))
+    print("Probabilities map mean: {}".format(probabilities_map.mean()))
+    
     output_folder = os.path.dirname(locscale_output_path)
 
-    p_value_map_path = os.path.join(output_folder, "p_value_map.mrc")
-    z_score_map_path = os.path.join(output_folder, "z_score_map.mrc")
+    p_value_map_path = os.path.join(output_folder, "hallucinations_probabilities_map.mrc")
+    z_score_map_path = os.path.join(output_folder, "z_scores_calibrated.mrc")
 
-    save_as_mrc(p_value_map, p_value_map_path, apix)
+    save_as_mrc(probabilities_map, p_value_map_path, apix)
     save_as_mrc(z_score_map, z_score_map_path, apix)
 
     

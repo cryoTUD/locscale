@@ -82,7 +82,7 @@ def print_start_banner(start_time, text="Map Sharpening"):
                 +"this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. "\
                 +"We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets."\
                 +"In addition, we have provided a measure of confidence in the predicted densities. You can find this in the output "\
-                +"directory as a map called 'p_value_map.mrc'. The voxels corresponding to p-values < 0.05 are likely to be network hallucinations. "\
+                +"directory as a map called 'hallucinations_probabilities_map.mrc'. "\
                 +"Please use this map along with the predicted density map for your model building needs. "+"\n"\
                 +"As a rule: NEVER USE THE PREDICTED MAPS AS A REFINEMENT TARGET. ALWAYS USE THE ORIGINAL MAPS. "+"\n"\
                 +"If you encounter obvious problems, please report this to the authors. "+"\n"\
