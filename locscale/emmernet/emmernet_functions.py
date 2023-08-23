@@ -257,9 +257,6 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
     # renormalize to -100 and 100
     probabilities_map = cdf_map * 200 - 100
     
-    print("Probabilities map min: {}".format(probabilities_map.min()))
-    print("Probabilities map max: {}".format(probabilities_map.max()))
-    print("Probabilities map mean: {}".format(probabilities_map.mean()))
     
     output_folder = os.path.dirname(locscale_output_path)
 
