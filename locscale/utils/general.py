@@ -239,9 +239,12 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
 def try_to(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
-    except:
+    except Exception as e:
         print("Failed to run {}".format(func.__name__))
-        print("with args: {}".format(args))
+        print("\twith args: {}".format(args))
+        print("\tand kwargs: {}".format(kwargs))
+        print("\tDue to...")
+        print(e)
         
     
 ##### MPI related functions #####
