@@ -196,6 +196,8 @@ def launch_contrast_enhance(args):
 def launch_feature_enhance(args):
     from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
     from locscale.utils.file_tools import change_directory, pretty_print_dictionary
+    from locscale.utils.general import try_to
+    from locscale.utils.plot_tools import compute_probability_distribution
     from locscale.emmernet.prepare_inputs import prepare_inputs
     from locscale.emmernet.run_emmernet import run_emmernet
     from locscale.emmernet.emmernet_functions import calculate_significance_map_from_emmernet_output
@@ -232,9 +234,18 @@ def launch_feature_enhance(args):
     emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
     calculate_significance_map_from_emmernet_output(
         locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, n_samples=input_dictionary["monte_carlo_iterations"])
+    # Compute the probability distribution for calibration
+    
+    probability_args = {"locscale_path" : locscale_output_filename, 
+                        "mean_prediction_path" : emmernet_output_mean_filename,
+                        "var_prediction_path" : emmernet_output_var_filename,
+                        "n_samples" :input_dictionary["monte_carlo_iterations"], 
+                        "processing_files_folder" : input_dictionary["output_processing_files"]}
+    
+    try_to(compute_probability_distribution,**probability_args)
     
     print("EMmerNet finished successfully")
-    print("Please check the p_value_map.mrc to check for hallucinated features")
+    print("Please check the hallucinations_probabilities_map.mrc to check for hallucinated features")
     ## Print end
     print_end_banner(datetime.now(), start_time)
     

@@ -286,3 +286,134 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
     else:
         return output_dictionary
             
+def compute_calibrated_probabilities(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+    from locscale.emmernet.emmernet_functions import load_smoothened_mask
+    from locscale.emmernet.utils import load_calibrator
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    import numpy as np
+    import os 
+    
+    #http://www.ltcconline.net/greenl/courses/201/estimation/smallConfLevelTable.htm
+    z_target_for_each_CI = {70 : 1.04, 80: 1.28, 90: 1.645, 95: 1.96, 99: 2.58}
+    
+    
+    locscale_map, apix = load_map(locscale_path)
+    mean_prediction, _ = load_map(mean_prediction_path)
+    variance_prediction, _ = load_map(variance_prediction_path)
+    
+    variance_mask = variance_prediction > 0.0002
+    
+    locscale_masked = locscale_map[variance_mask]
+    mean_masked = mean_prediction[variance_mask]
+    variance_masked = variance_prediction[variance_mask]
+    
+    standard_deviation_masked = np.sqrt(variance_masked)
+    standard_error_masked = standard_deviation_masked / np.sqrt(n_samples)
+    
+    calibrator = load_calibrator()
+    calibrated_standard_error = calibrator.predict(standard_error_masked)
+    
+    # compute the z-scores
+    z_scores = (locscale_masked - mean_masked) / calibrated_standard_error
+    
+    # compute the probabilities for different confidence intervals
+    observed_probabilities = {}
+    for ci in z_target_for_each_CI:
+        z_target = z_target_for_each_CI[ci]
+        observed_probability = np.sum(np.abs(z_scores) < z_target)
+        observed_probabilities[ci] = observed_probability / len(z_scores)
+        
+    
+    return observed_probabilities
+
+
+def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(8, 8)):
+    import matplotlib.pyplot as plt
+    import seaborn as sns    
+    import scipy.stats as st
+    import numpy as np
+    
+    sns.set_style("white")
+            
+    figsize = (figsize_cm[0] / 2.54, figsize_cm[1] / 2.54)
+    fig, ax = plt.subplots(figsize=figsize)
+
+    import warnings
+    warnings.filterwarnings('ignore')
+    xarray = np.array(xarray)
+    yarray = np.array(yarray)
+    
+    # Binning by the x axis data
+    bins = np.linspace(xarray.min(), xarray.max(), num_bins)
+    bin_indices = np.digitize(xarray, bins)
+
+    # Compute the statistics for each bin
+    bin_not_empty = lambda i: len(xarray[bin_indices == i]) > 0
+    
+    xarray_bin_means = [xarray[bin_indices == i].mean() for i in range(len(bins)) if bin_not_empty(i)]
+    yarray_bin_means = [yarray[bin_indices == i].mean() for i in range(len(bins)) if bin_not_empty(i)]
+    yarray_bin_stds = [yarray[bin_indices == i].std() for i in range(len(bins)) if bin_not_empty(i)]
+    yarray_bin_nums = [len(yarray[bin_indices == i]) for i in range(len(bins)) if bin_not_empty(i)]
+    z_score = st.norm.ppf(ci)
+    yarray_standard_errors = [z_score * yarray_bin_stds[i] / np.sqrt(yarray_bin_nums[i]) for i in range(len(xarray_bin_means))]
+    
+    # convert to numpy arrays
+    xarray_bin_means = np.array(xarray_bin_means)
+    yarray_bin_means = np.array(yarray_bin_means)
+    yarray_standard_errors = np.array(yarray_standard_errors)
+    
+    # Find max yarray and min yarray
+    yarray_top = yarray_bin_means + yarray_standard_errors
+    yarray_bottom = yarray_bin_means - yarray_standard_errors
+        
+    ax.plot(xarray_bin_means, yarray_bin_means, color='blue', marker='o')
+    # plot diagonal line for reference
+    max_x, max_y = np.max(xarray_bin_means), np.max(yarray_bin_means)
+    min_x, min_y = np.min(xarray_bin_means), np.min(yarray_bin_means)
+    min_val, max_val = np.min([min_x, min_y]), np.max([max_x, max_y])
+    ax.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--')
+    # shade the area between the standard errors
+    ax.fill_between(xarray_bin_means, yarray_bottom, yarray_top, color='skyblue', alpha=0.4, label=f'ci:{ci}')
+    
+    plt.tight_layout()
+    
+    return fig, ax
+
+def compute_reliability_curve(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+    from locscale.emmernet.utils import load_calibrator
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    import numpy as np
+    import os     
+    
+    locscale_map, apix = load_map(locscale_path)
+    mean_prediction, _ = load_map(mean_prediction_path)
+    variance_prediction, _ = load_map(variance_prediction_path)
+    
+    variance_mask = variance_prediction > 0.0002
+    
+    locscale_masked = locscale_map[variance_mask]
+    mean_masked = mean_prediction[variance_mask]
+    variance_masked = variance_prediction[variance_mask]
+    
+    standard_deviation_masked = np.sqrt(variance_masked)
+    standard_error_masked = standard_deviation_masked / np.sqrt(n_samples)
+    
+    calibrator = load_calibrator()
+    calibrated_standard_error = calibrator.predict(standard_error_masked)
+    
+    absolute_residual = np.abs(locscale_masked - mean_masked)
+    
+    fig, ax = plot_binned_correlation(calibrated_standard_error, absolute_residual, num_bins=128, ci=0.95, figsize_cm=(8, 8))
+    # modify plot 
+    ax.set_xlabel("Calibrated Standard Error")
+    ax.set_ylabel("Absolute Residual")
+    ax.set_title("Reliability Curve")
+    
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    maxval, minval = np.max([xmax, ymax]), np.min([xmin, ymin])
+    
+    ax.set_xlim(minval, maxval)
+    ax.set_ylim(minval, maxval)
+    
+    return fig, ax 
