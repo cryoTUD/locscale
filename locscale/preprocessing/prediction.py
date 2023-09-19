@@ -50,6 +50,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     input_dictionary["physics_based"] = physics_based
     input_dictionary["logger"] = parsed_inputs["logger"]
     input_dictionary["symmetry"] = parsed_inputs["symmetry"]
+    input_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]
     if gpu_ids is None:
         cuda_visible_devices_string = ""
     else:
@@ -63,37 +64,37 @@ def predict_model_map_from_input_map(parsed_inputs):
     
     # run emmernet
     emmap, apix = load_map(emmap_path)
-    
+    input_dictionary["apix"] = apix
     emmernet_output = run_emmernet(input_dictionary)
     model_map_predicted = emmernet_output["output_predicted_map_mean"]
     emmap_extension = os.path.splitext(emmap_path)[1]
     model_map_path_filename = emmap_path.replace(emmap_extension, "_model_map_predicted.mrc")
     save_as_mrc(model_map_predicted, model_map_path_filename, apix)
-    if symmetry != "C1":
-        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
-        from locscale.include.emmer.ndimage.map_utils import save_as_mrc
+    # if symmetry != "C1":
+    #     from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
+    #     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
         
-        if verbose:
-            print_statement = "b) Applying symmetry: {}".format(symmetry)
-            print(print_statement)
-            parsed_inputs['logger'].info(print_statement)
+    #     if verbose:
+    #         print_statement = "b) Applying symmetry: {}".format(symmetry)
+    #         print(print_statement)
+    #         parsed_inputs['logger'].info(print_statement)
         
-        with RedirectStdoutToLogger(parsed_inputs['logger'], wait_message="Applying symmetry"):
-            sym = symmetrize_map_emda(emmap_path=model_map_path_filename,pg=symmetry)
-            symmetrised_modmap = model_map_path_filename[:-4]+"_{}_symmetry.mrc".format(symmetry)
-            save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=True)
-            predicted_modmap = symmetrised_modmap
-    else:
-        predicted_modmap = model_map_path_filename
-        if verbose:
-            print_statement = "b) No symmetry applied"
-            print(print_statement)
-            parsed_inputs['logger'].info(print_statement)
+    #     with RedirectStdoutToLogger(parsed_inputs['logger'], wait_message="Applying symmetry"):
+    #         sym = symmetrize_map_emda(emmap_path=model_map_path_filename,pg=symmetry)
+    #         symmetrised_modmap = model_map_path_filename[:-4]+"_{}_symmetry.mrc".format(symmetry)
+    #         save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=True)
+    #         predicted_modmap = symmetrised_modmap
+    # else:
+    #     predicted_modmap = model_map_path_filename
+    #     if verbose:
+    #         print_statement = "b) No symmetry applied"
+    #         print(print_statement)
+    #         parsed_inputs['logger'].info(print_statement)
     
     print_statement = "Predicted model map with shape {} saved to: {}".format(model_map_predicted.shape, model_map_path_filename)
     parsed_inputs["logger"].info(print_statement)
     tprint(print_statement)
     
     
-    return predicted_modmap
+    return model_map_path_filename
     

@@ -827,15 +827,16 @@ def get_residue_ca_coordinates(in_model_path):
 
     return dict_coord
 
-def get_coordinates(input_pdb):
+def get_coordinates(input_pdb, skip_non_polymer=False):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     list_coord = []
     structure = detect_pdb_input(input_pdb)
     for model in structure:
         for chain in model:
-            polymer = chain.get_polymer()
-            #skip non polymers
-            if not polymer: continue
+            if skip_non_polymer:
+                polymer = chain.get_polymer()
+                #skip non polymers
+                if not polymer: continue
             for residue in chain:
                 residue_id = str(residue.seqid.num)+'_'+residue.name
                 for atom in residue:
