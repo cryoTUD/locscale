@@ -259,6 +259,7 @@ def load_calibrator():
     return calibrator
     
 def symmetrise_if_needed(input_dictionary, output_dictionary,):
+    import os
     symmetry = input_dictionary["symmetry"]
     
     if symmetry != "C1":
@@ -268,19 +269,25 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
         
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
-        _, apix = load_map(map_to_symmetrise)
+        # save the non-symmetrised map
+        processing_files_folder = input_dictionary["output_processing_files"]
+        apix = input_dictionary["apix"]
+        unsymmetrised_map_path = os.path.join(processing_files_folder, "unsymmetrised_mean_map.mrc")
+        save_as_mrc(map_data=map_to_symmetrise, output_filename=unsymmetrised_map_path, apix=apix, origin=0, verbose=True)
+        
+        _, apix = load_map(unsymmetrised_map_path)
         if verbose:
             print_statement = "Applying symmetry: {}".format(symmetry)
             print(print_statement)
             input_dictionary['logger'].info(print_statement)
         
         with RedirectStdoutToLogger(input_dictionary['logger'], wait_message="Applying symmetry"):
-            sym = symmetrize_map_emda(emmap_path=map_to_symmetrise,pg=symmetry)
-            symmetrised_map = map_to_symmetrise[:-4]+"_{}_symmetry.mrc".format(symmetry)
+            sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path,pg=symmetry)
+            symmetrised_map = unsymmetrised_map_path[:-4]+"_{}_symmetry.mrc".format(symmetry)
             save_as_mrc(map_data=sym, output_filename=symmetrised_map, apix=apix, origin=0, verbose=True)
         
         output_dictionary["output_predicted_map_mean_non_symmetrised"] = map_to_symmetrise
-        output_dictionary["output_predicted_map_mean"] = symmetrised_map
+        output_dictionary["output_predicted_map_mean"] = sym
         
         return output_dictionary
     else:
@@ -327,7 +334,7 @@ def compute_calibrated_probabilities(locscale_path, mean_prediction_path, varian
     return observed_probabilities
 
 
-def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(8, 8)):
+def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(8, 8), plot_diagonal=True):
     import matplotlib.pyplot as plt
     import seaborn as sns    
     import scipy.stats as st
@@ -367,11 +374,13 @@ def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(
     yarray_bottom = yarray_bin_means - yarray_standard_errors
         
     ax.plot(xarray_bin_means, yarray_bin_means, color='blue', marker='o')
-    # plot diagonal line for reference
+
     max_x, max_y = np.max(xarray_bin_means), np.max(yarray_bin_means)
     min_x, min_y = np.min(xarray_bin_means), np.min(yarray_bin_means)
     min_val, max_val = np.min([min_x, min_y]), np.max([max_x, max_y])
-    ax.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--')
+    if plot_diagonal:
+        # plot diagonal line for reference
+        ax.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--')
     # shade the area between the standard errors
     ax.fill_between(xarray_bin_means, yarray_bottom, yarray_top, color='skyblue', alpha=0.4, label=f'ci:{ci}')
     
