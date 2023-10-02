@@ -278,6 +278,7 @@ def run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored
         import atexit
     
     from tqdm import tqdm
+    import sys
     
     tfds.disable_progress_bar()
     
@@ -289,7 +290,7 @@ def run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored
     cubes_x = np.expand_dims(cubes, axis=4)
     
     with mirrored_strategy.scope():
-        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet PB"):
+        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet PB",file=sys.stdout):
             if i+batch_size > len(cubes):
                 #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
                 batch_size = len(cubes)-i
@@ -382,7 +383,8 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
         import atexit
     
     from tqdm import tqdm
-    
+    import sys
+
     tfds.disable_progress_bar()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
@@ -392,7 +394,7 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
     cubes_x = np.expand_dims(cubes, axis=4)
     
     with mirrored_strategy.scope():
-        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet",file=sys.stdout):
             if i+batch_size > len(cubes):
                 #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
                 batch_size = len(cubes)-i
@@ -520,7 +522,8 @@ def run_emmernet_cpu(cubes, emmernet_model, batch_size):
         import atexit
     from tqdm import tqdm
     import os
-    
+    import sys
+
     print("Running EMmerNet on {} cubes using CPU".format(len(cubes)))
 
     tfds.disable_progress_bar()
@@ -531,7 +534,7 @@ def run_emmernet_cpu(cubes, emmernet_model, batch_size):
     
     cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
 
-    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet", file=sys.stdout):
         if i+batch_size > len(cubes):
             #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
             batch_size = len(cubes)-i
@@ -557,7 +560,8 @@ def run_emmernet_cpu_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_
         import atexit
     
     from tqdm import tqdm
-    
+    import sys
+
     tfds.disable_progress_bar()
     
     
@@ -567,7 +571,7 @@ def run_emmernet_cpu_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_
     cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
     cubes_x = np.expand_dims(cubes, axis=4)
 
-    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet"):
+    for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet", file=sys.stdout):
         if i+batch_size > len(cubes):
             #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
             batch_size = len(cubes)-i
