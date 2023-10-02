@@ -9,7 +9,7 @@
 
 import numpy as np
 import os
-
+import sys
 from locscale.include.emmer.ndimage.map_utils import save_as_mrc
 #import gemmi
 
@@ -313,9 +313,9 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
         
         pbar = {}
         if rank == 0:
-            pbar = tqdm(total=len(scaling_dictionary['masked_xyz_locs'])*size,desc="LocScale MPI")
+            pbar = tqdm(total=len(scaling_dictionary['masked_xyz_locs'])*size,desc="LocScale MPI",file=sys.stdout)
     else:
-        progress_bar=tqdm(total=len(scaling_dictionary['masked_xyz_locs']), desc="LocScale")
+        progress_bar=tqdm(total=len(scaling_dictionary['masked_xyz_locs']), desc="LocScale",file=sys.stdout)
     
     ###############################################################################
     # Stage 2: Perform the scaling in a rolling window fashion
