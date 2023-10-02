@@ -130,6 +130,7 @@ def gradient_solver(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,ap
     from locscale.preprocessing.pseudomodel_classes import Vector, add_Vector
     from locscale.utils.plot_tools import tab_print
     from tqdm import tqdm
+    import sys 
 
     tabbed_print = tab_print(2)
     tprint = tabbed_print.tprint
@@ -171,7 +172,7 @@ def gradient_solver(emmap,gx,gy,gz,model_initial,g,friction,min_dist_in_angst,ap
     print('='*50,file=myoutput)
   
     
-    for iter in tqdm(range(total_iterations),desc="Building Pseudo-atomic model"):
+    for iter in tqdm(range(total_iterations),desc="Building Pseudo-atomic model", file=sys.stdout):
         neighborhood = get_neighborhood(pseudomodel.list,min_dist_in_angst/apix)
         
         point_id = 0
