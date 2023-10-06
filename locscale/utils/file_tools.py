@@ -158,7 +158,7 @@ def get_input_file_directory(args):
     return input_folder
 
     
-def copy_file_to_folder(full_path_to_file, new_folder):
+def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     import shutil
     import os
     
@@ -170,7 +170,13 @@ def copy_file_to_folder(full_path_to_file, new_folder):
     else:
         print(f"File {destination} already exists")
     
-    return destination
+    if mapfile:
+        # Check the axis order 
+        from locscale.preprocessing.headers import check_axis_order
+        xyz_axis_order_path = check_axis_order(destination, use_same_filename=True)
+        return xyz_axis_order_path
+    else:
+        return destination
 
 def change_directory(args, folder_name):
     import os    
@@ -203,17 +209,20 @@ def change_directory(args, folder_name):
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files":
+            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path":
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location)
+            elif arg == "emmap_path":
+                new_emmap_path = copy_file_to_folder(value, new_directory, mapfile=True)
+                setattr(args, arg, new_emmap_path)
         if isinstance(value, list):
             if arg == "halfmap_paths":
                 halfmap_paths = value
                 halfmap1_path = halfmap_paths[0]
                 halfmap2_path = halfmap_paths[1]
 
-                new_halfmap1_path = copy_file_to_folder(halfmap1_path, new_directory)
-                new_halfmap2_path = copy_file_to_folder(halfmap2_path, new_directory)
+                new_halfmap1_path = copy_file_to_folder(halfmap1_path, new_directory, mapfile=True)
+                new_halfmap2_path = copy_file_to_folder(halfmap2_path, new_directory, mapfile=True)
                 new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
     
@@ -557,8 +566,7 @@ def setup_logger(log_path: str):
         diagnose=True,
     )
     return logger
-
-
+    
 def check_user_input(args):
     '''
     Check user inputs for errors and conflicts
