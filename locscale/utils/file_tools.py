@@ -209,10 +209,10 @@ def change_directory(args, folder_name):
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path":
+            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path" and arg != "mask":
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location)
-            elif arg == "emmap_path":
+            elif arg == "emmap_path" or arg == "mask":
                 new_emmap_path = copy_file_to_folder(value, new_directory, mapfile=True)
                 setattr(args, arg, new_emmap_path)
         if isinstance(value, list):
