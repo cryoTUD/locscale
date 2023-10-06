@@ -148,10 +148,10 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
     save_as_mrc(fdr_mask, output_filename=mask_path.replace(".mrc","_raw.mrc"), apix=voxel_size_record.tolist(), origin=0)
     if averaging_filter_size > 1:
         tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
-        #fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
+        fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
         fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
-        #fdr_mask = binarise_map(fdr_mask, threshold=0.5, return_type='int',threshold_type='gteq')
-        #fdr_mask = get_cosine_mask(fdr_mask, 3)
+        fdr_mask = binarise_map(fdr_mask, threshold=0.5, return_type='int',threshold_type='gteq')
+        fdr_mask = get_cosine_mask(fdr_mask, 3)
         
 
         
