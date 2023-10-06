@@ -750,7 +750,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
         return None
 
 
-def check_axis_order(emmap_path, return_same_path=False):
+def check_axis_order(emmap_path, use_same_filename=False):
     '''
     Function to generate a XYZ corrected output using Gemmi
 
@@ -770,20 +770,24 @@ def check_axis_order(emmap_path, return_same_path=False):
            
     emmap, grid = read_gemmi_map(emmap_path, return_grid=True)
 
+    if use_same_filename:
+        xyz_emmap_path = emmap_path
+    else:
+        xyz_emmap_path = os.path.join(os.path.dirname(emmap_path), "xyz_"+os.path.basename(emmap_path))
+    
     ## Check if the map is in the right order
     if grid.axis_order.name == "XYZ":
-        xyz_emmap_path = emmap_path
+        return emmap_path
+    
     elif grid.axis_order.name == "ZYX":
         ## Flip and rotate the map
         xyz_emmap = ZYX_to_XYZ(emmap)
-        xyz_emmap_path = os.path.join(os.path.dirname(emmap_path), "xyz_"+os.path.basename(emmap_path))
         save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
+        return xyz_emmap_path
     else:
-        print("### Warning: Map is not in the right order. Please check the axis order of the map")
-        print("Axis order of the map: "+grid.axis_order.name)
-        print("Using the same map as input")
-        xyz_emmap_path = emmap_path
-    
-    return xyz_emmap_path
+        error_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX. \n \
+                        Please input the map using the correct header information. You can use mrcfile or gemmi to do so."
+        raise ValueError(error_message)
+        
     
 
