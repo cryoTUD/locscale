@@ -423,7 +423,7 @@ def get_modmap_from_inputs(parsed_inputs):
         # Stage 4a: Run the get_modmap pipeline                                 #
         #############################################################################
         modmap_path = get_modmap(parsed_inputs)
-        xyz_modmap_path = check_axis_order(modmap_path, return_same_path=True)
+        xyz_modmap_path = check_axis_order(modmap_path,True)
         xyz_modmap = load_map(xyz_modmap_path)[0]
 
     return xyz_modmap, xyz_modmap_path     
