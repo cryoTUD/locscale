@@ -785,9 +785,8 @@ def check_axis_order(emmap_path, use_same_filename=False):
         save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
         return xyz_emmap_path
     else:
-        error_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX. \n \
-                        Please input the map using the correct header information. You can use mrcfile or gemmi to do so."
-        raise ValueError(error_message)
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX"
+        print(warning_message)
         
     
 
