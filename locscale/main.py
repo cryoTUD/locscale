@@ -24,7 +24,6 @@ def test_everything():
     download_and_test_everything()
 
 def print_version():
-    print("Welcome to the CCPEM Icknield Workshop 2023!")
     print("LocScale")
     print("Version: ", version)
     print("Installed on: ", installation_date)
