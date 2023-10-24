@@ -239,6 +239,7 @@ def change_directory(args, folder_name):
     return args
 
 class RedirectStdoutToLogger:
+    # This class was written with the help of chatGPT, model: GPT4
     def __init__(self, logger, show_progress=True, wait_message="Please wait"):
         self.logger = logger
         self._stdout = sys.stdout
@@ -312,6 +313,7 @@ def print_ADP_statistics(bfactor_array):
     print("")
     
 class RedirectOutputToLogger:
+    # This class was written with the help of chatGPT, model: GPT4
     def __init__(self, log_func, show_progress=True, wait_message="Please wait"):
         self.log_func = log_func
         self._stdout = sys.stdout
@@ -614,6 +616,7 @@ def check_user_input(args):
         if is_input_path_valid([args.model_coordinates]):
             model_coordinates_absent = False
     
+    hybrid_locscale = args.complete_model
     ## Rename variables
     emmap_present, half_maps_present = not(emmap_absent), not(half_maps_absent)
     model_map_present, model_coordinates_present = not(model_map_absent), not(model_coordinates_absent)
@@ -636,7 +639,7 @@ def check_user_input(args):
             check_and_warn_about_ref_resolution(args)
 
                             
-    if model_coordinates_present:
+    if model_coordinates_present and not hybrid_locscale:
         # Check the model to map fit
         correlation = simple_test_model_to_map_fit(args)
         correlation_threshold = 0.3
