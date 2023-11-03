@@ -216,8 +216,8 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         if not output_has_extension:
             output_emmap_filename = output_emmap_filename + ".mrc"
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
-        output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_mean"+extension_output_filename)
-        output_filename_var = output_emmap_filename.replace(extension_output_filename, "_var"+extension_output_filename)
+        output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_feature_enhanced_output"+extension_output_filename)
+        output_filename_var = output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename)
         #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
         output_filename_for_locscale = output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename)
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
