@@ -245,7 +245,7 @@ def launch_feature_enhance(args):
     try_to(compute_probability_distribution,**probability_args)
     
     print("EMmerNet finished successfully")
-    print("Please check the hallucinations_probabilities_map.mrc to check for hallucinated features")
+    print("Please check the pVDDT_scores.mrc to observe significantly hallucinated features")
     ## Print end
     print_end_banner(datetime.now(), start_time)
     

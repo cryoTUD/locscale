@@ -247,23 +247,36 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
     
     standard_error_calibrated = calibrate_variance(standard_error)
 
-    z_score_map = (locscale_map - mean_prediction) / standard_error_calibrated
+    z_score_map = (mean_prediction - locscale_map) / standard_error_calibrated
 
-    # convert nan values to 1
-    z_score_map[np.isnan(z_score_map)] = 0
+    # take care of nan values
+    z_score_map[np.isnan(z_score_map)] = 100 # make it a large number so that is is very significant
     # convert the z score map to a p value map
 
     cdf_map = norm.cdf(z_score_map)
     # renormalize to -100 and 100
-    probabilities_map = cdf_map * 200 - 100
+    pVDDT_map = cdf_map * 200 - 100
     
     
     output_folder = os.path.dirname(locscale_output_path)
 
-    p_value_map_path = os.path.join(output_folder, "hallucinations_probabilities_map.mrc")
+    pVDDT_map_path = os.path.join(output_folder, "pVDDT.mrc")
     z_score_map_path = os.path.join(output_folder, "z_scores_calibrated.mrc")
 
-    save_as_mrc(probabilities_map, p_value_map_path, apix)
+    save_as_mrc(pVDDT_map, pVDDT_map_path, apix)
     save_as_mrc(z_score_map, z_score_map_path, apix)
 
+    # Create a chimera script to visualize the map
+    create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path)
+
+def create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path):
+    print("=========VISUALISATION INSTRUCTIONS=========")
+    print("Open the feature enhanced map and pVDDT map in chimera")
+    print("#1: Feature enhanced map and #2: pVDDT map")
+    print("Copy the following commands:\n")
+    threshold_command = "volume #1 level 0.12; volume #2 level 0.12;" 
+    color_scheme_command = "color sample #1 map #2 palette -95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000;" 
+    print(threshold_command)
+    print(color_scheme_command)
+    print("============================================")
     
