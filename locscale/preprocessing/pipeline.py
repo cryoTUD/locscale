@@ -90,7 +90,7 @@ def get_modmap(modmap_args):
     ###########################################################################
     if modality in ["pseudo_model_build_and_refine", "partial_model_input_build_and_refine"]:
         if molecular_weight is None:
-            with RedirectStdoutToLogger(modmap_args['logger'], wait_message="Measuring mask parameters"):
+            with RedirectStdoutToLogger(modmap_args['logger'], wait_message="Measuring input mask parameters"):
                 num_atoms,mask_dims = measure_mask_parameters(mask_path,verbose=True, edge_threshold=mask_threshold)
             num_atoms = int(round(num_atoms / 1.55)) # adding correction factor based on comparison with atomic models within modelled regions
         else:
@@ -127,7 +127,7 @@ def get_modmap(modmap_args):
     elif modality == "partial_model_input_build_and_refine":
         pseudomodel_refinement = False
         if verbose:
-            print_statement = "a) Running pseudo-atomic model generator with {} atoms to complete the user-provided PDB".format(num_atoms)
+            print_statement = "a) Running pseudo-atomic model generator to complete the user-provided PDB"
             print(print_statement)
             modmap_args['logger'].info(print_statement)
         integrated_structure, final_chain_counts, difference_mask_path = add_pseudoatoms_to_input_pdb(
