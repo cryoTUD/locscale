@@ -390,7 +390,8 @@ def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False
                 atom_count = 0
                 residue_name = res.name
                 combined_model = add_residue(combined_model, chain_count, res_count, residue_name)
-                for atom in res:
+                unique_atoms = get_unique_atoms_in_residue(res)
+                for atom in unique_atoms:
                     atom_name = atom.name
                     atom_position = atom.pos
                     atom_element = atom.element
@@ -422,6 +423,17 @@ def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False
         gemmi_model[chain_num][res_num].add_atom(atom, atom_num)
         
         return gemmi_model
+    
+    def get_unique_atoms_in_residue(res):
+        atoms = []
+        atom_names = []
+        for atom in res:
+            if atom.name not in atom_names:
+                atoms.append(atom)
+                atom_names.append(atom.name)
+        
+        return atoms
+
     
     combined_structure = gemmi.Structure()
     combined_model = gemmi.Model("combined")
@@ -471,6 +483,9 @@ def add_pseudoatoms_to_input_pdb(pdb_path, mask_path, emmap_path, mask_threshold
     save_as_mrc(difference_mask, difference_mask_path, apix)
 
     num_atoms, _ = measure_mask_parameters(mask_path = difference_mask_path, edge_threshold=mask_threshold, verbose=False)
+    if num_atoms == 0:
+        raise ValueError("No unmodelled atoms found in difference mask. Run Model Based LocScale without passing the '--complete_model' flag.")
+    
     pdb_filename = os.path.basename(pdb_path)
     print("Adding {} pseudoatoms to {}".format(num_atoms, pdb_filename))
 
