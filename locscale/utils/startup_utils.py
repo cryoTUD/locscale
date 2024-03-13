@@ -327,4 +327,20 @@ def add_installation_date():
     else:
         pass 
 
+        
+def test_everything():
+    from locscale.tests.utils import download_and_test_everything
+    download_and_test_everything()
+
+def print_version():
+    run_housekeeping()
+    print("LocScale")
+    print("Version: ", locscale.__version__)
+    try:
+        print("Installed on: ", locscale.__installation_date__)
+    except AttributeError:
+        print("Installation date not available")
+
+    print("Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)")
+    print("Python version: ", sys.version)
 
