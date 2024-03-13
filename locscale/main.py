@@ -9,9 +9,11 @@
 
 import os
 import sys
-from locscale.utils.startup_utils import launch_feature_enhance, launch_contrast_enhance, control_system_inputs
+from locscale.utils.startup_utils import launch_feature_enhance, launch_contrast_enhance, run_housekeeping
 from locscale.utils.parse_utils import locscale_parser
 import locscale
+
+run_housekeeping()
 
 progname = 'locscale'
 author = 'Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)'
@@ -31,8 +33,6 @@ def print_version():
     print("Python version: ", sys.version)
     
 def main():
-    control_system_inputs(sys.argv)
-    
     main_args = locscale_parser.parse_args()
     
     if len(sys.argv) == 1:
