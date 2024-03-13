@@ -271,7 +271,15 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     
     return locscale_args
 
-def control_system_inputs(system_arguments):
+def run_housekeeping():
+    import sys 
+
+    # Add installation date to __init__.py 
+    add_installation_date()
+    # Check if help message needs to be printed
+    check_for_help_message(sys.argv)
+
+def check_for_help_message(system_arguments):
     import sys 
     from locscale.utils.parse_utils import locscale_parser
     # Checks whether help is needed 
@@ -295,4 +303,28 @@ def control_system_inputs(system_arguments):
             raise ValueError("Unknown command: ", launch_command)
         
     
+def add_installation_date():
+
+    from datetime import datetime
+    from locscale.utils.file_tools import get_locscale_path
+
+    init_path = os.path.join(get_locscale_path(), "locscale","__init__.py")    
+    # readlines
+    with open(init_path, "r") as f:
+        lines = f.readlines()
+
+    # check if __installation_date__ is already present
+    installation_date_added = False
+    for line in lines:
+        if "__installation_date__" in line:
+            installation_date_added = True
+            break
+        
+    # write __installation_date__ to __init__.py if not present
+    if not installation_date_added:
+        with open(init_path, "a") as f:
+            f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
+    else:
+        pass 
+
 
