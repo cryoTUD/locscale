@@ -14,12 +14,6 @@ from locscale.utils.parse_utils import locscale_parser
 import locscale
 
 run_housekeeping()
-
-progname = 'locscale'
-author = 'Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)'
-version = locscale.__version__
-installation_date = locscale.__installation_date__
-
         
 def test_everything():
     from locscale.tests.utils import download_and_test_everything
@@ -27,9 +21,9 @@ def test_everything():
 
 def print_version():
     print("LocScale")
-    print("Version: ", version)
-    print("Installed on: ", installation_date)
-    print(author)
+    print("Version: ", locscale.__version__)
+    print("Installed on: ", locscale.__installation_date__)
+    print("Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)")
     print("Python version: ", sys.version)
     
 def main():
