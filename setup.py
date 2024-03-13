@@ -24,36 +24,7 @@ def get_version():
     version_text = (locscale_path / "locscale" / "__version__.py").read_text()
     version = version_text.split("=")[1][1:-1]
     return version
-
-def add_installation_date():
-    import pathlib    
-    from datetime import datetime
-    import os
-    locscale_path = pathlib.Path(__file__).parent.resolve()
-    # add installation date to __init__.py
-    init_path = os.path.join(locscale_path, "locscale", "__init__.py")
-    # readlines
-    with open(init_path, "r") as f:
-        lines = f.readlines()
-    
-    # write
-    with open(init_path, "w") as f:
-        # check for line containing __installation_date__
-        installation_date_added = False
-        for i, line in enumerate(lines):
-            if "__installation_date__" in line:
-                # edit the line in the file
-                line = f'__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n'
-                installation_date_added = True
-            f.write(line)
-        
-        # if __installation_date__ is not found, add it to the end of the file
-        if not installation_date_added:
-            newline = f'__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n'
-            f.write(newline)
-        
-        
-                
+                      
 
 def add_current_environment_to_init():
     import pathlib
@@ -92,8 +63,6 @@ class PostDevelopCommand(develop):
         develop.run(self)
         # Check if refmac5 is installed
         check_for_refmac()
-        # Add installation date to __init__.py
-        add_installation_date()
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
@@ -102,10 +71,7 @@ class PostInstallCommand(install):
         install.run(self)
         # Check if refmac5 is installed
         check_for_refmac()
-        
-        # Add installation date to __init__.py
-        add_installation_date()
-    
+            
 ## Modify installation structure based on environment variables for different platforms
 # LOCSCALE_COLAB_ENV
 if os.getenv('LOCSCALE_COLAB_ENV'):
