@@ -270,4 +270,29 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     locscale_args = argparse.Namespace(**defaults_dictionary)
     
     return locscale_args
+
+def control_system_inputs(system_arguments):
+    import sys 
+    from locscale.utils.parse_utils import locscale_parser
+    # Checks whether help is needed 
+    if len(system_arguments) == 1:
+        locscale_parser.print_help()
+        sys.exit(1)
     
+    else:
+        launch_command = locscale_parser.parse_args().command
+        if launch_command == 'feature_enhance':
+            if len(system_arguments) == 2:
+                locscale_parser.print_help()
+                sys.exit(1)
+        elif launch_command == 'version':
+            pass
+        elif launch_command == 'test':
+            pass
+        elif launch_command is None:
+            pass
+        else:
+            raise ValueError("Unknown command: ", launch_command)
+        
+    
+
