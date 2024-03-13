@@ -129,7 +129,7 @@ def shift_coordinates(in_model_path=None, out_model_path=None,\
                         if atom.charge != 0:
                             atom.charge = 0
     if input_structure is None:
-        structure.write_pdb(out_model_path)
+        structure.make_mmcif_document().write_file(out_model_path)
     else:
         return structure
   
@@ -481,7 +481,7 @@ def shake_pdb_within_mask(pdb_path, mask_path, rmsd_magnitude, use_pdb_mask=True
                 #                                                                                   apix=apix)
                 
                 
-                neighborhood_indices_list = tree.query_radius(shaken_atomic_position[i:i+1], r=rmsd_magnitude*2)
+                neighborhood_indices_list = tree.query_radius(shaken_atomic_position[i:i+1], r=rmsd_magnitude*3)
                 
                 random_index = random.choice(list(neighborhood_indices_list)[0])
                 random_position = np_array_mask_pdb[random_index] + np.random.uniform(0,apix/2,3)
@@ -653,16 +653,36 @@ def add_atomic_bfactors(input_pdb, additional_biso=None, minimum_biso=0.5, out_f
    
     return gemmi_st
 
+def compute_cdf(kde, xmin, xmax, nbins=1000):
+    cdf = []
+    xarray = np.linspace(xmin, xmax, nbins)
+    for x in xarray:
+        cdf.append(kde.integrate_box_1d(xmin,x))
+    
+    cdf = np.array(cdf)
+    return cdf, xarray
+
+def probe_cdf_threshold(cdf, xarray, probe_cdf):
+    from scipy.interpolate import interp1d
+    f = interp1d(cdf, xarray)
+    return f(probe_cdf)
+
 def get_lower_bound_threshold(bfactor_array, probability_threshold=0.01):
     # Using a Gaussian Kernel Density Estimation to get the lower bound threshold for the B-factors
-    from scipy.stats import invgamma
+    from scipy.stats import gaussian_kde
     
     bfactor_array = np.array(bfactor_array)
-    # fit a invgamma distribution to the data
-    param = invgamma.fit(bfactor_array)
-    # calculate the lower bound threshold
-    lower_bound_threshold = invgamma.ppf(probability_threshold, *param)
-    
+    kde = gaussian_kde(bfactor_array, bw_method="silverman")
+    xmin = np.min(bfactor_array)
+    xmax = np.max(bfactor_array)
+    cdf, xarray = compute_cdf(kde, xmin, xmax)
+    # check if the probability threshold is within the range of the cdf
+    probability_threshold_in_range = (probability_threshold > np.min(cdf)) and (probability_threshold < np.max(cdf))
+    if probability_threshold_in_range:
+        lower_bound_threshold = probe_cdf_threshold(cdf, xarray, probability_threshold)
+    else: 
+        lower_bound_threshold = 0
+        
     return lower_bound_threshold
 
 def shift_bfactors_by_probability(input_pdb, probability_threshold=0.01, minimum_bfactor=0.5, return_shift_values=True):
@@ -704,7 +724,7 @@ def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
     '''
     
     if in_model_path is not None:
-        gemmi_st = gemmi.read_pdb(in_model_path)
+        gemmi_st = gemmi.read_structure(in_model_path)
     elif input_gemmi_st is not None:
         gemmi_st = input_gemmi_st.clone()
     else:
@@ -729,7 +749,7 @@ def set_atomic_bfactors(in_model_path=None, input_gemmi_st=None,
         else:
             output_filepath = in_model_path[:-4]+'_modified_bfactor.pdb'
     
-        gemmi_st.write_pdb(output_filepath)
+        gemmi_st.make_mmcif_document().write_file(output_filepath)
     
     else:
         return gemmi_st
@@ -807,15 +827,16 @@ def get_residue_ca_coordinates(in_model_path):
 
     return dict_coord
 
-def get_coordinates(input_pdb):
+def get_coordinates(input_pdb, skip_non_polymer=False):
     from locscale.include.emmer.pdb.pdb_to_map import detect_pdb_input
     list_coord = []
     structure = detect_pdb_input(input_pdb)
     for model in structure:
         for chain in model:
-            polymer = chain.get_polymer()
-            #skip non polymers
-            if not polymer: continue
+            if skip_non_polymer:
+                polymer = chain.get_polymer()
+                #skip non polymers
+                if not polymer: continue
             for residue in chain:
                 residue_id = str(residue.seqid.num)+'_'+residue.name
                 for atom in residue:
@@ -835,7 +856,7 @@ def remove_atomic_charges(in_model_path,out_model_path):
                 for atom in residue:
                     if atom.charge != 0:
                         atom.charge = 0
-    structure.write_pdb(out_model_path)
+    structure.make_mmcif_document().write_file(out_model_path)
     return 1
 
 

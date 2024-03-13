@@ -239,7 +239,8 @@ class Model:
         else:
             position = pseudoAtom.pdb_position.get()
         atom = gemmi.Atom()
-        element_choice = np.random.choice(["C","O","N"], p=[0.63,0.2,0.17])
+        #element_choice = np.random.choice(["C","O","N"], p=[0.63,0.2,0.17])
+        element_choice = "O"
         atom.element = gemmi.Element(element_choice)
         atom.pos = gemmi.Position(position[0],position[1],position[2])
         atom.b_iso = pseudoAtom.bfactor
@@ -253,8 +254,9 @@ class Model:
              
     def add_residue(self,model, chain_num, res_num):
         model[chain_num].add_residue(gemmi.Residue(),res_num)
-        amino_acid_residues = ['TYR','THR','SER','PRO','PHE','MET','LEU','ILE','HIS','GLY','GLU','GLN','ASP','ASN','ALA','ARG','TRP','CYS']
-        model[chain_num][res_num].name = np.random.choice(amino_acid_residues)
+        #amino_acid_residues = ['TYR','THR','SER','PRO','PHE','MET','LEU','ILE','HIS','GLY','GLU','GLN','ASP','ASN','ALA','ARG','TRP','CYS']
+        #model[chain_num][res_num].name = np.random.choice(amino_acid_residues)
+        model[chain_num][res_num].name = "HOH"
         model[chain_num][res_num].seqid.num = res_num
     
         return model
@@ -278,7 +280,7 @@ class Model:
         structure = gemmi.Structure()
         structure.add_model(gemmi_model)
         structure.cell = self.unitcell
-        structure.write_pdb(output_string)
+        structure.make_mmcif_document().write_file(output_string)
         
     def update_pdb_positions(self,apix=1):
         for atom in self.list:
@@ -309,7 +311,7 @@ def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
 
 
 def get_model_from_gemmi_pdb(pdb_path,emmap_path=None):
-    gemmi_model = gemmi.read_pdb(pdb_path)[0]
+    gemmi_model = gemmi.read_structure(pdb_path)[0]
     
     if emmap_path is not None:
         mrc = mrcfile.open(emmap_path)

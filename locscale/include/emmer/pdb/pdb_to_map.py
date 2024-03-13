@@ -32,7 +32,7 @@ def detect_pdb_input(input_pdb):
     from locscale.include.emmer.pdb.pdb_utils import get_gemmi_st_from_id
     
     if isinstance(input_pdb, str):
-        if input_pdb.split(sep='.')[-1] in ['pdb','cif']:  # Then input is a file path
+        if input_pdb.split(sep='.')[-1] in ['pdb','cif', 'mmcif','ent']:  # Then input is a file path
             pdb_structure = gemmi.read_structure(input_pdb)
             return pdb_structure
         elif ("/" not in input_pdb) or ("\\" not in input_pdb) or ("." not in input_pdb): # Then input is not file path but pdb_id

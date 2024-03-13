@@ -110,7 +110,7 @@ def pretty_plot_radial_profile(freq,list_of_profiles_native, plot_type="make_log
     plt.tight_layout()
     return fig
 
-def plot_radial_profile(freq,list_of_profiles, squared_amplitudes=False, legends=None, normalise=False, font=28,showlegend=True, showPoints=True, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
+def plot_radial_profile(freq,list_of_profiles, squared_amplitudes=False, legends=None, normalise=False, font=28,showlegend=True, showPoints=False, alpha=0.05, variation=None, yticks=None, logScale=True, ylims=None, xlims=None, crop_freq=None):
     import matplotlib.pyplot as plt
     from matplotlib.pyplot import cm
     from locscale.include.emmer.ndimage.profile_tools import crop_profile_between_frequency

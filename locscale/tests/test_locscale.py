@@ -68,7 +68,7 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
+            locscale_command = ["python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
             
@@ -108,7 +108,7 @@ class test_locscale(unittest.TestCase):
             if n_proc > 2:
                 n_proc = 2
             
-            locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"run_locscale","--emmap_path",\
+            locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose","--mpi"]
             
@@ -119,7 +119,6 @@ class test_locscale(unittest.TestCase):
             rscc_test = rsc(self.reference_locscale_MB,output_locscale_path)
             self.assertTrue(rscc_test>0.9)
 
-       
     def test_run_model_free_locscale(self):
         from tempfile import TemporaryDirectory
         
@@ -140,7 +139,7 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "locscale_MF_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",copied_emmap_path, \
+            locscale_command = ["python",locscale_script_path,"--emmap_path",copied_emmap_path,\
                 "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose", "-pm_it","10","-ref_it","2"]
                         
             locscale_test_run = run(locscale_command)
@@ -184,7 +183,7 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "locscale_MBI_unittest.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",\
+            locscale_command = ["python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates_trimmed,"--mask",copied_mask_path, \
                 "--ref_resolution","3.4","--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
             
@@ -210,7 +209,7 @@ class test_locscale(unittest.TestCase):
             output_locscale_path = os.path.join(tempDir, "no_reference_scaling.mrc")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
-            locscale_command = ["python",locscale_script_path,"run_locscale","--emmap_path",copied_emmap_path, \
+            locscale_command = ["python",locscale_script_path,"--emmap_path",copied_emmap_path, \
                 "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose", \
                 "--no_reference"]
                         

@@ -8,8 +8,9 @@ Created on Mon Aug 17 11:31:51 2020
 
 import numpy as np
 from locscale.utils.plot_tools import tab_print
+from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary, setup_logger, run_command_with_filtered_output
 
-tabbed_print = tab_print(2)
+tabbed_print = tab_print(1)
 tprint = tabbed_print.tprint
 def prepare_sharpen_map(emmap_path,wilson_cutoff,fsc_resolution,target_bfactor=20, output_file_path=None,verbose=True,Cref=None, apply_filter=True):
     '''
@@ -147,8 +148,8 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
     save_as_mrc(fdr_mask, output_filename=mask_path.replace(".mrc","_raw.mrc"), apix=voxel_size_record.tolist(), origin=0)
     if averaging_filter_size > 1:
         tprint("Applying averaging filter of size {} to the mask".format(averaging_filter_size))
-        #fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
-        fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
+        fdr_mask = binarise_map(fdr_mask, threshold=0.99, return_type='int',threshold_type='gteq')
+        #fdr_mask = uniform_filter(fdr_mask, averaging_filter_size)
         #fdr_mask = binarise_map(fdr_mask, threshold=0.5, return_type='int',threshold_type='gteq')
         #fdr_mask = get_cosine_mask(fdr_mask, 3)
         
@@ -261,14 +262,14 @@ def run_pam(emmap_path,mask_path,threshold,num_atoms,method,bl,
             returnPointsOnly=True,integration='verlet',verbose=False, myoutput=output_file)
 
         mask_name = mask_path[:-4]
-        pseudomodel_path = mask_name+"_gradient_pseudomodel.pdb"
+        pseudomodel_path = mask_name+"_gradient_pseudomodel.cif"
 
     elif method=='random' or method=='kick' or method == 'random_placement_with_kick':
         arranged_points = main_solver_kick(
                 pseudomodel,min_dist_in_angst=bl,apix=apix,total_iterations=total_iterations,
                 returnPointsOnly=True,verbose=False, myoutput=output_file)
         mask_name = mask_path[:-4]
-        pseudomodel_path = mask_name+"_kick_pseudomodel.pdb"
+        pseudomodel_path = mask_name+"_kick_pseudomodel.cif"
     
 
     ### Save the pseudo-atomic model ###    
@@ -319,29 +320,29 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
                             refmac5_path=None, verbose=True, hybrid_model_refinement=False, \
                             final_chain_counts=None, cif_info=None):
     import os
-    from subprocess import run, PIPE, Popen
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
-    import mrcfile
 
     if hybrid_model_refinement: 
         assert final_chain_counts is not None, "Please provide the final chain counts for the hybrid model refinement"
 
-    tprint(" Running iterative refinement of the model using One Cycle ServalCat")
+    ## Create log file for servalcat
+    servalcat_log_path = os.path.join(os.path.dirname(model_path),"servalcat_log.txt")
+    servalcat_logger = setup_logger(servalcat_log_path)
+    servalcat_logger.info("Running servalcat to refine the model")
+    servalcat_logger.info("-"*50)
+    
     normal_refinement = not pseudomodel_refinement and not hybrid_model_refinement
     if normal_refinement:
         tprint("This is a refinement of a real atomic model")
-        servalcat_refined_path = run_refmac_servalcat(
+        servalcat_refined_model_path = run_refmac_servalcat(
             model_path=model_path, map_path=map_path, resolution=resolution, \
             num_iter=num_iter, pseudomodel_refinement=pseudomodel_refinement, \
-            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info)
-        
-        return servalcat_refined_path
-        
+            refmac5_path=refmac5_path, verbose=verbose, cif_info=cif_info, servalcat_logger=servalcat_logger)
+                
     else:
         tprint("This is a refinement of a pseudo-atomic model")
-        tprint("Running iterative refinement of the model")
+        tprint("Running iterative refinement of the model for {} cycles".format(num_iter))
         for cycle in range(num_iter):
-            print("Cycle: "+str(cycle))
+            tprint("Cycle: "+str(cycle))
             if cycle == 0:
                 model_path_input = model_path
                 initialise_bfactors = True
@@ -353,29 +354,36 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             servalcat_refined_once_path = run_refmac_servalcat(
                 model_path_input, map_path, resolution, num_iter=1, pseudomodel_refinement=pseudomodel_refinement,\
                 refmac5_path=refmac5_path, verbose=verbose, initialise_bfactors=initialise_bfactors, \
-                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info)
-            
+                hybrid_model_refinement=hybrid_model_refinement, cif_info=cif_info, servalcat_logger=servalcat_logger)
+
             servalcat_refinement_next_cycle_path = os.path.join(
-                os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".pdb")
+                os.path.dirname(servalcat_refined_once_path), "servalcat_refinement_cycle_"+str(cycle+1)+".cif")
             
-            tprint("Averaging the bfactors with radius of 3 angstroms")
+            servalcat_logger.info("Averaging the bfactors with radius of 3 angstroms")
             window_averaged_bfactors_structure = average_atomic_bfactors_window(
                 input_pdb=servalcat_refined_once_path, window_radius=3, hybrid_model_refinement = hybrid_model_refinement, final_chain_counts=final_chain_counts)
-            window_averaged_bfactors_structure.write_pdb(servalcat_refinement_next_cycle_path)
+            window_averaged_bfactors_structure.make_mmcif_document().write_file(servalcat_refinement_next_cycle_path)
         
-        # tprint("Setting the element composition of the model to match a typical protein composition")
-        # tprint("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
+        servalcat_logger.info("Setting the element composition of the model to match a typical protein composition")
+        servalcat_logger.info("Carbon: 63%, Nitrogen: 17%, Oxygen: 20%")
 
-        # if hybrid_model_refinement:
-        #     starting_chain_count = final_chain_counts[0]
-        # else:
-        #     starting_chain_count = None
+        if hybrid_model_refinement:
+            starting_chain_count = final_chain_counts[0]
+        else:
+            starting_chain_count = None
             
-        # proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        # proper_element_composition_filename = model_path.replace(".pdb", "_proper_element_composition.pdb")
-        # proper_element_composition_structure.write_pdb(proper_element_composition_filename)
+        proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
+        servalcat_refined_model_path = model_path.replace(".cif", "_proper_element_composition.cif")
+        proper_element_composition_structure.make_mmcif_document().write_file(servalcat_refined_model_path)
         
-        return servalcat_refinement_next_cycle_path
+    # Average the ADPs for 25 angstroms
+    servalcat_logger.info("Averaging the bfactors with radius of 25 angstroms")
+    ADP_averaged_structure = average_atomic_bfactors_window(servalcat_refined_model_path, window_radius=25)   
+    
+    refined_averaged_structure_path = servalcat_refined_model_path.replace(".cif", "_averaged.cif")
+    ADP_averaged_structure.make_mmcif_document().write_file(refined_averaged_structure_path)
+    
+    return refined_averaged_structure_path
         
 def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percentage=0.17, oxygen_percentage=0.2, starting_chain_count=None):
     '''
@@ -425,7 +433,7 @@ def set_average_composition(input_pdb, carbon_percentage=0.63, nitrogen_percenta
         
         return gemmi_st
         
-def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, \
+def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, servalcat_logger,\
                          refmac5_path=None, verbose=True, initialise_bfactors=True, \
                          hybrid_model_refinement=False, cif_info=None):
     '''
@@ -456,9 +464,12 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     '''
     
     import os
-    from subprocess import run, PIPE, Popen
-    from locscale.include.emmer.pdb.pdb_utils import get_bfactors, set_atomic_bfactors
-    import mrcfile
+    from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
+    from locscale.utils.file_tools import check_for_refmac
+    # check for refmac5
+    
+    with servalcat_logger.catch():
+        check_for_refmac(tolerate=False)
     
     # Get the current working directory
     current_directory = os.getcwd()
@@ -473,7 +484,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
 
     #### Set the starting bfactor of the atomic model to 40 before refinement ####
     if initialise_bfactors:
-        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.pdb"
+        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.cif"
         set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
         servalcat_input = servalcat_uniform_bfactor_input_path
     else:
@@ -495,31 +506,27 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
-    servalcat_command += ["--no_mask"]
     
     if cif_info is not None:
         servalcat_command += ["--ligand",cif_info]
     use_unrestrained_refinement = pseudomodel_refinement and not hybrid_model_refinement 
        
     if use_unrestrained_refinement:
+        servalcat_command += ["--no_mask"]
         servalcat_command += ["--keywords","refi bonly","refi type unre"]
+        
     else:
         servalcat_command += ["--keywords","refi bonly"]
 
     if refmac5_path is not None:
         servalcat_command += ["--exe",refmac5_path]
 
-    if verbose:       
-        tprint("Command line for servalcat: \n")    
-        tprint(" ".join(servalcat_command))
+    rcode = run_command_with_filtered_output(servalcat_command, servalcat_logger, filter_string="FSCaverage=") 
+    if rcode != 0:
+        servalcat_logger.error("Servalcat failed with return code: "+str(rcode))    
     
-    ## Create log file for servalcat
-    servalcat_log_path = os.path.join(os.path.dirname(model_path),"servalcat_log.txt")
-    servalcat_log_file = open(servalcat_log_path,"w")
-    
-    refmac_output = run(servalcat_command, stdout=servalcat_log_file)
-    refined_model_path = output_prefix+".pdb"
-    bfactors = get_bfactors(refined_model_path)
+    #possible_file_extensions = [".pdb", ".cif", ".mmcif", ".ent"]
+    refined_model_path = output_prefix+".mmcif"
 
     refined_model_path = os.path.join(processing_files_directory, os.path.basename(refined_model_path))
     
@@ -531,9 +538,11 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     if os.path.exists(refined_model_path):
         if verbose: 
             tprint("The refined PDB model is: "+refined_model_path+"\n\n")    
+            servalcat_logger.info("The refined PDB model is: "+refined_model_path+"\n\n")
         return refined_model_path
     else:
         tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        servalcat_logger.error("Uhhoh, something wrong with the REFMAC procedure. Returning None")
         return None
 
 
@@ -704,7 +713,8 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
     
     
     ## Output filename
-    reference_map_path = model_path[:-4]+"_4locscale.mrc"
+    extension_model = os.path.splitext(os.path.basename(model_path))[1]
+    reference_map_path = model_path.replace(extension_model,"_4locscale.mrc")
     save_as_mrc(map_data=refmap_data_normalised,output_filename=reference_map_path, apix=grid_simulated.spacing, origin=0)   
     
     ## Checklist: 
@@ -740,7 +750,7 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
         return None
 
 
-def check_axis_order(emmap_path, return_same_path=False):
+def check_axis_order(emmap_path, use_same_filename=False):
     '''
     Function to generate a XYZ corrected output using Gemmi
 
@@ -760,20 +770,23 @@ def check_axis_order(emmap_path, return_same_path=False):
            
     emmap, grid = read_gemmi_map(emmap_path, return_grid=True)
 
+    if use_same_filename:
+        xyz_emmap_path = emmap_path
+    else:
+        xyz_emmap_path = os.path.join(os.path.dirname(emmap_path), "xyz_"+os.path.basename(emmap_path))
+    
     ## Check if the map is in the right order
     if grid.axis_order.name == "XYZ":
-        xyz_emmap_path = emmap_path
+        return emmap_path
+    
     elif grid.axis_order.name == "ZYX":
         ## Flip and rotate the map
         xyz_emmap = ZYX_to_XYZ(emmap)
-        xyz_emmap_path = os.path.join(os.path.dirname(emmap_path), "xyz_"+os.path.basename(emmap_path))
         save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
+        return xyz_emmap_path
     else:
-        print("### Warning: Map is not in the right order. Please check the axis order of the map")
-        print("Axis order of the map: "+grid.axis_order.name)
-        print("Using the same map as input")
-        xyz_emmap_path = emmap_path
-    
-    return xyz_emmap_path
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX"
+        print(warning_message)
+        
     
 

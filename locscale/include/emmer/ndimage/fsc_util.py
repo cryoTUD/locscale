@@ -91,7 +91,9 @@ def calculate_phase_correlation(ps1,ps2,radii,map_shape):
     list_nsf = []
     ps1_phase = np.angle(ps1)
     ps2_phase = np.angle(ps2)
-    for r in np.unique(radii)[0:map_shape[0]//2]:
+    radius_array = np.unique(radii)[0:map_shape[0]//2] 
+    
+    for r in radius_array:
         idx = radii == r
         fsc = calculate_shell_correlation(ps1_phase[idx],ps2_phase[idx])
         list_fsc.append(fsc)
@@ -106,6 +108,27 @@ def calculate_phase_correlation(ps1,ps2,radii,map_shape):
     #sorted tuples
     listfreq, listfsc, listnsf = zip(*sorted(zip(list_radii, list_fsc, list_nsf))) 
     return listfreq,listfsc,listnsf
+
+def calculate_phase_difference(ps1,ps2,radii,map_shape):
+    '''
+    Calculate FSC curve given two FTmaps
+    '''
+
+    ps1_phase = np.angle(ps1)
+    ps2_phase = np.angle(ps2)
+    radius_array = np.unique(radii)[0:map_shape[0]//2] 
+    
+    mean_phase_diff_list = []
+    for r in radius_array:
+        idx = radii == r
+        phase_1 = ps1_phase[idx]
+        phase_2 = ps2_phase[idx]
+        # calculate mean phase difference
+        mean_phase_diff = np.mean(phase_1.flatten()-phase_2.flatten())
+        mean_phase_diff_list.append(mean_phase_diff)
+    
+    return radius_array,mean_phase_diff_list
+    
 
 def calculate_amplitude_correlation(ps1,ps2,radii,map_shape):
     '''
@@ -227,7 +250,7 @@ def calculate_fsc_maps(input_map_1, input_map_2):
     fsc = np.array(fsc)
     return np.array(fsc)
 
-def calculate_phase_correlation_maps(input_map_1, input_map_2):
+def calculate_phase_correlation_maps(input_map_1, input_map_2, return_phase_difference=False):
     '''
     Wrapper to calculate FSC curve from the above functions
 
@@ -259,7 +282,11 @@ def calculate_phase_correlation_maps(input_map_1, input_map_2):
     
     _, fsc, _ = calculate_phase_correlation(fft_1, fft_2, radii, map_shape)
     fsc = np.array(fsc)
-    return np.array(fsc)
+    if return_phase_difference:
+        phase_difference = calculate_phase_difference(fft_1, fft_2, radii, map_shape)
+        return np.array(fsc), np.array(phase_difference)
+    else:
+        return np.array(fsc)
 
 def calculate_amplitude_correlation_maps(input_map_1, input_map_2):
     '''
