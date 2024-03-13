@@ -32,8 +32,28 @@ def add_installation_date():
     locscale_path = pathlib.Path(__file__).parent.resolve()
     # add installation date to __init__.py
     init_path = os.path.join(locscale_path, "locscale", "__init__.py")
-    with open(init_path, "a") as f:
-        f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
+    # readlines
+    with open(init_path, "r") as f:
+        lines = f.readlines()
+    
+    # write
+    with open(init_path, "w") as f:
+        # check for line containing __installation_date__
+        installation_date_added = False
+        for i, line in enumerate(lines):
+            if "__installation_date__" in line:
+                # edit the line in the file
+                line = f'__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n'
+                installation_date_added = True
+            f.write(line)
+        
+        # if __installation_date__ is not found, add it to the end of the file
+        if not installation_date_added:
+            newline = f'__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n'
+            f.write(newline)
+        
+        
+                
 
 def add_current_environment_to_init():
     import pathlib
