@@ -1,11 +1,16 @@
 import numpy as np
 
-def load_map(map_path, return_apix = True):
+def load_map(map_path, return_apix = True, verbose=False):
     import mrcfile
     from locscale.include.emmer.ndimage.map_utils import average_voxel_size
     emmap = mrcfile.open(map_path).data
     apix = average_voxel_size(mrcfile.open(map_path).voxel_size)
     
+    if verbose:
+        print("Loaded map from path: ", map_path)
+        print("Voxel size: ", apix)
+        print("Map shape: ", emmap.shape)
+        
     if return_apix:
         return emmap, apix
     else:
@@ -126,8 +131,10 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
             
         if verbose:
             print("Saving as MRC file format with following properties: ")
+            print("File name: ", output_filename)
             print("Voxel size", mrc.voxel_size)
             print("Origin", mrc.header.origin)
+            
         
     mrc.close()
 

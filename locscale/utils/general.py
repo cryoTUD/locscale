@@ -204,7 +204,7 @@ def save_list_as_map(values_list, masked_indices, map_shape, map_path, apix):
     return value_map
 
 def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inputs_dict):
-    from locscale.utils.general import pad_or_crop_volume
+    from locscale.utils.general import pad_or_crop_volume, try_to
     from locscale.include.emmer.ndimage.map_utils import save_as_mrc
     from locscale.utils.plot_tools import make_locscale_report
     import mrcfile
@@ -227,28 +227,26 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
     if args.dev_mode:
         output_filename = output_filename[:-4]+"_devmode.mrc"
     
-    if args.symmetry != "C1":
-        asymmetric_output_filename = output_filename[:-4]+"_before_symmetrizing.mrc"
-        save_as_mrc(map_data=LocScaleVol, output_filename=asymmetric_output_filename, apix=apix, origin=0, verbose=True)
-        resolution = parsed_inputs_dict['fsc_resolution']
-        print("Imposing a symmetry condition of {}".format(args.symmetry))
-        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
-        LocScaleVol_sym = symmetrize_map_emda(emmap_path=asymmetric_output_filename,pg=args.symmetry)
-        save_as_mrc(map_data=LocScaleVol_sym, output_filename=output_filename, apix=apix, origin=0, verbose=True)
-    else:
-        save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
-    
-    try:
-        make_locscale_report(args, parsed_inputs_dict, output_filename, window_bleed_and_pad)
-    except Exception as e:
-        print("LocScale successfully completed, but failed to generate a report")
-        print("Error: \n{}".format(e))
-        
-        
+    save_as_mrc(map_data=LocScaleVol, output_filename=output_filename, apix=apix, origin=0, verbose=True)
         
     
-    return LocScaleVol
+    if args.print_report:
+        try_to(make_locscale_report, args, parsed_inputs_dict, output_filename, window_bleed_and_pad)    
+        return LocScaleVol
+    else: 
+        return LocScaleVol
 
+def try_to(func, *args, **kwargs):
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        print("Failed to run {}".format(func.__name__))
+        print("\twith args: {}".format(args))
+        print("\tand kwargs: {}".format(kwargs))
+        print("\tDue to...")
+        print(e)
+        
+    
 ##### MPI related functions #####
 
 def split_sequence_evenly(seq, size):
@@ -275,3 +273,4 @@ def merge_sequence_of_sequences(seq):
     newseq = [number for sequence in seq for number in sequence]
 
     return newseq
+

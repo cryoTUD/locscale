@@ -346,10 +346,8 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     apix = mrcfile.open(emmap_path).voxel_size.tolist()[0]
     emmap = mrcfile.open(emmap_path).data
     map_shape = emmap.shape
-    
-    
+        
     gemmi_st = gemmi.read_structure(pdb_path)
-    
     
     mask = np.zeros(map_shape)
     pdb_positions = []
@@ -369,7 +367,10 @@ def get_atomic_model_mask(emmap_path, pdb_path, dilation_radius=3, softening_par
     dilation_radius_int = round(dilation_radius / apix)
     dilated_mask = dilate_mask(mask, radius=dilation_radius_int)
     
-    softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
+    if softening_parameter > 1:
+        softened_mask = get_cosine_mask(dilated_mask, length_cosine_mask_1d=softening_parameter)
+    else:
+        softened_mask = dilated_mask
     
     if save_files:
         if output_filename is None:
@@ -500,7 +501,8 @@ def get_bfactor_distribution(emmap_path, mask_path, fsc_resolution, boxsize=None
     
     return bfactor_distributions
 
-def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, standard_notation=True, wilson_cutoff="local"):
+def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolution, boxsize=None, num_centers=15000, \
+                                    standard_notation=True, wilson_cutoff="local", verbose=True):
     from locscale.include.emmer.ndimage.profile_tools import estimate_bfactor_standard, compute_radial_profile, frequency_array
     from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation
     from locscale.include.emmer.ndimage.map_utils import measure_mask_parameters, get_all_voxels_inside_mask, extract_window
@@ -552,8 +554,9 @@ def get_bfactor_distribution_multiple(list_of_emmap_paths, mask_path, fsc_resolu
                 
                 temp_distribution[tuple(center)] = tuple([bfactor, qfit])
             except Exception as e:
-                print("Error at {}".format(center))
-                print(e)
+                if verbose:
+                    print("Error at {}".format(center))
+                    print(e)
                 raise
         bfactor_distributions[emmap_name] = temp_distribution
             

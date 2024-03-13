@@ -24,16 +24,7 @@ def get_version():
     version_text = (locscale_path / "locscale" / "__version__.py").read_text()
     version = version_text.split("=")[1][1:-1]
     return version
-
-def add_installation_date():
-    import pathlib    
-    from datetime import datetime
-    import os
-    locscale_path = pathlib.Path(__file__).parent.resolve()
-    # add installation date to __init__.py
-    init_path = os.path.join(locscale_path, "locscale", "__init__.py")
-    with open(init_path, "a") as f:
-        f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
+                      
 
 def add_current_environment_to_init():
     import pathlib
@@ -72,8 +63,6 @@ class PostDevelopCommand(develop):
         develop.run(self)
         # Check if refmac5 is installed
         check_for_refmac()
-        # Add installation date to __init__.py
-        add_installation_date()
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
@@ -82,10 +71,7 @@ class PostInstallCommand(install):
         install.run(self)
         # Check if refmac5 is installed
         check_for_refmac()
-        
-        # Add installation date to __init__.py
-        add_installation_date()
-    
+            
 ## Modify installation structure based on environment variables for different platforms
 # LOCSCALE_COLAB_ENV
 if os.getenv('LOCSCALE_COLAB_ENV'):

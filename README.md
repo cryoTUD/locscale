@@ -6,21 +6,22 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6652013.svg)](https://doi.org/10.5281/zenodo.6652013)
 [![Citation Badge](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://juleskreuer.eu/projekte/citation-badge/)
 
+# This is the development branch of LocScale. For a stable program, please use the master branch. 
+
 # LocScale - reference-based local sharpening of cryo-EM maps
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
-#### New in LocScale 2.1:
-
-- Hybrid sharpening: `LocScale` now supports reference-based sharpening when only partial atomic model information is present
-
-- Model-free sharpening: `LocScale` now supports reference-based sharpening without the need to supply an atomic model
-
-- `EMmerNet`: a physics-inspired deep convolutional neural network sharpening method.
-
+#### New in LocScale 2.1.6:
 - Completely automated process for local map sharpening 
 
-- Full support for point group symmetry (helical symmetry to follow)
+- [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): `LocScale` now supports reference-based sharpening when only partial atomic model information is available.
+
+- [Model-free sharpening](#3-run-locscale-without-atomic-model): `LocScale` now supports reference-based sharpening without the need to supply any atomic model information.
+
+- [`feature_enhance`](#4-confidence-aware-density-modification): a confidence-aware density modification tool to enhance features in cryo-EM maps using the `EMmerNet` neural network.
+
+- Full support for point group symmetry (helical symmetry to follow).
 
 <br>
   
@@ -35,7 +36,7 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 #### Requirements
 
-LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). To run LocScale efficiently in EMmerNet mode requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow. 
+LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). To run LocScale efficiently in EMmerNet mode requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow(er). 
 
 #### Installation instructions:
 
@@ -80,7 +81,7 @@ conda install -c conda-forge gfortran
 ```
 ##### 3. Install REFMAC5 via CCP4/CCPEM
 
-LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
+The model-based and hybrid map sharpening modes of LocScale need a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. For model-free sharpening and confidence-aware density modification REFMAC5 is not required. 
 
 ```bash
 which refmac5
@@ -115,18 +116,18 @@ locscale test
 
 ## How to use
 
-LocScale can generate locally sharpened cryo-EM maps either using model-based sharpening based on available atomic model(s), using model-free sharpening, or using deep neural network-based sharpening method (EMmerNet).
+LocScale can generate locally sharpened cryo-EM maps either using model-based sharpening based on available atomic model(s), using model-free sharpening, or using confidence-aware deep neural network-based density modification method (EMmerNet).
 
 #### 1. Run LocScale using an existing atomic model:
 
 ```bash
-locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
 
 ```bash
-locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
 ```
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
@@ -134,24 +135,24 @@ The output will be a locally sharpened map scaled according to the refined atomi
 To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
+mpirun -np 4 locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
 ```
 #### 2. Run LocScale using a partial atomic model:
 
 ```bash
-locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
+locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
 ```
 
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
 
 ```bash
-locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
 ```
 ##### Symmetry
 If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
 
 ```bash
-locscale run_locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -sym D2 -o model_based_locscale.mrc --complete_model 
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -sym D2 -o model_based_locscale.mrc --complete_model 
 ```
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
@@ -159,21 +160,25 @@ The output will be a locally sharpened map scaled according to the refined atomi
 To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc  --complete_model -mpi
+mpirun -np 4 locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc  --complete_model -mpi
 ```
 
 #### 3. Run LocScale without atomic model:
 
-If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This mode will estimate the molecular volume using statistical thresholding and generate a pseudo-atomic model in the thresholded density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate an average reference profile for local sharpening based on the experimental data and expected properties for electron scattering of biological macromolecules [[2]](#references). Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
+If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of `LocScale`. This method will predict a reference map using the `EMmerNet` network by default. 
+
+Another option would be to use pseudo-atomic model. This can be enabled by passing the `--build_using_pseudomodel` flag. This mode will estimate the molecular volume using statistical thresholding and generate a pseudo-atomic model in the thresholded density map to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate an average reference profile for local sharpening based on the experimental data and expected properties for electron scattering of biological macromolecules [[2]](#references). Use this if the default EMmerNet-based reference map generation does not work well for your data (e.g. if the map is too noisy or if the map has very low resolution). 
+
+Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
 
 ```bash
-locscale run_locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
+locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
 ```
 ##### Symmetry
 If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
 
 ```bash
-locscale run_locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc
+locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc
 ```
 
 LocScale currently supports all common point group symmetries. We are working on supporting helical symmetry, but this is not yet implemented. 
@@ -181,40 +186,37 @@ LocScale currently supports all common point group symmetries. We are working on
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
-mpirun -np 4 locscale run_locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc -mpi
+mpirun -np 4 locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc -mpi
 ```
 
 
 For an exhaustive list of options, use:   
 
 ```bash
-locscale run_locscale --help
+locscale --help
 ``` 
 
 Alternatively, see [here](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) for more information. Please note that these pages are still being updated.
 
-#### 3. Run LocScale using EMmerNet predictions:
+#### 4. Confidence-aware density modification:
 
-Instead of using model-based or model-free reference profiles, LocScale also supports local sharpening based on a physics-inspired deep neural network prediction method using our ensemble network `EMmerNet` that is under development. While we have done our very best to validate the network and mitigate the risk of hallucination, as for any such approach care needs to be exercised to avoid bias. We do encourage its use for model building and visualisation, but recommend to perform model refinement against the original map.
+Instead of a reference-based sharpening procedure, LocScale also supports density modification based on a physics-inspired deep neural network prediction method using  `EMmerNet` that is under development. To mitigate the risk of network inpainting or hallucination, we also calculate a per-pixel confidence score which informs the user how much the predicted density estimate deviates from a pure amplitude based sharpening approach. This score can be accessed using the p_value_map.mrc output file. We strongly recommend the users to use this score to validate the results of the prediction. 
+
+ While we encourage its use for model building and visualisation, we do not recommend using the prediction from the neural network as target for model refinement.
 
 ```bash
-locscale run_emmernet -em path/to/emmap.mrc -v -trained_model model_based -gpus 1 -o emmernet_model_based.mrc
+locscale feature_enhance -em path/to/emmap.mrc -v -gpus 1 -o feature_enhanced_prediction.mrc
 ```
+This will output a feature enhanced map together with a p-value map that can be used to assess the quality of the prediction.
 
-Currently, three different EMmerNet models are available and can be specified using the `-trained_model` flag as follows:
-
-| Model  | Syntax  | 
-|---|---|
-| Model Based EMmerNet  | ```-trained_model model_based```| 
-| Model Free EMmerNet   | ```-trained_model model_free``` | 
-| Ensemble EMmerNet     | ```-trained_model ensemble```   | 
+A network trained against high context data is used as default. This will result in a prediction that shows even the weakest features in the map as long as the signal is statistically better than the noise (for example, detergent belts for membrane proteins). If you want to use a network trained against low context data, use the flag `--use_low_context_model`:
 
 Additional models may become available and will be listed here.
 
 For an exhaustive list of options, run:   
 
 ```bash
-locscale run_emmernet --help
+locscale feature_enhance --help
 ``` 
 
 ## Tutorial and FAQs
@@ -233,10 +235,10 @@ This project is using code from a number of third-party open-source projects. Pr
 
 ## References
 
-If you found `LocScale` useful, please consider citing it:
+If you found `LocScale` useful for your research, please consider citing it:
 
 - A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions D2FD00078D (2022)
+- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
 ---
 
 ## Bugs and questions

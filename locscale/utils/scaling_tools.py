@@ -1,6 +1,15 @@
+#
+# Delft University of Technology (TU Delft) hereby disclaims all copyright interest in the program 'LocScale'
+# written by the Author(s).
+# Copyright (C) 2021 Alok Bharadwaj and Arjen J. Jakobi
+# This software may be modified and distributed under the terms of the BSD license. 
+# You should have received a copy of the BSD 3-clause license along with this program (see LICENSE file file for details).
+# If not see https://opensource.org/license/bsd-3-clause/.
+#
+
 import numpy as np
 import os
-
+import sys
 from locscale.include.emmer.ndimage.map_utils import save_as_mrc
 #import gemmi
 
@@ -42,10 +51,11 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         bfactor (float): The local bfactor of the reference map 
         qfit (float): The local qfit of the reference map for bfactor calculation
     """
-    
+    import warnings
     from locscale.include.emmer.ndimage.profile_tools import scale_profiles, merge_two_profiles, \
         add_deviations_to_reference_profile, frequency_array, estimate_bfactor_standard, get_theoretical_profile
-
+    from locscale.utils.file_tools import RedirectStdoutToLogger
+    
     ################################################################################
     # SCALING WITHOUT REFERENCE
     # Scaling without a reference profile is done by measuring the local bfactor
@@ -53,6 +63,7 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
     # unsharpened cube. This is then used to calculate the scale factors.
     # This method is not recommended since it is not robust to noise.
     ################################################################################
+    warnings.filterwarnings("ignore")
     if scale_factor_arguments['no_reference']:
         use_theoretical_profile = False
         ################################################################################
@@ -302,9 +313,9 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
         
         pbar = {}
         if rank == 0:
-            pbar = tqdm(total=len(scaling_dictionary['masked_xyz_locs'])*size,desc="LocScale MPI")
+            pbar = tqdm(total=len(scaling_dictionary['masked_xyz_locs'])*size,desc="LocScale MPI",file=sys.stdout)
     else:
-        progress_bar=tqdm(total=len(scaling_dictionary['masked_xyz_locs']), desc="LocScale")
+        progress_bar=tqdm(total=len(scaling_dictionary['masked_xyz_locs']), desc="LocScale",file=sys.stdout)
     
     ###############################################################################
     # Stage 2: Perform the scaling in a rolling window fashion
@@ -470,7 +481,6 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     ###############################################################################
 
     scaling_dictionary = parsed_inputs_dict
-    
     ###############################################################################
     # Stage 2: Extract masked locations and indices from the mask
     ###############################################################################

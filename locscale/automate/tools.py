@@ -11,13 +11,16 @@ from locscale.utils.startup_utils import launch_locscale_no_mpi
 import json
 import pickle
 
-def get_defaults_dictionary():
+
+def get_defaults_dictionary(program="locscale"):
     """
     Get the default input dictionary.
     """
-    from locscale.utils.parse_utils import locscale_parser
+    from locscale.utils.parse_utils import locscale_parser, feature_enhance_parser
+    parser_to_choose = locscale_parser if program == "locscale" else feature_enhance_parser
+    
     defaults_dictionary = {}
-    variables = locscale_parser._actions
+    variables = parser_to_choose._actions
     for variable in variables:
         # if variable.dest is not help then add to dictionary
         if variable.dest != 'help':
@@ -474,7 +477,7 @@ class LocScaleMultiple:
                 joblib.delayed(self.scale_amplitudes)(job_id) for job_id in job_list)
         else:
             result = joblib.Parallel(n_jobs=self.num_process_scaling, backend="loky",timeout=6*3600)(
-                joblib.delayed(self.launch_locscale)(job_id) for job_id in job_list)
+                joblib.delayed(self.launch_contrast_enhance)(job_id) for job_id in job_list)
 
         
         # Print the results for each job

@@ -91,7 +91,6 @@ def symmetrize_map_known_pg(emmap, apix, pg):
     avg_f = frs_sum / len(ops)
     avgmap = ifftshift(np.real(ifftn(ifftshift(avg_f))))
     #avgmap = rebox_map(avgmap)
-    
     return avgmap
 
 
