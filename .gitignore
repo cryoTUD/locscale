@@ -33,3 +33,4 @@ fcodes_fast.cpython-37m-x86_64-linux-gnu.so
 fcodes_fast.cpython-38-x86_64-linux-gnu.so
 .flake8
 recipe/meta.yaml
+locscale/__init__.py
