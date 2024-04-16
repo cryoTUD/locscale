@@ -608,3 +608,28 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
     return difference_mask_averaged
 
 
+def get_random_center_voxels(window_shape, num_windows, emmap_shape):
+    import random 
+    from locscale.include.emmer.ndimage.filter import get_spherical_mask
+    spherical_mask = get_spherical_mask(emmap_shape, emmap_shape[0]//2-window_shape)
+    all_voxels_within_mask = np.asarray(np.where(spherical_mask == 1)).T.tolist()
+    random_center_voxels = random.sample(all_voxels_within_mask, num_windows)
+    return random_center_voxels
+
+def detect_noise_boxes(emmap, num_windows=100):
+    from locscale.include.emmer.ndimage.map_utils import extract_window
+    # find random centers
+    emmap_shape = emmap.shape
+    window_shape = int(emmap_shape[0] * 0.1) if emmap_shape[0] > 210 else 21
+    emmap_shape = emmap.shape
+    random_centers = get_random_center_voxels(window_shape, num_windows, emmap_shape)
+
+    max_intensities_within_each_center = []
+    for center in random_centers:
+        window = extract_window(emmap, center, window_shape)
+        max_intensities_within_each_center.append(np.max(window))
+    
+    index_of_center_with_least_max_intensity = np.argmin(max_intensities_within_each_center)
+    center_with_least_max_intensity = random_centers[index_of_center_with_least_max_intensity]
+
+    return center_with_least_max_intensity

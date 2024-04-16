@@ -263,20 +263,27 @@ def average_voxel_size(voxel_size_record):
     
     return average_apix
 
-def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True, folder = None):
+def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True, folder = None, use_default_noise_box=False):
     from locscale.include.confidenceMapUtil.confidenceMapMain import calculateConfidenceMap
+    from locscale.include.emmer.ndimage.map_tools import detect_noise_boxes
     import os, shutil, time
     
     if folder is None:
         current_cwd = os.getcwd()
     else:
         current_cwd = folder
+    
+    if not use_default_noise_box:
+        noise_box_coords = detect_noise_boxes(em_map)
+        print("Noise box coordinates detected: ", noise_box_coords)
+    else:
+        noise_box_coords = None
     timestamp =  str(time.time())
     temp_dir = current_cwd + '/fdr_output_temp_'+timestamp
     os.mkdir(temp_dir)
     os.chdir(temp_dir)
     confidenceMap,locFiltMap,locScaleMap,binMap,maskedMap = calculateConfidenceMap(
-        em_map=em_map,apix=apix,noiseBox=None,testProc=None,ecdf=None,
+        em_map=em_map,apix=apix,noiseBox=noise_box_coords,testProc=None,ecdf=None,
         lowPassFilter_resolution=lowPassFilter_resolution,method=None, 
         window_size=window_size,windowSizeLocScale=None, locResMap=None,
         meanMap=None,varMap=None,fdr=fdr,modelMap=None,stepSize=None,mpi=None)
