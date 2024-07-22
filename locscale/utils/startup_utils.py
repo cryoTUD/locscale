@@ -77,12 +77,12 @@ def print_start_banner(start_time, text="Map Sharpening"):
         ## Print disclaimer for EMmerNet as this is in testing phase
         print("DISCLAIMER: Network Inpainting.\n")
         ## Print note on testing for network inpainting
-        print(fill("EMmerNet is a neural network based map sharpening procedure. As such, there exists a risk of network hallucination " \
-                +"i.e. the densities predicted by the network may not correspond to real densities. We are trying hard to mitigate "\
+        print(fill("EMmerNet is a neural network based density modification procedure. As such, there exists a risk of network hallucination " \
+                +"i.e. the densities predicted by the network may not correspond to real densities. We have been trying hard to mitigate "\
                 +"this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. "\
                 +"We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets."\
-                +"In addition, we have provided a measure of confidence in the predicted densities. You can find this in the output "\
-                +"directory as a map called 'hallucinations_probabilities_map.mrc'. "\
+                +"In addition, we have provided a voxel-wiise measure of confidence for the predicted density maps. 
+                +"You can find this probability map in the output directory: 'pVDDT.mrc'. "\
                 +"Please use this map along with the predicted density map for your model building needs. "+"\n"\
                 +"As a rule: NEVER USE THE PREDICTED MAPS AS A REFINEMENT TARGET. ALWAYS USE THE ORIGINAL MAPS. "+"\n"\
                 +"If you encounter obvious problems, please report this to the authors. "+"\n"\
