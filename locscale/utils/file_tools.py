@@ -172,11 +172,13 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     
     if mapfile:
         # Check the axis order 
-        from locscale.preprocessing.headers import check_axis_order
-        xyz_axis_order_path = check_axis_order(destination, use_same_filename=True)
-        return xyz_axis_order_path
-    else:
+        from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
+        emmap, apix = load_map(full_path_to_file)
+        save_as_mrc(emmap, destination, apix)
+        # xyz_axis_order_path = check_axis_order(destination, use_same_filename=True)
         return destination
+    # else:
+    #     return destination
 
 def change_directory(args, folder_name):
     import os    
@@ -209,10 +211,10 @@ def change_directory(args, folder_name):
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path" and arg != "mask":
+            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path" and arg != "mask" and arg != "model_map":
                 new_location=copy_file_to_folder(value, new_directory)
-                setattr(args, arg, new_location)
-            elif arg == "emmap_path" or arg == "mask":
+                setattr(args, arg, new_location) 
+            elif arg == "emmap_path" or arg == "mask" or arg == "model_map":
                 new_emmap_path = copy_file_to_folder(value, new_directory, mapfile=True)
                 setattr(args, arg, new_emmap_path)
         if isinstance(value, list):
@@ -226,6 +228,7 @@ def change_directory(args, folder_name):
                 new_halfmap_paths = [new_halfmap1_path,new_halfmap2_path]
                 setattr(args, arg, new_halfmap_paths)
     
+ 
     # Set the logger file path 
     log_file_path = os.path.join(new_directory, "locscale.log")
     setattr(args, "logfile_path", log_file_path)
