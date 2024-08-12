@@ -420,7 +420,7 @@ def get_emmap_path_from_args(args):
         halfmap1_path = halfmap_paths[0]
         halfmap2_path = halfmap_paths[1]
         new_file_path = generate_filename_from_halfmap_path(halfmap1_path)
-        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path)
+        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path, fsc_filter=bool(args.apply_fsc_filter))
         shift_vector=shift_map_to_zero_origin(halfmap1_path)
     
     return emmap_path, shift_vector
