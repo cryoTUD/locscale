@@ -235,7 +235,10 @@ def change_directory(args, folder_name):
     logger = setup_logger(log_file_path)
     logger.info("Starting LocScale program")
     logger.info("LocScale version: {}".format(locscale.__version__))
-    logger.info("LocScale installed on: {}".format(locscale.__installation_date__))
+    try:
+        logger.info("LocScale installed on: {}".format(locscale.__installation_date__))
+    except:
+        logger.info("LocScale installation date not found")
     logger.info("-"*80)
     setattr(args, "logger", logger)
     setattr(args, "input_folder", input_folder)
