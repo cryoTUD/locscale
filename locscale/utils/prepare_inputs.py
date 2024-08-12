@@ -13,6 +13,7 @@ import locscale.include.emmer as emmer
 from locscale.utils.plot_tools import tab_print
 from locscale.preprocessing.headers import check_axis_order
 from locscale.include.emmer.ndimage.map_utils import load_map
+from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
 from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary
 tabbed_print = tab_print(2)
 def prepare_mask_and_maps_for_scaling(args):
@@ -72,9 +73,10 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs["xyz_emmap_path"] = check_axis_order(parsed_inputs["unsharpened_emmap_path"])
     with RedirectStdoutToLogger(args.logger, wait_message="Loading inputs"):
         parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"], verbose=True)
+
     
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
-    
+
     ##########################################################################
     ## use_theoretical_profile is the flag used to determine 
     ## if scale factors are computed using the theoretical profile 

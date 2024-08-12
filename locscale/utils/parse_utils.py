@@ -63,6 +63,10 @@ def add_common_arguments(parser):
     prediction_argument_group.add_argument(
         '-cube_size','--cube_size', help='Size of the input cube for EMMERNET', default=32, type=int)
 
+    ## Input modifiers
+    input_modifiers_group = parser.add_argument_group('Input modifiers')
+    input_modifiers_group.add_argument(
+        '-apply_fsc_filter', '--apply_fsc_filter', help='Apply FSC filter to the input map', action='store_true', default=False)
     
 def add_locscale_arguments(locscale_parser):    
     ## Input model map file (mrc file) or atomic model (pdb file)
