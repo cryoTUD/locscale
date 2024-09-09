@@ -130,7 +130,7 @@ def add_locscale_arguments(locscale_parser):
     pseudo_atomic_parser.add_argument(
         '-mw', '--molecular_weight', help='Input molecular weight (in kDa)', default=None, type=float)
     pseudo_atomic_parser.add_argument(
-        '--build_ca_only', help='For gradient pseudomodel building: use only Ca atoms with interatomic distance 3.8',\
+        '--activate_pseudomodel', help='Treats the input model as a pseudo-atomic model',\
                                     action='store_true',default=False)
     pseudo_atomic_parser.add_argument(
         '-s', '--smooth_factor', help='Smooth factor for merging profiles', default=0.3, type=float)
@@ -145,8 +145,7 @@ def add_locscale_arguments(locscale_parser):
         '--set_local_bfactor', help='For reference-less sharpening. Use this value to set the local b-factor of the maps',\
                                     type=float, default=20)
     misc_parser.add_argument(
-        '--dev_mode', help='If true, this will force locscale to use the theoretical profile even if model map present \
-                                    and will not check for user input consistency', action='store_true', default=False)
+        '--dev_mode', help='If true, will not check for user input consistency', action='store_true', default=False)
     misc_parser.add_argument(
         '--skip_refine', help='Ignore REFMAC refinement', action='store_true')
 

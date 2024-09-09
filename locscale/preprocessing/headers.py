@@ -373,7 +373,8 @@ def run_servalcat_iterative(model_path, map_path, resolution, num_iter, pseudomo
             starting_chain_count = None
             
         proper_element_composition_structure = set_average_composition(input_pdb=servalcat_refinement_next_cycle_path, starting_chain_count=starting_chain_count)
-        servalcat_refined_model_path = model_path.replace(".cif", "_proper_element_composition.cif")
+        extension_model = os.path.splitext(os.path.basename(model_path))[1]
+        servalcat_refined_model_path = model_path.replace(extension_model, "_proper_element_composition.cif")
         proper_element_composition_structure.make_mmcif_document().write_file(servalcat_refined_model_path)
         
     # Average the ADPs for 25 angstroms

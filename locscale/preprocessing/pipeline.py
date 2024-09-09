@@ -44,7 +44,7 @@ def get_modmap(modmap_args):
     symmetry = modmap_args['symmetry']
     model_resolution = modmap_args['model_resolution']
     molecular_weight = modmap_args['molecular_weight']
-    build_ca_only = modmap_args['build_ca_only']
+    #build_ca_only = modmap_args['build_ca_only']
     verbose = modmap_args['verbose']
     #Cref = modmap_args['Cref']
     complete_model = modmap_args['complete_model']
@@ -99,13 +99,13 @@ def get_modmap(modmap_args):
     ###########################################################################
     # Stage: Check if the user requires to build only Ca atoms
     ###########################################################################
-    if build_ca_only:
-        num_atoms = int(num_atoms/9)  ## Assuming 9 atoms per residue
-        pam_bond_length = 3.8  ## Ca atom distances for secondary structures
-        pam_method = 'gradient'  ## use this exclusively for Gradient
-        if pam_method != 'gradient':
-            print("Using gradient method for building pseudo-atomic model!\
-                Not using user input:\t {}".format(pam_method))
+    # if build_ca_only:
+    #     num_atoms = int(num_atoms/9)  ## Assuming 9 atoms per residue
+    #     pam_bond_length = 3.8  ## Ca atom distances for secondary structures
+    #     pam_method = 'gradient'  ## use this exclusively for Gradient
+    #     if pam_method != 'gradient':
+    #         print("Using gradient method for building pseudo-atomic model!\
+    #             Not using user input:\t {}".format(pam_method))
     ###########################################################################
     # Stage : If user has not provided a PDB path then build a 
     # pseudomodel using the run_pam() routine else use the PDB path directly
@@ -143,8 +143,8 @@ def get_modmap(modmap_args):
             print("Problem running pseudo-atomic model generator. Returning None")
             modmap_args['logger'].error("Problem running pseudo-atomic model generator. Returning None")
             return None
-    elif modality == "full_model_input_refine_and_map" or modality == "full_model_input_no_refine":
-        pseudomodel_refinement = False
+    elif modality == "full_model_input_refine_and_map" or modality == "full_model_input_no_refine" or modality == "treat_input_model_as_pseudomodel":
+        pseudomodel_refinement = True if modality == "treat_input_model_as_pseudomodel" else False
         final_chain_counts = None
         if verbose:
             print_statement = "a) Using user-provided PDB for refinement"
