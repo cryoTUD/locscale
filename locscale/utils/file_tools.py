@@ -177,8 +177,9 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
         save_as_mrc(emmap, destination, apix)
         # xyz_axis_order_path = check_axis_order(destination, use_same_filename=True)
         return destination
-    # else:
-    #     return destination
+    
+    else:
+        return destination
 
 def change_directory(args, folder_name):
     import os    
@@ -485,6 +486,8 @@ def set_modality_based_on_input(args):
         else:
             if args.skip_refine:
                 modality = "full_model_input_no_refine"
+            elif args.activate_pseudomodel:
+                modality = "treat_input_model_as_pseudomodel"
             else:
                 modality = "full_model_input_refine_and_map"
     else:
