@@ -7,4 +7,4 @@
 # If not see https://opensource.org/license/bsd-3-clause/.
 #
 
-__version__="2.2.5"
+__version__="2.2.3"
