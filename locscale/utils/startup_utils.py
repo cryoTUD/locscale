@@ -21,12 +21,16 @@ def print_arguments(args):
 
 def print_start_banner(start_time, text="Map Sharpening"):
     from textwrap import fill
+    import time
     ## Definitions
     try:
         username = os.environ.get("USER")
     except:
         username = "Unknown"
 
+    disclaimer_text_path = os.path.join(os.path.dirname(locscale.__file__), "disclaimer.txt")
+    disclaimer_text = open(disclaimer_text_path, "r").read()
+                                        
     ## get today's date from start_time
     today_date = start_time.strftime("%d-%m-%Y")
     time_now = start_time.strftime("%H:%M:%S")
@@ -77,16 +81,9 @@ def print_start_banner(start_time, text="Map Sharpening"):
         ## Print disclaimer for EMmerNet as this is in testing phase
         print("DISCLAIMER: Network Inpainting.\n")
         ## Print note on testing for network inpainting
-        print(fill("EMmerNet is a neural network based density modification procedure. As such, there exists a risk of network hallucination " \
-                +"i.e. the densities predicted by the network may not correspond to real densities. We have been trying hard to mitigate "\
-                +"this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. "\
-                +"We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets."\
-                +"In addition, we have provided a voxel-wise measure of confidence for the predicted density maps. "\ 
-                +"You can find this probability map in the output directory: 'pVDDT.mrc'. "\
-                +"Please use this map along with the predicted density map for your model building needs. "+"\n"\
-                +"As a rule: NEVER USE THE PREDICTED MAPS AS A REFINEMENT TARGET. ALWAYS USE THE ORIGINAL MAPS. "+"\n"\
-                +"If you encounter obvious problems, please report this to the authors. "+"\n"\
-                +"Arjen Jakobi: a.jakobi@tudelft.nl  ", width=80))
+        print(fill(disclaimer_text, width=80))
+        # Sleep for 5 seconds
+        time.sleep(5)
 
 
     print("="*80)
