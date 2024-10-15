@@ -1,12 +1,12 @@
 import argparse
-sample_run_locscale = "python /path/to/locscale/main.py run_locscale --emmap_path path/to/emmap.mrc -res 3.4 -o locscale.mrc --verbose"
-sample_run_emmernet = "python /path/to/locscale/main.py run_emmernet --emmap_path path/to/emmap.mrc --verbose"
+sample_run_locscale = "locscale --emmap_path path/to/emmap.mrc -o locscale.mrc --verbose"
+sample_feature_enhance = "locscale feature_enhance --emmap_path path/to/emmap.mrc -o feature_enhanced.mrc --verbose"
 description = ["*** Optimisation of contrast in cryo-EM density maps using local density scaling ***\n",\
     "Command line arguments: \n",\
         "LocScale: \n",\
         "{}\n".format(sample_run_locscale),\
-        "EMmerNet: \n",\
-        "{}".format(sample_run_emmernet)]
+        "Feature Enhance: \n",\
+        "{}".format(sample_feature_enhance)]
 
 # **************************************************************************************
 # ************************ Command line arguments LocScale *****************************
