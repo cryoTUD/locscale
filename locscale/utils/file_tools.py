@@ -582,9 +582,11 @@ def check_user_input(args):
     None.
 
     '''
+    import warnings
     
     if args.dev_mode:
-        print("Warning: You are in Dev mode. Not checking user input! Results maybe unreliable")
+        warning_text="Warning: You are in Dev mode. Not checking user input! Results maybe unreliable"
+        warnings.warn(warning_text)
         return 
     
     import mrcfile
@@ -624,7 +626,7 @@ def check_user_input(args):
     ## If emmap is absent or half maps are absent, raise Exceptions
     
     if emmap_absent and half_maps_absent:
-        raise UserWarning("Please input either an unsharpened map or two half maps")
+        raise ValueError("Please input either an unsharpened map or two half maps")
           
     
     if model_coordinates_present and model_map_present:
@@ -643,7 +645,8 @@ def check_user_input(args):
         correlation = simple_test_model_to_map_fit(args)
         correlation_threshold = 0.3
         if correlation < correlation_threshold:
-            print(f"Warning: The model to map correlation is {correlation:.2f}. This is below the threshold of {correlation_threshold}")
+            warning_text_correlation = f"Warning: The model to map correlation is {correlation:.2f}. This is too low. Please check whether the model is correctly fitted to the map"
+            warnings.warn(warning_text_correlation)
         
 
     if model_coordinates_present and model_map_absent:
@@ -657,7 +660,7 @@ def check_user_input(args):
     if args.window_size is not None:
         window_size_pixels = int(args.window_size)
         if window_size_pixels%2 > 0:
-            print("You have input an odd window size. For best performance, an even numbered window size is required. Adding 1 to the provided window size ")
+            warnings.warn("You have input an odd window size. For best performance, an even numbered window size is required. Adding 1 to the provided window size ")
         if args.apix is not None:
             apix = float(args.apix)
         else:
@@ -670,7 +673,7 @@ def check_user_input(args):
         
         
         if window_size_ang < 10:
-            print("Warning: Provided window size of {} is too small for pixel size of {}. \
+            warnings.warn("Warning: Provided window size of {} is too small for pixel size of {}. \
                   Default window size is generally 25 A. Think of increasing the window size".format(window_size_pixels, apix))
     
     ## Check if the user added a no_reference flag
@@ -690,6 +693,7 @@ def check_user_input(args):
     ## Find the modalities to generate reference map based on user inputs 
 
 def warn_against_skip_refine(args, tolerate):
+    import warnings
     if args.skip_refine:
         if not tolerate:
             raise UserWarning("You have asked to skip REFMAC refinement. \
@@ -697,7 +701,7 @@ def warn_against_skip_refine(args, tolerate):
                                 Please do not raise the --skip_refine flag")
 
         if tolerate: 
-            print("Warning: You have asked to skip REFMAC refinement. \
+            warnings.warn("Warning: You have asked to skip REFMAC refinement. \
                     Please make sure that the atomic ADPs are refined. LocScale performance maybe severely affected if the ADPs are not refined")
                 
 def check_and_warn_about_ref_resolution(args):
