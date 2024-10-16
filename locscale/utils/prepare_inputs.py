@@ -148,7 +148,8 @@ def prepare_mask_and_maps_for_scaling(args):
     # which maybe required for pseudo-atomic model routine when the 
     # use_theoretical_profile is set to True
     ############################################################################## 
-    parsed_inputs["scale_factor_args"] = get_scale_factor_arguments(parsed_inputs)
+    with RedirectStdoutToLogger(parsed_inputs["logger"], wait_message="Preparing scale factor arguments"):
+        parsed_inputs["scale_factor_args"] = get_scale_factor_arguments(parsed_inputs)
     
     ###############################################################################
     # Definitions: 
@@ -475,17 +476,20 @@ def get_scale_factor_arguments(parsed_inputs):
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.ndimage.map_tools import compute_radial_profile_simple
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, number_of_segments, estimate_bfactor_through_pwlf
+    from locscale.include.emmer.ndimage.fsc_util import measure_fsc_resolution_maps
 
     wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["mask_path_raw"], verbose=False)
     
+    halfmaps_present = parsed_inputs["halfmap_paths"] is not None
     resolution_given = parsed_inputs["ref_resolution"] is not None
     poor_resolution = parsed_inputs["ref_resolution"] >= 6 if resolution_given else True
-    if (not resolution_given) or poor_resolution:
+    if  poor_resolution:
         high_frequency_cutoff = wilson_cutoff
         nyquist = (round(2*parsed_inputs["apix"]*10)+1)/10
         #fsc_cutoff = fsc_resolution
         bfactor_info = [0,np.array([0,0,0]),np.array([0,0,0])]
         pwlf_fit_quality = 0
+        
     else:
         rp_emmap = compute_radial_profile_simple(parsed_inputs["xyz_emmap"])
         freq = frequency_array(amplitudes=rp_emmap, apix=parsed_inputs["apix"])
@@ -500,6 +504,22 @@ def get_scale_factor_arguments(parsed_inputs):
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
         pwlf_fit_quality = fit.r_squared()
     
+    # Get fsc resolution for scaling
+    if parsed_inputs["ref_resolution"] is not None:
+        given_resolution = parsed_inputs["ref_resolution"]
+        fsc_cutoff_for_scaling = given_resolution
+        print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by user input)")
+    else:
+        if halfmaps_present:
+            print("Calculating FSC resolution for scaling from the two halfmaps")
+            fsc_cutoff_for_scaling = measure_fsc_resolution_maps(parsed_inputs["halfmap_paths"][0], parsed_inputs["halfmap_paths"][1], 0.143)
+            print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by halfmap FSC (unmasked) at 0.143)")
+        else:
+            fsc_cutoff_for_scaling = nyquist + 1 
+            print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by Nyquist frequency)")
+    
+
+
 
     ###############################################################################
     # Stage 6a: Pack into a dictionary
@@ -508,7 +528,7 @@ def get_scale_factor_arguments(parsed_inputs):
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
-    scale_factor_arguments['fsc_cutoff'] = parsed_inputs["ref_resolution"]
+    scale_factor_arguments['fsc_cutoff'] = fsc_cutoff_for_scaling
     scale_factor_arguments['nyquist'] = nyquist
     scale_factor_arguments['smooth'] = parsed_inputs["smooth_factor"]
     scale_factor_arguments['boost_secondary_structure'] = parsed_inputs["boost_secondary_structure"]
