@@ -484,7 +484,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
 
     #### Set the starting bfactor of the atomic model to 40 before refinement ####
     if initialise_bfactors:
-        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.cif"
+        model_extension = os.path.splitext(model_path)[1]
+        servalcat_uniform_bfactor_input_path = model_path.replace(model_extension,"_uniform_biso.cif")
         set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
         servalcat_input = servalcat_uniform_bfactor_input_path
     else:
