@@ -161,6 +161,7 @@ def get_input_file_directory(args):
 def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     import shutil
     import os
+    import warnings
     
     source = full_path_to_file
     file_name = os.path.basename(source)
@@ -168,7 +169,7 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     if not os.path.exists(destination):
         shutil.copyfile(source, destination)
     else:
-        print(f"File {destination} already exists")
+        warnings.warn(f"File {destination} already exists")
     
     if mapfile:
         # Check the axis order 
