@@ -637,8 +637,6 @@ def check_user_input(args):
     if model_coordinates_absent and model_map_absent:
         warn_against_skip_refine(args, tolerate=False)
 
-        if args.build_using_pseudomodel:
-            check_and_warn_about_ref_resolution(args)
 
                             
     if model_coordinates_present and not hybrid_locscale:
@@ -655,7 +653,6 @@ def check_user_input(args):
         
     if model_coordinates_present and args.complete_model:
         warn_against_skip_refine(args, tolerate=False)
-        check_and_warn_about_ref_resolution(args)
         
     ## Check for window size < 10 A
     if args.window_size is not None:
