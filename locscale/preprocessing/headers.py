@@ -765,6 +765,7 @@ def check_axis_order(emmap_path, use_same_filename=False):
 
     '''
     import os
+    import warnings
     from subprocess import run, PIPE
     from locscale.include.emmer.ndimage.map_utils import read_gemmi_map, ZYX_to_XYZ, save_as_mrc
            
@@ -785,8 +786,11 @@ def check_axis_order(emmap_path, use_same_filename=False):
         save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
         return xyz_emmap_path
     else:
-        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX"
-        print(warning_message)
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX. \
+                            Please check the header of the map. Using the map as it is. This may lead to poor refinements." 
+        warnings.warn(warning_message)
+        save_as_mrc(map_data=emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
+        return xyz_emmap_path
         
     
 
