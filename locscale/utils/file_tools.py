@@ -689,6 +689,12 @@ def check_user_input(args):
         time.sleep(2)
         
     ## Find the modalities to generate reference map based on user inputs 
+    # Check for conflicting inputs
+    if model_coordinates_absent and hybrid_locscale:
+        raise UserWarning("Conflicting inputs found! LocScale is running in \
+        Model Free mode. Remove --complete_model argument in the command line")
+    
+
 
 def warn_against_skip_refine(args, tolerate):
     import warnings
