@@ -174,10 +174,9 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     if mapfile:
         # Check the axis order 
         from locscale.preprocessing.headers import check_axis_order
-        xyz_axis_order_path = check_axis_order(destination, use_same_filename=True)
-        return xyz_axis_order_path
-    else:
-        return destination
+        destination = check_axis_order(destination)
+        
+    return destination
 
 def change_directory(args, folder_name):
     import os    

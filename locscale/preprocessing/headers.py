@@ -750,8 +750,34 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
         tprint("Reference map was not generated. Returning none")
         return None
 
+def check_axis_order(emmap_path):
+    '''
+    Function to check the axis order of a map
 
-def check_axis_order(emmap_path, use_same_filename=False):
+    Parameters
+    ----------
+    emmap_path : str
+        Path to the EM map
+
+    Returns
+    -------
+    axis_order : str
+        Axis order of the map
+
+    '''
+    import warnings
+    from locscale.include.emmer.ndimage.map_utils import read_gemmi_map
+    _, grid = read_gemmi_map(emmap_path, return_grid=True)
+
+    if grid.axis_order.name != "XYZ":
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be XYZ. \
+        Please check the header of the map. This may lead to poor refinements." 
+        warnings.warn(warning_message)
+    
+    return emmap_path   
+    
+    
+def change_axis_order(emmap_path, use_same_filename=False):
     '''
     Function to generate a XYZ corrected output using Gemmi
 
