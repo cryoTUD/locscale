@@ -77,7 +77,11 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
 
     if args.halfmap_paths is not None:
+        if args.verbose:
+            print("Calculating FSC resolution for scaling from the two halfmaps")
         fsc_resolution = measure_fsc_resolution_maps(parsed_inputs["halfmap_paths"][0], parsed_inputs["halfmap_paths"][1], 0.143)
+        if args.verbose:
+            print(f"FSC resolution determined from the two halfmaps: {fsc_resolution:.2f} A")
         parsed_inputs["unmasked_fsc_resolution"] = fsc_resolution
     else:
         parsed_inputs["unmasked_fsc_resolution"] = None
