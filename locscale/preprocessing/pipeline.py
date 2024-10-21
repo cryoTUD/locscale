@@ -37,6 +37,7 @@ def get_modmap(modmap_args):
     distance = modmap_args['distance']
     total_iterations = modmap_args['total_iterations']
     ref_resolution = modmap_args['ref_resolution']
+    unmasked_fsc_resolution = modmap_args['unmasked_fsc_resolution']
     refmac_iterations = modmap_args['refmac_iterations']
     add_blur = modmap_args['add_blur']
     skip_refine = modmap_args['skip_refine']
@@ -190,9 +191,13 @@ def get_modmap(modmap_args):
             target_map = emmap_path
         else:
             target_map = halfmap_paths
-        nyquist_resolution = 2*apix + 0.1
+        if unmasked_fsc_resolution is not None:
+            resolution_for_refinement = unmasked_fsc_resolution
+        else:
+            resolution_for_refinement = 2*apix + 0.1 # Nyquist frequency
+        
         refined_model_path = run_servalcat_iterative(model_path=input_pdb_path,  map_path=target_map,\
-                    pseudomodel_refinement=pseudomodel_refinement, resolution=nyquist_resolution, num_iter=refmac_iterations,\
+                    pseudomodel_refinement=pseudomodel_refinement, resolution=resolution_for_refinement, num_iter=refmac_iterations,\
                     refmac5_path=refmac5_path,verbose=verbose, hybrid_model_refinement=complete_model, \
                     final_chain_counts=final_chain_counts, cif_info=cif_info)
     
