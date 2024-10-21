@@ -13,6 +13,7 @@ import locscale.include.emmer as emmer
 from locscale.utils.plot_tools import tab_print
 from locscale.preprocessing.headers import check_axis_order
 from locscale.include.emmer.ndimage.map_utils import load_map
+from locscale.include.emmer.ndimage.fsc_util import measure_fsc_resolution_maps
 from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary
 tabbed_print = tab_print(2)
 def prepare_mask_and_maps_for_scaling(args):
@@ -74,6 +75,12 @@ def prepare_mask_and_maps_for_scaling(args):
         parsed_inputs["xyz_emmap"], apix_from_file = load_map(parsed_inputs["xyz_emmap_path"], verbose=True)
     
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
+
+    if args.halfmap_paths is not None:
+        fsc_resolution = measure_fsc_resolution_maps(parsed_inputs["halfmap_paths"][0], parsed_inputs["halfmap_paths"][1], 0.143)
+        parsed_inputs["unmasked_fsc_resolution"] = fsc_resolution
+    else:
+        parsed_inputs["unmasked_fsc_resolution"] = None
     
     ##########################################################################
     ## use_theoretical_profile is the flag used to determine 
@@ -424,7 +431,7 @@ def get_modmap_from_inputs(parsed_inputs):
         # Stage 4a: Run the get_modmap pipeline                                 #
         #############################################################################
         modmap_path = get_modmap(parsed_inputs)
-        xyz_modmap_path = check_axis_order(modmap_path,True)
+        xyz_modmap_path = check_axis_order(modmap_path)
         xyz_modmap = load_map(xyz_modmap_path)[0]
 
     return xyz_modmap, xyz_modmap_path     
