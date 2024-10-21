@@ -134,6 +134,7 @@ def save_as_mrc(map_data,output_filename, apix=None,origin=None,verbose=False, h
             print("File name: ", output_filename)
             print("Voxel size", mrc.voxel_size)
             print("Origin", mrc.header.origin)
+            print("Shape", mrc.data.shape)
             
         
     mrc.close()
