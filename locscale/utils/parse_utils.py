@@ -153,7 +153,7 @@ def add_locscale_arguments(locscale_parser):
 
 def add_emmernet_arguments(emmernet_parser):
     emmernet_parser.add_argument(
-        '-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
+        '-o', '--outfile', help='Output filename', default="feature_enhanced_output.mrc")
     emmernet_parser.add_argument(
         '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
     emmernet_parser.add_argument(
