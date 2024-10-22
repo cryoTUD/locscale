@@ -125,7 +125,7 @@ locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v 
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
 
 ```bash
-locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc
 ```
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the supplied atomic model.
