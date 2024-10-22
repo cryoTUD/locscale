@@ -1,5 +1,5 @@
 [![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)
-[![Python 3.8](https://img.shields.io/badge/python-3.8-green)]
+[![Python 3.8](https://img.shields.io/badge/python-3.8-green)](https://www.python.org/downloads/release/python-380/)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://gitlab.tudelft.nl/aj-lab/locscale/raw/master/LICENSE)
@@ -10,7 +10,7 @@
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
-#### New in LocScale 2.2.3:
+#### New in LocScale 2.2.8:
 - Completely automated process for local map sharpening 
 
 - [Feature_enhance](#4-confidence-aware-density-modification): a confidence-aware density modification tool to enhance features in cryo-EM maps using the `EMmerNet` neural network.
@@ -133,12 +133,12 @@ The output will be a locally sharpened map scaled according to the refined atomi
 To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
 
 ```bash
-mpirun -np 4 locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc -mpi
+mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc -mpi
 ```
 #### 2. Run LocScale using a partial atomic model:
 
 ```bash
-locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc --complete_model
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model
 ```
 
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
@@ -158,7 +158,7 @@ The output will be a locally sharpened map scaled according to the refined atomi
 To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
 
 ```bash
-mpirun -np 4 locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc  --complete_model -mpi
+mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc  --complete_model -mpi
 ```
 
 #### 3. Run LocScale without atomic model:
@@ -170,13 +170,13 @@ Another option would be to use pseudo-atomic model. This can be enabled by passi
 Usually all default parameters for pseudomodel and reference profile generation are fine, but you can [change](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) them if you deem fit.
 
 ```bash
-locscale -em path/to/emmap.mrc -res 3 -v -o model_free_locscale.mrc
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -o model_free_locscale.mrc
 ```
 ##### Symmetry
 If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g. for D2:
 
 ```bash
-locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -sym D2 -v -o model_free_locscale.mrc
 ```
 
 LocScale currently supports all common point group symmetries. We are working on supporting helical symmetry, but this is not yet implemented. 
@@ -184,7 +184,7 @@ LocScale currently supports all common point group symmetries. We are working on
 For faster computation, use [OpenMPI](https://www.open-mpi.org/):
 
 ```bash
-mpirun -np 4 locscale -em path/to/emmap.mrc -res 3 -sym D2 -v -o model_free_locscale.mrc -mpi
+mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -sym D2 -v -o model_free_locscale.mrc -mpi
 ```
 
 
@@ -203,7 +203,7 @@ Instead of a reference-based sharpening procedure, LocScale also supports densit
  While we encourage its use for model building and visualisation, we do not recommend using the prediction from the neural network as target for model refinement.
 
 ```bash
-locscale feature_enhance -em path/to/emmap.mrc -v -gpus 1 -o feature_enhanced_prediction.mrc
+locscale feature_enhance -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -gpus 1 -o feature_enhanced_prediction.mrc
 ```
 This will output a feature enhanced map together with a p-value map that can be used to assess the quality of the prediction.
 
