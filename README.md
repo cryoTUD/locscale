@@ -119,7 +119,7 @@ LocScale can generate locally sharpened cryo-EM maps either using model-based sh
 #### 1. Run LocScale using an existing atomic model:
 
 ```bash
-locscale -em path/to/emmap.mrc -mc path/to/model.pdb -res 3 -v -o model_based_locscale.mrc
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc
 ```
 
 Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
