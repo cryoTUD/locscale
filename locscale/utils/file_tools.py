@@ -182,34 +182,26 @@ def change_directory(args, folder_name):
     import os    
     import locscale
     from locscale.utils.file_tools import copy_file_to_folder
-    
-    # Get the input folder
     input_folder = get_input_file_directory(args)
-    
     if folder_name is None:
+        # Get the input folder
         new_directory = os.path.join(input_folder, "processing_files")
     else:
-        if os.path.isabs(folder_name):
-            new_directory = folder_name
-        else:
-            new_directory = os.path.join(input_folder, folder_name)
+        new_directory = folder_name
     
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
-    
-    assert os.path.isdir(new_directory), "New directory does not exist"
-    assert os.path.isabs(new_directory), "New directory is not absolute"
-    
+        
     if args.verbose:
         print("Copying files to {}\n".format(new_directory))
     
     # Set the "output_processing_files" argument to the new_directory
-    setattr(args, "output_processing_files", new_directory)
+    setattr(args, "output_processing_files", os.path.abspath(new_directory))
 
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path" and arg != "mask":
+            if os.path.exists(value) and arg not in ["outfile","output_processing_files","emmap_path","mask","model_map"]:
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location)
             elif arg == "emmap_path" or arg == "mask":
@@ -519,7 +511,7 @@ def is_input_path_valid(list_of_test_paths):
             return is_test_path_valid
         if not os.path.exists(test_path):
             is_test_path_valid = False
-            return is_test_path_valid
+            raise FileNotFoundError("File {} does not exist".format(test_path))
     
     ## If all tests passed then return True
     is_test_path_valid = True
