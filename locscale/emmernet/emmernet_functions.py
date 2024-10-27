@@ -241,7 +241,9 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
     locscale_map, apix = load_map(locscale_output_path)
     mean_prediction, apix = load_map(mean_prediction_path)
     var_prediction, apix = load_map(var_prediction_path)
-
+    # save a chimera script at the same folder as mean_prediction
+    main_folder = os.path.dirname(mean_prediction_path)
+    chimera_script_path = os.path.join(main_folder, "chimera_script.cxc")
     standard_deviation = np.sqrt(var_prediction)
     standard_error = standard_deviation / np.sqrt(n_samples)
     
@@ -267,9 +269,10 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
     save_as_mrc(z_score_map, z_score_map_path, apix)
 
     # Create a chimera script to visualize the map
-    create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path)
+    create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path, chimera_script_path)
 
-def create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path):
+def create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path, chimera_script_path):
+    import os
     print("=========VISUALISATION INSTRUCTIONS=========")
     print("Open the feature enhanced map and pVDDT map in chimera")
     print("#1: Feature enhanced map and #2: pVDDT map")
@@ -280,3 +283,20 @@ def create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_pr
     print(color_scheme_command)
     print("============================================")
     
+    mean_prediction_path = os.path.abspath(mean_prediction_path)
+    locscale_output_path = os.path.abspath(locscale_output_path)
+    pVDDT_map_path = os.path.abspath(pVDDT_map_path)
+    open_mean_map_command = f"open {mean_prediction_path}"
+    open_locscale_map_command = f"open {locscale_output_path}"
+    open_pVDDT_map_command = f"open {pVDDT_map_path}"
+    # Threshold the maps
+    threshold_command = "volume #1 level 0.12; volume #2 level 0.12;"
+    # Color the maps
+    color_scheme_command = "color sample #1 map #3 palette -95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000;"
+    # Save the script
+    with open(chimera_script_path, "w") as f:
+        f.write(open_mean_map_command + "\n")
+        f.write(open_locscale_map_command + "\n")
+        f.write(open_pVDDT_map_command + "\n")
+        f.write(threshold_command + "\n")
+        f.write(color_scheme_command + "\n")
