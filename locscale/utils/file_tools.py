@@ -655,8 +655,9 @@ def check_user_input(args):
         else:
             if args.emmap_path is not None:
                 apix = mrcfile.open(args.emmap_path).voxel_size.x
-            elif args.half_map1 is not None:
-                apix = mrcfile.open(args.half_map1).voxel_size.x
+            elif args.halfmap_paths is not None:
+                halfmap_1_path = args.halfmap_paths[0]
+                apix = mrcfile.open(halfmap_1_path).voxel_size.x
         
         window_size_ang = window_size_pixels * apix
         
