@@ -323,7 +323,7 @@ def prepare_inputs_for_FDR(parsed_inputs):
         fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
         parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
     else:
-        fdr_window_size = int(parsed_inputs["fdr_w"])
+        fdr_window_size = int(parsed_inputs["fdr_window_size"])
 
     # Set averaging_filter_size
     averaging_filter_size = parsed_inputs["averaging_filter_size"]    
