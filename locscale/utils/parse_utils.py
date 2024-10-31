@@ -62,6 +62,8 @@ def add_common_arguments(parser):
         '-gpus', '--gpu_ids', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False, nargs='+')
     prediction_argument_group.add_argument(
         '-cube_size','--cube_size', help='Size of the input cube for EMMERNET', default=32, type=int)
+    prediction_argument_group.add_argument(
+        '-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 
     
 def add_locscale_arguments(locscale_parser):    
@@ -129,7 +131,7 @@ def add_locscale_arguments(locscale_parser):
         '--build_ca_only', help='For gradient pseudomodel building: use only Ca atoms with interatomic distance 3.8',\
                                     action='store_true',default=False)
     pseudo_atomic_parser.add_argument(
-        '-s', '--smooth_factor', help='Smooth factor for merging profiles', default=0.3, type=float)
+        '-smooth', '--smooth_factor', help='Smooth factor for merging profiles', default=0.3, type=float)
     pseudo_atomic_parser.add_argument(
         '--boost_secondary_structure', help='Amplify signal corresponding to secondary structures', default=1.5, type=float)
     
@@ -155,8 +157,6 @@ def add_emmernet_arguments(emmernet_parser):
     emmernet_parser.add_argument(
         '-o', '--outfile', help='Output filename', default="feature_enhanced_output.mrc")
     emmernet_parser.add_argument(
-        '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
-    emmernet_parser.add_argument(
         '-sym', '--symmetry', help='If not equal to C1, then symmetry averaging will be performed', default='C1', type=str)
     
     misc_parser = emmernet_parser.add_argument_group('Miscellaneous arguments')
@@ -168,8 +168,14 @@ def add_emmernet_arguments(emmernet_parser):
         '-pb','--physics_based', help='Use physics-based model (under development!)', action='store_true')
     misc_parser.add_argument(
         '-download', '--download', help='Download the model weights', action='store_true', default=False)
-    misc_parser.add_argument(
-        '-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
+    
+    scaling_argument_group = emmernet_parser.add_argument_group('Scaling arguments')
+    scaling_argument_group.add_argument(
+        '-wn', '--window_size', help='window size in pixels', default=None, type=int)
+    scaling_argument_group.add_argument(
+        '-mpi', '--mpi', help='MPI version', action='store_true', default=False)
+    scaling_argument_group.add_argument(
+        '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
     
 
 locscale_parser = argparse.ArgumentParser(prog="locscale",description="".join(description)) 
