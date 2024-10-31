@@ -82,7 +82,7 @@ else:
     ext_modules = [ex1]
 
 setup(name='locscale',
-    version="2.2.8c",
+    version="2.2.8e",
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://gitlab.tudelft.nl/aj-lab/locscale',
     project_urls={
