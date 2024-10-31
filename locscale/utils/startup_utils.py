@@ -191,6 +191,13 @@ def launch_contrast_enhance(args):
         launch_locscale_no_mpi(args)
 
 def launch_feature_enhance(args):
+
+    if args.mpi:
+        launch_feature_enhance_mpi(args)
+    else:
+        launch_feature_enhance_no_mpi(args)
+
+def launch_feature_enhance_no_mpi(args):
     from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
     from locscale.utils.file_tools import change_directory, pretty_print_dictionary
     from locscale.utils.general import try_to
@@ -245,6 +252,88 @@ def launch_feature_enhance(args):
     print("Please check the pVDDT.mrc to observe significantly hallucinated features")
     ## Print end
     print_end_banner(datetime.now(), start_time)
+
+def launch_feature_enhance_mpi(args):
+    from locscale.emmernet.utils import check_emmernet_inputs, check_and_save_output
+    from locscale.utils.file_tools import change_directory, pretty_print_dictionary
+    from locscale.utils.general import try_to
+    from locscale.utils.plot_tools import compute_probability_distribution
+    from locscale.emmernet.prepare_inputs import prepare_inputs
+    from locscale.emmernet.run_emmernet import run_emmernet
+    from locscale.emmernet.emmernet_functions import calculate_significance_map_from_emmernet_output
+    
+    from mpi4py import MPI
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    ## If rank is 0, check and prepare inputs
+    try:
+        if rank==0:
+            ## Print start
+            start_time = datetime.now()
+            print_start_banner(start_time, "EMmerNet")
+            if args.verbose:
+                print_arguments(args)
+            
+            ## Check input
+            check_emmernet_inputs(args)
+            
+            copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
+            copied_args.logger.info("Running Feature Enhancement using EMmerNet")
+            copied_args.logger.info("-"*80)
+            copied_args.logger.info(f"Arguments used: \n{pretty_print_dictionary(vars(copied_args))}")
+            copied_args.logger.info("-"*80)
+            
+            ## Prepare inputs
+            input_dictionary = prepare_inputs(copied_args)
+            
+            ## Run EMMERNET
+            emmernet_output_dictionary = run_emmernet(input_dictionary)
+            emmernet_output_dictionary = check_and_save_output(input_dictionary, emmernet_output_dictionary)
+            ## Run LocScale using EMmerNet output using MPI
+            locscale_args = get_locscale_inputs_from_emmernet(input_dictionary, emmernet_output_dictionary)
+        else:
+            input_dictionary = None
+            emmernet_output_dictionary = None
+            locscale_args = None
+        
+        ## Wait for inputs to be prepared by rank 0
+        comm.barrier()
+        ## Broadcast inputs to all ranks
+        locscale_args = comm.bcast(locscale_args, root=0)
+
+        ## Run LocScale using EMmerNet output
+        launch_contrast_enhance(locscale_args)
+
+        if rank == 0:
+            # Calculate the p-values from the output of EMmerNet and LocScale
+            locscale_output_filename = locscale_args.outfile 
+            emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
+            emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
+            calculate_significance_map_from_emmernet_output(
+                locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, n_samples=input_dictionary["monte_carlo_iterations"])
+            # Compute the probability distribution for calibration
+            
+            probability_args = {"locscale_path" : locscale_output_filename, 
+                                "mean_prediction_path" : emmernet_output_mean_filename,
+                                "var_prediction_path" : emmernet_output_var_filename,
+                                "n_samples" :input_dictionary["monte_carlo_iterations"], 
+                                "processing_files_folder" : input_dictionary["output_processing_files"]}
+            
+            try_to(compute_probability_distribution,**probability_args)
+            
+            print("EMmerNet finished successfully")
+            print("Please check the pVDDT.mrc to observe significantly hallucinated features")
+            ## Print end
+            print_end_banner(datetime.now(), start_time)
+        
+            
+    except Exception as e:
+        print("Process {} failed with error: {}".format(rank, e))
+        comm.Abort()
+        raise e
+    
+    
     
 def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     from locscale.automate.tools import get_defaults_dictionary
@@ -258,11 +347,12 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     defaults_dictionary["emmap_path"] = parsed_inputs["xyz_emmap_path"]
     defaults_dictionary["mask"] = parsed_inputs["xyz_mask_path"]
     defaults_dictionary["model_map"] = emmernet_output["reference_map_for_locscale"]
-    defaults_dictionary["verbose"] = False 
+    defaults_dictionary["verbose"] = parsed_inputs["verbose"] 
     defaults_dictionary["outfile"] = output_path
     defaults_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]
-    defaults_dictionary["logger"] = parsed_inputs["logger"]
+    #defaults_dictionary["logger"] = parsed_inputs["logger"]
     defaults_dictionary["number_processes"] = parsed_inputs["number_processes"]
+    defaults_dictionary["mpi"] = parsed_inputs["mpi"]
     
     locscale_args = argparse.Namespace(**defaults_dictionary)
     
