@@ -771,7 +771,7 @@ def check_axis_order(emmap_path):
 
     if grid.axis_order.name != "XYZ":
         warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be XYZ. \
-        Please check the header of the map. This may lead to poor refinements." 
+        Please check the header of the map. If the map orientation is incorrect, it may lead to poor refinement when running Model Based or Hybrid LocScale." 
         warnings.warn(warning_message)
     
     return emmap_path   
