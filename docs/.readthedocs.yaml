@@ -13,4 +13,9 @@ mkdocs:
 
 python:
   install:
-    - requirements: requirements.txt
+    - method: pip
+      packages:
+        - mkdocs
+        - mkdocs-material[emojis]
+        - pymdown-extensions
+
