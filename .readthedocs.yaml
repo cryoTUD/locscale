@@ -19,4 +19,5 @@ python:
         - mkdocs-material[all]
         - pymdown-extensions
         - markdown  # sometimes needed explicitly
+        - pymdownx.emoji
 
