@@ -13,7 +13,5 @@ mkdocs:
 
 python:
   install:
-    - pip: 
-        packages:
-          - mkdocs-material[emojis]
+    requirements: requirements.txt
 
