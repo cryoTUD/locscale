@@ -110,4 +110,3 @@ plugins:
 
 extra_css:
   - stylesheets/extra.css
-  #- gallery/stylesheets/extra.css
