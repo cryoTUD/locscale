@@ -1,6 +1,6 @@
 # Overview
 <div class="c-compare" style="--value:20%; --h:4.6; --w:16;">
-  <img class="c-compare__left" src="https://photos.app.goo.gl/y798XUJ7sSFt7sft9"
+  <img class="c-compare__left" src="https://lh3.googleusercontent.com/pw/AP1GczO6MYBaRBnF2hu5P8VlsF0X_OCxNAh1Lcr_FSnmg906qeig-FvD4Hv1lgdHLEU-OHYdNAfZFduwVNseoTa5avg3GoNbwLBQCabFOUDyw5X4eWDF9E529TQwD8HLmRV8swHbySPmMqJviMiLWEo4AXDd=w653-h697-s-no?authuser=0"
 alt="Raw map" />
   <img class="c-compare__right" src="https://drive.google.com/file/d/1ALCRU8M8uZTQMqCPJ7TOLJWePRXw6Uf2/view?usp=drive_link" 
 alt="Feature-enhanced map" />
