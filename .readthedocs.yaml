@@ -16,5 +16,6 @@ python:
     - method: pip
       packages:
         - mkdocs
-        - mkdocs-material
+        - mkdocs-material[emojis]
+        - mkdocs-material[math]
         - pymdown-extensions
