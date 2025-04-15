@@ -18,8 +18,8 @@ theme:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: #00A6D6
-      accent: #00A6D6
+      primary: blue
+      accent: blue
       toggle:
         icon: material/toggle-switch
         name: Switch to dark mode
