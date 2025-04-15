@@ -13,5 +13,7 @@ mkdocs:
 
 python:
   install:
-    - pip install mkdocs-material[emojis]
+    - pip: 
+        packages:
+          - mkdocs-material[emojis]
 
