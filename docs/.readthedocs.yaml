@@ -13,9 +13,5 @@ mkdocs:
 
 python:
   install:
-    - method: pip
-      packages:
-        - mkdocs
-        - mkdocs-material[emojis]
-        - pymdown-extensions
+    - pip install mkdocs-material[emojis]
 
