@@ -2,7 +2,11 @@
 
 `LocScale` is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 
-
+!!! note
+    f,vf,v;fr,vfr
+    ,fe,rf;l,r;lf,rt
+    l;d,f;le,f;erl
+    
 >#### New in LocScale 2:
 >- Completely automated process for local map sharpening 
 >
