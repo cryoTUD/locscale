@@ -14,4 +14,3 @@ mkdocs:
 python:
   install:
     - method: pip
-      path: .
