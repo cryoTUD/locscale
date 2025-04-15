@@ -1,5 +1,5 @@
 # Overview
-<div class="c-compare" style="--value:10%; --h:2.6; --w:6;">
+<div class="c-compare" style="--value:20%; --h:4.6; --w:16;">
   <img class="c-compare__left" src="https://drive.google.com/uc?id=1Qyto1nhGk_M31fHWacJTj-vYeLrCX7tZ"
 alt="Raw map" />
   <img class="c-compare__right" src="https://drive.google.com/uc?id=1ALCRU8M8uZTQMqCPJ7TOLJWePRXw6Uf2" 
