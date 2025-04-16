@@ -34,8 +34,8 @@
   </div>
 </div>
 <br>
-!!! info 
-    This figure shows the effect of ```locscale_feature_enhance```.
+!!! info "Waht are we looking at here"
+    This figure shows the effect of map optimisation with ```LocScale 2.0```, in this case using the ```locscale_feature_enhance``` option. ```LocScale 2.0``` attempts to simultaneously enhance high-resolution structural detail and improve contrast of low(er) resolution map regions associated with flexible domains, subunits with partial occupancy and contextual structures such as detergent micelles.
 
 ## Which map optimisation procedure should I use?
 
