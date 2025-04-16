@@ -78,13 +78,16 @@ extra:
 
 nav:
   - Introduction: index.md
-  - Install: install.md
+  - Installation: install.md
   #- Troubleshooting:
   #    - Install troubles: Troubleshooting/install_trbl.md
   #    - ChimeraX: Troubleshooting/chimX_trbl.md
   #    - Other: Troubleshooting/other_trbl.md
-  #- Tutorials:
-  #    - GUI overview: Tutorials/gui.md
+  - Usage | Tutorials:
+      - Feature enhanced maps (FEM): tutorials/fem.md
+      - Model-free LocScale: tutorials/model_free_locscale.md
+      - Hybrid LocScale: tutorials/hybrid_locscale.md
+      - Model-based LocScale: tutorials/model_based_locscale.md
   #    - Intro tutorial: Tutorials/intro.md
   #    - I want to:
   #        - Estimate relative resolution: Tutorials/case/est_res.md
@@ -103,7 +106,7 @@ nav:
   #        - Modification: gallery/modification.md
   #      - From the team:
   #        - High-res: gallery/highres.md
-  - About: about.md
+  - About LocScale: about.md
 
 plugins:
   - search
