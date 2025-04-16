@@ -3,11 +3,12 @@
 </div>
 
 !!! info "What's new in LocScale 2.0"     
-    - [Feature_enhanced maps](#4-confidence-aware-density-modification): Confidence-weighted map optimisation by variational inference.
+    - [Feature_enhanced maps](tutorials/fem.md): Confidence-weighted map optimisation by variational inference.
     - [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): Reference-based local sharpening with partial (incomplete) models.  
     - [Model-free sharpening](#3-run-locscale-without-atomic-model): Reference-based local sharpening without atomic models. 
     - Completely automated process for local map optimisation
-    - Full support for point group symmetry (helical symmetry to follow).  
+    - Full support for point group symmetry (helical symmetry to follow).
+    - [LocScale-SURFER](https://locscale-surfer.readthedocs.io/): ChimeraX plugin to toggle contextual structure in ```LocScale``` maps
 
 ---
 ## How does LocScale 2.0 work?
