@@ -45,7 +45,7 @@ Usually all default parameters for pseudomodel and reference profile generation 
 
 The output will be a locally sharpened map scaled according to the ```EMmerNet```-predicted reference maps or the local scale factors derived from the ADP distribution of the hybrid pseudoatom model.
 
-!!! Speed-up computation on multiple CPUs
+!!! tip "Speed-up computation on multiple CPUs"
     To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`]
     (https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You
     can run it as follows:
