@@ -3,15 +3,23 @@
     <br>
     ![alt text](img/hybrid.png)
 
-```bash
-locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model
-```
-
-Here, emmap.mrc should be the unsharpened and unfiltered density map. If you wish to use the two half maps instead, use the following command:
+The hybrid ```LocScale``` workflow is useful in cases where partial model information is available but substantial map regions of interest or contextual densities cannot be modelled and/or are likely to fall outside the model generalisation of ```EMmerNet```, or in cases where optimal local sharpening using a physics-based amplitude scaling procedure is desired.
 
 ```bash
 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model
 ```
+
+Here, ```halfmap1.mrc``` and ```halfmap2.mrc``` should be the unsharpened and unfiltered half maps from yourr 3D refinement. If you wish to use the full map instead, use the following command:
+
+```bash
+locscale -em path/to/fullmap.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model
+```
+
+Note that in this case no half map validation can be performed for coordinate and ADP refinement of the hybrid model.
+
+!!! warning "Use of unfiltered input maps"
+    Note that using unfiltered maps as input is essential. Information beyond the spatial filter cutoff cannot be recovered.
+    
 !!! note "Point group symmetry"
     If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised
     reference map for scaling. You can do this by specifying the required point group symmetry using the `-sym/--symmetry` flag, e.g.
