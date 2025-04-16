@@ -1,2 +1,2 @@
 
-![alt text](img/feature_enhance.png)
+![alt text](img/feature_enhanced.png)
