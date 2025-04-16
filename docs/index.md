@@ -34,7 +34,7 @@
   </div>
 </div>
 <br>
-!!! info ""
+!!! info 
     This figure shows the effect of ```locscale_feature_enhance```.
 
 ## Which map optimisation procedure should I use?
