@@ -18,10 +18,7 @@
 <br>
 
 !!! info inline end "What are we looking at here?"
-    This figure shows the effect of map optimisation with ```LocScale 2.0``` using the ```feature_enhance``` option. ```LocScale 2.0``` attempts to simultaneously enhance high-resolution structural detail and improve contrast of low(er) resolution map regions associated with flexible subunits, partial occupancy and contextual structure such as detergent micelles.
-    !!! warning 
-        Confidence scores are not a 100% safeguard against misleading interpretations.
-
+    Example of map optimisation with ```LocScale 2.0``` using the ```feature_enhance``` option. ```LocScale 2.0``` attempts to simultaneously enhance high-resolution structural detail and improve contrast of low(er) resolution map regions associated with flexible subunits, partial occupancy and contextual structure such as detergent micelles.
 
 <div style="display: flex; flex-direction: column; align-items: left;">
   <div class="c-compare" style="--value:50%; position: relative; width: 500px; height: 333px; overflow: hidden;">
