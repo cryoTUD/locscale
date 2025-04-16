@@ -1,5 +1,6 @@
-### Run LocScale using a partial atomic model
-!!!info
+#Hybrid LocScale<br><sup>Run LocScale with a partial atomic model</sup>
+!!!info "Hybrid LocScale workflow"
+    <br>
     ![alt text](img/hybrid.png)
 
 ```bash
