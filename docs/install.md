@@ -38,7 +38,7 @@ You can also follow these steps to install locscale using pip.
 
 ##### 1. Create and activate a new conda environment
 
-```bash
+```bash title="1. Create and activate a new conda environment"
 conda create -n locscale python=3.8 
 conda activate locscale
 ```
