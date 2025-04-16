@@ -81,33 +81,11 @@ extra:
 nav:
   - Introduction: index.md
   - Installation: install.md
-  #- Troubleshooting:
-  #    - Install troubles: Troubleshooting/install_trbl.md
-  #    - ChimeraX: Troubleshooting/chimX_trbl.md
-  #    - Other: Troubleshooting/other_trbl.md
   - Usage | Tutorials:
       - Feature enhanced maps (FEM): tutorials/fem.md
-      - Model-free LocScale: tutorials/model_free_locscale.md
       - Hybrid LocScale: tutorials/hybrid_locscale.md
+      - Model-free LocScale: tutorials/model_free_locscale.md
       - Model-based LocScale: tutorials/model_based_locscale.md
-  #    - Intro tutorial: Tutorials/intro.md
-  #    - I want to:
-  #        - Estimate relative resolution: Tutorials/case/est_res.md
-  #        - Estimate occupancy: Tutorials/case/est_occ.md
-  #        - Modify a map: Tutorials/case/modification.md
-  #        - Supress solvent: Tutorials/case/supp_solv.md
-  #        - Make a subtraction mask : Tutorials/case/sub_mask.md
-  #        - Use a solvent definition: Tutorials/case/soldef.md
-  #- Showcase/gallery:
-  #  - View all: gallery/index.md
-  #  - Individual:
-  #      - From the paper:
-  #        - Synthetic: gallery/synthetic.md
-  #        - Mass: gallery/mass.md
-  #        - Membrane: gallery/membrane.md
-  #        - Modification: gallery/modification.md
-  #      - From the team:
-  #        - High-res: gallery/highres.md
   - About LocScale: about.md
 
 plugins:
