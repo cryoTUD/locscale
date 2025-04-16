@@ -19,4 +19,5 @@ If you found `LocScale` useful for your research, please consider citing it:
 
 ## Bugs and questions
 
-For bug reports please use the [Github issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues). 
+For bug reports please use the [LocScacle issue tracker](https://github.com/cryoTUD/locscale/issues)
+). 
