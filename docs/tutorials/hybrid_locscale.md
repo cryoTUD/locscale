@@ -35,7 +35,7 @@ Note that in this case no half map validation can be performed for coordinate an
 
 The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the hybrid atomic/pseudoatom model.
 
-!!! Speed-up computation on multiple CPUs
+!!! tip "Speed-up computation on multiple CPUs"
     To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`
     (https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You
     can run it as follows:
