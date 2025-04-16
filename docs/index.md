@@ -2,11 +2,11 @@
 <div style="text-align: justify"><code>LocScale 2.0</code> is an automated program for local sharpening of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map.
 </div>
 
-!!! info "What's new in LocScale 2.0"  
-    - Completely automated process for local map sharpening   
-    - [Feature_enhance](#4-confidence-aware-density-modification): Confidence-weighted map optimisation by variational inference.
-    - [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): `LocScale` now supports reference-based sharpening with partial (incomplete) models.  
-    - [Model-free sharpening](#3-run-locscale-without-atomic-model): `LocScale` now supports reference-based sharpening without any model information.  
+!!! info "What's new in LocScale 2.0"     
+    - [Feature_enhanced maps](#4-confidence-aware-density-modification): Confidence-weighted map optimisation by variational inference.
+    - [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): Reference-based local sharpening with partial (incomplete) models.  
+    - [Model-free sharpening](#3-run-locscale-without-atomic-model): Reference-based local sharpening without atomic models. 
+    - Completely automated process for local map optimisation
     - Full support for point group symmetry (helical symmetry to follow).  
 
 ---
@@ -42,8 +42,11 @@
 
 ## Which map optimisation procedure should I use?
 
+```LocScale 2.0``` supports several different workflows for automated, physics-informed map optimisation. Three of them fall into the category of local sharpening methods, and one ––__feature-enhanced maps__–– is a map optimisation methods akin to density modification. The different methods serve different needs and we will try to guide choosing the right approach for different scenarios below.
 
+<br>
 ![alt](imgs/overview_methods.png)
+<brr>
 
 In general we recommend using ```locscale_feature_enhance``` for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
 
