@@ -39,6 +39,9 @@
 
 ## Which map optimisation procedure should I use?
 
+
+![alt](imgs/overview_methods.png)
+
 In general we recommend using ```locscale_feature_enhance``` for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
 
 
