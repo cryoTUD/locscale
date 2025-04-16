@@ -33,7 +33,12 @@
            style="position: absolute; bottom: 10px; left: 10px; width: 90%; z-index: 10;" />
   </div>
 </div>
+<br>
+!!! info ""
+    This figure shows the effect of ```locscale_feature_enhance```.
 
 ## Which map optimisation procedure should I use?
+
+In general we recommend using ```locscale_feature_enhance``` for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
 
 
