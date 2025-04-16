@@ -17,7 +17,7 @@
 </div>
 <br>
 <div style="display: flex; flex-direction: column; align-items: center;">
-  <div class="c-compare" style="--value:50%; position: relative; width: 600px; height: 400px; overflow: hidden;">
+  <div class="c-compare" style="--value:50%; position: left; width: 400px; height: 267px; overflow: hidden;">
     <img class="c-compare__left"
          src="imgs/emd19995.png"
          alt="Raw map"
@@ -35,7 +35,7 @@
 </div>
 <br>
 
-!!! info "What are we looking at here?"
+!!! info inline end "What are we looking at here?"
     This figure shows the effect of map optimisation with ```LocScale 2.0```, in this case using the ```feature_enhance``` option. ```LocScale 2.0``` attempts to simultaneously enhance high-resolution structural detail and improve contrast of low(er) resolution map regions associated with flexible domains, subunits with partial occupancy and contextual structures such as detergent micelles.
     !!! warning 
         Confidence scores are not a 100% safeguard against misleading interpretations.
