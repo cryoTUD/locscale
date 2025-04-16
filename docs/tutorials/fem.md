@@ -1,4 +1,4 @@
-# Feature-enhanced maps<br><sup>Confidence-weighted map optimisation by density modification</sup>
+# Feature-enhanced maps<br><sup>Confidence-weighted map optimisation</sup>
 
 LocScale also supports confidence-weighted density modification based on a Bayesian-approximate implementation of ```EMmerNet```, whiich strives to simultaneously optimise high-resolution detail and contrast of low(er) resolution map regions or contextual stucture. To mitigate any risk of bias from network hallucination, ```LocScale``` integrates this procedure with calculate a per-pixel confidence score (__pVDDT score__) that effectively highlights regions requiring cautious interpretation.
 <br>
