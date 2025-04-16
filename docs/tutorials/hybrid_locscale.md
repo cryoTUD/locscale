@@ -1,6 +1,6 @@
 ### Run LocScale using a partial atomic model
 !!!info
-  ![alt text](img/hybrid.png)
+    ![alt text](img/hybrid.png)
 
 ```bash
 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model
