@@ -33,7 +33,7 @@ The output will be a locally sharpened map scaled according to the scale factors
 !!! warning "Recommended use of unfiltered input maps"
     Note that using unfiltered maps as input is essential. If using previously filtered maps, information beyond the spatial filter cutoff cannot be recovered.   
 
-#### Model-free locsl sharpening with pseudomodels
+#### Model-free local sharpening with pseudomodels
 Another option for model-free sharpening is use a full pseudotatom model. This can be enabled by passing the ```--build_using_pseudomodel``` flag when invoking ```LocScale```. This mode will estimate the molecular volume using statistical thresholding and generate a pseudo-atomic model within the thresholded boundary to approximate the distribution of atomic scatterers and estimate the local B-factor. It will then generate an average reference profile for local sharpening based on the experimental data and expected properties for electron scattering of biological macromolecules [2]. Use this if the default ```EMmerNet```-based reference map generation does not work well for your data (e.g. if the map is too noisy or if the map has very low resolution).
 
 ```bash
