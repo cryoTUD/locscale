@@ -29,7 +29,7 @@ locscale -em path/to/fullmap.mrc -mc path/to/model.pdb -v -gpus 1 -o feature_enh
 
     ```bash
     locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -sym D2 -gpus 1 -o feature_enhanced.mrc
-```
+    ```
 
 The output will be __feature-enhanced map__ along with its confidence scores that can be found in the file ```pvDDT.mrc```.
 
