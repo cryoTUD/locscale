@@ -21,7 +21,7 @@ locscale -em path/to/fullmap.mrc -mc path/to/model.pdb -v -o model_based_locscal
 
 Note that in this case no half map validation can be performed for coordinate and ADP refinement of the hybrid model.
 
-!!! warning "Use of unfiltered input maps"
+!!! warning "Recommended use of unfiltered input maps"
     Note that using unfiltered maps as input is essential. Information beyond the spatial filter cutoff cannot be recovered.
     
 !!! note "Point group symmetry"
