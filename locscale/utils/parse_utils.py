@@ -19,6 +19,8 @@ def add_common_arguments(parser):
         '-em', '--emmap_path',  help='Path to unsharpened EM map')
     locscale_emmap_input.add_argument(
         '-hm', '--halfmap_paths', help='Paths to first and second halfmaps', nargs=2)
+    input_emmap_group.add_argument(
+        '-filter_input', '--filter_input', help='Filter the input maps before processing', action='store_true', default=False)
     
     ## Input mask
     mask_input_group = parser.add_argument_group('Mask input arguments')
