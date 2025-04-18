@@ -25,7 +25,7 @@
     [:octicons-arrow-right-24: Locscale-FEM](tutorials/fem.md)
 
 -   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__  
-    Physics-based map optimisation process with optimal preservation of contextual structure. 
+    Physics-based map optimisation with optimal preservation of contextual structure. 
 
     ---
     ![Hybrid LocScale](imgs/hybrid.png)
