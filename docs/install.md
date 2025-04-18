@@ -29,38 +29,6 @@
 </div>
 
 
-<div class="grid cards" markdown>
-
--   :material-clock-fast:{ .lg .middle } __LocScale-FEM__
-
-    ---
-    ![Hybrid LocScale](imgs/hybrid.png)
-
-    [:octicons-arrow-right-24: Hybrid LocScale](#quick)
-
--   :material-clock-fast:{ .lg .middle } __Hybrid LocScale__
-
-    ---
-    ![Model-free LocScale](imgs/model_free.png)
-
-    [:octicons-arrow-right-24: Model-free LocScale](#quick)
-
--   :material-clock-fast:{ .lg .middle } __Model-free LocScale__
-
-    ---
-    ![Model-based LocScale](imgs/model_based.png)
-
-    [:octicons-arrow-right-24: Model-based Locscale](#quick)
-
--   :material-clock-fast:{ .lg .middle } __Model_based LocScale__
-
-    ---
-    ![LocScale_FEM](imgs/feature_enhanced.png)
-
-    [:octicons-arrow-right-24: LocScale-FEM](#quick)
-
-</div>
-
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
 ### Installation via environment files: {#quick}
