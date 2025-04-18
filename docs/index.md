@@ -5,10 +5,10 @@
 !!! info "What's new in LocScale 2.0"     
     - [Feature_enhanced maps](tutorials/fem.md): Confidence-weighted map optimisation by variational inference.
     - [Hybrid sharpening](#2-run-locscale-using-a-partial-atomic-model): Reference-based local sharpening with partial (incomplete) models.  
-    - [Model-free sharpening](#3-run-locscale-without-atomic-model): Reference-based local sharpening without atomic models. 
-    - Completely automated process for local map optimisation
-    - Full support for point group symmetry (helical symmetry to follow).
+    - [Model-free sharpening](#3-run-locscale-without-atomic-model): Reference-based local sharpening without atomic models.
     - [LocScale-SURFER](https://locscale-surfer.readthedocs.io/): ChimeraX plugin to toggle contextual structure in ```LocScale``` maps
+    - Complete automation of the map optimisation process
+    - Full support for point group symmetry (helical symmetry to follow).
 
 ---
 
@@ -17,7 +17,7 @@
 <div class="grid cards" markdown>
 
 -   :material-fruit-pineapple:{ .lg .middle } __LocScale-FEM__  
-    <ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps
+    <ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps with confidence weighting. Recommended for most cases. 
 
     ---
     ![Locscale-FEM LocScale](imgs/feature_enhanced.png)
@@ -25,7 +25,7 @@
     [:octicons-arrow-right-24: Locscale-FEM](tutorials/fem.md)
 
 -   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__  
-    Automated local sharpening without the need for model information. Fast and 
+    Physics-based map optimisation process with optimal preservation of contextual structure. 
 
     ---
     ![Hybrid LocScale](imgs/hybrid.png)
@@ -33,7 +33,7 @@
     [:octicons-arrow-right-24: Hybrid LocScale](#quick)
 
 -   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__  
-    Automated local sharpening without the need for model information. Fast and 
+    Automated local sharpening without the need for model information. Fast and easy.
 
     ---
     ![Model-free LocScale](imgs/model_free.png)
