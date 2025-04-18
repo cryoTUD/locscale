@@ -28,15 +28,36 @@
     [:octicons-arrow-right-24: Install guide](#detailed)
 </div>
 
-<div class="grid" markdown>
 
-![LocScale_FEM](imgs/feature_enhanced.png)
+<div class="grid cards" markdown>
 
-![Image title](imgs/hybrid.png)
+-   :material-clock-fast:{ .lg .middle } __LocScale-FEM__
 
-![Image title](imgs/model_free.png)
+    ---
+    ![Hybrid LocScale](imgs/hybrid.png)
 
-![Image title](imgs/model_based.png)
+    [:octicons-arrow-right-24: Hybrid LocScale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } __Hybrid LocScale__
+
+    ---
+    ![Model-free LocScale](imgs/model-free.png)
+
+    [:octicons-arrow-right-24: Model-free LocScale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } __Model-free LocScale__
+
+    ---
+    ![Model-based LocScale](imgs/model-based.png)
+
+    [:octicons-arrow-right-24: Model-based Locscale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } ```__LocScale-FEM__```
+
+    ---
+    ![LocScale_FEM](imgs/feature_enhanced.png)
+
+    [:octicons-arrow-right-24: LocScale-FEM](#quick)
 
 </div>
 
