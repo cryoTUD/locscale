@@ -94,6 +94,7 @@ locscale test
 
     Install [`mkdocs-material`](#) with [`pip`](#) and get up
     and running in minutes
+    ![alt](tutorials/img/fem.png)
 
     [:octicons-arrow-right-24: Getting started](#)
 
