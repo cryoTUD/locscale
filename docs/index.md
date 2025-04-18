@@ -40,7 +40,7 @@
 
     [:octicons-arrow-right-24: Model-free Locscale](#quick)
 
--   :material-fruit-pear:{ .lg .middle } __Model_based LocScale__  
+-   :material-fruit-pear:{ .lg .middle } __Model-based LocScale__  
     The legacy LocScale if complete model information is available. Still useful in many cases.
 
     ---
