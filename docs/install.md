@@ -15,8 +15,8 @@
     ---
 
     Install [`LocScale 2.0`](#) with [`pip`](#) and get up
-    and running in minutesv
-    ![](imgs/emd199995.png)
+    and running in minutes
+    ![](imgs/emd19995.png)
     
     [:octicons-arrow-right-24: Set up in 5 min](#quick)
 
