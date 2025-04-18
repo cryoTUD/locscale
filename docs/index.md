@@ -16,7 +16,7 @@
 
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } __LocScale-FEM__:
+-   :material-clock-fast:{ .lg .middle } __LocScale-FEM__: ^^F^^eature-^^E^^nhanced ^^M^^aps
 
     ---
     ![Hybrid LocScale](imgs/feature_enhanced.png)
