@@ -28,7 +28,7 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
     Step-by-step installation installation instructions.
 
     [:octicons-arrow-right-24: Reference](#detailed)
-
+</div>
 
 
 ### Installation via environment files: {#quick}
