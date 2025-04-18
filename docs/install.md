@@ -15,7 +15,7 @@
     ---
 
     Install [`LocScale 2.0`](#) with [`pip`](#) and get up
-    and running in minutes
+    and running in minutesv
     ![](tutorials/img/feature_enhance.png)
     
     [:octicons-arrow-right-24: Set up in 5 min](#quick)
@@ -27,6 +27,18 @@
     Step-by-step installation installation instructions.
 
     [:octicons-arrow-right-24: Install guide](#detailed)
+</div>
+
+<div class="grid" markdown>
+
+![Image title](https://dummyimage.com/600x400/f5f5f5/aaaaaa?text=1)
+
+![Image title](https://dummyimage.com/600x400/f5f5f5/aaaaaa?text=2)
+
+![Image title](https://dummyimage.com/600x400/f5f5f5/aaaaaa?text=3)
+
+![Image title](https://dummyimage.com/600x400/f5f5f5/aaaaaa?text=4)
+
 </div>
 
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
