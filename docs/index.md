@@ -16,31 +16,32 @@
 
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } __LocScale-FEM__: <ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps
+-   :material-fruit-pineapple:{ .lg .middle } __LocScale-FEM__
+    <ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps
 
     ---
-    ![Hybrid LocScale](imgs/feature_enhanced.png)
+    ![Locscale-FEM LocScale](imgs/feature_enhanced.png)
 
     [:octicons-arrow-right-24: Locscale-FEM](tutorials/fem.md)
 
--   :material-clock-fast:{ .lg .middle } __Hybrid LocScale__
+-   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__
 
     ---
-    ![Model-free LocScale](imgs/hybrid.png)
+    ![Hybrid LocScale](imgs/hybrid.png)
 
     [:octicons-arrow-right-24: Hybrid LocScale](#quick)
 
--   :material-clock-fast:{ .lg .middle } __Model-free LocScale__
+-   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__
 
     ---
-    ![Model-based LocScale](imgs/model_free.png)
+    ![Model-free LocScale](imgs/model_free.png)
 
     [:octicons-arrow-right-24: Model-free Locscale](#quick)
 
--   :material-clock-fast:{ .lg .middle } __Model_based LocScale__
+-   :material-fruit-pear:{ .lg .middle } __Model_based LocScale__
 
     ---
-    ![LocScale_FEM](imgs/model_based.png)
+    ![Model-based LocScale](imgs/model_based.png)
 
     [:octicons-arrow-right-24: LocScale-FEM](#quick)
 
