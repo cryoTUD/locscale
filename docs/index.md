@@ -11,6 +11,41 @@
     - [LocScale-SURFER](https://locscale-surfer.readthedocs.io/): ChimeraX plugin to toggle contextual structure in ```LocScale``` maps
 
 ---
+
+## Different LocScale flavours for different purposes
+
+<div class="grid cards" markdown>
+
+-   :material-clock-fast:{ .lg .middle } __LocScale-FEM__
+
+    ---
+    ![Hybrid LocScale](imgs/hybrid.png)
+
+    [:octicons-arrow-right-24: Hybrid LocScale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } __Hybrid LocScale__
+
+    ---
+    ![Model-free LocScale](imgs/model_free.png)
+
+    [:octicons-arrow-right-24: Model-free LocScale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } __Model-free LocScale__
+
+    ---
+    ![Model-based LocScale](imgs/model_based.png)
+
+    [:octicons-arrow-right-24: Model-based Locscale](#quick)
+
+-   :material-clock-fast:{ .lg .middle } __Model_based LocScale__
+
+    ---
+    ![LocScale_FEM](imgs/feature_enhanced.png)
+
+    [:octicons-arrow-right-24: LocScale-FEM](#quick)
+
+</div>
+
 ## How does LocScale 2.0 work?
 
 <div style="text-align: justify">
