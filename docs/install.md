@@ -16,7 +16,7 @@
 
     Install [`LocScale 2.0`](#) with [`pip`](#) and get up
     and running in minutes
-    [!](tutorials/img/feature_enhance.png)
+    ![](tutorials/img/feature_enhance.png)
     
     [:octicons-arrow-right-24: Set up in 5 min](#quick)
 
