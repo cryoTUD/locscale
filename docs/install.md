@@ -94,9 +94,8 @@ locscale test
 
     Install [`mkdocs-material`](#) with [`pip`](#) and get up
     and running in minutes
-    ![alt](tutorials/img/fem.png)
-
-    [:octicons-arrow-right-24: Getting started](#)
+    
+    [:octicons-arrow-right-24: Getting started](#Installation-via-environment-files)
 
 -   :fontawesome-brands-markdown:{ .lg .middle } __It's just Markdown__
 
