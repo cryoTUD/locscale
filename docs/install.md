@@ -10,6 +10,26 @@
 
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
+<div class="grid cards" markdown>
+
+-   :material-clock-fast:{ .lg .middle } __Quick installation__
+
+    ---
+
+    Install [`LocScale 2.0`](#) with [`pip`](#) and get up
+    and running in minutes
+    
+    [:octicons-arrow-right-24: Set up in 5 min](#quick)
+
+-   :material-sticker-text-outline:{ .lg .middle } __Step-by-step instructions__
+
+    ---
+
+    Step-by-step installation installation instructions.
+
+    [:octicons-arrow-right-24: Reference](#detailed)
+
+
 
 ### Installation via environment files: {#quick}
 ##### 1. Install REFMAC5 via CCP4/CCPEM
@@ -35,7 +55,7 @@ or
 conda env create -f /path/to/environment_gpu.yml
 conda activate gpu_locscale
 ```
-### Installation using PyPi (pip)
+### Installation using PyPi (pip) (#detailed)
 You can also follow these steps to install locscale using pip.
 
 ##### 1. Create and activate a new conda environment
@@ -85,23 +105,3 @@ locscale test
 ```
 
 ### LocScale 2.0 in CCPEM Doppio
-
-<div class="grid cards" markdown>
-
--   :material-clock-fast:{ .lg .middle } __Set up in 5 minutes__
-
-    ---
-
-    Install [`mkdocs-material`](#) with [`pip`](#) and get up
-    and running in minutes
-    
-    [:octicons-arrow-right-24: Getting started](#quick)
-
--   :fontawesome-brands-markdown:{ .lg .middle } __It's just Markdown__
-
-    ---
-
-    Focus on your content and generate a responsive and searchable static site
-
-    [:octicons-arrow-right-24: Reference](#)
-
