@@ -25,7 +25,7 @@
     [:octicons-arrow-right-24: Locscale-FEM](tutorials/fem.md)
 
 -   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__  
-    Physics-based map optimisation w/ optimal preservation of contextual structure. 
+    Physics-based map optimisation optimally retaining contextual structure. 
 
     ---
     ![Hybrid LocScale](imgs/hybrid.png)
@@ -33,7 +33,7 @@
     [:octicons-arrow-right-24: Hybrid LocScale](#quick)
 
 -   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__  
-    Automated local sharpening without the need for model information. Fast and easy.
+    Automated local sharpening without model information. Fast and easy.
 
     ---
     ![Model-free LocScale](imgs/model_free.png)
@@ -41,7 +41,7 @@
     [:octicons-arrow-right-24: Model-free Locscale](#quick)
 
 -   :material-fruit-pear:{ .lg .middle } __Model-based LocScale__  
-    The legacy LocScale if complete model information is available. Still useful in many cases.
+    Legacy LocScale with model information. Still useful in many cases.
 
     ---
     ![Model-based LocScale](imgs/model_based.png)
