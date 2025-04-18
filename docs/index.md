@@ -17,7 +17,7 @@
 <div class="grid cards" markdown>
 
 -   :material-fruit-pineapple:{ .lg .middle } __LocScale-FEM__  
-    <><ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps
+    <ins>F</ins>eature-<ins>E</ins>nhanced <ins>M</ins>aps
 
     ---
     ![Locscale-FEM LocScale](imgs/feature_enhanced.png)
