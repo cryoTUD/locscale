@@ -5,7 +5,8 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 !!! note
     #### System requirements
     LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL).  
-    __GPU__:To run the `feature_enhance` option LocScale requires the availability of a GPU; it is possible to run it on CPUs but computation will be slow(er). 
+    
+    {==__GPU__: To run the `feature_enhance` option LocScale requires the availability of a GPU==}. It is possible to run it on CPUs but computation will be slow(er). 
 
 #### Installation instructions:
 
