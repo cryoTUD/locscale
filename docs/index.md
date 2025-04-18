@@ -24,7 +24,7 @@
 
     [:octicons-arrow-right-24: Locscale-FEM](tutorials/fem.md)
 
--   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__
+-   :material-fruit-watermelon:{ .lg .middle } __Hybrid LocScale__  
     Automated local sharpening without the need for model information. Fast and 
 
     ---
@@ -32,7 +32,7 @@
 
     [:octicons-arrow-right-24: Hybrid LocScale](#quick)
 
--   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__
+-   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__  
     Automated local sharpening without the need for model information. Fast and 
 
     ---
@@ -40,7 +40,7 @@
 
     [:octicons-arrow-right-24: Model-free Locscale](#quick)
 
--   :material-fruit-pear:{ .lg .middle } __Model_based LocScale__
+-   :material-fruit-pear:{ .lg .middle } __Model_based LocScale__  
     The legacy LocScale if complete model information is available. Still useful in many cases.
 
     ---
