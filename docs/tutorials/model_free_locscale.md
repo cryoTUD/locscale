@@ -1,4 +1,4 @@
-# Model-free LocScale<br><sup>LocScale sharpening without atomic model</sup>
+# Model-free LocScale<br><sup>Reference-based local sharpening without atomic model</sup>
 
 If no atomic model is available, or if you do not want to use prior model information, you can use the model-free mode of LocScale. This method will predict a reference map using the ```EMmerNet``` network by default and is the recommended procedure for model-free local sharpening.  
 
