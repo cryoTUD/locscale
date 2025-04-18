@@ -41,18 +41,18 @@
 -   :material-clock-fast:{ .lg .middle } __Hybrid LocScale__
 
     ---
-    ![Model-free LocScale](imgs/model-free.png)
+    ![Model-free LocScale](imgs/model_free.png)
 
     [:octicons-arrow-right-24: Model-free LocScale](#quick)
 
 -   :material-clock-fast:{ .lg .middle } __Model-free LocScale__
 
     ---
-    ![Model-based LocScale](imgs/model-based.png)
+    ![Model-based LocScale](imgs/model_based.png)
 
     [:octicons-arrow-right-24: Model-based Locscale](#quick)
 
--   :material-clock-fast:{ .lg .middle } ```__LocScale-FEM__```
+-   :material-clock-fast:{ .lg .middle } __Model_based LocScale__
 
     ---
     ![LocScale_FEM](imgs/feature_enhanced.png)
