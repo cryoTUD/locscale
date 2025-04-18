@@ -1,4 +1,4 @@
-# Hybrid LocScale<br><sup>LocScale sharpening with a partial atomic model</sup>
+# Hybrid LocScale<br><sup>Reference-based local sharpening with a partial atomic model</sup>
 
 The hybrid ```LocScale``` workflow is useful in cases where partial model information is available but substantial map regions of interest or contextual densities cannot be modelled and/or are likely to fall outside the model generalisation of ```EMmerNet```, or in cases where optimal local sharpening using a physics-based amplitude scaling procedure is desired.
 <br>
