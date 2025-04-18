@@ -30,7 +30,7 @@
 
 <div class="grid" markdown>
 
-![Image title](imgs/feature_enhance.png)
+![LocScale_FEM](imgs/feature_enhanced.png)
 
 ![Image title](imgs/hybrid.png)
 
