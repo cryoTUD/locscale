@@ -30,7 +30,7 @@
     ---
     ![Hybrid LocScale](imgs/hybrid.png)
 
-    [:octicons-arrow-right-24: Hybrid LocScale](#quick)
+    [:octicons-arrow-right-24: Hybrid LocScale](tutorials/hybrid_locscale.md)
 
 -   :material-fruit-cherries:{ .lg .middle } __Model-free LocScale__  
     Automated local sharpening without model information. Fast and easy.
@@ -38,7 +38,7 @@
     ---
     ![Model-free LocScale](imgs/model_free.png)
 
-    [:octicons-arrow-right-24: Model-free Locscale](#quick)
+    [:octicons-arrow-right-24: Model-free Locscale](tutorials/model_free_locscale.md)
 
 -   :material-fruit-pear:{ .lg .middle } __Model-based LocScale__  
     Legacy LocScale with model information. Still useful in many cases.
@@ -46,7 +46,7 @@
     ---
     ![Model-based LocScale](imgs/model_based.png)
 
-    [:octicons-arrow-right-24: LocScale-FEM](#quick)
+    [:octicons-arrow-right-24: Model-based LocScale](tutorials/model_based_locscale.md)
 
 </div>
 
