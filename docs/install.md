@@ -11,7 +11,7 @@
 We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
 
-### Installation via environment files: 
+### Installation via environment files: {#quick}
 ##### 1. Install REFMAC5 via CCP4/CCPEM
 LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
 
@@ -95,7 +95,7 @@ locscale test
     Install [`mkdocs-material`](#) with [`pip`](#) and get up
     and running in minutes
     
-    [:octicons-arrow-right-24: Getting started](#Installation-via-environment-files)
+    [:octicons-arrow-right-24: Getting started](#quick)
 
 -   :fontawesome-brands-markdown:{ .lg .middle } __It's just Markdown__
 
