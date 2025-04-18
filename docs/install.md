@@ -7,10 +7,10 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
     LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL).  
     
     __GPU__: {==To run the `feature_enhance` option LocScale requires the availability of a GPU==}. It is possible to run it on CPUs but computation will be slow(er). 
+    !!! Installation on Apple silicon 
+        GPU support on Apple silicon (MX chip) is currently buggy. We are working on resolving this.
 
-#### Installation instructions:
-
-#### Quick installation: 
+### Installation via environment files: 
 ##### 1. Install REFMAC5 via CCP4/CCPEM
 LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
 
@@ -34,7 +34,7 @@ or
 conda env create -f /path/to/environment_gpu.yml
 conda activate gpu_locscale
 ```
-#### Alternatively
+### Installation using PyPi (pip)
 You can also follow these steps to install locscale using pip.
 
 ##### 1. Create and activate a new conda environment
@@ -43,7 +43,6 @@ You can also follow these steps to install locscale using pip.
 conda create -n locscale python=3.8 
 conda activate locscale
 ```
-
 ##### 2. Install fortran compiler
 LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install `gfortran` from conda-forge.
 ```bash
@@ -57,7 +56,7 @@ The model-based and hybrid map sharpening modes of LocScale need a working insta
 which refmac5
 ```
 
-If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
+If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure REFMAC5 is accessible. 
 
 ##### 4. Install LocScale and dependencies using pip:
 
@@ -83,3 +82,6 @@ To test functionality after installation, you can run LocScale unit tests using 
 ```bash
 locscale test
 ```
+
+### LocScale 2.0 in CCPEM Doppio
+
