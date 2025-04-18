@@ -1,7 +1,4 @@
 # Installation 
-
-We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
-
 !!! note "System Compatibility"
     LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). 
     <br><br>
@@ -10,6 +7,8 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
     __OpenMPI__: LocScale allows parallelisation on multi-CPU environment with OpenMPI
     !!! warning "Installation on Apple silicon" 
         GPU support on Apple silicon (MX chip) is currently buggy. We are working on resolving this.  
+
+We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local working environment. See [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda) for more information on what Conda flavour may be the right choice for you, and [here](https://www.anaconda.com/products/distribution) for Conda installation instructions.
 
 
 ### Installation via environment files: 
