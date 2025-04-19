@@ -9,73 +9,73 @@ and model challenge](https://zenodo.org/records/1185426).
 
 <div class="grid cards" markdown>
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-1-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_01](img/LocScale_tutorial_01.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-2-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_02](img/LocScale_tutorial_02.png)
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-3-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_03](img/LocScale_tutorial_03.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-4-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_04](img/LocScale_tutorial_04.png)
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-5-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_05](img/LocScale_tutorial_05.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-6-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_06](img/LocScale_tutorial_06.png)
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-7-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_07](img/LocScale_tutorial_07.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-8-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_08](img/LocScale_tutorial_08.png)
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-9-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_09](img/LocScale_tutorial_09.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-9-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_10](img/LocScale_tutorial_10.png)
 
--   :material-one-circle:{ .lg .middle } __XXX__  
+-   :material-9-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
 
--   :material-tow-circle:{ .lg .middle } __YYY__  
+-   :material-9-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
