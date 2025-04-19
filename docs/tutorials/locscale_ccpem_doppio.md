@@ -84,8 +84,8 @@ and model challenge](https://zenodo.org/records/1185426). You can [download the 
 </div>
 
 #### Relevant advanced options in CCPEM Doppio
-| Option                  | Description                          | Affected Method |
-| ------------------------| ------------------------------------ | |
-| `LocScale Window size`  | :material-fruit-watermelon:          | :material-fruit-watermelon: |
+| Option                  | Notes                                                            | Affected Method |
+| ------------------------| ------------------------------------ |---------------------------|
+| `LocScale Window size`  | Choose an even number, preferable range is between 15 and 30     | ALL (:material-fruit-pineapple:, :material-fruit-watermelon:, :material-fruit-cherry:, :material-fruit-pear: |
 | `Resolution`            | :material-check-all: Update resource | :material-fruit-watermelon: |
 | `DELETE`                | :material-close:     Delete resource | :material-fruit-watermelon: |
