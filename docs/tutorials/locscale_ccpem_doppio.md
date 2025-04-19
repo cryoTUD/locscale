@@ -63,19 +63,19 @@ and model challenge](https://zenodo.org/records/1185426).
     ---
     ![Doppio_tutorial_09](img/LocScale_tutorial_09.png)
 
--   :material-numeric-9-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-1-box:{ .lg .middle }:material-numeric-0-box:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_10](img/LocScale_tutorial_10.png)
 
--   :material-numeric-9-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-1-box:{ .lg .middle }:material-numeric-1-box:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
 
--   :material-numeric-9-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-1-box:{ .lg .middle }:material-numeric-2-box:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
