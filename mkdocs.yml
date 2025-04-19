@@ -88,6 +88,7 @@ nav:
       - Hybrid LocScale: tutorials/hybrid_locscale.md
       - Model-free LocScale: tutorials/model_free_locscale.md
       - Model-based LocScale: tutorials/model_based_locscale.md
+      - LocScale in CCPEM Doppio: tutorials/locscale_ccpem_doppio.md
   - About LocScale: about.md
 
 plugins:
