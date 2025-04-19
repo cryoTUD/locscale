@@ -69,7 +69,7 @@ and model challenge](https://zenodo.org/records/1185426).
     ---
     ![Doppio_tutorial_10](img/LocScale_tutorial_10.png)
 
--   :material-numeric-1-box:{ .lg .middle }:material-numeric-1-box:{ .lg .middle } __XXX__  
+-   :material-numeric-1-box:{ .lg .top }:material-numeric-1-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
