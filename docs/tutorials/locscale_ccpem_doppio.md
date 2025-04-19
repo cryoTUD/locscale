@@ -9,61 +9,61 @@ and model challenge](https://zenodo.org/records/1185426).
 
 <div class="grid cards" markdown>
 
--   :material-numeric-1-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-1-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_01](img/LocScale_tutorial_01.png)
 
--   :material-numeric-2-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-2-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_02](img/LocScale_tutorial_02.png)
 
--   :material-numeric-3-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-3-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_03](img/LocScale_tutorial_03.png)
 
--   :material-numeric-4-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-4-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_04](img/LocScale_tutorial_04.png)
 
--   :material-numeric-5-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-5-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_05](img/LocScale_tutorial_05.png)
 
--   :material-numeric-6-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-6-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_06](img/LocScale_tutorial_06.png)
 
--   :material-numeric-7-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-7-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_07](img/LocScale_tutorial_07.png)
 
--   :material-numeric-8-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-8-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
     ![Doppio_tutorial_08](img/LocScale_tutorial_08.png)
 
--   :material-numeric-9-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-9-box:{ .lg .top } __XXX__  
     This is hopw it starts
 
     ---
     ![Doppio_tutorial_09](img/LocScale_tutorial_09.png)
 
--   :material-numeric-1-box:{ .lg .middle }:material-numeric-0-box:{ .lg .middle } __YYY__  
+-   :material-numeric-1-box:{ .lg .top }:material-numeric-0-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
@@ -75,7 +75,7 @@ and model challenge](https://zenodo.org/records/1185426).
     ---
     ![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
 
--   :material-numeric-1-box:{ .lg .middle }:material-numeric-2-box:{ .lg .middle } __YYY__  
+-   :material-numeric-1-box:{ .lg .top }:material-numeric-2-box:{ .lg .top } __YYY__  
     This is how it continues 
 
     ---
