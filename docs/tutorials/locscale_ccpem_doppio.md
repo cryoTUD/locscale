@@ -9,13 +9,13 @@ and model challenge](https://zenodo.org/records/1185426).
 
 <div class="grid cards" markdown>
 
--   :material-1-circle:{ .lg .middle } __XXX__  
+-   :material-numeric-1-circle:{ .lg .middle } __XXX__  
     This is hopw it starts
 
     ---
     ![![Doppio_tutorial_01](img/LocScale_tutorial_01.png)
 
--   :material-2-circle:{ .lg .middle } __YYY__  
+-   :material-numeric-2-circle:{ .lg .middle } __YYY__  
     This is how it continues 
 
     ---
