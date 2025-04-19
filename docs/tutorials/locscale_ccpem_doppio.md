@@ -25,7 +25,7 @@ and model challenge](https://zenodo.org/records/1185426).
     This is hopw it starts
 
     ---
-    ![![Doppio_tutorial_03](img/LocScale_tutorial_03.png)
+    ![Doppio_tutorial_03](img/LocScale_tutorial_03.png)
 
 -   :material-numeric-4-circle:{ .lg .middle } __YYY__  
     This is how it continues 
@@ -37,7 +37,7 @@ and model challenge](https://zenodo.org/records/1185426).
     This is hopw it starts
 
     ---
-    ![![Doppio_tutorial_05](img/LocScale_tutorial_05.png)
+    ![Doppio_tutorial_05](img/LocScale_tutorial_05.png)
 
 -   :material-numeric-6-circle:{ .lg .middle } __YYY__  
     This is how it continues 
@@ -49,7 +49,7 @@ and model challenge](https://zenodo.org/records/1185426).
     This is hopw it starts
 
     ---
-    ![![Doppio_tutorial_07](img/LocScale_tutorial_07.png)
+    ![Doppio_tutorial_07](img/LocScale_tutorial_07.png)
 
 -   :material-numeric-8-circle:{ .lg .middle } __YYY__  
     This is how it continues 
@@ -61,7 +61,7 @@ and model challenge](https://zenodo.org/records/1185426).
     This is hopw it starts
 
     ---
-    ![![Doppio_tutorial_09](img/LocScale_tutorial_09.png)
+    ![Doppio_tutorial_09](img/LocScale_tutorial_09.png)
 
 -   :material-numeric-9-circle:{ .lg .middle } __YYY__  
     This is how it continues 
@@ -73,7 +73,7 @@ and model challenge](https://zenodo.org/records/1185426).
     This is hopw it starts
 
     ---
-    ![![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
+    ![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
 
 -   :material-numeric-9-circle:{ .lg .middle } __YYY__  
     This is how it continues 
