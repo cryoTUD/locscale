@@ -186,21 +186,29 @@ def change_directory(args, folder_name):
     import os    
     import locscale
     from locscale.utils.file_tools import copy_file_to_folder
+    
+    # Get the input folder
     input_folder = get_input_file_directory(args)
+    
     if folder_name is None:
-        # Get the input folder
         new_directory = os.path.join(input_folder, "processing_files")
     else:
-        new_directory = folder_name
+        if os.path.isabs(folder_name):
+            new_directory = folder_name
+        else:
+            new_directory = os.path.join(input_folder, folder_name)
     
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
-        
+    
+    assert os.path.isdir(new_directory), "New directory does not exist"
+    assert os.path.isabs(new_directory), "New directory is not absolute"
+    
     if args.verbose:
         print("Copying files to {}\n".format(new_directory))
     
     # Set the "output_processing_files" argument to the new_directory
-    setattr(args, "output_processing_files", os.path.abspath(new_directory))
+    setattr(args, "output_processing_files", new_directory)
 
     for arg in vars(args):
         value = getattr(args, arg)
@@ -410,11 +418,10 @@ def get_emmap_path_from_args(args):
         assert len(halfmap_paths) == 2, "Please provide two half maps"
         print(halfmap_paths[0])
         print(halfmap_paths[1])
-        filter_input = args.filter_input
         halfmap1_path = halfmap_paths[0]
         halfmap2_path = halfmap_paths[1]
         new_file_path = generate_filename_from_halfmap_path(halfmap1_path)
-        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path)
+        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path, fsc_filter=bool(args.apply_fsc_filter))
         shift_vector=shift_map_to_zero_origin(halfmap1_path)
     
     return emmap_path, shift_vector
@@ -522,7 +529,7 @@ def is_input_path_valid(list_of_test_paths):
             return is_test_path_valid
         if not os.path.exists(test_path):
             is_test_path_valid = False
-            raise FileNotFoundError("File {} does not exist".format(test_path))
+            return is_test_path_valid
     
     ## If all tests passed then return True
     is_test_path_valid = True
@@ -629,7 +636,7 @@ def check_user_input(args):
     ## If emmap is absent or half maps are absent, raise Exceptions
     
     if emmap_absent and half_maps_absent:
-        raise ValueError("Please input either an unsharpened map or two half maps")
+        raise UserWarning("Please input either an unsharpened map or two half maps")
           
     
     if model_coordinates_present and model_map_present:
@@ -639,6 +646,8 @@ def check_user_input(args):
     if model_coordinates_absent and model_map_absent:
         warn_against_skip_refine(args, tolerate=False)
 
+        if args.build_using_pseudomodel:
+            check_and_warn_about_ref_resolution(args)
 
                             
     if model_coordinates_present and not hybrid_locscale:
@@ -655,6 +664,7 @@ def check_user_input(args):
         
     if model_coordinates_present and args.complete_model:
         warn_against_skip_refine(args, tolerate=False)
+        check_and_warn_about_ref_resolution(args)
         
     ## Check for window size < 10 A
     if args.window_size is not None:
