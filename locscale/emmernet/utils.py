@@ -252,8 +252,7 @@ def load_calibrator():
     import os 
     
     locscale_path = get_locscale_path()
-    regressor_path = os.path.join(locscale_path, "locscale", "utils", "calibrator_locscale_target.pkl")
-    
+    regressor_path = os.path.join(locscale_path, "locscale", "utils", "calibrator_locscale_target_seed_42.pickle")
     calibrator = pickle.load(open(regressor_path, "rb"))
     
     return calibrator
