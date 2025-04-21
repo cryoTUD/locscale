@@ -190,38 +190,12 @@ class test_locscale(unittest.TestCase):
             
             locscale_command = ["python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates_trimmed,"--mask",copied_mask_path, \
-                "--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
+                "--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model", "--ref_resolution", "3.4"]
             
             locscale_test_run = run(locscale_command)
             
             self.assertTrue(os.path.exists(output_locscale_path))
 
-    def test_no_reference_scaling(self):
-        from tempfile import TemporaryDirectory
-        
-        print("Testing: No reference scaling")
-        with TemporaryDirectory() as tempDir: 
-            from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
-            import os
-            from subprocess import run
-            
-            # copy emmap
-            copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
-            copied_mask_path = self.copy_files(self.mask_path, tempDir)
-                        
-            os.chdir(tempDir)
-            
-            output_locscale_path = os.path.join(tempDir, "no_reference_scaling.mrc")
-            locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
-            
-            locscale_command = ["python",locscale_script_path,"--emmap_path",copied_emmap_path, \
-                "--mask",copied_mask_path, "--outfile",output_locscale_path,"--ref_resolution","3.4","--verbose", \
-                "--no_reference"]
-                        
-            locscale_test_run = run(locscale_command)
-            
-            self.assertTrue(os.path.exists(output_locscale_path))
-            
            
     
    
