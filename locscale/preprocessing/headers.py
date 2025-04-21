@@ -485,7 +485,8 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
 
     #### Set the starting bfactor of the atomic model to 40 before refinement ####
     if initialise_bfactors:
-        servalcat_uniform_bfactor_input_path = model_path[:-4]+"_uniform_biso.cif"
+        model_extension = os.path.splitext(model_path)[1]
+        servalcat_uniform_bfactor_input_path = model_path.replace(model_extension,"_uniform_biso.cif")
         set_atomic_bfactors(in_model_path=model_path, b_iso=40, out_file_path=servalcat_uniform_bfactor_input_path)
         servalcat_input = servalcat_uniform_bfactor_input_path
     else:
@@ -750,8 +751,34 @@ def run_refmap(model_path,emmap_path,mask_path,add_blur=0,resolution=None,verbos
         tprint("Reference map was not generated. Returning none")
         return None
 
+def check_axis_order(emmap_path):
+    '''
+    Function to check the axis order of a map
 
-def check_axis_order(emmap_path, use_same_filename=False):
+    Parameters
+    ----------
+    emmap_path : str
+        Path to the EM map
+
+    Returns
+    -------
+    axis_order : str
+        Axis order of the map
+
+    '''
+    import warnings
+    from locscale.include.emmer.ndimage.map_utils import read_gemmi_map
+    _, grid = read_gemmi_map(emmap_path, return_grid=True)
+
+    if grid.axis_order.name != "XYZ":
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be XYZ. \
+        Please check the header of the map. If the map orientation is incorrect, it may lead to poor refinement when running Model Based or Hybrid LocScale." 
+        warnings.warn(warning_message)
+    
+    return emmap_path   
+    
+    
+def change_axis_order(emmap_path, use_same_filename=False):
     '''
     Function to generate a XYZ corrected output using Gemmi
 
@@ -766,6 +793,7 @@ def check_axis_order(emmap_path, use_same_filename=False):
 
     '''
     import os
+    import warnings
     from subprocess import run, PIPE
     from locscale.include.emmer.ndimage.map_utils import read_gemmi_map, ZYX_to_XYZ, save_as_mrc
            
@@ -786,8 +814,11 @@ def check_axis_order(emmap_path, use_same_filename=False):
         save_as_mrc(map_data=xyz_emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
         return xyz_emmap_path
     else:
-        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX"
-        print(warning_message)
+        warning_message = f"The axis order of the map {emmap_path} is {grid.axis_order.name}. It should be either XYZ or ZYX. \
+                            Please check the header of the map. Using the map as it is. This may lead to poor refinements." 
+        warnings.warn(warning_message)
+        save_as_mrc(map_data=emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
+        return xyz_emmap_path
         
     
 

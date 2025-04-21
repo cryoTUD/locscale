@@ -250,6 +250,23 @@ def calculate_fsc_maps(input_map_1, input_map_2):
     fsc = np.array(fsc)
     return np.array(fsc)
 
+def measure_fsc_resolution_maps(halfmap_1_path, halfmap_2_path, threshold=0.143):
+    from locscale.include.emmer.ndimage.map_utils import load_map
+    from scipy.interpolate import interp1d
+    from locscale.include.emmer.ndimage.map_utils import parse_input
+    from locscale.include.emmer.ndimage.profile_tools import frequency_array
+    
+    _, apix = load_map(halfmap_1_path)
+    fsc_curve = calculate_fsc_maps(halfmap_1_path, halfmap_2_path)
+    freq = frequency_array(fsc_curve, apix=apix)
+
+    f = interp1d(fsc_curve, freq)
+    fsc_resolution_freq = f(threshold) # in per Angstrom
+    fsc_resolution_angstrom = 1/fsc_resolution_freq # in Angstrom
+    return fsc_resolution_angstrom.round(1)
+
+
+
 def calculate_phase_correlation_maps(input_map_1, input_map_2, return_phase_difference=False):
     '''
     Wrapper to calculate FSC curve from the above functions

@@ -1,12 +1,12 @@
 import argparse
-sample_run_locscale = "python /path/to/locscale/main.py run_locscale --emmap_path path/to/emmap.mrc -res 3.4 -o locscale.mrc --verbose"
-sample_run_emmernet = "python /path/to/locscale/main.py run_emmernet --emmap_path path/to/emmap.mrc --verbose"
+sample_run_locscale = "locscale --emmap_path path/to/emmap.mrc -o locscale.mrc --verbose"
+sample_feature_enhance = "locscale feature_enhance --emmap_path path/to/emmap.mrc -o feature_enhanced.mrc --verbose"
 description = ["*** Optimisation of contrast in cryo-EM density maps using local density scaling ***\n",\
     "Command line arguments: \n",\
         "LocScale: \n",\
         "{}\n".format(sample_run_locscale),\
-        "EMmerNet: \n",\
-        "{}".format(sample_run_emmernet)]
+        "Feature Enhance: \n",\
+        "{}".format(sample_feature_enhance)]
 
 # **************************************************************************************
 # ************************ Command line arguments LocScale *****************************
@@ -19,6 +19,8 @@ def add_common_arguments(parser):
         '-em', '--emmap_path',  help='Path to unsharpened EM map')
     locscale_emmap_input.add_argument(
         '-hm', '--halfmap_paths', help='Paths to first and second halfmaps', nargs=2)
+    input_emmap_group.add_argument(
+        '-filter_input', '--filter_input', help='Filter the input maps before processing', action='store_true', default=False)
     
     ## Input mask
     mask_input_group = parser.add_argument_group('Mask input arguments')
@@ -62,6 +64,8 @@ def add_common_arguments(parser):
         '-gpus', '--gpu_ids', help="numbers of the selected GPUs, format: '1 2 3 ... 5'", required=False, nargs='+')
     prediction_argument_group.add_argument(
         '-cube_size','--cube_size', help='Size of the input cube for EMMERNET', default=32, type=int)
+    prediction_argument_group.add_argument(
+        '-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
 
     ## Input modifiers
     input_modifiers_group = parser.add_argument_group('Input modifiers')
@@ -133,7 +137,7 @@ def add_locscale_arguments(locscale_parser):
         '--activate_pseudomodel', help='Treats the input model as a pseudo-atomic model',\
                                     action='store_true',default=False)
     pseudo_atomic_parser.add_argument(
-        '-s', '--smooth_factor', help='Smooth factor for merging profiles', default=0.3, type=float)
+        '-smooth', '--smooth_factor', help='Smooth factor for merging profiles', default=0.3, type=float)
     pseudo_atomic_parser.add_argument(
         '--boost_secondary_structure', help='Amplify signal corresponding to secondary structures', default=1.5, type=float)
     
@@ -156,9 +160,7 @@ def add_locscale_arguments(locscale_parser):
 
 def add_emmernet_arguments(emmernet_parser):
     emmernet_parser.add_argument(
-        '-o', '--outfile', help='Output filename', default="emmernet_output.mrc")
-    emmernet_parser.add_argument(
-        '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
+        '-o', '--outfile', help='Output filename', default="feature_enhanced_output.mrc")
     emmernet_parser.add_argument(
         '-sym', '--symmetry', help='If not equal to C1, then symmetry averaging will be performed', default='C1', type=str)
     
@@ -171,8 +173,14 @@ def add_emmernet_arguments(emmernet_parser):
         '-pb','--physics_based', help='Use physics-based model (under development!)', action='store_true')
     misc_parser.add_argument(
         '-download', '--download', help='Download the model weights', action='store_true', default=False)
-    misc_parser.add_argument(
-        '-s', '--stride', help='Stride for EMMERNET', default=16, type=int)
+    
+    scaling_argument_group = emmernet_parser.add_argument_group('Scaling arguments')
+    scaling_argument_group.add_argument(
+        '-wn', '--window_size', help='window size in pixels', default=None, type=int)
+    scaling_argument_group.add_argument(
+        '-mpi', '--mpi', help='MPI version', action='store_true', default=False)
+    scaling_argument_group.add_argument(
+        '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
     
 
 locscale_parser = argparse.ArgumentParser(prog="locscale",description="".join(description)) 

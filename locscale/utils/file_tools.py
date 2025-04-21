@@ -161,6 +161,7 @@ def get_input_file_directory(args):
 def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     import shutil
     import os
+    import warnings
     
     source = full_path_to_file
     file_name = os.path.basename(source)
@@ -168,7 +169,7 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
     if not os.path.exists(destination):
         shutil.copyfile(source, destination)
     else:
-        print(f"File {destination} already exists")
+        warnings.warn(f"File {destination} already exists")
     
     if mapfile:
         # Check the axis order 
@@ -185,34 +186,26 @@ def change_directory(args, folder_name):
     import os    
     import locscale
     from locscale.utils.file_tools import copy_file_to_folder
-    
-    # Get the input folder
     input_folder = get_input_file_directory(args)
-    
     if folder_name is None:
+        # Get the input folder
         new_directory = os.path.join(input_folder, "processing_files")
     else:
-        if os.path.isabs(folder_name):
-            new_directory = folder_name
-        else:
-            new_directory = os.path.join(input_folder, folder_name)
+        new_directory = folder_name
     
     if not os.path.isdir(new_directory):
         os.mkdir(new_directory)
-    
-    assert os.path.isdir(new_directory), "New directory does not exist"
-    assert os.path.isabs(new_directory), "New directory is not absolute"
-    
+        
     if args.verbose:
         print("Copying files to {}\n".format(new_directory))
     
     # Set the "output_processing_files" argument to the new_directory
-    setattr(args, "output_processing_files", new_directory)
+    setattr(args, "output_processing_files", os.path.abspath(new_directory))
 
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg != "outfile" and arg != "output_processing_files" and arg != "emmap_path" and arg != "mask" and arg != "model_map":
+            if os.path.exists(value) and arg not in ["outfile","output_processing_files","emmap_path","mask","model_map"]:
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location) 
             elif arg == "emmap_path" or arg == "mask" or arg == "model_map":
@@ -417,11 +410,11 @@ def get_emmap_path_from_args(args):
         assert len(halfmap_paths) == 2, "Please provide two half maps"
         print(halfmap_paths[0])
         print(halfmap_paths[1])
-
+        filter_input = args.filter_input
         halfmap1_path = halfmap_paths[0]
         halfmap2_path = halfmap_paths[1]
         new_file_path = generate_filename_from_halfmap_path(halfmap1_path)
-        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path, fsc_filter=bool(args.apply_fsc_filter))
+        emmap_path = add_half_maps(halfmap1_path, halfmap2_path,new_file_path)
         shift_vector=shift_map_to_zero_origin(halfmap1_path)
     
     return emmap_path, shift_vector
@@ -529,7 +522,7 @@ def is_input_path_valid(list_of_test_paths):
             return is_test_path_valid
         if not os.path.exists(test_path):
             is_test_path_valid = False
-            return is_test_path_valid
+            raise FileNotFoundError("File {} does not exist".format(test_path))
     
     ## If all tests passed then return True
     is_test_path_valid = True
@@ -592,9 +585,11 @@ def check_user_input(args):
     None.
 
     '''
+    import warnings
     
     if args.dev_mode:
-        print("Warning: You are in Dev mode. Not checking user input! Results maybe unreliable")
+        warning_text="Warning: You are in Dev mode. Not checking user input! Results maybe unreliable"
+        warnings.warn(warning_text)
         return 
     
     import mrcfile
@@ -634,7 +629,7 @@ def check_user_input(args):
     ## If emmap is absent or half maps are absent, raise Exceptions
     
     if emmap_absent and half_maps_absent:
-        raise UserWarning("Please input either an unsharpened map or two half maps")
+        raise ValueError("Please input either an unsharpened map or two half maps")
           
     
     if model_coordinates_present and model_map_present:
@@ -644,8 +639,6 @@ def check_user_input(args):
     if model_coordinates_absent and model_map_absent:
         warn_against_skip_refine(args, tolerate=False)
 
-        if args.build_using_pseudomodel:
-            check_and_warn_about_ref_resolution(args)
 
                             
     if model_coordinates_present and not hybrid_locscale:
@@ -653,7 +646,8 @@ def check_user_input(args):
         correlation = simple_test_model_to_map_fit(args)
         correlation_threshold = 0.3
         if correlation < correlation_threshold:
-            print(f"Warning: The model to map correlation is {correlation:.2f}. This is below the threshold of {correlation_threshold}")
+            warning_text_correlation = f"Warning: The model to map correlation is {correlation:.2f}. This is too low. Please check whether the model is correctly fitted to the map"
+            warnings.warn(warning_text_correlation)
         
 
     if model_coordinates_present and model_map_absent:
@@ -661,26 +655,26 @@ def check_user_input(args):
         
     if model_coordinates_present and args.complete_model:
         warn_against_skip_refine(args, tolerate=False)
-        check_and_warn_about_ref_resolution(args)
         
     ## Check for window size < 10 A
     if args.window_size is not None:
         window_size_pixels = int(args.window_size)
         if window_size_pixels%2 > 0:
-            print("You have input an odd window size. For best performance, an even numbered window size is required. Adding 1 to the provided window size ")
+            warnings.warn("You have input an odd window size. For best performance, an even numbered window size is required. Adding 1 to the provided window size ")
         if args.apix is not None:
             apix = float(args.apix)
         else:
             if args.emmap_path is not None:
                 apix = mrcfile.open(args.emmap_path).voxel_size.x
-            elif args.half_map1 is not None:
-                apix = mrcfile.open(args.half_map1).voxel_size.x
+            elif args.halfmap_paths is not None:
+                halfmap_1_path = args.halfmap_paths[0]
+                apix = mrcfile.open(halfmap_1_path).voxel_size.x
         
         window_size_ang = window_size_pixels * apix
         
         
         if window_size_ang < 10:
-            print("Warning: Provided window size of {} is too small for pixel size of {}. \
+            warnings.warn("Warning: Provided window size of {} is too small for pixel size of {}. \
                   Default window size is generally 25 A. Think of increasing the window size".format(window_size_pixels, apix))
     
     ## Check if the user added a no_reference flag
@@ -698,8 +692,15 @@ def check_user_input(args):
         time.sleep(2)
         
     ## Find the modalities to generate reference map based on user inputs 
+    # Check for conflicting inputs
+    if model_coordinates_absent and hybrid_locscale:
+        raise UserWarning("Conflicting inputs found! LocScale is running in \
+        Model Free mode. Remove --complete_model argument in the command line")
+    
+
 
 def warn_against_skip_refine(args, tolerate):
+    import warnings
     if args.skip_refine:
         if not tolerate:
             raise UserWarning("You have asked to skip REFMAC refinement. \
@@ -707,7 +708,7 @@ def warn_against_skip_refine(args, tolerate):
                                 Please do not raise the --skip_refine flag")
 
         if tolerate: 
-            print("Warning: You have asked to skip REFMAC refinement. \
+            warnings.warn("Warning: You have asked to skip REFMAC refinement. \
                     Please make sure that the atomic ADPs are refined. LocScale performance maybe severely affected if the ADPs are not refined")
                 
 def check_and_warn_about_ref_resolution(args):
