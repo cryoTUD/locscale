@@ -16,7 +16,7 @@ def make_2d_letter(text, image_size=144):
     plt.close()
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,)).mean(2)
     data -= data.min(); data /= data.max()
-    data = data.astype(np.bool)[::-1]
+    data = data.astype(bool)[::-1]
     data_inv = (~data).astype(float)
     data_zoom = scipy.ndimage.zoom(data_inv, image_size/data_inv.shape[0])
     return data_zoom 
