@@ -120,7 +120,6 @@ def launch_locscale_no_mpi(args):
     
     ## Change to output directory
     copied_args = change_directory(args, args.output_processing_files)  ## Copy the contents of files into a new directory
-
     copied_args.logger.info("Running LocScale")
     copied_args.logger.info("-"*80)
     copied_args.logger.info(f"Arguments used: \n{pretty_print_dictionary(vars(copied_args))}")
@@ -347,8 +346,8 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     defaults_dictionary = get_defaults_dictionary("locscale")
     defaults_dictionary["emmap_path"] = parsed_inputs["xyz_emmap_path"]
     defaults_dictionary["mask"] = parsed_inputs["xyz_mask_path"]
-    defaults_dictionary["model_map"] = os.path.join(input_folder, emmernet_output["reference_map_for_locscale"])
-    defaults_dictionary["verbose"] = False 
+    defaults_dictionary["model_map"] = emmernet_output["reference_map_for_locscale"]
+    defaults_dictionary["verbose"] = parsed_inputs["verbose"] 
     defaults_dictionary["outfile"] = output_path
     defaults_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]
     #defaults_dictionary["logger"] = parsed_inputs["logger"]
