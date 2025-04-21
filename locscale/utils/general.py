@@ -117,7 +117,7 @@ def get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn):
     jj_flat = jj.ravel()
     ii_flat = ii.ravel()
 
-    mask_bin = np.array(mask.ravel(), dtype=np.bool)
+    mask_bin = np.array(mask.ravel(), dtype=bool)
     indices = np.arange(mask.size)
     masked_indices = indices[mask_bin]
     cropped_indices = indices[(wn / 2 <= kk_flat) & (kk_flat < (nk - wn / 2)) &
