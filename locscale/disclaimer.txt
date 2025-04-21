@@ -1,0 +1,8 @@
+EMmerNet is a neural network based density modification procedure. As such, there exists a risk of network hallucination i.e. the densities predicted by the network may not correspond to real densities. We have been trying hard to mitigate this risk and we have undertaken a number of tests to ensure that network inpainting is not a problem. 
+
+We have taken measures to ensure minimal bias exists in the training phase by using appropriate training targets. In addition, we have provided a voxel-wise measure of confidence for the predicted density maps. You can find this probability map in the output directory: 'pVDDT.mrc'. Please use this map along with the predicted density map for your model building needs.
+
+As a rule: NEVER USE THE PREDICTED MAPS AS A REFINEMENT TARGET. ALWAYS USE THE ORIGINAL MAPS. 
+
+If you encounter obvious problems, please report this to the authors. 
+"Arjen Jakobi: a.jakobi@tudelft.nl 

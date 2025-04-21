@@ -289,6 +289,9 @@ class Model:
 def extract_model_from_mask(mask,num_atoms,threshold=1,ignore_these=None):
     from locscale.preprocessing.pseudomodel_classes import Atom
     import random
+    # set random seed
+    random.seed(42)
+    np.random.seed(42)
     x1,x2,x3 = mask.shape
     buffer = 2 ## To ensure no atoms near edge get picked 
     ones_array = np.ones((x1-2*buffer, x2-2*buffer, x3-2*buffer))

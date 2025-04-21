@@ -15,7 +15,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
     
     # set inputs from parsed_inputs
-    cube_size = 32 
+    cube_size = parsed_inputs["cube_size"] 
     symmetry = parsed_inputs["symmetry"]
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]

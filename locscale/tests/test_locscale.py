@@ -58,6 +58,7 @@ class test_locscale(unittest.TestCase):
             import os
             from subprocess import run
             
+            os.chdir(tempDir)
             # copy emmap
             copied_emmap_path = self.copy_files(self.emmap_path, tempDir)
             copied_mask_path = self.copy_files(self.mask_path, tempDir)
@@ -66,11 +67,13 @@ class test_locscale(unittest.TestCase):
             os.chdir(tempDir)
 
             output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
+            output_processing_files = "locscale_processing_files"
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
             
             locscale_command = ["python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
-                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose"]
+                "--outfile",output_locscale_path,"--skip_refine","--verbose",\
+                "--output_processing_files",output_processing_files]
             
             locscale_test_run = run(locscale_command)
             
@@ -99,6 +102,7 @@ class test_locscale(unittest.TestCase):
             os.chdir(tempDir)
 
             output_locscale_path = os.path.join(tempDir, "locscale_unittest.mrc")
+            output_processing_files = os.path.join(tempDir,"locscale_processing_files")
             locscale_script_path = os.path.join(self.locscale,"locscale","main.py")
 
             ## Find number of processors
@@ -110,7 +114,8 @@ class test_locscale(unittest.TestCase):
             
             locscale_command = ["mpirun","-np",str(n_proc),"python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates,"--mask",copied_mask_path, \
-                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose","--mpi"]
+                "--ref_resolution","3.4","--outfile",output_locscale_path,"--skip_refine","--verbose","--mpi",\
+                "--output_processing_files",output_processing_files]
             
             locscale_test_run = run(locscale_command)
 
@@ -185,7 +190,7 @@ class test_locscale(unittest.TestCase):
             
             locscale_command = ["python",locscale_script_path,"--emmap_path",\
                 copied_emmap_path, "--model_coordinates",copied_model_coordinates_trimmed,"--mask",copied_mask_path, \
-                "--ref_resolution","3.4","--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
+                "--outfile",output_locscale_path,"-ref_it","1","-pm_it","1","--verbose","--complete_model"]
             
             locscale_test_run = run(locscale_command)
             

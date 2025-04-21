@@ -13,7 +13,7 @@ import locscale.include.emmer as emmer
 from locscale.utils.plot_tools import tab_print
 from locscale.preprocessing.headers import check_axis_order
 from locscale.include.emmer.ndimage.map_utils import load_map
-from locscale.include.emmer.ndimage.fsc_util import apply_fsc_filter
+from locscale.include.emmer.ndimage.fsc_util import measure_fsc_resolution_maps
 from locscale.utils.file_tools import RedirectStdoutToLogger, pretty_print_dictionary
 tabbed_print = tab_print(2)
 def prepare_mask_and_maps_for_scaling(args):
@@ -77,6 +77,17 @@ def prepare_mask_and_maps_for_scaling(args):
     
     parsed_inputs["apix"] = parsed_inputs["apix"] if parsed_inputs["apix"] else apix_from_file
 
+
+    if args.halfmap_paths is not None:
+        if args.verbose:
+            print("Calculating FSC resolution for scaling from the two halfmaps")
+        fsc_resolution = measure_fsc_resolution_maps(parsed_inputs["halfmap_paths"][0], parsed_inputs["halfmap_paths"][1], 0.143)
+        if args.verbose:
+            print(f"FSC resolution determined from the two halfmaps: {fsc_resolution:.2f} A")
+        parsed_inputs["unmasked_fsc_resolution"] = fsc_resolution
+    else:
+        parsed_inputs["unmasked_fsc_resolution"] = None
+    
     ##########################################################################
     ## use_theoretical_profile is the flag used to determine 
     ## if scale factors are computed using the theoretical profile 
@@ -150,7 +161,8 @@ def prepare_mask_and_maps_for_scaling(args):
     # which maybe required for pseudo-atomic model routine when the 
     # use_theoretical_profile is set to True
     ############################################################################## 
-    parsed_inputs["scale_factor_args"] = get_scale_factor_arguments(parsed_inputs)
+    with RedirectStdoutToLogger(parsed_inputs["logger"], wait_message="Preparing scale factor arguments"):
+        parsed_inputs["scale_factor_args"] = get_scale_factor_arguments(parsed_inputs)
     
     ###############################################################################
     # Definitions: 
@@ -313,7 +325,7 @@ def prepare_inputs_for_FDR(parsed_inputs):
         fdr_window_size = round_up_to_even(parsed_inputs["xyz_emmap"].shape[0] * 0.1)
         parsed_inputs["logger"].info("FDR window size is not set. Using a default window size of {} \n".format(fdr_window_size))
     else:
-        fdr_window_size = int(parsed_inputs["fdr_w"])
+        fdr_window_size = int(parsed_inputs["fdr_window_size"])
 
     # Set averaging_filter_size
     averaging_filter_size = parsed_inputs["averaging_filter_size"]    
@@ -425,7 +437,7 @@ def get_modmap_from_inputs(parsed_inputs):
         # Stage 4a: Run the get_modmap pipeline                                 #
         #############################################################################
         modmap_path = get_modmap(parsed_inputs)
-        xyz_modmap_path = check_axis_order(modmap_path,True)
+        xyz_modmap_path = check_axis_order(modmap_path)
         xyz_modmap = load_map(xyz_modmap_path)[0]
 
     return xyz_modmap, xyz_modmap_path     
@@ -477,17 +489,20 @@ def get_scale_factor_arguments(parsed_inputs):
     from locscale.include.emmer.pdb.pdb_tools import find_wilson_cutoff
     from locscale.include.emmer.ndimage.map_tools import compute_radial_profile_simple
     from locscale.include.emmer.ndimage.profile_tools import frequency_array, number_of_segments, estimate_bfactor_through_pwlf
+    from locscale.include.emmer.ndimage.fsc_util import measure_fsc_resolution_maps
 
     wilson_cutoff = find_wilson_cutoff(mask_path=parsed_inputs["mask_path_raw"], verbose=False)
     
+    halfmaps_present = parsed_inputs["halfmap_paths"] is not None
     resolution_given = parsed_inputs["ref_resolution"] is not None
     poor_resolution = parsed_inputs["ref_resolution"] >= 6 if resolution_given else True
-    if (not resolution_given) or poor_resolution:
+    if  poor_resolution:
         high_frequency_cutoff = wilson_cutoff
         nyquist = (round(2*parsed_inputs["apix"]*10)+1)/10
         #fsc_cutoff = fsc_resolution
         bfactor_info = [0,np.array([0,0,0]),np.array([0,0,0])]
         pwlf_fit_quality = 0
+        
     else:
         rp_emmap = compute_radial_profile_simple(parsed_inputs["xyz_emmap"])
         freq = frequency_array(amplitudes=rp_emmap, apix=parsed_inputs["apix"])
@@ -502,6 +517,22 @@ def get_scale_factor_arguments(parsed_inputs):
         bfactor_info = [round(bfactor,2), 1/np.sqrt(z).round(2), np.array(slope).round(2)]  ## For information at end
         pwlf_fit_quality = fit.r_squared()
     
+    # Get fsc resolution for scaling
+    if parsed_inputs["ref_resolution"] is not None:
+        given_resolution = parsed_inputs["ref_resolution"]
+        fsc_cutoff_for_scaling = given_resolution
+        print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by user input)")
+    else:
+        if halfmaps_present:
+            print("Calculating FSC resolution for scaling from the two halfmaps")
+            fsc_cutoff_for_scaling = measure_fsc_resolution_maps(parsed_inputs["halfmap_paths"][0], parsed_inputs["halfmap_paths"][1], 0.143)
+            print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by halfmap FSC (unmasked) at 0.143)")
+        else:
+            fsc_cutoff_for_scaling = nyquist + 1 
+            print(f"Resolution cutoff for scaling: {fsc_cutoff_for_scaling} A (determined by Nyquist frequency)")
+    
+
+
 
     ###############################################################################
     # Stage 6a: Pack into a dictionary
@@ -510,7 +541,7 @@ def get_scale_factor_arguments(parsed_inputs):
     scale_factor_arguments = {}
     scale_factor_arguments['wilson'] = wilson_cutoff
     scale_factor_arguments['high_freq'] = high_frequency_cutoff
-    scale_factor_arguments['fsc_cutoff'] = parsed_inputs["ref_resolution"]
+    scale_factor_arguments['fsc_cutoff'] = fsc_cutoff_for_scaling
     scale_factor_arguments['nyquist'] = nyquist
     scale_factor_arguments['smooth'] = parsed_inputs["smooth_factor"]
     scale_factor_arguments['boost_secondary_structure'] = parsed_inputs["boost_secondary_structure"]

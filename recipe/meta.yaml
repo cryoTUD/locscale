@@ -1,0 +1,40 @@
+package:
+  name: locscale
+  version: "2.1.6"
+
+source:
+  path: /home/abharadwaj1/dev/locscale
+
+build:
+  number: 0
+  noarch: python
+  script: "{{ PYTHON }} -m pip install . "
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - pip 
+  host:
+    - python
+    - pip
+    - numpy
+    - gfortran
+  run:
+    - python=3.7
+    - cudatoolkit=11.3.1
+    - cudnn=8.2.1
+    - gfortran
+    - pip 
+  
+      
+about:
+  home: https://gitlab.tudelft.nl/aj-lab/locscale/
+  license: BSD-3-Clause 
+  summary: LocScale is a python package for post-processing cryo-EM maps to improve interpretability.
+
+extra:
+  channels:
+    - conda-forge
+    - defaults
+    - nvidia

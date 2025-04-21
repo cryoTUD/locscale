@@ -26,7 +26,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.random.set_seed(42)
 
 def run_emmernet(input_dictionary):
-    
     input_dictionary["logger"].info("1) Preprocessing the data...")
     input_dictionary = start_preprocessing_data(input_dictionary)
     
@@ -109,8 +108,12 @@ def predict_cubes_and_assemble(input_dictionary):
         print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         input_dictionary["logger"].info("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
 
-    
-    emmernet_model = load_emmernet_model(input_dictionary)
+    if mirrored_strategy != "cpu":
+        with mirrored_strategy.scope():
+            emmernet_model = load_emmernet_model(input_dictionary)
+    else:
+        emmernet_model = load_emmernet_model(input_dictionary)
+
     input_dictionary["logger"].info("Prediction start")
     input_dictionary = run_emmernet_batch(input_dictionary, emmernet_model, mirrored_strategy)
 
@@ -313,54 +316,148 @@ def run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored
     
     return cubes_predicted_potential, cubes_predicted_cd
         
-def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string):
-    import os 
+# def run_emmernet_batch_monte_carlo(cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string):
+#     import os 
+#     import sys
+#     import warnings
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings("ignore", category=DeprecationWarning)
+#         import tensorflow_datasets as tfds
+#         import atexit
+    
+#     from tqdm import tqdm
+    
+#     tfds.disable_progress_bar()
+    
+#     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+    
+#     cube_size = cubes[0].shape[0]
+#     cubes_predicted_full_network = np.empty((0, cube_size, cube_size, cube_size, 1))
+#     cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
+#     cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
+#     cubes_x = np.expand_dims(cubes, axis=4)
+#     with mirrored_strategy.scope():
+#         for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running MC-EMmerNet", ascii=True, file=sys.stdout):
+#             if i+batch_size > len(cubes):
+#                 #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
+#                 batch_size = len(cubes)-i
+                
+#                 assert batch_size > 0, "Batch size is less than 0"
+#                 assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
+            
+#             cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
+#             cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
+#             cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
+#             # predict again without dropout 
+#             cubes_batch_predicted = emmernet_model(cubes_batch_X, training=False)
+            
+#             # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
+#             cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
+#             cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
+#             cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
+#             cubes_batch_full_network_numpy = cubes_batch_predicted.numpy()
+
+#             cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
+#             cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
+#             cubes_predicted_full_network = np.append(cubes_predicted_full_network, cubes_batch_full_network_numpy, axis=0)
+    
+#     atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
+    
+#     return cubes_predicted_mean, cubes_predicted_var, cubes_predicted_full_network
+
+def run_emmernet_batch_monte_carlo(
+    cubes, emmernet_model, batch_size, monte_carlo_iterations, mirrored_strategy, cuda_visible_devices_string
+):
+    import os
     import sys
     import warnings
+    import tensorflow as tf
+    from tqdm import tqdm
+    import numpy as np
+
+    # Set CUDA_VISIBLE_DEVICES before any TensorFlow operations
+    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+
+    # Suppress deprecation warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         import tensorflow_datasets as tfds
         import atexit
-    
-    from tqdm import tqdm
-    
-    tfds.disable_progress_bar()
-    
-    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
-    
-    cube_size = cubes[0].shape[0]
-    cubes_predicted_full_network = np.empty((0, cube_size, cube_size, cube_size, 1))
-    cubes_predicted_mean = np.empty((0, cube_size, cube_size, cube_size, 1))
-    cubes_predicted_var = np.empty((0, cube_size, cube_size, cube_size, 1))
-    cubes_x = np.expand_dims(cubes, axis=4)
-    with mirrored_strategy.scope():
-        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running MC-EMmerNet", ascii=True, file=sys.stdout):
-            if i+batch_size > len(cubes):
-                #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
-                batch_size = len(cubes)-i
-                
-                assert batch_size > 0, "Batch size is less than 0"
-                assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
-            
-            cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
-            cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
-            cubes_batch_predicted_list = [emmernet_model(cubes_batch_X, training=True) for _ in range(monte_carlo_iterations)]
-            # predict again without dropout 
-            cubes_batch_predicted = emmernet_model(cubes_batch_X, training=False)
-            
-            # cubes_batch_predicted_list = [split_potential(cube) for cube in cubes_batch_predicted_list]
-            cubes_batch_predicted_numpy = [cube.numpy() for cube in cubes_batch_predicted_list]
-            cubes_batch_predicted_mean = np.mean(cubes_batch_predicted_numpy, axis=0)
-            cubes_batch_predicted_var = np.var(cubes_batch_predicted_numpy, axis=0)
-            cubes_batch_full_network_numpy = cubes_batch_predicted.numpy()
 
-            cubes_predicted_mean = np.append(cubes_predicted_mean, cubes_batch_predicted_mean, axis=0)
-            cubes_predicted_var = np.append(cubes_predicted_var, cubes_batch_predicted_var, axis=0)
-            cubes_predicted_full_network = np.append(cubes_predicted_full_network, cubes_batch_full_network_numpy, axis=0)
-    
+    tfds.disable_progress_bar()
+    # suppress tensorflow warnings
+    tf.get_logger().setLevel('ERROR')
+
+    # Prepare the data
+    cubes_x = np.expand_dims(cubes, axis=4)
+    length_of_cubes = len(cubes)
+    cube_size = cubes_x.shape[1]
+
+    # Convert the data to a tf.data.Dataset
+    dataset = tf.data.Dataset.from_tensor_slices(cubes_x)
+    dataset = dataset.batch(batch_size)
+    # Distribute the dataset across the GPUs
+    distributed_dataset = mirrored_strategy.experimental_distribute_dataset(dataset)
+
+    # Initialize lists to store results
+    cubes_predicted_mean_list = []
+    cubes_predicted_var_list = []
+    cubes_predicted_full_network_list = []
+
+    with mirrored_strategy.scope():
+        @tf.function
+        def predict_step(inputs):
+            # Initialize mean and M2 (sum of squares of differences from the current mean)
+            mean = tf.zeros_like(emmernet_model(inputs, training=False))
+            M2 = tf.zeros_like(emmernet_model(inputs, training=False))
+            
+            # Loop over Monte Carlo iterations
+            for i in tf.range(1, monte_carlo_iterations + 1):
+                output = emmernet_model(inputs, training=True)
+                delta = output - mean
+                mean += delta / tf.cast(i, tf.float32)
+                delta2 = output - mean
+                M2 += delta * delta2
+            
+            # Compute variance
+            variance = M2 / tf.cast(monte_carlo_iterations, tf.float32)
+            
+            # Prediction without dropout
+            #full_network_output = emmernet_model(inputs, training=False)
+            full_network_output = mean # Not required but keeping it for consistency in code structure
+
+            return mean, variance, full_network_output
+
+        # Iterate over the distributed dataset
+        for batch in tqdm(distributed_dataset, desc="Running MC-EMmerNet", ascii=True, file=sys.stdout, total=length_of_cubes // batch_size):
+            # Run the prediction step on all GPUs
+            mean, var, full_network_output = mirrored_strategy.run(predict_step, args=(batch,))
+
+            # Aggregate results from all replicas
+            mean = mirrored_strategy.gather(mean, axis=0)
+            var = mirrored_strategy.gather(var, axis=0)
+            full_network_output = mirrored_strategy.gather(full_network_output, axis=0)
+
+            # Convert tensors to NumPy arrays
+            mean_np = mean.numpy()
+            var_np = var.numpy()
+            full_network_output_np = full_network_output.numpy()
+
+            # Append results
+            cubes_predicted_mean_list.append(mean_np)
+            cubes_predicted_var_list.append(var_np)
+            cubes_predicted_full_network_list.append(full_network_output_np)
+
+    # Concatenate the results
+    cubes_predicted_mean = np.concatenate(cubes_predicted_mean_list, axis=0)
+    cubes_predicted_var = np.concatenate(cubes_predicted_var_list, axis=0)
+    cubes_predicted_full_network = np.concatenate(cubes_predicted_full_network_list, axis=0)
+
+    # Clean up resources
     atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
-    
+
     return cubes_predicted_mean, cubes_predicted_var, cubes_predicted_full_network
+
 
 def compute_mle_mean_variance(data):
     # Reshape data to treat each voxel's values across MC samples as distinct rows
@@ -374,43 +471,106 @@ def compute_mle_mean_variance(data):
     variance_cube = (mle_params[:, 1] ** 2).reshape(data.shape[1:])
     
     return mean_cube, variance_cube
+# def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string):
+#     import os
+#     import warnings
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings("ignore", category=DeprecationWarning)
+#         import tensorflow_datasets as tfds
+#         import atexit
+    
+#     from tqdm import tqdm
+#     import sys
+
+#     tfds.disable_progress_bar()
+
+#     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
+    
+#     cube_size = cubes[0].shape[0]
+#     cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
+#     cubes_x = np.expand_dims(cubes, axis=4)
+    
+#     with mirrored_strategy.scope():
+#         for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet",file=sys.stdout):
+#             if i+batch_size > len(cubes):
+#                 #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
+#                 batch_size = len(cubes)-i
+                
+#                 assert batch_size > 0, "Batch size is less than 0"
+#                 assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
+            
+#             cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
+#             cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
+#             cubes_batch_predicted = emmernet_model(cubes_batch_X, training=True)
+#             cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
+    
+#     atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
+    
+#     return cubes_predicted
+
 def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrored_strategy, cuda_visible_devices_string):
     import os
     import warnings
+    import tensorflow as tf
+    from tqdm import tqdm
+    import sys
+    import numpy as np
+
+    # Suppress deprecation warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         import tensorflow_datasets as tfds
         import atexit
-    
-    from tqdm import tqdm
-    import sys
 
     tfds.disable_progress_bar()
+    # Suppress tensorflow warnings
+    tf.get_logger().setLevel('ERROR')
 
+    # Set CUDA_VISIBLE_DEVICES before importing TensorFlow modules
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
-    
-    cube_size = cubes[0].shape[0]
-    cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
+
+    # Prepare the data
     cubes_x = np.expand_dims(cubes, axis=4)
-    
+    cube_size = cubes_x.shape[1]
+
+    # Convert the data to a tf.data.Dataset
+    dataset = tf.data.Dataset.from_tensor_slices(cubes_x)
+    # Use global batch size; it will be divided among GPUs
+    dataset = dataset.batch(batch_size)
+    # Distribute the dataset across the GPUs
+    distributed_dataset = mirrored_strategy.experimental_distribute_dataset(dataset)
+
+    # Initialize a list to store predictions
+    cubes_predicted_list = []
+
     with mirrored_strategy.scope():
-        for i in tqdm(np.arange(0,len(cubes),batch_size),desc="Running EMmerNet",file=sys.stdout):
-            if i+batch_size > len(cubes):
-                #i = len(cubes)-batch_size-1 # make sure the last batch is of size batch_size
-                batch_size = len(cubes)-i
-                
-                assert batch_size > 0, "Batch size is less than 0"
-                assert batch_size + i == len(cubes), "Batch size and i do not add up to the number of cubes"
-            
-            cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
-            cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
-            cubes_batch_predicted = emmernet_model(cubes_batch_X, training=True)
-            cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
-    
+        @tf.function
+        def predict_step(inputs):
+            # Perform prediction
+            outputs = emmernet_model(inputs, training=False)
+            return outputs
+
+        # Iterate over the distributed dataset
+        for batch in tqdm(distributed_dataset, desc="Running EMmerNet", file=sys.stdout):
+            # Run the prediction step on all GPUs
+            outputs = mirrored_strategy.run(predict_step, args=(batch,))
+
+            # Collect results from all replicas
+            outputs_list = mirrored_strategy.experimental_local_results(outputs)
+            # Convert tensors to NumPy arrays and concatenate
+            outputs_np = np.concatenate([output.numpy() for output in outputs_list], axis=0)
+
+            # Append the outputs to the list
+            cubes_predicted_list.append(outputs_np)
+
+    # Concatenate all predictions
+    cubes_predicted = np.concatenate(cubes_predicted_list, axis=0)
+
+    # Close the strategy's resources
     atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
-    
+
     return cubes_predicted
-    
+
     
 ## Preprocess the map
 def preprocess_map(emmap, apix, standardize=True):

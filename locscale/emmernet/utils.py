@@ -184,7 +184,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     monte_carlo = parsed_inputs["monte_carlo"]
     physics_based = parsed_inputs["physics_based"]
     emmap, apix = load_map(input_emmap_path)
-    output_emmap_folder = os.path.dirname(output_emmap_filename)
+    output_emmap_folder = os.path.dirname(input_emmap_path)
 
     if monte_carlo:
         emmernet_output_mean = emmernet_output["output_predicted_map_mean"]
@@ -216,7 +216,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         if not output_has_extension:
             output_emmap_filename = output_emmap_filename + ".mrc"
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
-        output_filename_mean = output_emmap_filename.replace(extension_output_filename, "_feature_enhanced_output"+extension_output_filename)
+        output_filename_mean = output_emmap_filename
         output_filename_var = output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename)
         #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
         output_filename_for_locscale = output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename)
@@ -252,8 +252,7 @@ def load_calibrator():
     import os 
     
     locscale_path = get_locscale_path()
-    regressor_path = os.path.join(locscale_path, "locscale", "utils", "calibrator_locscale_target.pkl")
-    
+    regressor_path = os.path.join(locscale_path, "locscale", "utils", "calibrator_locscale_target_seed_42.pickle")
     calibrator = pickle.load(open(regressor_path, "rb"))
     
     return calibrator

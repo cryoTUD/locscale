@@ -210,10 +210,10 @@ def plot_pickle_output(folder, figsize=(8.27, 11.69)):
 def compute_probability_distribution(locscale_path, mean_prediction_path, var_prediction_path, n_samples, processing_files_folder):
     from locscale.emmernet.utils import compute_calibrated_probabilities, compute_reliability_curve
     import json
-    
+    print("Expected and observed probabilities for different confidence intervals")
     observed_probabilities = compute_calibrated_probabilities(locscale_path, mean_prediction_path, var_prediction_path, n_samples)
     
-    print("Expected and observed probabilities for different confidence intervals")
+    
     for ci in observed_probabilities:
         print("Expected Probability: {:.2f}, Observed Probability: {:.2f}".format(ci, 100*observed_probabilities[ci]))
     
