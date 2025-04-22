@@ -145,7 +145,7 @@ def window3D(w):
 
 def get_cosine_mask(mask,length_cosine_mask_1d):
     from scipy import signal
-    cosine_window_1d = signal.cosine(length_cosine_mask_1d)
+    cosine_window_1d = signal.windows.cosine(length_cosine_mask_1d)
     cosine_window_3d = window3D(cosine_window_1d)
     cosine_mask = signal.convolve(mask,cosine_window_3d,mode='same')
     cosine_mask = cosine_mask/cosine_mask.max()
