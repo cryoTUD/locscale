@@ -16,13 +16,15 @@ from locscale.emmernet.emmernet_functions import standardize_map, get_cubes, ass
                                                     load_smoothened_mask, show_signal_cubes
 
 from locscale.emmernet.utils import symmetrise_if_needed                                                    
-import tensorflow as tf
+
 import numpy as np
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
+import tensorflow as tf
 from tqdm import tqdm
 from scipy.stats import norm 
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
+
 tf.random.set_seed(42)
 
 def run_emmernet(input_dictionary):
@@ -312,7 +314,6 @@ def run_emmernet_batch_physics_based(cubes, emmernet_model, batch_size, mirrored
             cubes_predicted_potential = np.append(cubes_predicted_potential, cubes_batch_predicted_potential_numpy, axis=0)
             cubes_predicted_cd = np.append(cubes_predicted_cd, cubes_batch_predicted_cd_numpy, axis=0)
     
-    atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
     
     return cubes_predicted_potential, cubes_predicted_cd
         
@@ -453,9 +454,7 @@ def run_emmernet_batch_monte_carlo(
     cubes_predicted_var = np.concatenate(cubes_predicted_var_list, axis=0)
     cubes_predicted_full_network = np.concatenate(cubes_predicted_full_network_list, axis=0)
 
-    # Clean up resources
-    atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
-
+    
     return cubes_predicted_mean, cubes_predicted_var, cubes_predicted_full_network
 
 
@@ -566,8 +565,6 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
     # Concatenate all predictions
     cubes_predicted = np.concatenate(cubes_predicted_list, axis=0)
 
-    # Close the strategy's resources
-    atexit.register(mirrored_strategy._extended._collective_ops._pool.close)
 
     return cubes_predicted
 
