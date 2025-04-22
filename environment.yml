@@ -10,4 +10,6 @@ dependencies:
   - mpi4py
   - openmpi
   - pip
+  - pip:
+      - locscale
 
