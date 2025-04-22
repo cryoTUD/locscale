@@ -36,9 +36,9 @@ def download_and_test_everything():
     test_data_path = os.path.join(test_path, "test_data")
     if not os.path.exists(test_data_path):
         os.makedirs(test_data_path, exist_ok=True)
-    
+        tarball_path = os.path.join(test_data_path, "test_data.tar.gz")
         ## Download test data
-        download_test_data_from_url(test_data_path)
+        download_test_data_from_url(tarball_path)
         ## Extract tar files
         extract_tar_files_in_folder(test_data_path, use_same_folder=False)
 
