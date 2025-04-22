@@ -6,6 +6,7 @@
 #
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow warnings
 import pyfiglet
 from datetime import datetime
 import sys
