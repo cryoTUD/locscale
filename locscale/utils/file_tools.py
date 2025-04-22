@@ -172,11 +172,12 @@ def copy_file_to_folder(full_path_to_file, new_folder, mapfile=False):
         warnings.warn(f"File {destination} already exists")
     
     if mapfile:
-        # Check the axis order 
-        from locscale.preprocessing.headers import check_axis_order
-        destination = check_axis_order(destination)
-        
-    return destination
+        from locscale.include.emmer.ndimage.map_utils import load_map, save_as_mrc
+        emmap, apix = load_map(full_path_to_file)
+        save_as_mrc(emmap, destination, apix)
+        return destination
+    else:
+        return destination
 
 def change_directory(args, folder_name):
     import os    
