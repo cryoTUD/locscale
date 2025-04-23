@@ -1,5 +1,5 @@
 # LocScale 2.0 <br><sup>Confidence-weighted cryoEM map optimisation</sup> 
-<div style="text-align: justify"><code>LocScale 2.0</code> is an automated program for physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can inferred directly from the experimental density map, or be provided either from an existing atomic model. 
+<div style="text-align: justify"><code>LocScale 2.0</code> is an automated program for physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can either inferred directly from the experimental density map, or be provided from an existing atomic model. 
 </div>
 
 !!! info "What's new in LocScale 2.0"     
