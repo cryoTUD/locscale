@@ -1,5 +1,5 @@
 # LocScale 2.0 <br><sup>Confidence-weighted cryoEM map optimisation</sup> 
-<div style="text-align: justify"><code>LocScale 2.0</code> is an automated program for physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can be provided either from an existing atomic model, or inferred directly from the experimental density map. 
+<div style="text-align: justify"><code>LocScale 2.0</code> is an automated program for physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening filter. These can inferred directly from the experimental density map, or be provided either from an existing atomic model. 
 </div>
 
 !!! info "What's new in LocScale 2.0"     
@@ -90,7 +90,7 @@
 ![alt](imgs/overview_methods.png)
 <br><br>
 
-In general we recommend using [`locscale_feature_enhance`](tutorial/fem.md) for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
+In general we recommend using [`locscale_feature_enhance`](tutorial/fem.md) for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  <br>
 
 [`Hybrid LocScale`](tutorials/hybrid_locscale.md) will be most useful in cases where preservation of contextual structure is of high importance and/or where a purely physics-driven map optimisation process is desirable, e.g if features to be optimised will likely fall outside the training data of `EMmerNEt` (e.g. sub-tomogram averages from _in situ_ cryoET). IF partial model information is available we recommend using all parts of the atomic model that can be reliably placed. 
 
