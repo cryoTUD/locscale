@@ -1,5 +1,5 @@
 [![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)
-[![Python 3.8](https://img.shields.io/badge/python-3.8-green)](https://www.python.org/downloads/release/python-380/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-green)](https://www.python.org/downloads/release/python-3110/)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://gitlab.tudelft.nl/aj-lab/locscale/raw/master/LICENSE)
@@ -50,17 +50,12 @@ If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/downl
 
 ##### 2. Install LocScale using environment files 
 
-There are two yml files in the repo: environment_cpu.yml and environment_gpu.yml. We recommend you to download and install the GPU version.
+You will see environment.yml file in the main repo. Download this file to your local computer.
 
-Once you download the yml file of your choice: 
+Once you download the yml file:
 ```bash
-conda env create -f /path/to/environment_cpu.yml
-conda activate cpu_locscale
-```
-or 
-```bash
-conda env create -f /path/to/environment_gpu.yml
-conda activate gpu_locscale
+conda env create -f /path/to/environment.yml
+conda activate locscale2
 ```
 #### Alternatively
 You can also follow these steps to install locscale using pip.
@@ -68,7 +63,7 @@ You can also follow these steps to install locscale using pip.
 ##### 1. Create and activate a new conda environment
 
 ```bash
-conda create -n locscale python=3.8 
+conda create -n locscale python=3.11
 conda activate locscale
 ```
 
