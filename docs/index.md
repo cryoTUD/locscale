@@ -84,12 +84,14 @@
 
 ## Which map optimisation procedure should I use? {#flavour_guide}
 
-```LocScale 2.0``` supports several different workflows for automated, physics-informed map optimisation. Three of them fall into the category of local sharpening methods, and one ––__feature-enhanced maps__–– is a map optimisation methods akin to density modification. The different methods serve different needs and we will try to guide choosing the right approach for different scenarios below.
+```LocScale 2.0``` supports several different workflows for automated, physics-informed map optimisation. Three of them fall into the category of local sharpening methods (i.e. they function as Fourier filters), and one ––__feature-enhanced maps__–– is a map optimisation methods akin to density modification. The different methods serve different needs and we will try to guide choosing the right approach for different scenarios below.
 
 <br>
 ![alt](imgs/overview_methods.png)
-<br>
+<br><br>
 
-In general we recommend using ```locscale_feature_enhance``` for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
+In general we recommend using [`locscale_feature_enhance`](tutorial/fem.md) for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  
+
+[`Hybrid LocScale`](tutorials/hybrid_locscale.md) will be most useful in cases where preservation of contextual structure is of high importance and/or where a purely physics-driven map optimisation process is desirable, e.g if features to be optimised will likely fall outside the training data of `EMmerNEt` (e.g. sub-tomogram averages from _in situ_ cryoET). IF partial model information is available we recommend using all parts of the atomic model that can be reliably placed. 
 
 
