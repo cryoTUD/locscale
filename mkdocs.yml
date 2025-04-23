@@ -1,0 +1,98 @@
+site_name: LocScale-2.0
+site_url: https://github.com/cryoTUD/locscale
+site_author: Arjen Jakobi
+site_description: >-
+  Documentation for LocScale-2.0, an automated workflow for confidence-weighted optimisation of cryoEM maps.
+# Repository
+repo_name: cryoTUD/locscale
+repo_url: https://github.com/cryoTUD/locscale
+
+# Copyright
+copyright: Copyright &copy; 2025 - 2025 Arjen Jakobi
+
+theme:
+  icon:
+    logo: material/home-circle
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: light blue
+      accent: light blue
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      accent: blue grey
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - content.code.copy
+    - content.code.select
+    #- navigation.tabs
+    #- navigation.top
+    #- navigation.tracking
+    - search.highlight
+    - search.suggest
+    # - toc.follow
+    # - content.code.annotate
+    - content.tabs.link
+
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.critic
+  - pymdownx.mark
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+
+extra:
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >- 
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+
+nav:
+  - Introduction: index.md
+  - Installation: install.md
+  - Usage | Tutorials:
+      - Feature enhanced maps (FEM): tutorials/fem.md
+      - Hybrid LocScale: tutorials/hybrid_locscale.md
+      - Model-free LocScale: tutorials/model_free_locscale.md
+      - Model-based LocScale: tutorials/model_based_locscale.md
+      - LocScale in CCPEM Doppio: tutorials/locscale_ccpem_doppio.md
+  - About LocScale 2.0: about.md
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
