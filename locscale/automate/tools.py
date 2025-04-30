@@ -219,17 +219,13 @@ class LocScaleRun:
         # Copy files to new folder
         self.input.copy_files_to_new_folder(job_folder)
 
-        # Make a locscale output log file
-        log_file_path = os.path.join(job_folder, "locscale_output.log")
 
         # Create command
         self.input.update_args()
-        self.write_header_to_log_file(log_file_path)
 
         # Create job file
         job = {
         "args": self.input.args.__dict__, 
-        "output_log": log_file_path, 
         "job_name": self.job_name,
         "timeout": int(self.timeout),
         "data_folder": self.data_folder,}
@@ -252,9 +248,6 @@ class LocScaleRun:
 
         self.fetch_job()
 
-        log_file = open(self.job["output_log"], "a")
-        sys.stdout = log_file
-        sys.stderr = log_file
         print("Submitting job {}".format(self.job_name))
 
         args = argparse.Namespace()
