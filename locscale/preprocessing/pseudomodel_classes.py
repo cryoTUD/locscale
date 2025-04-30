@@ -211,7 +211,7 @@ class Model:
        
     def convert_to_gemmi_model(self):
         import string
-        model = gemmi.Model('pseudo')
+        model = gemmi.Model(0)
         chain_letters = list(string.ascii_uppercase)
         chain_count = 0
         res_count = 0

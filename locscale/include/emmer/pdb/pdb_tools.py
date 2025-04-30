@@ -436,7 +436,7 @@ def combine_pdb_structures_into_one(list_of_input_pdb, return_chain_counts=False
 
     
     combined_structure = gemmi.Structure()
-    combined_model = gemmi.Model("combined")
+    combined_model = gemmi.Model(0)
     
     chain_count = 0
     final_chain_counts = []
