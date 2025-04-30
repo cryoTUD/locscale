@@ -138,7 +138,7 @@ def run_FDR(emmap_path,window_size,fdr=0.01,verbose=True,filter_cutoff=None, ave
     fdr = fdr
     fdr_mask, fdr_threshold = compute_FDR_confidenceMap_easy(
         emmap, apix=apix, fdr=fdr, window_size=window_size, 
-        lowPassFilter_resolution=filter_cutoff, remove_temp_files=False)
+        lowPassFilter_resolution=filter_cutoff, remove_temp_files=False, use_default_noise_box=True)
     
     
     emmap_path_without_ext = emmap_path[:-4]
@@ -495,7 +495,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     ### Run Servalcat after preparing inputs ###
     output_prefix = model_name[:-4]+"_servalcat_refined"
-    servalcat_command = ["servalcat","refine_spa","--model",servalcat_input,\
+    servalcat_command = ["servalcat","refine_spa_norefmac","--model",servalcat_input,\
         "--resolution",str(round(resolution, 2)), "--ncycle",str(int(num_iter)),\
         "--output_prefix",output_prefix]
 
@@ -506,7 +506,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
         assert len(map_path) == 2, "The map_path should be a string or a list of two strings"
         servalcat_command.extend(["--halfmaps",map_path[0],map_path[1]])
     
-    servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
+    #servalcat_command += ["--jellybody","--jellybody_params","0.01","4.2"]
     servalcat_command += ["--hydrogen","no"]
     
     if cif_info is not None:
