@@ -31,7 +31,7 @@ def compute_radial_profile_proper(vol, frequency_map):
     return radial_profile, frequencies;
 
 def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments, 
-                          use_theoretical_profile=True, check_scaling=False):
+                          use_theoretical_profile=True, check_scaling=False, measure_bfactors=False):
     """Function to calculate the scale factors given two profiles.
     This function is compatible with both pseudo-atomic model routine and 
     regular atomic model routine.
@@ -203,10 +203,10 @@ def compute_scale_factors(em_profile, ref_profile, apix, scale_factor_arguments,
         ##########################################################################################
         # Calculate the local bfactor information from refernce profile
         ##########################################################################################
-        try:
+        if measure_bfactors:
             bfactor, amp, qfit = estimate_bfactor_standard(freq=freq, amplitude=ref_profile, wilson_cutoff=wilson_cutoff_traditional, 
                                                         fsc_cutoff=scale_factor_arguments['fsc_cutoff'], return_amplitude=True, return_fit_quality=True, standard_notation=True)
-        except:
+        else:
             bfactor = 99
             amp = 99
             qfit = 0.99
@@ -278,6 +278,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
 
     temp_folder = scaling_dictionary['processing_files_folder']
     hybrid_model_scaling = scaling_dictionary['complete_model']
+    measure_bfactors = scaling_dictionary['measure_bfactors']
     preprocess_intermediate_pickle_file = os.path.join(temp_folder, 'intermediate_outputs.pickle')
     # If the intermediate pickle file exists, load it and continue from there
     if os.path.exists(preprocess_intermediate_pickle_file):
@@ -359,7 +360,7 @@ def get_central_scaled_pixel_vals_after_scaling(scaling_dictionary):
             scale_factor_result = compute_scale_factors(
                 em_profile,mod_profile, apix=apix, check_scaling=check_scaling, \
                 scale_factor_arguments=scaling_dictionary['scale_factor_arguments'], \
-                use_theoretical_profile=use_theoretical_profile)
+                use_theoretical_profile=use_theoretical_profile, measure_bfactors=measure_bfactors)
             
             scale_factors = scale_factor_result['scale_factors']
             bfactor = scale_factor_result['bfactor']

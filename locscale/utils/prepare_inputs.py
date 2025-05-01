@@ -203,6 +203,7 @@ def prepare_mask_and_maps_for_scaling(args):
     parsed_inputs_dict['number_processes'] = parsed_inputs["number_processes"]
     parsed_inputs_dict['complete_model'] = parsed_inputs["complete_model"]
     parsed_inputs_dict['original_map_shape'] = parsed_inputs["original_map_shape"]
+    parsed_inputs_dict["measure_bfactors"] = parsed_inputs["measure_bfactors"]
     
     
     parsed_inputs["logger"].info("Parsed inputs dictionary: \n{}".format(pretty_print_dictionary(parsed_inputs_dict)))
