@@ -95,6 +95,8 @@ def add_locscale_arguments(locscale_parser):
         '-mpi', '--mpi', help='MPI version', action='store_true', default=False)
     scaling_argument_group.add_argument(
         '-np', '--number_processes', help='Number of processes to use', type=int, default=1)
+    scaling_argument_group.add_argument(
+        '--measure_bfactors', help='Measure b-factors of the reference map for validation later', action='store_true', default=False)
 
     ## Refinement parameters
     refinement_argument_group = locscale_parser.add_argument_group('Refinement arguments')
