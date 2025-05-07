@@ -30,6 +30,34 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
     [:octicons-arrow-right-24: Install guide](#detailed)
 </div>
 
+=== "From PyPI"
+
+    ```shell
+    pip install cylindra[all] -U
+    ```
+
+=== "From napari hub"
+
+    `cylindra` is available as a [napari plugin](https://napari-hub.org/plugins/cylindra).
+    You can install it from the napari plugin manager.
+
+    1. Launch `napari`.
+    2. Click `Plugins > Install/Uninstall plugins...`.
+    3. Type "cylindra" in the filter box. Click the "Install" button.
+
+=== "From the GitHub main branch"
+
+    ```shell
+    pip install git+https://github.com/hanjinliu/cylindra.git
+    ```
+
+=== "Build from the source"
+
+    ```shell
+    git clone https://github.com/hanjinliu/cylindra
+    cd cylindra
+    pip install .[all]
+
 
 ### Installation via environment files: {#quick}
 ##### 1. Install REFMAC5 via CCP4/CCPEM
