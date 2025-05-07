@@ -50,9 +50,9 @@ If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/downl
 
 ##### 2. Install LocScale using environment files 
 
-You will see environment.yml file in the main repo. Download this file to your local computer. 
+You will see environment.yml file in the main repo. Download this file to your local computer.
 
-Once you download the yml file: 
+Once you download the yml file:
 ```bash
 conda env create -f /path/to/environment.yml
 conda activate locscale2
