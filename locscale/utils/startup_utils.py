@@ -250,7 +250,7 @@ def launch_feature_enhance_no_mpi(args):
     try_to(compute_probability_distribution,**probability_args)
     
     print("EMmerNet finished successfully")
-    print("Please check the pVDDT.mrc to observe significantly hallucinated features")
+    print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
     ## Print end
     print_end_banner(datetime.now(), start_time)
 
@@ -324,7 +324,7 @@ def launch_feature_enhance_mpi(args):
             try_to(compute_probability_distribution,**probability_args)
             
             print("EMmerNet finished successfully")
-            print("Please check the pVDDT.mrc to observe significantly hallucinated features")
+            print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
             ## Print end
             print_end_banner(datetime.now(), start_time)
         
