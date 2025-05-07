@@ -33,27 +33,6 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
 
 ### Installation via environment files: {#quick}
 
-=== "From environment file {#quick}" 
-
-    1. Install REFMAC5 via CCP4/CCPEM
-    LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
-
-    ```shell
-    which refmac5
-    ```
-
-    If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
-
-   2. Install LocScale using environment files 
-
-    You will see environment.yml file in the main repo. Download this file to your local computer.
-
-    Once you download the yml file:
-    ```shell
-    conda env create -f /path/to/environment.yml
-    conda activate locscale2
-    ```
-
 ##### 1. Install REFMAC5 via CCP4/CCPEM
 LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
 
