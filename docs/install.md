@@ -30,36 +30,30 @@ We recommend to use [Conda](https://docs.conda.io/en/latest/) for a local workin
     [:octicons-arrow-right-24: Install guide](#detailed)
 </div>
 
-=== "From PyPI"
-
-    ```shell
-    pip install cylindra[all] -U
-    ```
-
-=== "From napari hub"
-
-    `cylindra` is available as a [napari plugin](https://napari-hub.org/plugins/cylindra).
-    You can install it from the napari plugin manager.
-
-    1. Launch `napari`.
-    2. Click `Plugins > Install/Uninstall plugins...`.
-    3. Type "cylindra" in the filter box. Click the "Install" button.
-
-=== "From the GitHub main branch"
-
-    ```shell
-    pip install git+https://github.com/hanjinliu/cylindra.git
-    ```
-
-=== "Build from the source"
-
-    ```shell
-    git clone https://github.com/hanjinliu/cylindra
-    cd cylindra
-    pip install .[all]
-
 
 ### Installation via environment files: {#quick}
+
+=== "From environment file" {#quick}
+
+    1. Install REFMAC5 via CCP4/CCPEM
+    LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
+
+    ```shell
+    which refmac5
+    ```
+
+    If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure refmac5 is accessible to the program. 
+
+   2. Install LocScale using environment files 
+
+    You will see environment.yml file in the main repo. Download this file to your local computer.
+
+    Once you download the yml file:
+    ```shell
+    conda env create -f /path/to/environment.yml
+    conda activate locscale2
+    ```
+
 ##### 1. Install REFMAC5 via CCP4/CCPEM
 LocScale needs a working instance of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html). If you already have CCP4/CCPEM installed check if the path to run `refmac5` is present in your environment. 
 
