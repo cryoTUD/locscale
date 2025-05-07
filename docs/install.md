@@ -76,22 +76,26 @@ which refmac5
 
 If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/download/) to ensure REFMAC5 is accessible. 
 
-##### 4. Install LocScale and dependencies using pip:
+##### 4. Install LocScale and dependencies using pip
 
-###### Recommended installation
-We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met. 
+=== "Recommended installation"
 
-```bash
-pip install locscale 
-```
+    We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met.
 
-###### Install development version
-If you would like to install the latest development version of locscale, use the following command to install from the git repository. 
-```bash
-pip install git+https://github.com/cryoTUD/locscale.git
-```
+    ```shell
+    pip install locscale 
+    ```
+    Install development version
 
-To install the git repository in editable mode, clone the repository, navigate to the `locscale` directory, and run `pip install -e .`
+==== "Development version"
+    If you would like to install the latest development version of locscale, use the following command to install from the git repository.
+
+    ```shell
+    pip install git+https://github.com/cryoTUD/locscale.git
+    ```
+=== "Editable mode"
+    To install the git repository in editable mode, clone the repository, navigate to the locscale directory, and run `pip install -e`.
+
 
 ##### 5. Testing
 
