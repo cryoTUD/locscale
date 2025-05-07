@@ -87,7 +87,7 @@ If no valid path is returned, please install [CCP4](https://www.ccp4.ac.uk/downl
     ```
     Install development version
 
-==== "Development version"
+=== "Development version"
     If you would like to install the latest development version of locscale, use the following command to install from the git repository.
 
     ```shell
