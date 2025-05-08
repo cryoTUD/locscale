@@ -292,7 +292,7 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
     else:
         return output_dictionary
             
-def compute_calibrated_probabilities(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+def compute_calibrated_probabilities(locscale_path, mean_prediction_path, variance_prediction_path, mask_path, n_samples=15):
     from locscale.emmernet.emmernet_functions import load_smoothened_mask
     from locscale.emmernet.utils import load_calibrator
     from locscale.include.emmer.ndimage.map_utils import load_map
@@ -306,9 +306,9 @@ def compute_calibrated_probabilities(locscale_path, mean_prediction_path, varian
     locscale_map, apix = load_map(locscale_path)
     mean_prediction, _ = load_map(mean_prediction_path)
     variance_prediction, _ = load_map(variance_prediction_path)
-    
-    variance_mask = variance_prediction > 0.0002
-    
+    variance_mask, _ = load_map(mask_path)
+    variance_mask = variance_mask > 0.5
+        
     locscale_masked = locscale_map[variance_mask]
     mean_masked = mean_prediction[variance_mask]
     variance_masked = variance_prediction[variance_mask]
@@ -387,7 +387,7 @@ def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(
     
     return fig, ax
 
-def compute_reliability_curve(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+def compute_reliability_curve(locscale_path, mean_prediction_path, variance_prediction_path, mask_path, n_samples=15):
     from locscale.emmernet.utils import load_calibrator
     from locscale.include.emmer.ndimage.map_utils import load_map
     import numpy as np
@@ -396,8 +396,8 @@ def compute_reliability_curve(locscale_path, mean_prediction_path, variance_pred
     locscale_map, apix = load_map(locscale_path)
     mean_prediction, _ = load_map(mean_prediction_path)
     variance_prediction, _ = load_map(variance_prediction_path)
-    
-    variance_mask = variance_prediction > 0.0002
+    variance_mask, _ = load_map(mask_path)
+    variance_mask = variance_mask > 0.5
     
     locscale_masked = locscale_map[variance_mask]
     mean_masked = mean_prediction[variance_mask]

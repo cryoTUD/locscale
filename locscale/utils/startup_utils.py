@@ -45,7 +45,7 @@ def print_start_banner(start_time, text="Map Sharpening"):
     elif text == "EMmerNet":
         author_list = ["Arjen J. Jakobi (TU Delft)",  "Alok Bharadwaj (TU Delft)", "Reinier de Bruin (TU Delft)"]
         contributor_list = None
-        version = "1.0"
+        version = locscale.__version__
     else:
         version = "x"
 
@@ -237,14 +237,17 @@ def launch_feature_enhance_no_mpi(args):
     locscale_output_filename = locscale_args.outfile 
     emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
     emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
+    mask_path = input_dictionary["xyz_mask_path"]
     calculate_significance_map_from_emmernet_output(
-        locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, n_samples=input_dictionary["monte_carlo_iterations"])
+        locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
+        n_samples=input_dictionary["monte_carlo_iterations"])
     # Compute the probability distribution for calibration
     
     probability_args = {"locscale_path" : locscale_output_filename, 
                         "mean_prediction_path" : emmernet_output_mean_filename,
                         "var_prediction_path" : emmernet_output_var_filename,
                         "n_samples" :input_dictionary["monte_carlo_iterations"], 
+                        "mask_path" : mask_path,
                         "processing_files_folder" : input_dictionary["output_processing_files"]}
     
     try_to(compute_probability_distribution,**probability_args)
@@ -287,6 +290,7 @@ def launch_feature_enhance_mpi(args):
             
             ## Prepare inputs
             input_dictionary = prepare_inputs(copied_args)
+            mask_path = input_dictionary["xyz_mask_path"]
             
             ## Run EMMERNET
             emmernet_output_dictionary = run_emmernet(input_dictionary)
@@ -312,13 +316,15 @@ def launch_feature_enhance_mpi(args):
             emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
             emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
             calculate_significance_map_from_emmernet_output(
-                locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, n_samples=input_dictionary["monte_carlo_iterations"])
+                locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
+                n_samples=input_dictionary["monte_carlo_iterations"])
             # Compute the probability distribution for calibration
             
             probability_args = {"locscale_path" : locscale_output_filename, 
                                 "mean_prediction_path" : emmernet_output_mean_filename,
                                 "var_prediction_path" : emmernet_output_var_filename,
                                 "n_samples" :input_dictionary["monte_carlo_iterations"], 
+                                "mask_path" : mask_path,
                                 "processing_files_folder" : input_dictionary["output_processing_files"]}
             
             try_to(compute_probability_distribution,**probability_args)
