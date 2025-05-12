@@ -136,4 +136,4 @@ If you found `LocScale` useful for your research, please consider citing it:
 
 ## Bugs and questions
 
-For bug reports please use the [GitHub issue tracker](https://github.com/issues/assigned)).   
+For bug reports please use the [GitHub issue tracker](https://github.com/issues/assigned).   
