@@ -18,8 +18,6 @@
 - [`LocScale-SURFER`](https://github.com/cryoTUD/locscale-surfer): ChimeraX plugin to toggle contextual structure in LocScale maps.
 - Full support for point group symmetry (helical symmetry to follow).
 
-<br>
-
 ## Documentation
 
 >[!TIP]
