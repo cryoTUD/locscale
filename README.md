@@ -106,11 +106,6 @@ locscale test
 ```
 </details>
 
-## Tutorial and FAQs
-
-We are currently working on the tutorial and [__Wiki__](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) help. If you are still using LocScale 1.0, see the [LocScale1](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)-Wiki for usage instructions, FAQs and tutorial.
-<br>  
-
 ## Credits
 `LoScale 2.0` is using code from a number of open-source projects.
 
