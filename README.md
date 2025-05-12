@@ -19,8 +19,6 @@
 - Full support for point group symmetry (helical symmetry to follow).
 
 <br>
-  
-`LocScale-2.0` is distributed as a portable stand-alone installation that includes all the needed libraries from: [https://github.com/cryoTUD/locscale/](https://github.com/cryoTUD/locscale/)
 
 ## Documentation
 
