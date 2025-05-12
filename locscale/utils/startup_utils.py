@@ -192,7 +192,9 @@ def launch_contrast_enhance(args):
         launch_locscale_no_mpi(args)
 
 def launch_feature_enhance(args):
-
+    if args.download:
+        from locscale.emmernet.utils import check_and_download_emmernet_model
+        check_and_download_emmernet_model(verbose=True)
     if args.mpi:
         launch_feature_enhance_mpi(args)
     else:
