@@ -13,6 +13,8 @@
 
     `LocScale` also makes use of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html). Refmac is distributed as part of CCP-EM.
 
+We acknowledge the use of computational resources of the DelftBlue supercomputer, provided by [Delft High Performance Computing Centre](https://www.tudelft.nl/dhpc).  
+
 ## References {#references}
 
 If you found `LocScale` useful for your research, please consider citing it:
