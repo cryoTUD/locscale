@@ -782,10 +782,10 @@
 <p>LocScale should run on any CPU system with Linux, OS X or Windows subsytem for Linux (WSL). 
 <br><br></p>
 <p><strong>GPU</strong>: <mark class="critic">To run the <code>feature_enhance</code> option LocScale requires the availability of a GPU</mark>. It is possible to run it on CPUs but computation will be slow(er).<br />
-<strong>OpenMPI</strong>: LocScale allows parallelisation on multi-CPU environment with OpenMPI</p>
+<strong>OpenMPI</strong>: LocScale allows parallelisation on multi-CPU environment with OpenMPI. If no OpenMPI environment exists, <code>joblib</code> is used for parallelisation.</p>
 <div class="admonition warning">
 <p class="admonition-title">Installation on Apple silicon</p>
-<p>GPU support on Apple silicon (MX chip) is currently buggy. We are working on resolving this.  </p>
+<p>GPU support on Apple silicon (MX chip) has now been fixed and should work seamlessly.  </p>
 </div>
 </div>
 <p>We recommend to use <a href="https://docs.conda.io/en/latest/">Conda</a> for a local working environment. See <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html#anaconda-or-miniconda">here</a> for more information on what Conda flavour may be the right choice for you, and <a href="https://www.anaconda.com/products/distribution">here</a> for Conda installation instructions.</p>

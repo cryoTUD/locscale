@@ -707,9 +707,11 @@
 <img alt="alt" src="imgs/overview_methods.png" />
 <br><br></p>
 <p>In general we recommend using <a href="tutorial/fem.md"><code>locscale_feature_enhance</code></a> for map optimisation in <code>LocScale 2.0</code> whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  <br><br></p>
-<p><a href="tutorials/hybrid_locscale/"><code>Hybrid LocScale</code></a> will be most useful in cases where preservation of contextual structure is of high importance and/or where a purely physics-driven map optimisation process is desirable, e.g if features to be optimised will likely fall outside the training data of <code>EMmerNEt</code> (e.g. sub-tomogram averages from <em>in situ</em> cryoET). IF partial model information is available we recommend using all parts of the atomic model that can be reliably placed. </p>
-<p><a href="tutorials/model_free_locscale/"><code>Model-free LocScale</code></a> is the quickest method for local sharpening and most useful for rapid testing of the effect of local sharpening, and for cases where physics-based amplitude scaling is desired but no partial model-information is available.  </p>
-<p><a href="tutorials/model_based_locscale/"><code>Model-based LocScale</code></a> is the legacy method for reference-based local sharpening using atomic model information.  </p>
+<p><a href="tutorials/hybrid_locscale/"><code>Hybrid LocScale</code></a> will be most useful in cases where preservation of contextual structure is of high importance and/or where a purely physics-driven map optimisation process is desirable, e.g if features to be optimised will likely fall outside the training data of <code>EMmerNEt</code> (e.g. sub-tomogram averages from <em>in situ</em> cryoET). IF partial model information is available we recommend using all parts of the atomic model that can be reliably placed. 
+<br>
+<a href="tutorials/model_free_locscale/"><code>Model-free LocScale</code></a> is the quickest method for local sharpening and most useful for rapid testing of the effect of local sharpening, and for cases where physics-based amplitude scaling is desired but no partial model-information is available.<br />
+<br>
+<a href="tutorials/model_based_locscale/"><code>Model-based LocScale</code></a> is the legacy method for reference-based local sharpening using atomic model information.  </p>
 
 
 
