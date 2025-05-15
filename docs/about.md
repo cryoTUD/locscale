@@ -1,6 +1,6 @@
 `LocScale 2.0` has been developed by Alok Bharadwaj and Arjen Jakobi at the [Kavli Institute of Nanoscience Delft](https://kavli.tudelft.nl/), with contributions by Reinier de Bruijn to the development of EMmerNet. 
-
-`LocScale 2.0` builds on `LocScale, which has been origninally developed by Arjen Jakobi and Carsten Sachse at EMBL.
+<br>
+`LocScale 2.0` builds on `LocScale`, which has been origninally developed by Arjen Jakobi and Carsten Sachse at EMBL.
 
 ### Credits
 `LoScale 2.0` is facilitated by a number of open-source projects.
