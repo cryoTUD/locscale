@@ -93,7 +93,7 @@
 In general we recommend using [`locscale_feature_enhance`](tutorial/fem.md) for map optimisation in ```LocScale 2.0``` whenever applicable. We have found this procedure to work robustly in a majority of cases and to provide the best compromise in preserving high-resolution detail and enhancing contrast of flexible or lower occupancy regions and contextual structures such as micelles.  <br><br>
 
 [`Hybrid LocScale`](tutorials/hybrid_locscale.md) will be most useful in cases where preservation of contextual structure is of high importance and/or where a purely physics-driven map optimisation process is desirable, e.g if features to be optimised will likely fall outside the training data of `EMmerNEt` (e.g. sub-tomogram averages from _in situ_ cryoET). IF partial model information is available we recommend using all parts of the atomic model that can be reliably placed. 
-
+<br>
 [`Model-free LocScale`](tutorials/model_free_locscale.md) is the quickest method for local sharpening and most useful for rapid testing of the effect of local sharpening, and for cases where physics-based amplitude scaling is desired but no partial model-information is available.  
-
+<br>
 [`Model-based LocScale`](tutorials/model_based_locscale.md) is the legacy method for reference-based local sharpening using atomic model information.  
