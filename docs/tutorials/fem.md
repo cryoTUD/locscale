@@ -1,6 +1,6 @@
 # Feature-enhanced maps<br><sup>Confidence-weighted map optimisation</sup>
 
-LocScale also supports confidence-weighted density modification based on a Bayesian-approximate implementation of ```EMmerNet```, whiich strives to simultaneously optimise high-resolution detail and contrast of low(er) resolution map regions or contextual stucture. To mitigate any risk of bias from network hallucination, ```LocScale``` integrates this procedure with calculate a per-pixel [confidence score](#pvddt) that effectively highlights regions requiring cautious interpretation.
+LocScale also supports confidence-weighted density modification based on a Bayesian-approximate implementation of ```EMmerNet```, whiich strives to simultaneously optimise high-resolution detail and contrast of low(er) resolution map regions or contextual stucture. To mitigate any risk of bias from network hallucination, ```LocScale``` integrates this procedure with calculation of a per-pixel [confidence score](#pvddt) that effectively highlights regions requiring cautious interpretation.
 <br>
 
 !!!info "Confidence-weighted map optimisation workflow (__Feature-enhanced maps__)"
@@ -38,11 +38,15 @@ The output will be __feature-enhanced map__ along with its confidence scores tha
 
 
 !!! tip "Speed-up computation on multiple CPUs"
-    To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You
-    can run it as follows:
+    To speed up computation, you can use multiple CPUs if available. LocScale uses [OpenMPI](https://www.open-mpi.org/)/[`mpi4py`](https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You can run it as follows:
 
     ```bash
     mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -gpus 1 -o feature_enhanced.mrc -mpi
+    ```
+    If use of OpenMPI is not possible on your system, you can still take advantage of multiple CPU cores by using `joblib`. In this case, simply specify the number of CPU cores using the `-np` flag as follows:
+
+    ```bash
+    locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -gpus 1 -np 4 -o feature_enhanced.mrc
     ```
 
 ### Interpreting pVDDT scores {#pvddt}
@@ -55,7 +59,7 @@ The output will be __feature-enhanced map__ along with its confidence scores tha
 #### Visualising confidence-weighted maps in ChimeraX
 The best way to visualise confidence scores is using the surface colour option in ChimeraX. `LocScale` outputs the pVDDT scores in MRC format, withc each voxel representing the pVDDT score associated with it.  <br>
 
-In ChimeraX, if your model #1 refers to the feature enhanced map (`locscale_output.mrc`) and model #2 refers to the pVDDT score map (`pVDDT.mrc`), use the following command to visualise the confidence score superimposed on the surface map:  
+In ChimeraX, if your model #1 refers to the feature enhanced map (`locscale_output.mrc`) and model #2 refers to the pVDDT score map (`pVDDT.mrc`), use the following command to visualise the confidence score superimposed on the map surface:  
 
 ```bash 
 color sample #1 map #2 palette -95, #0000ff; -80, #00ffff; 0, 00ff00; 80, #ffff00; 95, #ff0000;
