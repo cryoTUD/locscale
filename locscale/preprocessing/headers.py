@@ -469,9 +469,6 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     from locscale.utils.file_tools import check_for_refmac
     # check for refmac5
     
-    with servalcat_logger.catch():
-        check_for_refmac(tolerate=False)
-    
     # Get the current working directory
     current_directory = os.getcwd()
     processing_files_directory = os.path.dirname(os.path.abspath(model_path))
