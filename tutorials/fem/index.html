@@ -641,7 +641,7 @@
 
 
 <h1 id="feature-enhanced-mapsconfidence-weighted-map-optimisation">Feature-enhanced maps<br><sup>Confidence-weighted map optimisation</sup></h1>
-<p>LocScale also supports confidence-weighted density modification based on a Bayesian-approximate implementation of <code>EMmerNet</code>, whiich strives to simultaneously optimise high-resolution detail and contrast of low(er) resolution map regions or contextual stucture. To mitigate any risk of bias from network hallucination, <code>LocScale</code> integrates this procedure with calculate a per-pixel <a href="#pvddt">confidence score</a> that effectively highlights regions requiring cautious interpretation.
+<p>LocScale also supports confidence-weighted density modification based on a Bayesian-approximate implementation of <code>EMmerNet</code>, whiich strives to simultaneously optimise high-resolution detail and contrast of low(er) resolution map regions or contextual stucture. To mitigate any risk of bias from network hallucination, <code>LocScale</code> integrates this procedure with calculation of a per-pixel <a href="#pvddt">confidence score</a> that effectively highlights regions requiring cautious interpretation.
 <br></p>
 <div class="admonition info">
 <p class="admonition-title">Confidence-weighted map optimisation workflow (<strong>Feature-enhanced maps</strong>)</p>
@@ -672,9 +672,11 @@ this by specifying the required point group symmetry using the <code>-sym/--symm
 </div>
 <div class="admonition tip">
 <p class="admonition-title">Speed-up computation on multiple CPUs</p>
-<p>To speed up computation, you can use multiple CPUs if available. LocScale uses <a href="https://www.open-mpi.org/">OpenMPI</a>/<a href="https://mpi4py.readthedocs.io/en/stable/"><code>mpi4py</code></a> for parallelisation, which should have been automatically set up during installation. You
-can run it as follows:</p>
-<div class="highlight"><pre><span></span><code>mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-v<span class="w"> </span>-gpus<span class="w"> </span><span class="m">1</span><span class="w"> </span>-o<span class="w"> </span>feature_enhanced.mrc<span class="w"> </span>-mpi
+<p>To speed up computation, you can use multiple CPUs if available. LocScale uses <a href="https://www.open-mpi.org/">OpenMPI</a>/<a href="https://mpi4py.readthedocs.io/en/stable/"><code>mpi4py</code></a> for parallelisation, which should have been automatically set up during installation. You can run it as follows:</p>
+<p><div class="highlight"><pre><span></span><code>mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-v<span class="w"> </span>-gpus<span class="w"> </span><span class="m">1</span><span class="w"> </span>-o<span class="w"> </span>feature_enhanced.mrc<span class="w"> </span>-mpi
+</code></pre></div>
+If use of OpenMPI is not possible on your system, you can still take advantage of multiple CPU cores by using <code>joblib</code>. In this case, simply specify the number of CPU cores using the <code>-np</code> flag as follows:</p>
+<div class="highlight"><pre><span></span><code>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-v<span class="w"> </span>-gpus<span class="w"> </span><span class="m">1</span><span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>-o<span class="w"> </span>feature_enhanced.mrc
 </code></pre></div>
 </div>
 <h3 id="pvddt">Interpreting pVDDT scores</h3>
@@ -686,7 +688,7 @@ below.</mark>  </p>
 </div>
 <h4 id="visualising-confidence-weighted-maps-in-chimerax">Visualising confidence-weighted maps in ChimeraX</h4>
 <p>The best way to visualise confidence scores is using the surface colour option in ChimeraX. <code>LocScale</code> outputs the pVDDT scores in MRC format, withc each voxel representing the pVDDT score associated with it.  <br></p>
-<p>In ChimeraX, if your model #1 refers to the feature enhanced map (<code>locscale_output.mrc</code>) and model #2 refers to the pVDDT score map (<code>pVDDT.mrc</code>), use the following command to visualise the confidence score superimposed on the surface map:  </p>
+<p>In ChimeraX, if your model #1 refers to the feature enhanced map (<code>locscale_output.mrc</code>) and model #2 refers to the pVDDT score map (<code>pVDDT.mrc</code>), use the following command to visualise the confidence score superimposed on the map surface:  </p>
 <div class="highlight"><pre><span></span><code>color<span class="w"> </span>sample<span class="w"> </span><span class="c1">#1 map #2 palette -95, #0000ff; -80, #00ffff; 0, 00ff00; 80, #ffff00; 95, #ff0000;</span>
 </code></pre></div>
 <div class="admonition warning inline end">
