@@ -178,7 +178,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     from locscale.emmernet.emmernet_functions import calibrate_variance
     
     input_emmap_path = parsed_inputs["emmap_path"]
-    input_emmap_folder = os.path.dirname(input_emmap_path)
+    input_emmap_folder = os.path.dirname(os.path.dirname(input_emmap_path))
     output_emmap_filename = parsed_inputs["outfile"]
     verbose = parsed_inputs["verbose"]
     monte_carlo = parsed_inputs["monte_carlo"]
