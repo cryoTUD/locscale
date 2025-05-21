@@ -82,11 +82,11 @@ else:
     ext_modules = [ex1]
 
 setup(name='locscale',
-    version="2.3.0.post1",
+    version="2.3.0.post2",
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
-    url='https://gitlab.tudelft.nl/aj-lab/locscale',
+    url='https://github.com/cryoTUD/locscale',
     project_urls={
-        "Bug Tracker": "https://gitlab.tudelft.nl/aj-lab/locscale/issues",
+        "Bug Tracker": "https://github.com/cryoTUD/locscale/issues",
     },
     classifiers=[
         "Development Status :: 4 - Beta",
