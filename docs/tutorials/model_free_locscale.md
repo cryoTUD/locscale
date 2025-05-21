@@ -14,7 +14,7 @@ If no atomic model is available, or if you do not want to use prior model inform
 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -o model_free_locscale.mrc
 ```
 
-Here, ```halfmap1.mrc``` and ```halfmap2.mrc``` should be the unsharpened and unfiltered half maps from yourr 3D refinement. If you wish to use the full map instead, use the following command:
+Here, ```halfmap1.mrc``` and ```halfmap2.mrc``` should be the unsharpened and unfiltered half maps from your 3D refinement. If you wish to use the full map instead, use the following command:
 
 ```bash
 locscale -em path/to/fullmap.mrc -mc path/to/model.pdb -v -o model_free_locscale.mrc
@@ -59,4 +59,11 @@ The output will be a locally sharpened map scaled according to the local scale f
 
     ```bash
     mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -v -o model_free_locscale.mrc -mpi
+    ```
+    If use of OpenMPI is not possible on your system, you can still take advanta
+ge of multiple CPU cores by using `joblib`. In this case, simply specify the num
+ber of CPU cores using the `-np` flag as follows:
+
+    ```bash
+    locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -np 4 -v -o model_free_locscale.mrc
     ```
