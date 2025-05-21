@@ -610,6 +610,7 @@ def find_unmodelled_mask_region(fdr_mask_path, pdb_path, fdr_threshold=0.99, ato
 
 def get_random_center_voxels(window_shape, num_windows, emmap_shape):
     import random 
+    random.seed(42)
     from locscale.include.emmer.ndimage.filter import get_spherical_mask
     spherical_mask = get_spherical_mask(emmap_shape, emmap_shape[0]//2-window_shape)
     all_voxels_within_mask = np.asarray(np.where(spherical_mask == 1)).T.tolist()

@@ -1,6 +1,9 @@
 <!---[![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)-->
 [![stability-release-candidate](https://img.shields.io/badge/stability-pre--release-48c9b0.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#release-candidate)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-green)](https://www.python.org/downloads/release/python-3110/)
+<!---[![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)-->
+[![stability-release-candidate](https://img.shields.io/badge/stability-pre--release-48c9b0.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#release-candidate)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-green)](https://www.python.org/downloads/release/python-3110/)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://gitlab.tudelft.nl/aj-lab/locscale/raw/master/LICENSE)
@@ -10,6 +13,12 @@
 # LocScale-2.0
 `LocScale-2.0` is an automated map optimisation program performing physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening and/or optimisation filter. These can be inferred directly from the experimental density map, or - in legacy mode – provided from an existing atomic model.
 
+## What's new in LocScale-2.0?
+- Completely automated process for map optimisation
+- [`Feature-enhanced maps`](https://locscale.readthedocs.io/en/latest/tutorials/fem/): Confidence-weighted map optimisation by variational inference.
+- [`Hybrid sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/hybrid_locscale/): Reference-based local sharpening with partial (incomplet>e) models. 
+- [`Model-free sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/model_free_locscale/): Reference-based local sharpening without atomic models.
+- [`LocScale-SURFER`](https://github.com/cryoTUD/locscale-surfer): ChimeraX plugin to toggle contextual structure in LocScale maps.
 ## What's new in LocScale-2.0?
 - Completely automated process for map optimisation
 - [`Feature-enhanced maps`](https://locscale.readthedocs.io/en/latest/tutorials/fem/): Confidence-weighted map optimisation by variational inference.

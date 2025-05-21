@@ -178,7 +178,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     from locscale.emmernet.emmernet_functions import calibrate_variance
     
     input_emmap_path = parsed_inputs["emmap_path"]
-    input_emmap_folder = os.path.dirname(input_emmap_path)
+    input_emmap_folder = os.path.dirname(os.path.dirname(input_emmap_path))
     output_emmap_filename = parsed_inputs["outfile"]
     verbose = parsed_inputs["verbose"]
     monte_carlo = parsed_inputs["monte_carlo"]
@@ -216,10 +216,10 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         if not output_has_extension:
             output_emmap_filename = output_emmap_filename + ".mrc"
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
-        output_filename_mean = output_emmap_filename
-        output_filename_var = output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename)
+        output_filename_mean = os.path.join(input_emmap_folder, output_emmap_filename)
+        output_filename_var = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename))
         #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
-        output_filename_for_locscale = output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename)
+        output_filename_for_locscale = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename))
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
         save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
         #save_as_mrc(emmernet_output_var_calibrated, output_filename_var_calibrated, apix, verbose=verbose)
@@ -292,7 +292,7 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
     else:
         return output_dictionary
             
-def compute_calibrated_probabilities(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+def compute_calibrated_probabilities(locscale_path, mean_prediction_path, variance_prediction_path, mask_path, n_samples=15):
     from locscale.emmernet.emmernet_functions import load_smoothened_mask
     from locscale.emmernet.utils import load_calibrator
     from locscale.include.emmer.ndimage.map_utils import load_map
@@ -306,9 +306,9 @@ def compute_calibrated_probabilities(locscale_path, mean_prediction_path, varian
     locscale_map, apix = load_map(locscale_path)
     mean_prediction, _ = load_map(mean_prediction_path)
     variance_prediction, _ = load_map(variance_prediction_path)
-    
-    variance_mask = variance_prediction > 0.0002
-    
+    variance_mask, _ = load_map(mask_path)
+    variance_mask = variance_mask > 0.5
+        
     locscale_masked = locscale_map[variance_mask]
     mean_masked = mean_prediction[variance_mask]
     variance_masked = variance_prediction[variance_mask]
@@ -387,7 +387,7 @@ def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(
     
     return fig, ax
 
-def compute_reliability_curve(locscale_path, mean_prediction_path, variance_prediction_path, n_samples=15):
+def compute_reliability_curve(locscale_path, mean_prediction_path, variance_prediction_path, mask_path, n_samples=15):
     from locscale.emmernet.utils import load_calibrator
     from locscale.include.emmer.ndimage.map_utils import load_map
     import numpy as np
@@ -396,8 +396,8 @@ def compute_reliability_curve(locscale_path, mean_prediction_path, variance_pred
     locscale_map, apix = load_map(locscale_path)
     mean_prediction, _ = load_map(mean_prediction_path)
     variance_prediction, _ = load_map(variance_prediction_path)
-    
-    variance_mask = variance_prediction > 0.0002
+    variance_mask, _ = load_map(mask_path)
+    variance_mask = variance_mask > 0.5
     
     locscale_masked = locscale_map[variance_mask]
     mean_masked = mean_prediction[variance_mask]

@@ -207,17 +207,17 @@ def plot_pickle_output(folder, figsize=(8.27, 11.69)):
     
     return fig
 
-def compute_probability_distribution(locscale_path, mean_prediction_path, var_prediction_path, n_samples, processing_files_folder):
+def compute_probability_distribution(locscale_path, mean_prediction_path, var_prediction_path, mask_path, n_samples, processing_files_folder):
     from locscale.emmernet.utils import compute_calibrated_probabilities, compute_reliability_curve
     import json
     print("Expected and observed probabilities for different confidence intervals")
-    observed_probabilities = compute_calibrated_probabilities(locscale_path, mean_prediction_path, var_prediction_path, n_samples)
+    observed_probabilities = compute_calibrated_probabilities(locscale_path, mean_prediction_path, var_prediction_path, mask_path, n_samples)
     
     
     for ci in observed_probabilities:
         print("Expected Probability: {:.2f}, Observed Probability: {:.2f}".format(ci, 100*observed_probabilities[ci]))
     
-    reliability_curve_fig, ax = compute_reliability_curve(locscale_path, mean_prediction_path, var_prediction_path, n_samples)
+    reliability_curve_fig, ax = compute_reliability_curve(locscale_path, mean_prediction_path, var_prediction_path, mask_path, n_samples)
     reliability_curve_fig.savefig(os.path.join(processing_files_folder, "reliability_curve.png"))
     
     # dump observed probabilities to a json file
