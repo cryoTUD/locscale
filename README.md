@@ -13,7 +13,7 @@
 ## What's new in LocScale-2.0?
 - Completely automated process for map optimisation
 - [`Feature-enhanced maps`](https://locscale.readthedocs.io/en/latest/tutorials/fem/): Confidence-weighted map optimisation by variational inference.
-- [`Hybrid sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/hybrid_locscale/): Reference-based local sharpening with partial (incomplet>e) models. 
+- [`Hybrid sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/hybrid_locscale/): Reference-based local sharpening with partial (incomplete) models. 
 - [`Model-free sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/model_free_locscale/): Reference-based local sharpening without atomic models.
 - [`LocScale-SURFER`](https://github.com/cryoTUD/locscale-surfer): ChimeraX plugin to toggle contextual structure in LocScale maps.
 - Full support for point group symmetry (helical symmetry to follow).
