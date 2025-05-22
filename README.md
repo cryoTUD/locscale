@@ -20,8 +20,8 @@
 
 ## Documentation
 
->[!TIP]
-> Please visit [https://locscale.readthedocs.io/en/latest/](https://locscale.readthedocs.io/en/latest/) for comprehensive documentation, tutorials and troubleshooting.
+>[!IMPORTANT]
+> Please visit [https://cryotud.github.io/locscale/](https://cryotud.github.io/locscale/) for comprehensive documentation, tutorials and troubleshooting.
 
 ## Installation
 
@@ -105,6 +105,14 @@ To test functionality after installation, you can run LocScale unit tests using 
 locscale test
 ```
 </details>
+
+## ColabScale
+
+>[!TIP]
+> For quick testing or if you have limited compute resources, many functionalities of `LocScale-2.0` are available on [`ColabScale`](https://github.com/cryoTUD/ColabScale/tree/main).  <br><br>
+> <a target="_blank" href="https://colab.research.google.com/github/cryoTUD/ColabScale/blob/main/ColabScale.ipynb">
+>  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+>  </a>
 
 ## Credits
 `LoScale 2.0` is using code from a number of open-source projects.
