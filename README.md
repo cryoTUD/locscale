@@ -115,7 +115,7 @@ locscale test
 >  </a>
 
 ## Credits
-`LoScale 2.0` is using code from a number of open-source projects.
+`LoScale 2.0` is facilitated by a number of open-source projects.
 
 - [`EMmer`](https://gitlab.tudelft.nl/aj-lab/emmer): Python library for electron microscopy map and model manipulations. [3-Clause BSD license]    
 - [`FDRthresholding`](https://git.embl.de/mbeckers/FDRthresholding): Tool for FDR-based density thresholding. [3-Clause BSD license]
