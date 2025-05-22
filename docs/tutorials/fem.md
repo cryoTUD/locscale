@@ -62,7 +62,7 @@ The best way to visualise confidence scores is using the surface colour option i
 In ChimeraX, if your model #1 refers to the feature enhanced map (`locscale_output.mrc`) and model #2 refers to the pVDDT score map (`pVDDT.mrc`), use the following command to visualise the confidence score superimposed on the map surface:  
 
 ```bash 
-color sample #1 map #2 palette -95, #0000ff; -80, #00ffff; 0, 00ff00; 80, #ffff00; 95, #ff0000;
+color sample #1 map #2 palette -95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000
 ```
 
 !!! warning inline end "pVDDT score interpretation"
