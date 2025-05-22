@@ -1,0 +1,23 @@
+abstract: No description provided.
+authors:
+- affiliation: Delft University of Technology
+  family-names: Bharadwaj
+  given-names: Alok
+  orcid: 0000-0002-7223-5648
+- affiliation: Delft University of Technology
+  family-names: Jakobi
+  given-names: Arjen J.
+  orcid: 0000-0002-7761-2027
+cff-version: 1.2.0
+date-released: '2025-05-22'
+doi: 10.5281/zenodo.15488220
+identifiers:
+- type: swh
+  value: swh:1:dir:5e4a911fcc9a7e8321fcba9859a56abd341ca7eb;origin=https://doi.org/10.5281/zenodo.15488219;visit=swh:1:snp:c34571333a9ac951f555138ed0f4f7ed85ddb94b;anchor=swh:1:rel:4796f0695338c03bff81df56e6158aaa62a31c6d;path=cryoTUD-locscale-364e4b4
+license:
+- cc-by-4.0
+message: If you use this software, please cite it as below.
+repository-code: https://github.com/cryoTUD/locscale/tree/v2.3.1
+title: "LocScale 2.0 \u2013 confidence-weighted cryoEM map optimisation"
+type: software
+version: v2.3.1
