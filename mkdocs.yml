@@ -5,7 +5,7 @@ site_description: >-
   Documentation for LocScale-2.0, an automated workflow for confidence-weighted optimisation of cryoEM maps.
 # Repository
 repo_name: cryoTUD/locscale
-repo_url: https://github.com/cryoTUD/locscale
+repo_url: https://github.com/cryotud/locscale
 
 # Copyright
 copyright: Copyright &copy; 2025 - 2025 Arjen Jakobi
