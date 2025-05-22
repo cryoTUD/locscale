@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://gitlab.tudelft.nl/aj-lab/locscale/raw/master/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6652013.svg)](https://doi.org/10.5281/zenodo.6652013)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15488220.svg)](https://doi.org/10.5281/zenodo.15488220)
 [![Citation Badge](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://juleskreuer.eu/projekte/citation-badge/)
 
 # LocScale-2.0
