@@ -3,7 +3,9 @@
 Model-based sharpening is the legacy mode of local sharpening as originally introduced for the first version of LocScale descrirbed in this [paper](https://elifesciences.org/articles/27131). In `LocScale 2.0`, model-based sharpening can be run in a completely automated procedure, including robust ADP refinement of the input model. Model-based LocScale can still be a very useful sharpening tool in cases where atomic models have been fitted, but the map displays substantial resolution variation. 
 <br>
 
-![alt text](img/model_based.png)
+!!!info "Model-based LocScale workflow"
+    <br>
+    ![alt text](img/model_based.png)
 
 ### Usage 
 
