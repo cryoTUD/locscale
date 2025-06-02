@@ -595,7 +595,11 @@
 <h1 id="model-based-locscalemodel-based-local-sharpening">Model-based LocScale<br><sup>Model-based local sharpening</sup></h1>
 <p>Model-based sharpening is the legacy mode of local sharpening as originally introduced for the first version of LocScale descrirbed in this <a href="https://elifesciences.org/articles/27131">paper</a>. In <code>LocScale 2.0</code>, model-based sharpening can be run in a completely automated procedure, including robust ADP refinement of the input model. Model-based LocScale can still be a very useful sharpening tool in cases where atomic models have been fitted, but the map displays substantial resolution variation. 
 <br></p>
-<p><img alt="alt text" src="../img/model_based.png" /></p>
+<div class="admonition info">
+<p class="admonition-title">Model-based LocScale workflow</p>
+<p><br>
+<img alt="alt text" src="../img/model_based.png" /></p>
+</div>
 <h3 id="usage">Usage</h3>
 <div class="highlight"><pre><span></span><code>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-mc<span class="w"> </span>path/to/model.pdb<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>model_based_locscale.mrc
 </code></pre></div>
