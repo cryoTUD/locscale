@@ -102,6 +102,8 @@ def prepare_inputs_for_network(input_dictionary):
 def predict_cubes_and_assemble(input_dictionary):
     
     verbose = input_dictionary["verbose"]
+    processing_files_folder = input_dictionary["output_processing_files"]
+    
 
     mirrored_strategy, cuda_visible_devices_string = get_strategy(input_dictionary)
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
@@ -133,8 +135,8 @@ def predict_cubes_and_assemble(input_dictionary):
         "output_predicted_map_mean":predicted_map_mean, 
         "output_predicted_map_var":predicted_map_var,
         "output_predicted_map_total":predicted_map_total,
+        "output_processing_files" : processing_files_folder,
     }
-
     
     return emmernet_output_dictionary
 
