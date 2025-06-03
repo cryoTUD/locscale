@@ -531,7 +531,7 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
     # Prepare the data
     cubes_x = np.expand_dims(cubes, axis=4)
     cube_size = cubes_x.shape[1]
-
+    length_of_cubes = len(cubes)
     # Convert the data to a tf.data.Dataset
     dataset = tf.data.Dataset.from_tensor_slices(cubes_x)
     # Use global batch size; it will be divided among GPUs
@@ -550,7 +550,7 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
             return outputs
 
         # Iterate over the distributed dataset
-        for batch in tqdm(distributed_dataset, desc="Running EMmerNet", file=sys.stdout):
+        for batch in tqdm(distributed_dataset, desc="Running EMmerNet", file=sys.stdout, total=length_of_cubes // batch_size):
             # Run the prediction step on all GPUs
             outputs = mirrored_strategy.run(predict_step, args=(batch,))
 
