@@ -212,7 +212,10 @@ class Model:
     def convert_to_gemmi_model(self):
         import string
         model = gemmi.Model(0)
-        chain_letters = list(string.ascii_uppercase)
+        chain_letters_uppercase = list(string.ascii_uppercase) 
+        chain_letters_lowercase = list(string.ascii_lowercase)
+        # add permutation of uppercase and lowercase letters
+        chain_letters = [x+y for x in chain_letters_uppercase for y in chain_letters_lowercase]
         chain_count = 0
         res_count = 0
         atom_count = 0
