@@ -102,6 +102,8 @@ def prepare_inputs_for_network(input_dictionary):
 def predict_cubes_and_assemble(input_dictionary):
     
     verbose = input_dictionary["verbose"]
+    processing_files_folder = input_dictionary["output_processing_files"]
+    
 
     mirrored_strategy, cuda_visible_devices_string = get_strategy(input_dictionary)
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
@@ -133,8 +135,8 @@ def predict_cubes_and_assemble(input_dictionary):
         "output_predicted_map_mean":predicted_map_mean, 
         "output_predicted_map_var":predicted_map_var,
         "output_predicted_map_total":predicted_map_total,
+        "output_processing_files" : processing_files_folder,
     }
-
     
     return emmernet_output_dictionary
 
@@ -531,7 +533,7 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
     # Prepare the data
     cubes_x = np.expand_dims(cubes, axis=4)
     cube_size = cubes_x.shape[1]
-
+    length_of_cubes = len(cubes)
     # Convert the data to a tf.data.Dataset
     dataset = tf.data.Dataset.from_tensor_slices(cubes_x)
     # Use global batch size; it will be divided among GPUs
@@ -550,7 +552,7 @@ def run_emmernet_batch_no_monte_carlo(cubes, emmernet_model, batch_size, mirrore
             return outputs
 
         # Iterate over the distributed dataset
-        for batch in tqdm(distributed_dataset, desc="Running EMmerNet", file=sys.stdout):
+        for batch in tqdm(distributed_dataset, desc="Running EMmerNet", file=sys.stdout, total=length_of_cubes // batch_size):
             # Run the prediction step on all GPUs
             outputs = mirrored_strategy.run(predict_step, args=(batch,))
 
