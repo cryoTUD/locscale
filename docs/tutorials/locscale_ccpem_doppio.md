@@ -15,7 +15,7 @@ and model challenge](https://zenodo.org/records/1185426). You can [download the 
     ![Doppio_tutorial_01](img/LocScale_tutorial_01.png)
     After starting up the [CCPEM Doppio](https://www.ccpem.ac.uk/docs/software/) interface, start a new project.
 
--   :material-numeric-2-box:{ .lg .top } __Locate locScale job node__  
+-   :material-numeric-2-box:{ .lg .top } __Locate LocScale job node__  
 
     ---
     ![Doppio_tutorial_02](img/LocScale_tutorial_02.png)
