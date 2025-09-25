@@ -15,7 +15,7 @@ and model challenge](https://zenodo.org/records/1185426). You can [download the 
     ![Doppio_tutorial_01](img/LocScale_tutorial_01.png)
     After starting up the [CCPEM Doppio](https://www.ccpem.ac.uk/docs/software/) interface, start a new project.
 
--   :material-numeric-2-box:{ .lg .top } __Locate locScale job node__  
+-   :material-numeric-2-box:{ .lg .top } __Locate LocScale job node__  
 
     ---
     ![Doppio_tutorial_02](img/LocScale_tutorial_02.png)
@@ -73,13 +73,13 @@ and model challenge](https://zenodo.org/records/1185426). You can [download the 
     ![Doppio_tutorial_10](img/LocScale_tutorial_10.png)
     Output from LocScale and any warnings/errors that it encounters will appear under _Logs_.
 
--   :material-numeric-1-box:{ .lg .top }:material-numeric-1-box:{ .lg .top } __XXX__  
+-   :material-numeric-1-box:{ .lg .top }:material-numeric-1-box:{ .lg .top } __Analyse 2D map slices__  
 
     ---
     ![Doppio_tutorial_11](img/LocScale_tutorial_11.png)
     View the slices of the input half-maps and the LocScale output maps.
 
--   :material-numeric-1-box:{ .lg .top }:material-numeric-2-box:{ .lg .top } __YYY__  
+-   :material-numeric-1-box:{ .lg .top }:material-numeric-2-box:{ .lg .top } __Inspect 3D density maps__  
 
     ---
     ![Doppio_tutorial_12](img/LocScale_tutorial_12.png)
