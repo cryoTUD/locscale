@@ -82,7 +82,7 @@ else:
     ext_modules = [ex1]
 
 setup(name='locscale',
-    version="2.3.1.post1",
+    version="2.3.1.post2",
     author='Alok Bharadwaj, Arjen J. Jakobi, Reinier de Bruin',
     url='https://github.com/cryoTUD/locscale',
     project_urls={
