@@ -220,7 +220,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         output_filename_mean = os.path.join(input_emmap_folder, output_emmap_filename)
         output_filename_var = os.path.join(processing_files_folder, output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename))
         #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
-        output_filename_for_locscale = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_locscale_output"+extension_output_filename))
+        output_filename_for_locscale = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_baseline"+extension_output_filename))
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
         save_as_mrc(emmernet_output_var, output_filename_var, apix, verbose=verbose)
         #save_as_mrc(emmernet_output_var_calibrated, output_filename_var_calibrated, apix, verbose=verbose)
