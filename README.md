@@ -129,8 +129,9 @@ locscale test
 
 If you found `LocScale` useful for your research, please consider citing it:
 
-- A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
+- A. Bharadwaj, R.M. de Bruin, A.J. Jakobi: [Confidence-guided cryo-EM map optimisation with LocScale-2.0](https://doi.org/10.1101/2025.09.11.674726), BioRxiv 2025.09.11.674726 (2025) 
+- A.J. Jakobi, M. Wilmanns and C. Sachse: [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
+- A. Bharadwaj and A.J. Jakobi: [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
 ---
 
 ## Bugs and questions
