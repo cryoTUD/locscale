@@ -65,6 +65,11 @@ In ChimeraX, if your model #1 refers to the feature enhanced map (`locscale_outp
 color sample #1 map #2 palette -95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000
 ```
 
+```bash
+key  #0000ff:-100 #00ffff:-80 #00ff00:0 #ffff00:-80 #ff0000:100 numericLabelSpacing proportional fontSize 16 ticks true pos 0.9,0.5 size 0.01,0.2
+```
+
+
 !!! warning inline end "pVDDT score interpretation"
     pVDDT scores provide an intutive way for objective map interpretation by highlighting regions that may require caution because. these regions display density that significantly deviates from the density in amplitude-only modified maps. Note that these scores do not necessarily mean that these regions should not be interpreted, just that their confidence is low(er).   
 ![pvddt](img/pvddt.png){width=400}
