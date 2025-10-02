@@ -269,6 +269,7 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
         
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
+        processing_files_folder = input_dictionary["output_processing_files"]
         # save the non-symmetrised map
         apix = input_dictionary["apix"]
         unsymmetrised_map_path = os.path.join(processing_files_folder, "unsymmetrised_mean_map.mrc")
