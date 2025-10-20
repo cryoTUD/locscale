@@ -51,7 +51,7 @@ def estimateNoiseFromMap(map, windowSize, boxCoord):
 
 	if var == 0.0:
 		print("Variance is estimated to be 0. You are probably estimating noise in a masked region. Exit ...")
-		sys.exit();
+		sys.exit(1);
 
 	return mean, var, sampleMap;
 #-------------------------------------------------------------------------------------
