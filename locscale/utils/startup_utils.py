@@ -370,8 +370,6 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
 def run_housekeeping():
     import sys 
 
-    # Add installation date to __init__.py 
-    add_installation_date()
     # Check if help message needs to be printed
     check_for_help_message(sys.argv)
 
@@ -398,30 +396,30 @@ def check_for_help_message(system_arguments):
         else:
             raise ValueError("Unknown command: ", launch_command)
         
-    
-def add_installation_date():
+# Removing this function because it increases the risk of failure due to permission issues. 
+# def add_installation_date(): 
 
-    from datetime import datetime
-    from locscale.utils.file_tools import get_locscale_path
+#     from datetime import datetime
+#     from locscale.utils.file_tools import get_locscale_path
 
-    init_path = os.path.join(get_locscale_path(), "locscale","__init__.py")    
-    # readlines
-    with open(init_path, "r") as f:
-        lines = f.readlines()
+#     init_path = os.path.join(get_locscale_path(), "locscale","__init__.py")    
+#     # readlines
+#     with open(init_path, "r") as f:
+#         lines = f.readlines()
 
-    # check if __installation_date__ is already present
-    installation_date_added = False
-    for line in lines:
-        if "__installation_date__" in line:
-            installation_date_added = True
-            break
+#     # check if __installation_date__ is already present
+#     installation_date_added = False
+#     for line in lines:
+#         if "__installation_date__" in line:
+#             installation_date_added = True
+#             break
         
-    # write __installation_date__ to __init__.py if not present
-    if not installation_date_added:
-        with open(init_path, "a") as f:
-            f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
-    else:
-        pass 
+#     # write __installation_date__ to __init__.py if not present
+#     if not installation_date_added:
+#         with open(init_path, "a") as f:
+#             f.write(f'\n__installation_date__ = "{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}"\n')
+#     else:
+#         pass 
 
         
 def test_everything():
@@ -432,10 +430,10 @@ def print_version():
     run_housekeeping()
     print("LocScale")
     print("Version: ", locscale.__version__)
-    try:
-        print("Installed on: ", locscale.__installation_date__)
-    except AttributeError:
-        print("Installation date not available")
+    # try:
+    #     print("Installed on: ", locscale.__installation_date__)
+    # except AttributeError:
+    #     print("Installation date not available")
 
     print("Authors: Arjen J. Jakobi (TU Delft), Alok Bharadwaj (TU Delft), Reinier de Bruin (TU Delft)")
     print("Python version: ", sys.version)
