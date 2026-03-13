@@ -20,6 +20,7 @@ from locscale.emmernet.utils import symmetrise_if_needed
 import numpy as np
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
+os.environ["TF_USE_LEGACY_KERAS"] = "1"
 import tensorflow as tf
 from tqdm import tqdm
 from scipy.stats import norm 
@@ -185,7 +186,8 @@ def load_emmernet_model(input_dictionary):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=DeprecationWarning)    
         from tensorflow.keras.models import load_model
-        from tensorflow_addons.layers import GroupNormalization
+        from tensorflow.keras.layers import GroupNormalization
+
 
     emmernet_folder_path = emmernet_model_folder
     if emmernet_type == "model_based":
@@ -207,13 +209,13 @@ def load_emmernet_model(input_dictionary):
     
     if model_path is not None:
         emmernet_model = load_model(model_path, custom_objects={
-                                'GroupNormalization': GroupNormalization, \
-                                'reducePhysicsBasedLoss': reducePhysicsBasedLoss,
-                                'PhysicsBasedMetric': PhysicsBasedMetric,
-                                'DataBasedMetric': DataBasedMetric})
+                                'Addons>GroupNormalization': GroupNormalization, \
+                                  })
         
     else:
-        emmernet_model = load_model(emmernet_model_path)
+        emmernet_model = load_model(emmernet_model_path, custom_objects={
+                                'Addons>GroupNormalization': GroupNormalization, \
+                                  })
         
     if verbose:
         if model_path is None:
