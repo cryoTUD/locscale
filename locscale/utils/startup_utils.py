@@ -369,9 +369,6 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
 
 def run_housekeeping():
     import sys 
-
-    # Add installation date to __init__.py 
-    add_installation_date()
     # Check if help message needs to be printed
     check_for_help_message(sys.argv)
 
