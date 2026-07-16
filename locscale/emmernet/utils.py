@@ -1,12 +1,28 @@
 import numpy as np
 
 def download_emmernet_model_from_url(download_folder):
-    import wget
-   
-    #url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"    # OLD SURFdrive link
-    #url_model_based_emmernet = "https://zenodo.org/record/6651995/files/emmernet.tar.gz?download=1"    # https://doi.org/10.5281/zenodo.6651995 (16 June 2022)
-    url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1" # https://doi.org/10.5281/zenodo.8211668 (3 Aug 2023)
-    wget.download(url_emmernet_models, download_folder)
+    import os
+    import urllib.request
+    from tqdm import tqdm
+
+    class DownloadProgressBar(tqdm):
+        """Adapts tqdm to urlretrieve's reporthook(block_num, block_size, total_size)."""
+        def update_to(self, block_num=1, block_size=1, total_size=None):
+            if total_size is not None:
+                self.total = total_size
+            self.update(block_num * block_size - self.n)
+
+    url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1"
+    # urlretrieve needs a full path, not a directory: name the file explicitly rather
+    # than letting it be inferred from a URL that ends in "?download=1".
+    destination = os.path.join(download_folder, "emmernet.tar.gz")
+
+    with DownloadProgressBar(unit="B", unit_scale=True, unit_divisor=1024,
+                             miniters=1, desc="Downloading EMmerNet models") as progress:
+        urllib.request.urlretrieve(url_emmernet_models, destination, reporthook=progress.update_to)
+
+    return destination
+
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile

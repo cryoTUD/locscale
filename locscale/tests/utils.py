@@ -1,12 +1,25 @@
 import unittest
 
 def download_test_data_from_url(download_folder):
-    import wget
+    import urllib.request
+    from tqdm import tqdm
+    import os 
+    class DownloadProgressBar(tqdm):
+        """Adapts tqdm to urlretrieve's reporthook(block_num, block_size, total_size)."""
+        def update_to(self, block_num=1, block_size=1, total_size=None):
+            if total_size is not None:
+                self.total = total_size
+            self.update(block_num * block_size - self.n)
+
     print("\nDownloading test data... \n")
     #url_test_data = "https://surfdrive.surf.nl/files/index.php/s/xJKxGXR0LWGBDWM/download"
    # url_test_data = "https://surfdrive.surf.nl/files/index.php/s/lk9CdNO5gszFll1/download"
     url_test_data = "https://data.4tu.nl/file/ebf034e4-a348-4094-b03a-3c15c6eebd66/78f706b7-4a8b-4192-99dd-825ec1d9aaef"
-    wget.download(url_test_data, download_folder, bar=None)
+
+    download_path = os.path.join(download_folder, "test_data.tar.gz")
+    with DownloadProgressBar(unit="B", unit_scale=True, unit_divisor=1024,
+                             miniters=1, desc="Downloading test data") as progress:
+        urllib.request.urlretrieve(url_test_data, download_path, reporthook=progress.update_to)
     
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):

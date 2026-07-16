@@ -1,4 +1,4 @@
-name: locscale_numpy2
+name: locscale
 channels:
   - conda-forge
 dependencies:
@@ -16,5 +16,4 @@ dependencies:
       - servalcat==0.4.*   
       - tqdm>=4.66
       - pyfiglet>=1.0
-      - wget>=3.2
       - loguru>=0.7
