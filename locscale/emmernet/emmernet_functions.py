@@ -146,7 +146,7 @@ def extract_cubes_from_cubecenters(emmap, cubecenters, cube_size):
     cubes = {}
     for i,center in enumerate(cubecenters):
         cube = extract_window(emmap, center=center, size=cube_size)
-        cube = np.expand_dims(cube, axis=3)
+        cube = np.expand_dims(cube, axis=0)
     
         cubes[i] = {'cube': cube, 'center': center}
     

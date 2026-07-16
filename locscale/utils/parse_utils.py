@@ -172,8 +172,6 @@ def add_emmernet_arguments(emmernet_parser):
     misc_parser.add_argument(
         '-mc_it','--monte_carlo_iterations', help='Number of Monte Carlo iterations', default=15, type=int)
     misc_parser.add_argument(
-        '-pb','--physics_based', help='Use physics-based model (under development!)', action='store_true')
-    misc_parser.add_argument(
         '-download', '--download', help='Download the model weights', action='store_true', default=False)
     
     scaling_argument_group = emmernet_parser.add_argument_group('Scaling arguments')

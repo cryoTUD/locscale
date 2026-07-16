@@ -67,30 +67,12 @@ def check_dependencies():
         except ImportError:
             dependency["tqdm"] = False
         
-        ## Check modules tensorflow, keras, tensorflow_addons, pypdb, pyfiglet, emda, proshade
+        ## Check modules torch, pypdb, pyfiglet, emda, proshade
         try:
-            import tensorflow
-            dependency["tensorflow"] = True
+            import torch
+            dependency["torch"] = True
         except:
-            dependency["tensorflow"] = False
-        
-        try:
-            import keras
-            dependency["keras"] = True
-        except:
-            dependency["keras"] = False
-        
-        try:
-            import tensorflow_addons
-            dependency["tensorflow_addons"] = True
-        except:
-            dependency["tensorflow_addons"] = False
-        
-        try:
-            import pypdb
-            dependency["pypdb"] = True
-        except:
-            dependency["pypdb"] = False
+            dependency["torch"] = False
         
         try:
             import pyfiglet
@@ -98,31 +80,7 @@ def check_dependencies():
         except:
             dependency["pyfiglet"] = False
         
-        # try:
-        #     import emda
-        #     dependency["emda"] = True
-        # except:
-        #     dependency["emda"] = False
         
-        # try:
-        #     import proshade
-        #     dependency["proshade"] = True
-        # except:
-        #     dependency["proshade"] = False
-        
-        ## Check Bio
-        try:
-            import Bio
-            dependency["Bio"] = True
-        except:
-            dependency["Bio"] = False
-        
-        ## Check Bio.PDB
-        try:
-            import Bio.PDB
-            dependency["Bio.PDB"] = True
-        except:
-            dependency["Bio.PDB"] = False
     
     list_of_all_imports = [x for x in dependency.values()]
     if all(list_of_all_imports):
