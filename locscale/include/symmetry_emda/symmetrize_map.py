@@ -1,9 +1,9 @@
 # symmetrize map by operators
 import numpy as np
-import fcodes_fast
+import torch
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from locscale.include.symmetry_emda.GenerateOperators_v9_ky4 import operators_from_symbol
-from locscale.include.symmetry_emda.apply_rotation_matrix import *
+from locscale.include.symmetry_emda.trilinear_torch import compute_nbin, pick_device, rotate_ft
 """
 Original authors
 
@@ -12,21 +12,12 @@ MRC Laboratory of Molecular Biology
 
 https://gitlab.com/ccpem/emda/-/tree/master/
 EMDA version 1.1.3.post6
-"""
 
-def get_resolution_array(uc, hf1):
-    debug_mode = 0
-    nx, ny, nz = hf1.shape
-    maxbin = np.amax(np.array([nx // 2, ny // 2, nz // 2]))
-    if nx == ny == nz:
-        nbin, res_arr, bin_idx, s_grid = fcodes_fast.resol_grid_em(
-            uc, debug_mode, maxbin, nx, ny, nz
-        )
-    else:
-        nbin, res_arr, bin_idx, sgrid = fcodes_fast.resolution_grid(
-            uc, debug_mode, maxbin, nx, ny, nz
-        )
-    return nbin, res_arr[:nbin], bin_idx
+The fcodes_fast Fortran kernels (resol_grid_em, trilinear2) are replaced by the
+PyTorch implementation in trilinear_torch.py, validated against the compiled
+originals to ~5e-15. Dropping the f2py/numpy.distutils build step is what lifts
+the numpy<=1.26 pin and allows a compiler-free install.
+"""
 
 def double_the_axes(arr1):
     nx, ny, nz = arr1.shape
@@ -38,7 +29,12 @@ def double_the_axes(arr1):
     return big_arr1
 
 
-def apply_op(f1, op, bin_idx, nbin):
+def _to_zyx(op):
+    """Reverse an xyz-convention operator into the volume's zyx axis order.
+
+    Reproduces the row/column reversal applied before the Fortran trilinear2
+    call, i.e. rm = J @ op @ J with J the exchange matrix.
+    """
     assert op.ndim == 2
     assert op.shape[0] == op.shape[1] == 3
     tmp = np.zeros(op.shape, 'float')
@@ -48,15 +44,14 @@ def apply_op(f1, op, bin_idx, nbin):
     tmp[:,2] = op[:,0]
     rm[0, :] = tmp[2, :]
     rm[1, :] = tmp[1, :]
-    rm[2, :] = tmp[0, :]  
-    nz, ny, nx = f1.shape 
-    frs = fcodes_fast.trilinear2(f1,bin_idx,rm,nbin,0,1,nz,ny,nx)[:,:,:,0]
-    # frs = trilinear_interpolation(f1, rm)  # 
-    # frs = trilinear_interpolation_numpy(f1, rm) # TBC
-    # frs = trilinear_interpolation_gemmi(f1, rm) # TBC
-    # frs = trilinear_interpolation_gemmi_real(f1, rm) # TBC
-    # frs = rotate_and_interpolate_scipy(f1, rm) 
-    return frs
+    rm[2, :] = tmp[0, :]
+    return rm
+
+
+def apply_op(f1, op, nbin, device=None, dtype=torch.complex128):
+    rm = _to_zyx(op)
+    return rotate_ft(f1, rm, nbin=nbin, device=device, dtype=dtype)
+
 
 def rebox_map(arr1):
     nx, ny, nz = arr1.shape
@@ -67,36 +62,35 @@ def rebox_map(arr1):
     return reboxed_map
 
 
-def symmetrize_map_known_pg(emmap, apix, pg):
+def symmetrize_map_known_pg(emmap, apix, pg, device=None, dtype=torch.complex128):
     print("===== Symmetrize Map =====")
     print("Credits: Rangana Warshamanage, Garib N. Murshudov")
     print("EMDA version 1.1.3.post6")
     print("https://gitlab.com/ccpem/emda/-/tree/master/")
     print("==========================")
-    
 
     _, _, ops = operators_from_symbol(pg)
-    #uc, arr, orig = em.get_data(imap)
-    unitcell = np.array([emmap.shape[0]*apix, emmap.shape[1]*apix, emmap.shape[2]*apix, 90, 90, 90])
-    #arr2 = double_the_axes(emmap)
-    #print("Double the axes: {}".format(arr2.shape))
+    dev = pick_device(device)
+    print("Symmetrising {} map over {} operators on {}".format(emmap.shape, len(ops), dev))
+
     f1 = fftshift(fftn(fftshift(emmap)))
-    nbin, res_arr, bin_idx = get_resolution_array(unitcell, f1)
-    frs_sum = np.zeros(f1.shape, f1.dtype)
-    i=0
+    nbin = compute_nbin(f1.shape[0])
+
+    # Accumulate on-device; only the averaged volume returns to the host.
+    f1_t = torch.as_tensor(f1, dtype=dtype, device=dev)
+    frs_sum = torch.zeros_like(f1_t)
     for op in ops:
-        frs = apply_op(f1, op,bin_idx,nbin)
-        i+=1
-        frs_sum += frs
-    avg_f = frs_sum / len(ops)
+        frs_sum += apply_op(f1_t, op, nbin, device=dev, dtype=dtype)
+    avg_f = (frs_sum / len(ops)).cpu().numpy()
+
     avgmap = ifftshift(np.real(ifftn(ifftshift(avg_f))))
     #avgmap = rebox_map(avgmap)
     return avgmap
 
 
-def symmetrize_map_emda(emmap_path, pg):
+def symmetrize_map_emda(emmap_path, pg, device=None, dtype=torch.complex128):
     from locscale.include.emmer.ndimage.map_utils import load_map
     emmap,apix = load_map(emmap_path)
-    symmetry_average_map = symmetrize_map_known_pg(emmap, apix, pg)
-    
+    symmetry_average_map = symmetrize_map_known_pg(emmap, apix, pg, device=device, dtype=dtype)
+
     return symmetry_average_map
