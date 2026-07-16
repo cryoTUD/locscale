@@ -12,7 +12,7 @@ authors = [
 ]
 description = "Contrast optimization for cryo-EM maps"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = { text = "3-Clause BSD" }
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -25,7 +25,16 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["locscale"]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.package-data]
+locscale = [
+    "utils/*.pickle",
+    "utils/*.pkl",
+    "emmernet/emmernet_models/*.pt",
+    "*.txt",
+]
 
 [project.urls]
 Homepage = "https://github.com/cryoTUD/locscale"
