@@ -1,3 +1,0 @@
-Neural network-based map optimisation requires caution as it affects both map amplitudes and phases. 
-To guide objectivity during map interpretation, LocScale-2.0 provides a voxel-wise measure of confidence along with the predictions. 
-Please see https://cryotud.github.io/locscale/tutorials/fem/#pvddt for usage.
