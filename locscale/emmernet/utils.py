@@ -149,7 +149,7 @@ def check_and_download_emmernet_model(verbose=False):
     import os
     import locscale
 
-    emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
+    emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models", "emmernet")
     path_exists = os.path.exists(emmernet_model_folder)
     EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "emmernet_highcontext.pt"))
     EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "emmernet_lowcontext.pt"))
