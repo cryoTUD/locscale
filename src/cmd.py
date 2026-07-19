@@ -22,6 +22,12 @@ def show_volume(session, array, template, name, show=True):
     grid.name = name
     volume = volume_from_grid_data(grid, session)
     volume.display = show
+    if show:
+        # Setting display only *schedules* the surface to be built on the next frame, so a
+        # command issued straight afterwards -- `color sample`, below -- would find no
+        # surface on this model and fail. Build it now. (ChimeraX does this itself only
+        # when session.in_script is set, which is not the case for a tool or a command.)
+        volume.update_drawings()
     return volume
 
 
@@ -54,7 +60,7 @@ def show_results(session, results, template):
 
 def locscale2(session, inputMap=None, inputMask=None, model="high_context",
               monteCarloIterations=15, batchSize=8, windowSize=25, cubeSize=32, stride=16,
-              scalingChunk=4096, useGpu=True):
+              scalingChunk=4096, useGpu=True, gpuId=None):
     """Feature-enhance a cryo-EM map with EMmerNet and colour it by pVDDT.
 
     Runs synchronously and blocks the UI; the GUI tool runs the same pipeline on a thread.
@@ -82,7 +88,7 @@ def locscale2(session, inputMap=None, inputMask=None, model="high_context",
         emmap=emmap, apix=apix, mask=mask, model_type=model,
         monte_carlo_iterations=monteCarloIterations, batch_size=batchSize,
         cube_size=cubeSize, stride=stride, window_size=windowSize,
-        scaling_chunk=scalingChunk, use_gpu=useGpu,
+        scaling_chunk=scalingChunk, use_gpu=useGpu, gpu_id=gpuId,
         status_callback=lambda m: session.logger.info("LocScale2: " + m),
     )
     return show_results(session, results, inputMap)
@@ -100,6 +106,7 @@ locscale2_desc = CmdDesc(
         ("stride", IntArg),
         ("scalingChunk", IntArg),
         ("useGpu", BoolArg),
+        ("gpuId", IntArg),
     ],
     synopsis="Feature-enhance a cryo-EM map with EMmerNet and colour it by pVDDT",
 )

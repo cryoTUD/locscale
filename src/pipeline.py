@@ -34,6 +34,16 @@ from .windowed_scaling import run_windowed_scaling
 PVDDT_PALETTE = "-95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000"
 
 
+class Cancelled(Exception):
+    """Raised by a caller's status/progress callback to abort the run.
+
+    The pipeline never raises or catches this itself; it simply lets it propagate out of
+    run_feature_enhance. Cancellation is therefore cooperative and only takes effect where
+    the pipeline calls back, i.e. between stages and between EMmerNet batches / scaling
+    chunks. The FDR mask stage makes no callbacks and cannot be interrupted.
+    """
+
+
 def _noop(*args, **kwargs):
     pass
 
@@ -86,7 +96,7 @@ def compute_pvddt(feature_enhanced, baseline, variance, n_samples, data_dir=None
 
 def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
                         monte_carlo_iterations=15, batch_size=8, cube_size=32, stride=16,
-                        window_size=25, scaling_chunk=4096, use_gpu=True,
+                        window_size=25, scaling_chunk=4096, use_gpu=True, gpu_id=None,
                         status_callback=None, progress_callback=None):
     """Run the whole pipeline on in-memory arrays.
 
@@ -120,7 +130,7 @@ def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
     status(f"{len(cubes_array)} cubes with signal")
 
     # ---- 4. EMmerNet, Monte-Carlo dropout ---------------------------------
-    device = get_device(prefer_gpu=use_gpu)
+    device = get_device(prefer_gpu=use_gpu, gpu_id=gpu_id)
     status(f"Loading EMmerNet ({model_type}) on {device}...")
     model, device = load_emmernet(model_type=model_type, device=device)
 

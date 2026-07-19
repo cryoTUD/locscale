@@ -1,0 +1,69 @@
+<!--
+ChimeraX bundle names must start with "ChimeraX-" to avoid clashes with
+package names on pypi.python.org. When uploaded to the ChimeraX toolshed,
+the bundle is displayed without the ChimeraX- prefix.
+-->
+
+<BundleInfo name="ChimeraX-LocScale2"
+	    version="0.1.0" package="chimerax.locscale2"
+	    minSessionVersion="1" maxSessionVersion="1">
+
+  <!-- Additional information about bundle source -->
+  <Author>Alok Bharadwaj, Arjen Jakobi</Author>
+  <Email>a.bharadwaj@tudelft.nl, a.jakobi@tudelft.nl</Email>
+  <URL>https://github.com/cryoTUD/locscale</URL>
+
+  <!-- Synopsis is a one-line description
+       Description is a full multi-line description -->
+  <Synopsis>Feature-enhanced maps with confidence estimation (LocScale-FEM)</Synopsis>
+  <Description>
+  Runs the LocScale2 feature-enhance pipeline on a cryo-EM map. EMmerNet inference with
+  Monte-Carlo dropout produces a feature-enhanced map and its per-voxel variance; windowed
+  amplitude scaling against the input map produces a baseline map; the two are combined into
+  a per-voxel confidence score (pVDDT) that colours the enhanced surface.
+  </Description>
+
+  <!-- Categories is a list where this bundle should appear -->
+  <Categories>
+    <Category name="EM"/>
+    <Category name="Volume Data"/>
+  </Categories>
+
+  <!-- EMmerNet checkpoints and the pVDDT calibrator pickle -->
+  <DataFiles>
+    <DataDir>data</DataDir>
+  </DataFiles>
+
+  <!-- Dependencies on other ChimeraX/Python packages.
+
+       numpy, scipy and matplotlib are already shipped inside ChimeraX 1.11
+       (1.26.4 / 1.14.0 / 3.10.7); the bounds below are satisfied by those versions so pip
+       leaves them alone rather than upgrading ChimeraX's own copies.
+
+       torch, scikit-learn and mrcfile are not shipped and are downloaded on install.
+       scikit-learn is never imported by name: it is required because the pVDDT calibrator
+       is a pickled sklearn IsotonicRegression.
+  -->
+  <Dependencies>
+    <Dependency name="ChimeraX-Core" version="~=1.1"/>
+    <Dependency name="ChimeraX-UI" version="~=1.0"/>
+    <Dependency name="numpy" version="~=1.26"/>
+    <Dependency name="scipy" version="~=1.14"/>
+    <Dependency name="matplotlib" version="~=3.10"/>
+    <Dependency name="torch" version="~=2.9.1"/>
+    <Dependency name="scikit-learn" version="~=1.5"/>
+    <Dependency name="mrcfile" version="~=1.5"/>
+  </Dependencies>
+
+  <Classifiers>
+    <!-- Development Status should be compatible with bundle version number -->
+    <PythonClassifier>Development Status :: 3 - Alpha</PythonClassifier>
+    <PythonClassifier>License :: Freeware</PythonClassifier>
+    <!-- ChimeraX classifiers describe supplied functionality.
+         Do not add a "ChimeraX :: Bundle" line here: the BundleInfo element above
+         generates it, and a second one is ignored with a warning. -->
+    <ChimeraXClassifier>ChimeraX :: Tool :: LocScale2 :: Volume Data :: Feature-enhanced maps with confidence estimation</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: Command :: locscale2 :: Volume Data :: Feature-enhance a cryo-EM map with EMmerNet and colour it by pVDDT</ChimeraXClassifier>
+  </Classifiers>
+
+</BundleInfo>

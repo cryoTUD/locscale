@@ -26,31 +26,52 @@ with open(os.path.join(os.path.dirname(__file__), "data", "help_info.json")) as 
 class PipelineWorker(QThread):
     """Runs the pipeline off the UI thread.
 
-    Nothing here may touch ChimeraX models: results come back through `finished` and are
-    turned into volumes on the UI thread.
+    Nothing here may touch ChimeraX models: results come back through `completed` and are
+    turned into volumes on the UI thread. The signal is deliberately not called `finished`,
+    which is QThread's own.
     """
 
     status = Signal(str)
     progress = Signal(str, int, int)
-    finished = Signal(object)
+    completed = Signal(object)
+    cancelled = Signal()
     failed = Signal(str)
 
     def __init__(self, kwargs):
         super().__init__()
         self._kwargs = kwargs
+        self._cancel_requested = False
+
+    def cancel(self):
+        """Ask the run to stop. Safe to call from the UI thread: it only sets a flag."""
+        self._cancel_requested = True
 
     def run(self):
-        from .pipeline import run_feature_enhance
+        from .pipeline import Cancelled, run_feature_enhance
+
+        # The pipeline's callbacks are the only points at which it yields to us, so they are
+        # also where cancellation is honoured.
+        def status(message):
+            if self._cancel_requested:
+                raise Cancelled()
+            self.status.emit(message)
+
+        def progress(stage, done, total):
+            if self._cancel_requested:
+                raise Cancelled()
+            self.progress.emit(stage, done, total)
+
         try:
             results = run_feature_enhance(
-                status_callback=self.status.emit,
-                progress_callback=lambda stage, i, n: self.progress.emit(stage, i, n),
-                **self._kwargs)
+                status_callback=status, progress_callback=progress, **self._kwargs)
+        except Cancelled:
+            self.cancelled.emit()
+            return
         except Exception as exc:
             import traceback
             self.failed.emit("{}: {}\n\n{}".format(type(exc).__name__, exc, traceback.format_exc()))
             return
-        self.finished.emit(results)
+        self.completed.emit(results)
 
 
 class LocScale2Tool(ToolInstance):
@@ -72,6 +93,12 @@ class LocScale2Tool(ToolInstance):
         layout.addWidget(self._run_panel(parent))
         layout.addStretch(1)
         self.tool_window.manage("side")
+
+        # Show the options expanded. Done after manage() so the content area's sizeHint is
+        # settled; setChecked keeps the disclosure button in step, otherwise the first
+        # click would try to expand an already-expanded panel.
+        self._options.toggle_button.setChecked(True)
+        self._options.toggle_panel_display(True)
 
     # ------------------------------------------------------------ panels
 
@@ -103,21 +130,32 @@ class LocScale2Tool(ToolInstance):
         return frame
 
     def _options_panel(self, parent):
-        panel = CollapsiblePanel(parent, title="Options")
+        self._options = panel = CollapsiblePanel(parent, title="Advanced Options")
         frame = panel.content_area
-        options = vertical_layout(frame, margins=(0, 0, 0, 0))
+        # CollapsiblePanel already installs a QVBoxLayout on content_area. Calling
+        # vertical_layout() here would try to set a second layout on the same widget, which
+        # Qt refuses: the rows below would never be laid out, content_area.sizeHint() would
+        # stay at zero, and expanding the panel would reveal nothing.
+        options = frame.layout()
 
         self._model_combo = QComboBox(frame)
         from .emmernet import available_models
         self._model_combo.addItems(available_models())
         options.addWidget(self._row(frame, "Model:", help_info["model_help"], self._model_combo))
 
-        self._mc_spin = QSpinBox(frame); self._mc_spin.setRange(2, 100); self._mc_spin.setValue(15)
+        # Minimum is 1 so the pipeline can be exercised end to end quickly. At 1 the sample
+        # variance is identically zero, so pVDDT degenerates to a constant -- fine for a
+        # plumbing test, useless as a confidence map. 15 is the real default.
+        self._mc_spin = QSpinBox(frame); self._mc_spin.setRange(1, 100); self._mc_spin.setValue(1)
         options.addWidget(self._row(frame, "Monte-Carlo iterations:",
                                     help_info["monte_carlo_help"], self._mc_spin))
 
         self._batch_spin = QSpinBox(frame); self._batch_spin.setRange(1, 128); self._batch_spin.setValue(8)
         options.addWidget(self._row(frame, "Batch size:", help_info["batch_size_help"], self._batch_spin))
+
+        # Cube size is deliberately not exposed: EMmerNet's padding and crops assume 32.
+        self._stride_spin = QSpinBox(frame); self._stride_spin.setRange(1, 32); self._stride_spin.setValue(16)
+        options.addWidget(self._row(frame, "Cube stride:", help_info["stride_help"], self._stride_spin))
 
         self._window_spin = QSpinBox(frame); self._window_spin.setRange(9, 101); self._window_spin.setValue(25)
         options.addWidget(self._row(frame, "Scaling window:", help_info["window_help"], self._window_spin))
@@ -130,16 +168,42 @@ class LocScale2Tool(ToolInstance):
         self._gpu_check = QCheckBox("Use GPU when available", frame)
         self._gpu_check.setChecked(True)
         self._gpu_check.setToolTip(help_info["gpu_help"])
+        self._gpu_check.toggled.connect(self._gpu_toggled)
         options.addWidget(self._gpu_check)
+
+        from .emmernet import available_gpus
+        self._gpus = available_gpus()
+        self._gpu_combo = QComboBox(frame)
+        for index, name in self._gpus:
+            self._gpu_combo.addItem("{}: {}".format(index, name), index)
+        if not self._gpus:
+            # MPS and CPU have no device index to pick, so leave the control in place but
+            # inert rather than implying a choice that does not exist.
+            self._gpu_combo.addItem("no CUDA device — MPS or CPU will be used", None)
+            self._gpu_combo.setEnabled(False)
+        self._gpu_row = self._row(frame, "GPU:", help_info["gpu_id_help"], self._gpu_combo)
+        options.addWidget(self._gpu_row)
         return panel
 
     def _run_panel(self, parent):
         frame = QFrame(parent)
         panel = vertical_layout(frame, margins=(0, 8, 0, 0))
 
-        self._run_button = QPushButton("Run feature enhancement", frame)
+        buttons = QFrame(frame)
+        button_row = QHBoxLayout(buttons)
+        button_row.setContentsMargins(0, 0, 0, 0)
+
+        self._run_button = QPushButton("Run feature enhancement", buttons)
         self._run_button.clicked.connect(self._run_clicked)
-        panel.addWidget(self._run_button)
+        button_row.addWidget(self._run_button)
+
+        self._cancel_button = QPushButton("Cancel", buttons)
+        self._cancel_button.setEnabled(False)
+        self._cancel_button.setToolTip(help_info["cancel_help"])
+        self._cancel_button.clicked.connect(self._cancel_clicked)
+        button_row.addWidget(self._cancel_button)
+
+        panel.addWidget(buttons)
 
         self._progress_bar = QProgressBar(frame)
         self._progress_bar.setVisible(False)
@@ -181,18 +245,45 @@ class LocScale2Tool(ToolInstance):
             model_type=self._model_combo.currentText(),
             monte_carlo_iterations=self._mc_spin.value(),
             batch_size=self._batch_spin.value(),
+            stride=self._stride_spin.value(),
             window_size=self._window_spin.value(),
             scaling_chunk=self._chunk_spin.value(),
             use_gpu=self._gpu_check.isChecked(),
+            gpu_id=self._selected_gpu_id(),
         ))
         self._worker.status.connect(self._on_status)
         self._worker.progress.connect(self._on_progress)
-        self._worker.finished.connect(self._on_finished)
+        self._worker.completed.connect(self._on_completed)
+        self._worker.cancelled.connect(self._on_cancelled)
         self._worker.failed.connect(self._on_failed)
         self._worker.start()
 
+    def _gpu_toggled(self, checked):
+        self._gpu_row.setVisible(checked)
+        # The panel's height was frozen at whatever sizeHint said when it was expanded, so
+        # a row appearing afterwards would be clipped unless we refit.
+        if self._options.shown:
+            self._options.resize_panel(True)
+
+    def _selected_gpu_id(self):
+        """The chosen CUDA index, or None when there is nothing to choose."""
+        if not self._gpu_check.isChecked() or not self._gpus:
+            return None
+        return self._gpu_combo.currentData()
+
+    def _cancel_clicked(self):
+        if self._worker is None or not self._worker.isRunning():
+            return
+        self._worker.cancel()
+        self._cancel_button.setEnabled(False)
+        self._cancel_button.setText("Cancelling...")
+        self._status_label.setText(
+            "Cancelling &mdash; the current batch has to finish first.")
+
     def _set_running(self, running):
         self._run_button.setEnabled(not running)
+        self._cancel_button.setEnabled(running)
+        self._cancel_button.setText("Cancel")
         self._progress_bar.setVisible(running)
         if running:
             self._progress_bar.setRange(0, 0)      # busy until a stage reports counts
@@ -206,11 +297,16 @@ class LocScale2Tool(ToolInstance):
         self._progress_bar.setValue(done)
         self._progress_bar.setFormat(f"{stage}: %v/%m")
 
-    def _on_finished(self, results):
+    def _on_completed(self, results):
         from .cmd import show_results
         self._set_running(False)
         self._status_label.setText("Done.")
         show_results(self.session, results, self._template)   # UI thread: safe to touch models
+
+    def _on_cancelled(self):
+        self._set_running(False)
+        self._status_label.setText("Cancelled &mdash; no maps were opened.")
+        self.session.logger.info("LocScale2: cancelled by the user.")
 
     def _on_failed(self, message):
         self._set_running(False)
@@ -219,5 +315,8 @@ class LocScale2Tool(ToolInstance):
 
     def delete(self):
         if self._worker is not None and self._worker.isRunning():
+            # Ask first, then wait: otherwise closing the tool blocks ChimeraX for the rest
+            # of the run.
+            self._worker.cancel()
             self._worker.wait()
         super().delete()

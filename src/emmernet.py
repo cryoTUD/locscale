@@ -133,12 +133,34 @@ def available_models():
     return present or ["high_context"]      # never return empty; load_emmernet reports the miss
 
 
-def get_device(prefer_gpu=True):
-    """CUDA if available, else Apple MPS, else CPU."""
+def available_gpus():
+    """Selectable GPUs as (index, name) pairs; empty when there is nothing to choose from.
+
+    Only CUDA is enumerated. Apple MPS exposes a single unindexed device, so there is no
+    choice to offer there, and CPU obviously has none either.
+    """
+    if not torch.cuda.is_available():
+        return []
+    return [(i, torch.cuda.get_device_name(i)) for i in range(torch.cuda.device_count())]
+
+
+def get_device(prefer_gpu=True, gpu_id=None):
+    """CUDA if available, else Apple MPS, else CPU.
+
+    `gpu_id` picks a specific CUDA device. It is ignored on MPS and CPU, which have no
+    device index; an out-of-range index is an error rather than a silent fallback, since
+    quietly running on the wrong GPU is worse than refusing to start.
+    """
     if not prefer_gpu:
         return torch.device("cpu")
     if torch.cuda.is_available():
-        return torch.device("cuda")
+        if gpu_id is None:
+            return torch.device("cuda")
+        count = torch.cuda.device_count()
+        if not 0 <= int(gpu_id) < count:
+            raise ValueError(
+                f"GPU {gpu_id} does not exist; {count} CUDA device(s) present (0-{count - 1})")
+        return torch.device("cuda", int(gpu_id))
     if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")
