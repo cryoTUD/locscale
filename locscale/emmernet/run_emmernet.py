@@ -101,10 +101,7 @@ def predict_cubes_and_assemble(input_dictionary):
     
     gpu_ids = input_dictionary["gpu_ids"]  
 
-    cuda_visible_devices_string = input_dictionary["cuda_visible_devices_string"]
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
-    input_dictionary["cuda_visible_devices_string"] = cuda_visible_devices_string
+    
     if verbose:
         print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         input_dictionary["logger"].info("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))

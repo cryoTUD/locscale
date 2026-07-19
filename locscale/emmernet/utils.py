@@ -73,7 +73,7 @@ def plot_phase_correlations(phase_correlations_all, freq):
         ax1.plot(freq[1:], phase_correlation, color="black", alpha=0.1)
     # Plot the mean
     ax1.plot(freq[1:], phase_correlations_all.mean(axis=0), color="red", linewidth=2)
-    ax1.set_xlabel("Spatial frequency 1/$\AA$")
+    ax1.set_xlabel(r"Spatial frequency 1/$\AA$")
     ax1.set_ylabel("Phase correlation")
     ax2.set_xticks(ax1.get_xticks())
     ax2.set_xbound(ax1.get_xbound())
@@ -151,8 +151,8 @@ def check_and_download_emmernet_model(verbose=False):
 
     emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models", "emmernet")
     path_exists = os.path.exists(emmernet_model_folder)
-    EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "emmernet_highcontext.pt"))
-    EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "emmernet_lowcontext.pt"))
+    EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet_highcontext.pt"))
+    EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet_lowcontext.pt"))
     
 
     emmernet_downloaded = path_exists and EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED and EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED
