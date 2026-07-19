@@ -8,7 +8,7 @@ The `locscale2` ChimeraX command.
 """
 import numpy as np
 from chimerax.core.commands import BoolArg, CmdDesc, EnumOf, IntArg
-from chimerax.map import Volume, volume_from_grid_data
+from chimerax.map import MapArg, volume_from_grid_data
 from chimerax.map_data import ArrayGridData
 
 from .emmernet import available_models
@@ -95,9 +95,11 @@ def locscale2(session, inputMap=None, inputMask=None, model="high_context",
 
 
 locscale2_desc = CmdDesc(
-    required=[("inputMap", Volume)],
+    # MapArg, not the Volume class: `usage` needs a real Annotation, and a bare model class
+    # makes it fail with "type object 'Volume' has no attribute 'url'".
+    required=[("inputMap", MapArg)],
     keyword=[
-        ("inputMask", Volume),
+        ("inputMask", MapArg),
         ("model", EnumOf(available_models())),
         ("monteCarloIterations", IntArg),
         ("batchSize", IntArg),
