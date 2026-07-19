@@ -99,8 +99,9 @@ def predict_cubes_and_assemble(input_dictionary):
     verbose = input_dictionary["verbose"]
     processing_files_folder = input_dictionary["output_processing_files"]
     
-    gpu_ids = input_dictionary["gpu_ids"]    
-    cuda_visible_devices_string = ",".join([str(gpu_id) for gpu_id in gpu_ids])
+    gpu_ids = input_dictionary["gpu_ids"]  
+
+    cuda_visible_devices_string = input_dictionary["cuda_visible_devices_string"]
 
     os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices_string
     input_dictionary["cuda_visible_devices_string"] = cuda_visible_devices_string
@@ -111,7 +112,7 @@ def predict_cubes_and_assemble(input_dictionary):
     emmernet_model, device = load_emmernet_model(model_type=input_dictionary["trained_model"], verbose=verbose)
 
     # use nn.DataParallel if multiple GPUs are available
-    if len(gpu_ids) > 1:
+    if gpu_ids is not None and len(gpu_ids) > 1:
         import torch
         emmernet_model = torch.nn.DataParallel(emmernet_model, device_ids=[i for i in range(len(gpu_ids))])
         if verbose:
