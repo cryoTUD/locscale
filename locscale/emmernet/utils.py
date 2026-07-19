@@ -12,7 +12,8 @@ def download_emmernet_model_from_url(download_folder):
                 self.total = total_size
             self.update(block_num * block_size - self.n)
 
-    url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1"
+    #url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1"
+    url_emmernet_models = "https://surfdrive.surf.nl/files/index.php/s/txtZ7WiyRwixcrB/download"
     # urlretrieve needs a full path, not a directory: name the file explicitly rather
     # than letting it be inferred from a URL that ends in "?download=1".
     destination = os.path.join(download_folder, "emmernet.tar.gz")
