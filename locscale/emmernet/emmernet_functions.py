@@ -146,7 +146,7 @@ def extract_cubes_from_cubecenters(emmap, cubecenters, cube_size):
     cubes = {}
     for i,center in enumerate(cubecenters):
         cube = extract_window(emmap, center=center, size=cube_size)
-        cube = np.expand_dims(cube, axis=3)
+        cube = np.expand_dims(cube, axis=0)
     
         cubes[i] = {'cube': cube, 'center': center}
     
@@ -261,12 +261,13 @@ def calculate_significance_map_from_emmernet_output(locscale_output_path, mean_p
     
     
     output_folder = os.path.dirname(locscale_output_path)
-
-    pVDDT_map_path = os.path.join(output_folder, "pVDDT.mrc")
-    z_score_map_path = os.path.join(output_folder, "z_scores_calibrated.mrc")
+    # get the filename of mean_prediction_path to add as a prefix to the output files
+    mean_prediction_filename = os.path.basename(mean_prediction_path).split('.')[0]
+    pVDDT_map_path = os.path.join(output_folder, f"{mean_prediction_filename}_pVDDT.mrc")
+    #z_score_map_path = os.path.join(output_folder, f"{mean_prediction_filename}_z_scores_calibrated.mrc")
 
     save_as_mrc(pVDDT_map, pVDDT_map_path, apix)
-    save_as_mrc(z_score_map, z_score_map_path, apix)
+    #save_as_mrc(z_score_map, z_score_map_path, apix)
 
     # Create a chimera script to visualize the map
     create_and_save_chimera_script(pVDDT_map_path, locscale_output_path, mean_prediction_path, chimera_script_path)

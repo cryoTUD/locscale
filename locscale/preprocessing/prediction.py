@@ -31,7 +31,6 @@ def predict_model_map_from_input_map(parsed_inputs):
     model_path = parsed_inputs["model_path"]
     monte_carlo = False
     monte_carlo_iterations = 1
-    physics_based = False
     
     input_dictionary = {}
     input_dictionary["cube_size"] = cube_size
@@ -47,7 +46,6 @@ def predict_model_map_from_input_map(parsed_inputs):
     input_dictionary["model_path"] = model_path
     input_dictionary["monte_carlo"] = monte_carlo
     input_dictionary["monte_carlo_iterations"] = monte_carlo_iterations
-    input_dictionary["physics_based"] = physics_based
     input_dictionary["logger"] = parsed_inputs["logger"]
     input_dictionary["symmetry"] = parsed_inputs["symmetry"]
     input_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]

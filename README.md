@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://gitlab.tudelft.nl/aj-lab/locscale/raw/master/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6652013.svg)](https://doi.org/10.5281/zenodo.6652013)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15488220.svg)](https://doi.org/10.5281/zenodo.15488220)
 [![Citation Badge](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://juleskreuer.eu/projekte/citation-badge/)
 
 # LocScale-2.0
@@ -13,19 +13,15 @@
 ## What's new in LocScale-2.0?
 - Completely automated process for map optimisation
 - [`Feature-enhanced maps`](https://locscale.readthedocs.io/en/latest/tutorials/fem/): Confidence-weighted map optimisation by variational inference.
-- [`Hybrid sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/hybrid_locscale/): Reference-based local sharpening with partial (incomplet>e) models. 
+- [`Hybrid sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/hybrid_locscale/): Reference-based local sharpening with partial (incomplete) models. 
 - [`Model-free sharpening`](https://locscale.readthedocs.io/en/latest/tutorials/model_free_locscale/): Reference-based local sharpening without atomic models.
 - [`LocScale-SURFER`](https://github.com/cryoTUD/locscale-surfer): ChimeraX plugin to toggle contextual structure in LocScale maps.
 - Full support for point group symmetry (helical symmetry to follow).
 
-<br>
-  
-`LocScale-2.0` is distributed as a portable stand-alone installation that includes all the needed libraries from: [https://github.com/cryoTUD/locscale/](https://github.com/cryoTUD/locscale/)
-
 ## Documentation
 
->[!TIP]
-> Please visit [https://locscale.readthedocs.io/en/latest/](https://locscale.readthedocs.io/en/latest/) for comprehensive documentation, tutorials and troubleshooting.
+>[!IMPORTANT]
+> Please visit [https://cryotud.github.io/locscale/](https://cryotud.github.io/locscale/) for comprehensive documentation, tutorials and troubleshooting.
 
 ## Installation
 
@@ -110,13 +106,16 @@ locscale test
 ```
 </details>
 
-## Tutorial and FAQs
+## ColabScale
 
-We are currently working on the tutorial and [__Wiki__](https://gitlab.tudelft.nl/aj-lab/locscale/-/wikis/home/) help. If you are still using LocScale 1.0, see the [LocScale1](https://gitlab.tudelft.nl/ajakobi/locscale/wikis/home)-Wiki for usage instructions, FAQs and tutorial.
-<br>  
+>[!TIP]
+> For quick testing or if you have limited compute resources, many functionalities of `LocScale-2.0` are available on [`ColabScale`](https://github.com/cryoTUD/ColabScale/tree/main).  <br><br>
+> <a target="_blank" href="https://colab.research.google.com/github/cryoTUD/ColabScale/blob/main/ColabScale.ipynb">
+>  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+>  </a>
 
 ## Credits
-`LoScale 2.0` is using code from a number of open-source projects.
+`LoScale 2.0` is facilitated by a number of open-source projects.
 
 - [`EMmer`](https://gitlab.tudelft.nl/aj-lab/emmer): Python library for electron microscopy map and model manipulations. [3-Clause BSD license]    
 - [`FDRthresholding`](https://git.embl.de/mbeckers/FDRthresholding): Tool for FDR-based density thresholding. [3-Clause BSD license]
@@ -130,10 +129,11 @@ We are currently working on the tutorial and [__Wiki__](https://gitlab.tudelft.n
 
 If you found `LocScale` useful for your research, please consider citing it:
 
-- A.J. Jakobi, M. Wilmanns and C. Sachse, [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-- A. Bharadwaj and A.J. Jakobi, [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
+- A. Bharadwaj, R.M. de Bruin, A.J. Jakobi: [Confidence-guided cryo-EM map optimisation with LocScale-2.0](https://doi.org/10.1101/2025.09.11.674726), BioRxiv 2025.09.11.674726 (2025) 
+- A.J. Jakobi, M. Wilmanns and C. Sachse: [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
+- A. Bharadwaj and A.J. Jakobi: [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
 ---
 
 ## Bugs and questions
 
-For bug reports please use the [GitLab issue tracker](https://gitlab.tudelft.nl/aj-lab/locscale/issues).   
+For bug reports please use the [GitHub issue tracker](https://github.com/issues/assigned).   

@@ -1,15 +1,19 @@
-name: locscale2
+name: locscale
 channels:
   - conda-forge
-  - defaults
-  - nvidia
 dependencies:
-  - python=3.11
-  - numpy
-  - gfortran
-  - mpi4py
-  - openmpi
+  - python=3.12
+  - numpy>=2.0
+  - scipy>=1.13      
   - pip
   - pip:
-      - locscale
-
+      - pandas>=2.2.2
+      - scikit-learn>=1.5
+      - matplotlib>=3.9      
+      - torch>=2.3   
+      - gemmi==0.7.*
+      - mrcfile>=1.5
+      - servalcat==0.4.*   
+      - tqdm>=4.66
+      - pyfiglet>=1.0
+      - loguru>=0.7

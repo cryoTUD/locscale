@@ -1,12 +1,29 @@
 import numpy as np
 
 def download_emmernet_model_from_url(download_folder):
-    import wget
-   
-    #url_model_based_emmernet = "https://surfdrive.surf.nl/files/index.php/s/HxRLgoZFYQEbf8Z/download"    # OLD SURFdrive link
-    #url_model_based_emmernet = "https://zenodo.org/record/6651995/files/emmernet.tar.gz?download=1"    # https://doi.org/10.5281/zenodo.6651995 (16 June 2022)
-    url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1" # https://doi.org/10.5281/zenodo.8211668 (3 Aug 2023)
-    wget.download(url_emmernet_models, download_folder)
+    import os
+    import urllib.request
+    from tqdm import tqdm
+
+    class DownloadProgressBar(tqdm):
+        """Adapts tqdm to urlretrieve's reporthook(block_num, block_size, total_size)."""
+        def update_to(self, block_num=1, block_size=1, total_size=None):
+            if total_size is not None:
+                self.total = total_size
+            self.update(block_num * block_size - self.n)
+
+    #url_emmernet_models = "https://zenodo.org/record/8211668/files/emmernet.tar.gz?download=1"
+    url_emmernet_models = "https://surfdrive.surf.nl/files/index.php/s/txtZ7WiyRwixcrB/download"
+    # urlretrieve needs a full path, not a directory: name the file explicitly rather
+    # than letting it be inferred from a URL that ends in "?download=1".
+    destination = os.path.join(download_folder, "emmernet.tar.gz")
+
+    with DownloadProgressBar(unit="B", unit_scale=True, unit_divisor=1024,
+                             miniters=1, desc="Downloading EMmerNet models") as progress:
+        urllib.request.urlretrieve(url_emmernet_models, destination, reporthook=progress.update_to)
+
+    return destination
+
 
 def extract_tar_files_in_folder(tar_folder, use_same_folder=True):
     import tarfile
@@ -56,7 +73,7 @@ def plot_phase_correlations(phase_correlations_all, freq):
         ax1.plot(freq[1:], phase_correlation, color="black", alpha=0.1)
     # Plot the mean
     ax1.plot(freq[1:], phase_correlations_all.mean(axis=0), color="red", linewidth=2)
-    ax1.set_xlabel("Spatial frequency 1/$\AA$")
+    ax1.set_xlabel(r"Spatial frequency 1/$\AA$")
     ax1.set_ylabel("Phase correlation")
     ax2.set_xticks(ax1.get_xticks())
     ax2.set_xbound(ax1.get_xbound())
@@ -119,8 +136,7 @@ def check_emmernet_dependencies(verbose=False):
     try:
         import numpy as np
         import mrcfile
-        import tensorflow as tf
-        import keras
+        import torch 
         import locscale
         
         if verbose:
@@ -133,10 +149,10 @@ def check_and_download_emmernet_model(verbose=False):
     import os
     import locscale
 
-    emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models")
+    emmernet_model_folder = os.path.join(os.path.dirname(locscale.__file__), "emmernet", "emmernet_models", "emmernet")
     path_exists = os.path.exists(emmernet_model_folder)
-    EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "EMmerNet_highContext.hdf5"))
-    EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet", "EMmerNet_lowContext.hdf5"))
+    EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet_highcontext.pt"))
+    EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED = os.path.exists(os.path.join(emmernet_model_folder, "emmernet_lowcontext.pt"))
     
 
     emmernet_downloaded = path_exists and EMMERNET_HIGH_CONTEXT_MODEL_DOWNLOADED and EMMERNET_LOW_CONTEXT_MODEL_DOWNLOADED
@@ -179,29 +195,20 @@ def check_and_save_output(parsed_inputs, emmernet_output):
     
     input_emmap_path = parsed_inputs["emmap_path"]
     input_emmap_folder = os.path.dirname(os.path.dirname(input_emmap_path))
+    processing_files_folder = emmernet_output["output_processing_files"]
     output_emmap_filename = parsed_inputs["outfile"]
     verbose = parsed_inputs["verbose"]
     monte_carlo = parsed_inputs["monte_carlo"]
-    physics_based = parsed_inputs["physics_based"]
     emmap, apix = load_map(input_emmap_path)
     output_emmap_folder = os.path.dirname(input_emmap_path)
 
     if monte_carlo:
         emmernet_output_mean = emmernet_output["output_predicted_map_mean"]
-        emmernet_output_var = emmernet_output["output_predicted_map_var"]
-        emmernet_output_total = emmernet_output["output_predicted_map_total"]
-        
+        emmernet_output_var = emmernet_output["output_predicted_map_var"]        
         #emmernet_output_var_calibrated = calibrate_variance(emmernet_output_var)
             
         assert emmap.shape == emmernet_output_mean.shape, "Emmernet output mean map shape does not match input map shape"
         assert emmap.shape == emmernet_output_var.shape, "Emmernet output var map shape does not match input map shape"
-        assert emmap.shape == emmernet_output_total.shape, "Emmernet output total map shape does not match input map shape"
-    elif physics_based:
-        emmernet_output_potential = emmernet_output["output_predicted_map_mean"]
-        emmernet_output_cd = emmernet_output["output_predicted_map_var"]
-        
-        assert emmap.shape == emmernet_output_potential.shape, "Emmernet output potential map shape does not match input map shape"
-        assert emmap.shape == emmernet_output_cd.shape, "Emmernet output cd map shape does not match input map shape"
     else:
         emmernet_output_map = emmernet_output["output_predicted_map_mean"]
         assert emmap.shape == emmernet_output_map.shape, "Emmernet output map shape does not match input map shape"
@@ -217,7 +224,7 @@ def check_and_save_output(parsed_inputs, emmernet_output):
             output_emmap_filename = output_emmap_filename + ".mrc"
         extension_output_filename = os.path.splitext(output_emmap_filename)[1]
         output_filename_mean = os.path.join(input_emmap_folder, output_emmap_filename)
-        output_filename_var = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename))
+        output_filename_var = os.path.join(processing_files_folder, output_emmap_filename.replace(extension_output_filename, "_variance"+extension_output_filename))
         #output_filename_var_calibrated = output_emmap_filename.replace(extension_output_filename, "_var_calibrated"+extension_output_filename)
         output_filename_for_locscale = os.path.join(input_emmap_folder, output_emmap_filename.replace(extension_output_filename, "_baseline"+extension_output_filename))
         save_as_mrc(emmernet_output_mean, output_filename_mean, apix, verbose=verbose)
@@ -228,18 +235,6 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         #emmernet_output["output_filename_var_calibrated"] = output_filename_var_calibrated
         emmernet_output["output_filename_for_locscale"] = os.path.join(output_emmap_folder, output_filename_for_locscale)
         emmernet_output["reference_map_for_locscale"] = output_filename_mean
-        #save_as_mrc(emmernet_output_total, output_emmap_filename, apix, verbose=verbose)
-    elif physics_based:
-        output_has_extension = len(os.path.splitext(output_emmap_filename)) > 1
-        if not output_has_extension:
-            output_emmap_filename = output_emmap_filename + ".mrc"
-        extension_output_filename = os.path.splitext(output_emmap_filename)[1]
-        output_filename_potential = output_emmap_filename.replace(extension_output_filename, "_potential"+extension_output_filename)
-        output_filename_cd = output_emmap_filename.replace(extension_output_filename, "_cd"+extension_output_filename)
-        save_as_mrc(emmernet_output_potential, output_filename_potential, apix, verbose=verbose)
-        save_as_mrc(emmernet_output_cd, output_filename_cd, apix, verbose=verbose)
-        emmernet_output["output_filename_potential"] = output_filename_potential
-        emmernet_output["output_filename_cd"] = output_filename_cd
     else:
         save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
         emmernet_output["output_filename"] = output_emmap_filename
@@ -268,8 +263,8 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
         
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
-        # save the non-symmetrised map
         processing_files_folder = input_dictionary["output_processing_files"]
+        # save the non-symmetrised map
         apix = input_dictionary["apix"]
         unsymmetrised_map_path = os.path.join(processing_files_folder, "unsymmetrised_mean_map.mrc")
         save_as_mrc(map_data=map_to_symmetrise, output_filename=unsymmetrised_map_path, apix=apix, origin=0, verbose=True)

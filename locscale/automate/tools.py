@@ -1,14 +1,8 @@
 # Script to automate LocScale for large number of files
 
 import argparse
-from distutils.cmd import Command
-from genericpath import isfile
 import os
-from socket import timeout
-import sys
-from subprocess import PIPE
 from locscale.utils.startup_utils import launch_locscale_no_mpi
-import json
 import pickle
 
 

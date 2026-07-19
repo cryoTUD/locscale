@@ -83,29 +83,31 @@ class test_emmernet(unittest.TestCase):
         self.test_input_dict = inputs_dictionary
     
     def test_run_emmernet(self):
-        from locscale.emmernet.emmernet_functions import get_cubes, assemble_cubes
-        from locscale.emmernet.run_emmernet import load_emmernet_model
-        from locscale.include.emmer.ndimage.map_utils import load_map
         import numpy as np
+        import torch 
 
+        from locscale.emmernet.emmernet_functions import get_cubes
+        from locscale.emmernet.run_emmernet import load_emmernet_model
+        
         
         cubes_dictionary, cubes_array, filtered_signal_cubecenters = get_cubes(self.masked_emmap, self.stride, self.cube_size, self.mask)
         cube_1 = cubes_array[0]
         cube_size = cube_1.shape[0]
         batch_size = 8
     
-        emmernet_model_1 = load_emmernet_model(self.inputs_dictionary)
+        emmernet_model_1, device = load_emmernet_model(self.inputs_dictionary)
         i=0
         cubes = cubes_array
         cubes_x = np.expand_dims(cubes, axis=4)
-        cubes_predicted = np.empty((0, cube_size, cube_size, cube_size, 1))
-        cubes_batch_X = np.empty((batch_size, cube_size, cube_size, cube_size, 1))
+        cubes_predicted = np.empty((0, 1, cube_size, cube_size, cube_size))
+        cubes_batch_X = np.empty((batch_size, 1, cube_size, cube_size, cube_size))
         cubes_batch_X = cubes_x[i:i+batch_size,:,:,:,:]
 
         ## Predict using model_based
-        cubes_batch_predicted = emmernet_model_1.predict(x=cubes_batch_X, batch_size=batch_size, verbose=0)
+        with torch.no_grad():
+            cubes_batch_predicted = emmernet_model_1(cubes_batch_X.to(device))
         cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
-        cubes_predicted = np.squeeze(cubes_predicted, axis=-1)
+        cubes_predicted = np.squeeze(cubes_predicted, axis=1)
 
         self.assertTrue(cubes_predicted is not None)
 
