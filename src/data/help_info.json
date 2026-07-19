@@ -1,0 +1,10 @@
+{
+    "input_map_help": "The unsharpened cryo-EM map to enhance. EMmerNet predicts from it, and it is also the target of the amplitude scaling that produces the baseline map.",
+    "mask_help": "Optional. Selects which cubes carry signal. If left empty, an FDR confidence mask is computed at 1% FDR and returned as an output so you can inspect and reuse it. Must have the same shape as the input map.",
+    "model_help": "Which EMmerNet variant to use. high_context is the default; low_context was trained on different targets.",
+    "monte_carlo_help": "Number of stochastic forward passes. Their mean is the feature-enhanced map and their variance drives pVDDT, so this cannot be disabled. More samples give a less noisy confidence map and cost proportionally more time.",
+    "batch_size_help": "Cubes per forward pass. Larger is faster on a GPU but uses more memory; reduce it if you run out.",
+    "window_help": "Side length of the window used for local amplitude scaling. LocScale's default is 25.",
+    "chunk_help": "Windows scaled per batch. This is the main memory control for the scaling stage: roughly 344 KB per window at window 25, so 4096 is about 1.4 GB. Reduce it on a small GPU.",
+    "gpu_help": "Use CUDA, or Apple MPS, when available. Both EMmerNet inference and the amplitude scaling run on the GPU. Uncheck to force CPU."
+}
