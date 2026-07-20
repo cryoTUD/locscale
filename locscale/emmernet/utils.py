@@ -239,6 +239,16 @@ def check_and_save_output(parsed_inputs, emmernet_output):
         save_as_mrc(emmernet_output_map, output_emmap_filename, apix, verbose=verbose)
         emmernet_output["output_filename"] = output_emmap_filename
 
+        output_has_extension = len(os.path.splitext(output_emmap_filename)) > 1
+        if not output_has_extension:
+            output_emmap_filename = output_emmap_filename + ".mrc"
+        extension_output_filename = os.path.splitext(output_emmap_filename)[1]
+        # No Monte Carlo variance without dropout sampling: the single
+        # prediction doubles as the reference map LocScale scales against.
+        emmernet_output["output_filename_for_locscale"] = output_emmap_filename.replace(
+            extension_output_filename, "_baseline" + extension_output_filename)
+        emmernet_output["reference_map_for_locscale"] = output_emmap_filename
+
     return emmernet_output
 
 def load_calibrator():
@@ -255,12 +265,15 @@ def load_calibrator():
 def symmetrise_if_needed(input_dictionary, output_dictionary,):
     import os
     symmetry = input_dictionary["symmetry"]
-    
-    if symmetry != "C1":
+    twist = input_dictionary.get("twist")
+    rise = input_dictionary.get("rise")
+    n_steps = input_dictionary.get("n_steps")
+
+    if symmetry != "C1" or twist is not None:
         from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
         from locscale.utils.file_tools import RedirectStdoutToLogger
-        
+
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
         processing_files_folder = input_dictionary["output_processing_files"]
@@ -268,21 +281,24 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
         apix = input_dictionary["apix"]
         unsymmetrised_map_path = os.path.join(processing_files_folder, "unsymmetrised_mean_map.mrc")
         save_as_mrc(map_data=map_to_symmetrise, output_filename=unsymmetrised_map_path, apix=apix, origin=0, verbose=True)
-        
+
         _, apix = load_map(unsymmetrised_map_path)
         if verbose:
-            print_statement = "Applying symmetry: {}".format(symmetry)
+            if twist is not None:
+                print_statement = "Applying helical symmetry: twist={}, rise={}, point group={}".format(twist, rise, symmetry)
+            else:
+                print_statement = "Applying symmetry: {}".format(symmetry)
             print(print_statement)
             input_dictionary['logger'].info(print_statement)
-        
+
         with RedirectStdoutToLogger(input_dictionary['logger'], wait_message="Applying symmetry"):
-            sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path,pg=symmetry)
+            sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps)
             symmetrised_map = unsymmetrised_map_path[:-4]+"_{}_symmetry.mrc".format(symmetry)
             save_as_mrc(map_data=sym, output_filename=symmetrised_map, apix=apix, origin=0, verbose=True)
-        
+
         output_dictionary["output_predicted_map_mean_non_symmetrised"] = map_to_symmetrise
         output_dictionary["output_predicted_map_mean"] = sym
-        
+
         return output_dictionary
     else:
         return output_dictionary

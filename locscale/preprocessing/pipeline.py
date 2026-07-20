@@ -43,6 +43,9 @@ def get_modmap(modmap_args):
     skip_refine = modmap_args['skip_refine']
     refmac5_path = modmap_args['refmac5_path']
     symmetry = modmap_args['symmetry']
+    twist = modmap_args.get('twist')
+    rise = modmap_args.get('rise')
+    n_steps = modmap_args.get('n_steps')
     model_resolution = modmap_args['model_resolution']
     molecular_weight = modmap_args['molecular_weight']
     #build_ca_only = modmap_args['build_ca_only']
@@ -256,20 +259,23 @@ def get_modmap(modmap_args):
         pseudomodel_modmap = run_refmap(model_path=shifted_model_path, emmap_path=emmap_path, mask_path=mask_path, verbose=verbose)
     
     #############################################################################
-    # Stage: If the user has specified symmetry, then apply the PG symmetry
+    # Stage: If the user has specified symmetry, then apply the PG or helical symmetry
     #############################################################################
-    if symmetry != "C1":
+    if symmetry != "C1" or twist is not None:
         from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc
-        
+
         if verbose:
             print_downward_arrow(2)
-            print_statement = "d) Applying symmetry: {}".format(symmetry)
+            if twist is not None:
+                print_statement = "d) Applying helical symmetry: twist={}, rise={}, point group={}".format(twist, rise, symmetry)
+            else:
+                print_statement = "d) Applying symmetry: {}".format(symmetry)
             print(print_statement)
             modmap_args['logger'].info(print_statement)
-        
+
         with RedirectStdoutToLogger(modmap_args['logger'], wait_message="Applying symmetry"):
-            sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap,pg=symmetry)
+            sym = symmetrize_map_emda(emmap_path=pseudomodel_modmap, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps)
             symmetrised_modmap = pseudomodel_modmap[:-4]+"_{}_symmetry.mrc".format(symmetry)
             save_as_mrc(map_data=sym, output_filename=symmetrised_modmap, apix=apix, origin=0, verbose=True)
             pseudomodel_modmap = symmetrised_modmap

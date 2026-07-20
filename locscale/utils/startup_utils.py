@@ -233,28 +233,31 @@ def launch_feature_enhance_no_mpi(args):
     ## Run LocScale using EMmerNet output
     locscale_args = get_locscale_inputs_from_emmernet(input_dictionary, emmernet_output_dictionary)
     launch_contrast_enhance(locscale_args)
-    
-    # Calculate the p-values from the output of EMmerNet and LocScale
-    locscale_output_filename = locscale_args.outfile 
-    emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
-    emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
-    mask_path = input_dictionary["xyz_mask_path"]
-    calculate_significance_map_from_emmernet_output(
-        locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
-        n_samples=input_dictionary["monte_carlo_iterations"])
-    # Compute the probability distribution for calibration
-    
-    probability_args = {"locscale_path" : locscale_output_filename, 
-                        "mean_prediction_path" : emmernet_output_mean_filename,
-                        "var_prediction_path" : emmernet_output_var_filename,
-                        "n_samples" :input_dictionary["monte_carlo_iterations"], 
-                        "mask_path" : mask_path,
-                        "processing_files_folder" : input_dictionary["output_processing_files"]}
-    
-    try_to(compute_probability_distribution,**probability_args)
-    
+
+    if input_dictionary["monte_carlo"]:
+        # Calculate the p-values from the output of EMmerNet and LocScale.
+        # This needs the Monte Carlo variance map, so it only runs when
+        # Monte Carlo sampling was actually performed.
+        locscale_output_filename = locscale_args.outfile
+        emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
+        emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
+        mask_path = input_dictionary["xyz_mask_path"]
+        calculate_significance_map_from_emmernet_output(
+            locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
+            n_samples=input_dictionary["monte_carlo_iterations"])
+        # Compute the probability distribution for calibration
+
+        probability_args = {"locscale_path" : locscale_output_filename,
+                            "mean_prediction_path" : emmernet_output_mean_filename,
+                            "var_prediction_path" : emmernet_output_var_filename,
+                            "n_samples" :input_dictionary["monte_carlo_iterations"],
+                            "mask_path" : mask_path,
+                            "processing_files_folder" : input_dictionary["output_processing_files"]}
+
+        try_to(compute_probability_distribution,**probability_args)
+        print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
+
     print("EMmerNet finished successfully")
-    print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
     ## Print end
     print_end_banner(datetime.now(), start_time)
 
@@ -312,26 +315,29 @@ def launch_feature_enhance_mpi(args):
         launch_contrast_enhance(locscale_args)
 
         if rank == 0:
-            # Calculate the p-values from the output of EMmerNet and LocScale
-            locscale_output_filename = locscale_args.outfile 
-            emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
-            emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
-            calculate_significance_map_from_emmernet_output(
-                locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
-                n_samples=input_dictionary["monte_carlo_iterations"])
-            # Compute the probability distribution for calibration
-            
-            probability_args = {"locscale_path" : locscale_output_filename, 
-                                "mean_prediction_path" : emmernet_output_mean_filename,
-                                "var_prediction_path" : emmernet_output_var_filename,
-                                "n_samples" :input_dictionary["monte_carlo_iterations"], 
-                                "mask_path" : mask_path,
-                                "processing_files_folder" : input_dictionary["output_processing_files"]}
-            
-            try_to(compute_probability_distribution,**probability_args)
-            
+            if input_dictionary["monte_carlo"]:
+                # Calculate the p-values from the output of EMmerNet and LocScale.
+                # This needs the Monte Carlo variance map, so it only runs when
+                # Monte Carlo sampling was actually performed.
+                locscale_output_filename = locscale_args.outfile
+                emmernet_output_mean_filename = emmernet_output_dictionary["output_filename_mean"]
+                emmernet_output_var_filename = emmernet_output_dictionary["output_filename_var"]
+                calculate_significance_map_from_emmernet_output(
+                    locscale_output_filename, emmernet_output_mean_filename, emmernet_output_var_filename, \
+                    n_samples=input_dictionary["monte_carlo_iterations"])
+                # Compute the probability distribution for calibration
+
+                probability_args = {"locscale_path" : locscale_output_filename,
+                                    "mean_prediction_path" : emmernet_output_mean_filename,
+                                    "var_prediction_path" : emmernet_output_var_filename,
+                                    "n_samples" :input_dictionary["monte_carlo_iterations"],
+                                    "mask_path" : mask_path,
+                                    "processing_files_folder" : input_dictionary["output_processing_files"]}
+
+                try_to(compute_probability_distribution,**probability_args)
+                print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
+
             print("EMmerNet finished successfully")
-            print("We recommend to always use feature-enhanced maps together with their pVDDT scores (pVDDT.mrc) for map interpretation.")
             ## Print end
             print_end_banner(datetime.now(), start_time)
         
@@ -361,7 +367,14 @@ def get_locscale_inputs_from_emmernet(parsed_inputs, emmernet_output):
     #defaults_dictionary["logger"] = parsed_inputs["logger"]
     defaults_dictionary["number_processes"] = parsed_inputs["number_processes"]
     defaults_dictionary["mpi"] = parsed_inputs["mpi"]
-    
+    # Carry the symmetry/helical parameters through so the final LocScale-scaled
+    # output (not just the EMmerNet reference map symmetrised earlier) also gets
+    # symmetrised, see write_out_final_volume_window_back_if_required().
+    defaults_dictionary["symmetry"] = parsed_inputs["symmetry"]
+    defaults_dictionary["twist"] = parsed_inputs.get("twist")
+    defaults_dictionary["rise"] = parsed_inputs.get("rise")
+    defaults_dictionary["n_steps"] = parsed_inputs.get("n_steps")
+
     locscale_args = argparse.Namespace(**defaults_dictionary)
     
     return locscale_args

@@ -99,13 +99,13 @@ def predict_cubes_and_assemble(input_dictionary):
     verbose = input_dictionary["verbose"]
     processing_files_folder = input_dictionary["output_processing_files"]
     
-    gpu_ids = input_dictionary["gpu_ids"]  
+    gpu_ids = input_dictionary["gpu_ids"]
 
     
     if verbose:
         print("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         input_dictionary["logger"].info("\tCUDA_VISIBLE_DEVICES set to: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
-   
+
     emmernet_model, device = load_emmernet_model(model_type=input_dictionary["trained_model"], verbose=verbose)
 
     # use nn.DataParallel if multiple GPUs are available

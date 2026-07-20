@@ -168,7 +168,7 @@ def change_directory(args, folder_name):
     for arg in vars(args):
         value = getattr(args, arg)
         if isinstance(value, str):
-            if os.path.exists(value) and arg not in ["outfile","output_processing_files","emmap_path","mask","model_map"]:
+            if os.path.exists(value) and arg not in ["outfile","output_processing_files","emmap_path","mask","model_map","run_type"]:
                 new_location=copy_file_to_folder(value, new_directory)
                 setattr(args, arg, new_location) 
             elif arg == "emmap_path" or arg == "mask" or arg == "model_map":
