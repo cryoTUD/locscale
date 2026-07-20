@@ -15,8 +15,11 @@ def predict_model_map_from_input_map(parsed_inputs):
     emmernet_model_folder = check_and_download_emmernet_model(verbose=True)
     
     # set inputs from parsed_inputs
-    cube_size = parsed_inputs["cube_size"] 
+    cube_size = parsed_inputs["cube_size"]
     symmetry = parsed_inputs["symmetry"]
+    twist = parsed_inputs.get("twist")
+    rise = parsed_inputs.get("rise")
+    n_steps = parsed_inputs.get("n_steps")
     emmap_path = parsed_inputs["xyz_emmap_path"]
     xyz_mask_path = parsed_inputs["mask_path_raw"]
     if parsed_inputs["use_low_context_model"]:
@@ -48,6 +51,9 @@ def predict_model_map_from_input_map(parsed_inputs):
     input_dictionary["monte_carlo_iterations"] = monte_carlo_iterations
     input_dictionary["logger"] = parsed_inputs["logger"]
     input_dictionary["symmetry"] = parsed_inputs["symmetry"]
+    input_dictionary["twist"] = twist
+    input_dictionary["rise"] = rise
+    input_dictionary["n_steps"] = n_steps
     input_dictionary["output_processing_files"] = parsed_inputs["output_processing_files"]
     if gpu_ids is None:
         cuda_visible_devices_string = ""

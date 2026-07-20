@@ -220,6 +220,25 @@ def write_out_final_volume_window_back_if_required(args, LocScaleVol, parsed_inp
         map_shape = input_map.shape
         LocScaleVol = pad_or_crop_volume(LocScaleVol, (map_shape))
 
+    ###########################################################################
+    # If the user has specified symmetry, apply it to the assembled output.
+    # This runs once the full volume has been reassembled from the windowed
+    # scaling.
+    ###########################################################################
+    symmetry = getattr(args, "symmetry", "C1")
+    twist = getattr(args, "twist", None)
+    rise = getattr(args, "rise", None)
+    n_steps = getattr(args, "n_steps", None)
+    if symmetry != "C1" or twist is not None:
+        from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map
+        if args.verbose:
+            if twist is not None:
+                print("Applying helical symmetry to final output: twist={}, rise={}, point group={}".format(
+                    twist, rise, symmetry))
+            else:
+                print("Applying symmetry to final output: {}".format(symmetry))
+        LocScaleVol = symmetrize_map(LocScaleVol, apix, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps)
+
     output_filename = args.outfile
     output_directory = parsed_inputs_dict["output_directory"]
     if not os.path.isabs(output_filename):

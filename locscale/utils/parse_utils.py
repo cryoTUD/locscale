@@ -85,8 +85,22 @@ def add_locscale_arguments(locscale_parser):
     reference_map_group.add_argument(
         '-mres', '--model_resolution', help='Resolution limit for Model Map generation', type=float)
     reference_map_group.add_argument(
-        '-sym', '--symmetry', help='Impose symmetry condition for output', default='C1', type=str)
-    
+        '-sym', '--symmetry', help='Impose symmetry condition for output. Point group (C1..Cn, D1..Dn, T, O, I) \
+                                    by default, or the internal Cn/Dn point group of a helical assembly when \
+                                    --twist/--rise are given', default='C1', type=str)
+    reference_map_group.add_argument(
+        '-twist', '--twist', help='Helical twist in degrees per asymmetric unit (enables helical symmetry \
+                                    averaging; requires --rise). Sign gives handedness.', default=None, type=float)
+    reference_map_group.add_argument(
+        '-rise', '--rise', help='Helical rise in Angstrom per asymmetric unit (required with --twist)',
+        default=None, type=float)
+    reference_map_group.add_argument(
+        '-n_steps', '--n_steps', help='Number of times the helical twist/rise operation is applied on \
+                                    each side of the reference copy (not an asymmetric-unit count -- with \
+                                    an internal Cn/Dn point group each step still covers the full point-group \
+                                    order in asymmetric units). Default: chosen automatically from the box \
+                                    size so translated copies never wrap around the FFT box', default=None, type=int)
+
     ## LocScale main function parameters
     scaling_argument_group = locscale_parser.add_argument_group('Scaling arguments')
     scaling_argument_group.add_argument(
@@ -164,8 +178,22 @@ def add_emmernet_arguments(emmernet_parser):
     emmernet_parser.add_argument(
         '-o', '--outfile', help='Output filename', default="feature_enhanced_output.mrc")
     emmernet_parser.add_argument(
-        '-sym', '--symmetry', help='If not equal to C1, then symmetry averaging will be performed', default='C1', type=str)
-    
+        '-sym', '--symmetry', help='If not equal to C1, then symmetry averaging will be performed. Point group \
+                                    (C1..Cn, D1..Dn, T, O, I) by default, or the internal Cn/Dn point group of a \
+                                    helical assembly when --twist/--rise are given', default='C1', type=str)
+    emmernet_parser.add_argument(
+        '-twist', '--twist', help='Helical twist in degrees per asymmetric unit (enables helical symmetry \
+                                    averaging; requires --rise). Sign gives handedness.', default=None, type=float)
+    emmernet_parser.add_argument(
+        '-rise', '--rise', help='Helical rise in Angstrom per asymmetric unit (required with --twist)',
+        default=None, type=float)
+    emmernet_parser.add_argument(
+        '-n_steps', '--n_steps', help='Number of times the helical twist/rise operation is applied on \
+                                    each side of the reference copy (not an asymmetric-unit count -- with \
+                                    an internal Cn/Dn point group each step still covers the full point-group \
+                                    order in asymmetric units). Default: chosen automatically from the box \
+                                    size so translated copies never wrap around the FFT box', default=None, type=int)
+
     misc_parser = emmernet_parser.add_argument_group('Miscellaneous arguments')
     misc_parser.add_argument(
         '-no_mc','--no_monte_carlo', help='Disable Monte Carlo sampling of the output', action='store_true', default=False)
