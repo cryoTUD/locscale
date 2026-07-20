@@ -139,9 +139,15 @@ def available_gpus():
     Only CUDA is enumerated. Apple MPS exposes a single unindexed device, so there is no
     choice to offer there, and CPU obviously has none either.
     """
-    if not torch.cuda.is_available():
+    if torch.cuda.is_available():
+        return [(i, torch.cuda.get_device_name(i)) for i in range(torch.cuda.device_count())]
+
+    elif torch.backends.mps.is_available():
+        return [(0, "Apple MPS")]
+    
+    else:
         return []
-    return [(i, torch.cuda.get_device_name(i)) for i in range(torch.cuda.device_count())]
+    
 
 
 def get_device(prefer_gpu=True, gpu_id=None):

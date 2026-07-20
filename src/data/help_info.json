@@ -5,9 +5,11 @@
     "monte_carlo_help": "Number of stochastic forward passes. Their mean is the feature-enhanced map and their variance drives pVDDT, so this cannot be disabled. More samples give a less noisy confidence map and cost proportionally more time. 15 is the recommended value; 1 makes the variance identically zero, which collapses pVDDT to a constant and is only useful for testing that the pipeline runs.",
     "batch_size_help": "Cubes per forward pass. Larger is faster on a GPU but uses more memory; reduce it if you run out.",
     "stride_help": "Spacing between the 32-voxel cubes fed to EMmerNet. Smaller strides overlap more, so each voxel is averaged over more predictions and the seams are smoother, but the number of cubes -- and the runtime -- grows quickly. 16 is half-overlap and the default. The cube size itself is fixed at 32, which is what the network was trained on.",
-    "window_help": "Side length of the window used for local amplitude scaling. LocScale's default is 25.",
+    "window_help": "Window size to use for amplitude scaling in angstorms. Default is 25 A",
     "chunk_help": "Windows scaled per batch. This is the main memory control for the scaling stage: roughly 344 KB per window at window 25, so 4096 is about 1.4 GB. Reduce it on a small GPU.",
     "gpu_help": "Use CUDA, or Apple MPS, when available. Both EMmerNet inference and the amplitude scaling run on the GPU. Uncheck to force CPU.",
     "gpu_id_help": "Which CUDA device to run on, listed by index and name. Only meaningful on multi-GPU CUDA machines: Apple MPS exposes a single unindexed GPU, so the list is empty and inert there. Both EMmerNet inference and the amplitude scaling run on the device you pick.",
-    "cancel_help": "Stop the current run. The pipeline checks between EMmerNet batches and scaling chunks, so cancelling takes effect at the end of the batch in progress rather than instantly. FDR mask computation cannot be interrupted. No maps are opened when a run is cancelled."
+    "cancel_help": "Stop the current run. The pipeline checks between EMmerNet batches and scaling chunks, so cancelling takes effect at the end of the batch in progress rather than instantly. FDR mask computation cannot be interrupted. No maps are opened when a run is cancelled.",
+    "point_group_symmetry_help": "Input point group symmetry (C1, C2, D2, etc.) to apply",
+    "helical_symmetry_help" : "Check this if input has helical symmetry"
 }

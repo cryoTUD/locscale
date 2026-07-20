@@ -138,7 +138,7 @@ def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
     mean_cubes, var_cubes = predict_monte_carlo(
         cubes_array, model, device, num_samples=monte_carlo_iterations,
         batch_size=batch_size,
-        progress_callback=lambda i, n: progress("EMmerNet", i, n))
+        progress_callback=lambda i, n: progress("Predicting", i, n))
 
     # ---- 5. reassemble ----------------------------------------------------
     status("Assembling cubes...")

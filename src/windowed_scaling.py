@@ -1,26 +1,4 @@
 """GPU-accelerated windowed amplitude scaling.
-
-This is the `scale_windows_shell` formulation, validated against LocScale's
-`utils/scaling_tools.py` to ~1e-15 over whole scaled cubes (not just the central voxel) on
-both noise and simulated cryo-EM windows, including the degenerate empty/zero-target cases.
-On CUDA it measured ~49x faster than the multiprocess CPU implementation it replaces.
-
-Two things make it fast, neither of which changes the result:
-
-1.  Only the central voxel of each scaled window is kept, and that voxel is *exactly* a
-    weighted sum of the scaled forward coefficients:
-        centre = Re( sum_k F(k) * W(k) ),  W = conj(rfftn(delta_centre)) * mult
-    with `mult` the hermitian multiplicity (2, except 1 at the rfft DC/Nyquist columns).
-    So the inverse FFT is never performed.
-
-2.  The scale factor is constant within a shell, so the interpolation folds into shell
-    space and the (B, n_fourier_voxels) scaling map is never materialised -- only
-    (B, n_shells).
-
-Conventions are LocScale's and must not drift: rfftn norm="ortho"; the profile uses
-amplitude |F| rather than power; the shell index is round(sqrt(i^2+j^2+k^2)) over raw rfft
-indices, bincount-averaged and truncated to [0 : wn/2+1]; and the central pixel is
-round_up_proper(wn/2), which is 13 for wn=25 -- one voxel past the geometric centre.
 """
 import numpy as np
 import torch

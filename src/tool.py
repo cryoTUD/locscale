@@ -17,7 +17,13 @@ from chimerax.ui import MainToolWindow
 from chimerax.ui.widgets import CollapsiblePanel, ModelMenuButton, vertical_layout
 from Qt.QtCore import QThread, Signal
 from Qt.QtWidgets import (QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QProgressBar,
-                          QPushButton, QSpinBox)
+                          QPushButton, QSpinBox, QLineEdit)
+
+
+from .utils import (
+    round_up_proper,
+    round_up_to_even,
+)
 
 with open(os.path.join(os.path.dirname(__file__), "data", "help_info.json")) as _f:
     help_info = json.load(_f)
@@ -81,7 +87,7 @@ class LocScale2Tool(ToolInstance):
 
     def __init__(self, session, tool_name):
         super().__init__(session, tool_name)
-        self.display_name = "LocScale2"
+        self.display_name = "LocScale-FEM"
         self._worker = None
         self._template = None
 
@@ -118,15 +124,38 @@ class LocScale2Tool(ToolInstance):
         panel = vertical_layout(frame, margins=(0, 0, 0, 8))
         panel.addWidget(QLabel("<b>Inputs</b>", frame))
 
+        # Add input unsharpened map
         self._map_menu = ModelMenuButton(self.session, class_filter=Volume)
         panel.addWidget(self._row(frame, "Input map:", help_info["input_map_help"], self._map_menu))
-
-        self._mask_menu = ModelMenuButton(self.session, class_filter=Volume)
+        # Add optional mask
+        self._mask_menu = ModelMenuButton(
+            self.session, 
+            class_filter=Volume, 
+            no_value_button_text="No model chosen",
+            no_value_menu_text="None",
+            autoselect="none",
+        )
         panel.addWidget(self._row(frame, "Mask (optional):", help_info["mask_help"], self._mask_menu))
-
         note = QLabel("<i>If no mask is given, an FDR mask is computed and returned.</i>", frame)
         note.setWordWrap(True)
         panel.addWidget(note)
+
+        # Add point group symmetry as text input 
+        self._point_group_symmetry_menu = QLineEdit(frame, placeholderText="C1")
+        panel.addWidget(self._row(frame, "Point group symmetry:", help_info["point_group_symmetry_help"], self._point_group_symmetry_menu))
+
+        # Add collapsible panel for helical symmetry parameters
+        self._helical_symmetry_panel = CollapsiblePanel(frame, title="Helical symmetry parameters")
+        
+        # Add helical symmetry parameters as text inputs as twist and rise
+        helical_symmetry_frame = self._helical_symmetry_panel.content_area
+        self._helical_twist_menu = QLineEdit(helical_symmetry_frame, placeholderText="Twist")
+        self._helical_rise_menu = QLineEdit(helical_symmetry_frame, placeholderText="Rise")
+        helical_symmetry_frame_layout = vertical_layout(helical_symmetry_frame, margins=(0, 0, 0, 0))
+        helical_symmetry_frame_layout.addWidget(self._row(helical_symmetry_frame, "Helical symmetry parameters", "XYZ", self._helical_twist_menu))
+        helical_symmetry_frame_layout.addWidget(self._row(helical_symmetry_frame, "Helical symmetry parameters", "XYZ", self._helical_rise_menu))
+
+        panel.addWidget(self._helical_symmetry_panel)
         return frame
 
     def _options_panel(self, parent):
@@ -143,10 +172,8 @@ class LocScale2Tool(ToolInstance):
         self._model_combo.addItems(available_models())
         options.addWidget(self._row(frame, "Model:", help_info["model_help"], self._model_combo))
 
-        # Minimum is 1 so the pipeline can be exercised end to end quickly. At 1 the sample
-        # variance is identically zero, so pVDDT degenerates to a constant -- fine for a
-        # plumbing test, useless as a confidence map. 15 is the real default.
-        self._mc_spin = QSpinBox(frame); self._mc_spin.setRange(1, 100); self._mc_spin.setValue(1)
+        
+        self._mc_spin = QSpinBox(frame); self._mc_spin.setRange(1, 100); self._mc_spin.setValue(15)
         options.addWidget(self._row(frame, "Monte-Carlo iterations:",
                                     help_info["monte_carlo_help"], self._mc_spin))
 
@@ -157,7 +184,7 @@ class LocScale2Tool(ToolInstance):
         self._stride_spin = QSpinBox(frame); self._stride_spin.setRange(1, 32); self._stride_spin.setValue(16)
         options.addWidget(self._row(frame, "Cube stride:", help_info["stride_help"], self._stride_spin))
 
-        self._window_spin = QSpinBox(frame); self._window_spin.setRange(9, 101); self._window_spin.setValue(25)
+        self._window_spin = QSpinBox(frame); self._window_spin.setRange(11, 45); self._window_spin.setValue(25)
         options.addWidget(self._row(frame, "Scaling window:", help_info["window_help"], self._window_spin))
 
         self._chunk_spin = QSpinBox(frame)
@@ -179,7 +206,7 @@ class LocScale2Tool(ToolInstance):
         if not self._gpus:
             # MPS and CPU have no device index to pick, so leave the control in place but
             # inert rather than implying a choice that does not exist.
-            self._gpu_combo.addItem("no CUDA device — MPS or CPU will be used", None)
+            self._gpu_combo.addItem("Using CPU", None)
             self._gpu_combo.setEnabled(False)
         self._gpu_row = self._row(frame, "GPU:", help_info["gpu_id_help"], self._gpu_combo)
         options.addWidget(self._gpu_row)
@@ -228,6 +255,11 @@ class LocScale2Tool(ToolInstance):
             return
 
         emmap = input_map.data.full_matrix()
+        apix = float(input_map.data.step[0])
+
+        window_size_angstroms = self._window_spin.value()
+        window_size_pix = round_up_to_even(window_size_angstroms / apix)
+
         mask = mask_volume.data.full_matrix() if mask_volume is not None else None
         if mask is not None and mask.shape != emmap.shape:
             self._status_label.setText(
@@ -240,17 +272,18 @@ class LocScale2Tool(ToolInstance):
 
         self._worker = PipelineWorker(dict(
             emmap=emmap,
-            apix=float(input_map.data.step[0]),
+            apix=apix,
             mask=mask,
             model_type=self._model_combo.currentText(),
             monte_carlo_iterations=self._mc_spin.value(),
             batch_size=self._batch_spin.value(),
             stride=self._stride_spin.value(),
-            window_size=self._window_spin.value(),
+            window_size=window_size_pix,
             scaling_chunk=self._chunk_spin.value(),
             use_gpu=self._gpu_check.isChecked(),
             gpu_id=self._selected_gpu_id(),
         ))
+
         self._worker.status.connect(self._on_status)
         self._worker.progress.connect(self._on_progress)
         self._worker.completed.connect(self._on_completed)
@@ -278,7 +311,7 @@ class LocScale2Tool(ToolInstance):
         self._cancel_button.setEnabled(False)
         self._cancel_button.setText("Cancelling...")
         self._status_label.setText(
-            "Cancelling &mdash; the current batch has to finish first.")
+            "Cancelling after the current batch is processed.")
 
     def _set_running(self, running):
         self._run_button.setEnabled(not running)
@@ -305,12 +338,12 @@ class LocScale2Tool(ToolInstance):
 
     def _on_cancelled(self):
         self._set_running(False)
-        self._status_label.setText("Cancelled &mdash; no maps were opened.")
+        self._status_label.setText("Cancelled; no maps were opened.")
         self.session.logger.info("LocScale2: cancelled by the user.")
 
     def _on_failed(self, message):
         self._set_running(False)
-        self._status_label.setText("<font color='red'>Failed &mdash; see the log.</font>")
+        self._status_label.setText("<font color='red'>Failed; see the log.</font>")
         self.session.logger.error("LocScale2 failed.\n" + message)
 
     def delete(self):
