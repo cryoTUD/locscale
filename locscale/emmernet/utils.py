@@ -355,12 +355,9 @@ def compute_calibrated_probabilities(locscale_path, mean_prediction_path, varian
 
 def plot_binned_correlation(xarray, yarray, num_bins=50, ci = 0.95, figsize_cm=(8, 8), plot_diagonal=True):
     import matplotlib.pyplot as plt
-    import seaborn as sns    
     import scipy.stats as st
     import numpy as np
-    
-    sns.set_style("white")
-            
+                
     figsize = (figsize_cm[0] / 2.54, figsize_cm[1] / 2.54)
     fig, ax = plt.subplots(figsize=figsize)
 
