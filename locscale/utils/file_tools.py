@@ -502,21 +502,6 @@ def simple_test_model_to_map_fit(args):
 
     return correlation
 
-def check_for_refmac(tolerate=False):
-    import os
-    from shutil import which
-    
-    refmac5_path = which("refmac5")
-    
-    if refmac5_path is None:
-        if not tolerate:
-            raise Exception("Refmac5 is not installed. Please install refmac5 and add it to your path")
-        else:
-            print("Refmac5 is not installed. Please install refmac5 and add it to your path")
-    else:
-        print("Refmac5 is installed at {}".format(refmac5_path))
-        print("If you want to use a different binary please use the --refmac5_path option or alias it to refmac5")
-
 def setup_logger(log_path: str):
     from loguru import logger
     try:
@@ -666,12 +651,12 @@ def warn_against_skip_refine(args, tolerate):
     import warnings
     if args.skip_refine:
         if not tolerate:
-            raise UserWarning("You have asked to skip REFMAC refinement. \
+            raise UserWarning("You have asked to skip ADP refinement. \
                                 However, you have asked to complete a partially built model. This requires a refined pseudo-atomic model. \
                                 Please do not raise the --skip_refine flag")
 
         if tolerate: 
-            warnings.warn("Warning: You have asked to skip REFMAC refinement. \
+            warnings.warn("Warning: You have asked to skip ADP refinement. \
                     Please make sure that the atomic ADPs are refined. LocScale performance maybe severely affected if the ADPs are not refined")
                 
 def check_and_warn_about_ref_resolution(args):
