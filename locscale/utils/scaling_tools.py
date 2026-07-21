@@ -477,6 +477,7 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     from locscale.utils.general import save_list_as_map, put_scaled_voxels_back_in_original_volume_including_padding
     from locscale.utils.general import merge_sequence_of_sequences, split_sequence_evenly, write_out_final_volume_window_back_if_required
     from joblib import Parallel, delayed
+    from locscale.utils.amplitude_scaling import local_amplitude_scaling
     ###############################################################################
     # Stage 1: Collect inputs from the dictionary
     ###############################################################################
@@ -486,47 +487,53 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     # Stage 2: Extract masked locations and indices from the mask
     ###############################################################################
     
-    masked_xyz_locs, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(
+    corner_voxels, masked_indices, map_shape = get_xyz_locs_and_indices_after_edge_cropping_and_masking(
         scaling_dictionary['mask'], scaling_dictionary['wn'])
+    
+    reference_map = scaling_dictionary["modmap"]
+    target_map = scaling_dictionary["emmap"]
+    window_size = scaling_dictionary["wn"]
+    
+    sharpened_vals = local_amplitude_scaling(reference_map, target_map, corner_voxels, window_size=window_size)
 
-    masked_xyz_locs_split = split_sequence_evenly(masked_xyz_locs, scaling_dictionary['number_processes'])
+    # masked_xyz_locs_split = split_sequence_evenly(masked_xyz_locs, scaling_dictionary['number_processes'])
 
-    scaling_dictionary["masked_indices"] = masked_indices
-    scaling_dictionary["map_shape"] = map_shape
+    # scaling_dictionary["masked_indices"] = masked_indices
+    # scaling_dictionary["map_shape"] = map_shape
     
 
-    scaling_dictionary_split = {}
-    for i in range(scaling_dictionary['number_processes']):
-        scaling_dictionary_split[i] = scaling_dictionary.copy()
-        scaling_dictionary_split[i]["masked_xyz_locs"] = masked_xyz_locs_split[i]
-        scaling_dictionary_split[i]["use_mpi"] = False
-    ###############################################################################
-    # Stage 3: Run the window function to get sharpened values and bfactor information
-    ###############################################################################
-    # Use joblib to parallelize the window function 
-    if scaling_dictionary['number_processes'] > 1:
-        results = Parallel(n_jobs=scaling_dictionary['number_processes'])(
-            delayed(get_central_scaled_pixel_vals_after_scaling)(scaling_dictionary_split[i]) for i in range(scaling_dictionary['number_processes']))
-    else:
-        scaling_dictionary_split[0]["use_mpi"] = False
-        results = [get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_split[0])]
+    # scaling_dictionary_split = {}
+    # for i in range(scaling_dictionary['number_processes']):
+    #     scaling_dictionary_split[i] = scaling_dictionary.copy()
+    #     scaling_dictionary_split[i]["masked_xyz_locs"] = masked_xyz_locs_split[i]
+    #     scaling_dictionary_split[i]["use_mpi"] = False
+    # ###############################################################################
+    # # Stage 3: Run the window function to get sharpened values and bfactor information
+    # ###############################################################################
+    # # Use joblib to parallelize the window function 
+    # if scaling_dictionary['number_processes'] > 1:
+    #     results = Parallel(n_jobs=scaling_dictionary['number_processes'])(
+    #         delayed(get_central_scaled_pixel_vals_after_scaling)(scaling_dictionary_split[i]) for i in range(scaling_dictionary['number_processes']))
+    # else:
+    #     scaling_dictionary_split[0]["use_mpi"] = False
+    #     results = [get_central_scaled_pixel_vals_after_scaling(scaling_dictionary_split[0])]
     
-    ###############################################################################
-    # Stage 4: Merge the results from the parallelized window function
-    ###############################################################################
-    if scaling_dictionary['number_processes'] > 1:
-        sharpened_vals = merge_sequence_of_sequences([results[i]['sharpened_vals'] for i in range(scaling_dictionary['number_processes'])])
-        bfactor_vals = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
-        qfit_vals = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
-    else:
-        sharpened_vals = results[0]['sharpened_vals']
-        bfactor_vals = results[0]['bfactor_vals']
-        qfit_vals = results[0]['qfit_vals']
+    # ###############################################################################
+    # # Stage 4: Merge the results from the parallelized window function
+    # ###############################################################################
+    # if scaling_dictionary['number_processes'] > 1:
+    #     sharpened_vals = merge_sequence_of_sequences([results[i]['sharpened_vals'] for i in range(scaling_dictionary['number_processes'])])
+    #     bfactor_vals = merge_sequence_of_sequences([results[i]['bfactor_vals'] for i in range(scaling_dictionary['number_processes'])])
+    #     qfit_vals = merge_sequence_of_sequences([results[i]['qfit_vals'] for i in range(scaling_dictionary['number_processes'])])
+    # else:
+    #     sharpened_vals = results[0]['sharpened_vals']
+    #     bfactor_vals = results[0]['bfactor_vals']
+    #     qfit_vals = results[0]['qfit_vals']
 
 
-    ###############################################################################
-    # Stage 5: Put the sharpened values back in the original volume
-    ###############################################################################
+    # ###############################################################################
+    # # Stage 5: Put the sharpened values back in the original volume
+    # ###############################################################################
 
     map_scaled = put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape)
     
@@ -534,19 +541,19 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     # Stage 5: Save processing files such as bfactor map and qfit maps 
     ###############################################################################
     
-    bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
-    qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
-    bfactor_map = save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
-    qfit_map = save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
+    # bfactor_path = os.path.join(scaling_dictionary['processing_files_folder'], "bfactor_map.mrc")
+    # qfit_path = os.path.join(scaling_dictionary['processing_files_folder'], "qfit_map.mrc")
+    # bfactor_map = save_list_as_map(bfactor_vals, masked_indices, map_shape, bfactor_path, scaling_dictionary['apix'])
+    # qfit_map = save_list_as_map(qfit_vals, masked_indices, map_shape, qfit_path, scaling_dictionary['apix'])
 
-    if scaling_dictionary["win_bleed_pad"]:
-        #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
-        from locscale.utils.general import pad_or_crop_volume
-        map_shape = scaling_dictionary["original_map_shape"]
-        bfactor_map = pad_or_crop_volume(bfactor_map, (map_shape))
-        qfit_map = pad_or_crop_volume(qfit_map, (map_shape))
-    save_as_mrc(bfactor_map, bfactor_path, scaling_dictionary['apix'])
-    save_as_mrc(qfit_map, qfit_path, scaling_dictionary['apix'])
+    # if scaling_dictionary["win_bleed_pad"]:
+    #     #map_shape = [(LocScaleVol.shape[0] - wn), (LocScaleVol.shape[1] - wn), (LocScaleVol.shape[2] - wn)]
+    #     from locscale.utils.general import pad_or_crop_volume
+    #     map_shape = scaling_dictionary["original_map_shape"]
+    #     bfactor_map = pad_or_crop_volume(bfactor_map, (map_shape))
+    #     qfit_map = pad_or_crop_volume(qfit_map, (map_shape))
+    # save_as_mrc(bfactor_map, bfactor_path, scaling_dictionary['apix'])
+    # save_as_mrc(qfit_map, qfit_path, scaling_dictionary['apix'])
 
     ###############################################################################
     # Stage 6: Return the scaled map
