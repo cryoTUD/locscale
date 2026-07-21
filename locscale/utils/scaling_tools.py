@@ -493,8 +493,9 @@ def run_window_function_including_scaling(parsed_inputs_dict):
     reference_map = scaling_dictionary["modmap"]
     target_map = scaling_dictionary["emmap"]
     window_size = scaling_dictionary["wn"]
+    chunk = scaling_dictionary["chunk"]
     
-    sharpened_vals = local_amplitude_scaling(reference_map, target_map, corner_voxels, window_size=window_size)
+    sharpened_vals = local_amplitude_scaling(reference_map, target_map, corner_voxels, window_size=window_size, chunk=chunk)
 
     # masked_xyz_locs_split = split_sequence_evenly(masked_xyz_locs, scaling_dictionary['number_processes'])
 
