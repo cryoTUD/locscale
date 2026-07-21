@@ -75,8 +75,8 @@ class test_emmernet(unittest.TestCase):
             "cuda_visible_devices_string" : "",
         }
         
-        emmernet_model_1 = load_emmernet_model(inputs_dictionary)
-        emmernet_model_2 = load_emmernet_model(inputs_dictionary_2)
+        emmernet_model_1 = load_emmernet_model(inputs_dictionary["trained_model"])
+        emmernet_model_2 = load_emmernet_model(inputs_dictionary_2["trained_model"])
 
         self.assertTrue(emmernet_model_1 is not None)
         self.assertTrue(emmernet_model_2 is not None)
@@ -95,7 +95,9 @@ class test_emmernet(unittest.TestCase):
         cube_size = cube_1.shape[0]
         batch_size = 8
     
-        emmernet_model_1, device = load_emmernet_model(self.inputs_dictionary)
+        emmernet_model_1, device = load_emmernet_model(
+            model_type=self.inputs_dictionary["trained_model"]
+        )
         i=0
         cubes = cubes_array
         cubes_x = np.expand_dims(cubes, axis=4)
