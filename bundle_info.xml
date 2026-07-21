@@ -50,7 +50,10 @@ the bundle is displayed without the ChimeraX- prefix.
     <Dependency name="numpy" version="~=1.26"/>
     <Dependency name="scipy" version="~=1.14"/>
     <Dependency name="matplotlib" version="~=3.10"/>
-    <Dependency name="torch" version="~=2.9.1"/>
+    <!-- Not pinned to a single minor: PyTorch dropped Maxwell/Pascal (sm_5x/6x) from its
+         CUDA 12.8+ builds, so 2.9.x cannot run on Pascal cards. Pre-install the CUDA build
+         that matches the host GPUs (e.g. 2.6.0+cu124) and pip will leave it alone. -->
+    <Dependency name="torch" version=">=2.6"/>
     <Dependency name="scikit-learn" version="~=1.5"/>
     <Dependency name="mrcfile" version="~=1.5"/>
   </Dependencies>
