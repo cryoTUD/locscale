@@ -466,9 +466,7 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     
     import os
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
-    from locscale.utils.file_tools import check_for_refmac
-    # check for refmac5
-    check_for_refmac(tolerate=False)
+
     # Get the current working directory
     current_directory = os.getcwd()
     processing_files_directory = os.path.dirname(os.path.abspath(model_path))
@@ -540,14 +538,14 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
             servalcat_logger.info("The refined PDB model is: "+refined_model_path+"\n\n")
         return refined_model_path
     else:
-        tprint("Uhhoh, something wrong with the REFMAC procedure. Returning None")
-        servalcat_logger.error("Uhhoh, something wrong with the REFMAC procedure. Returning None")
+        tprint("Uhhoh, something wrong with the ADP refinement. Returning None")
+        servalcat_logger.error("Uhhoh, something wrong with the ADP refinement. Returning None")
         return None
 
 
 def run_profile_prediction_refinement(model_path, map_path,resolution,  num_iter, pseudomodel_refinement, refmac5_path=None, verbose=True, initialise_bfactors=True, hybrid_model_refinement=False):
     '''
-    Function to run Refmac to refine the model and generate a new model with refined B-factors.
+    Function to run ADP refinement to refine the model and generate a new model with refined B-factors.
 
     Parameters
     ----------
@@ -558,7 +556,7 @@ def run_profile_prediction_refinement(model_path, map_path,resolution,  num_iter
     resolution : float
         Resolution of the map
     num_iter : int
-        Number of iterations to run Refmac
+        Number of iterations to run ADP refinement
     pseudomodel_refinement : bool
         If True, bfactor refinement is performed without any restraints
     refmac5_path : string
