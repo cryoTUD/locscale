@@ -270,9 +270,18 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
     n_steps = input_dictionary.get("n_steps")
 
     if symmetry != "C1" or twist is not None:
+        import torch 
         from locscale.include.symmetry_emda.symmetrize_map import symmetrize_map_emda
         from locscale.include.emmer.ndimage.map_utils import save_as_mrc, load_map
         from locscale.utils.file_tools import RedirectStdoutToLogger
+
+        input_map_shape = input_dictionary["input_map_shape"][0]
+
+        if input_map_shape < 350 and torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
+
 
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
@@ -292,7 +301,7 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
             input_dictionary['logger'].info(print_statement)
 
         with RedirectStdoutToLogger(input_dictionary['logger'], wait_message="Applying symmetry"):
-            sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps)
+            sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps, device=device)
             symmetrised_map = unsymmetrised_map_path[:-4]+"_{}_symmetry.mrc".format(symmetry)
             save_as_mrc(map_data=sym, output_filename=symmetrised_map, apix=apix, origin=0, verbose=True)
 
