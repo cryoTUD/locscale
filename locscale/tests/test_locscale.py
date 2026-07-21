@@ -154,10 +154,10 @@ class test_locscale(unittest.TestCase):
             rscc_test = rsc(copy_reference_locscale_MF,output_locscale_path)
             
             self.assertTrue(rscc_test>0.9)
-    def test_model_based_integrated_locscale(self):
+    def test_hybrid_locscale(self):
         from tempfile import TemporaryDirectory
         
-        print("Testing: Model Based Integrated LocScale")
+        print("Testing: Hybrid LocScale")
         with TemporaryDirectory() as tempDir: 
             from locscale.include.emmer.ndimage.map_tools import compute_real_space_correlation as rsc
             import os
