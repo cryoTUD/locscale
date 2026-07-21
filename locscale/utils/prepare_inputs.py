@@ -215,7 +215,7 @@ def prepare_mask_and_maps_for_scaling(args):
     ## all maps should have same shape
     assert parsed_inputs_dict["emmap"].shape == parsed_inputs_dict["modmap"].shape == parsed_inputs_dict['mask'].shape, "The input maps and mask do not have the same shape"
     ## emmap and modmap should not be zeros
-    assert abs(parsed_inputs_dict["emmap"].sum()) > 0 and abs(parsed_inputs_dict["modmap"].sum()) > 0, "Emmap and Modmap should not be zeros!"
+    assert abs(parsed_inputs_dict["emmap"]).sum() > 0 and abs(parsed_inputs_dict["modmap"]).sum() > 0, "Emmap and Modmap should not be zeros!"
     ## No element of the mask should be negative
     assert (parsed_inputs_dict['mask']>=0).any(), "Negative numbers found in mask"
     

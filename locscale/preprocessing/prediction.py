@@ -69,6 +69,7 @@ def predict_model_map_from_input_map(parsed_inputs):
     # run emmernet
     emmap, apix = load_map(emmap_path)
     input_dictionary["apix"] = apix
+    input_dictionary["cuda_visible_devices_string"] = cuda_visible_devices_string
     emmernet_output = run_emmernet(input_dictionary)
     model_map_predicted = emmernet_output["output_predicted_map_mean"]
     emmap_extension = os.path.splitext(emmap_path)[1]
