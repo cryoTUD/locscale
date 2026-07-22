@@ -467,6 +467,9 @@ def run_refmac_servalcat(model_path, map_path,resolution,  num_iter, pseudomodel
     import os
     from locscale.include.emmer.pdb.pdb_utils import set_atomic_bfactors
 
+    # Ensure the monomer library is available and CLIBD_MON is set before servalcat launches.
+    check_and_download_monomer_library(verbose=verbose)
+
     # Get the current working directory
     current_directory = os.getcwd()
     processing_files_directory = os.path.dirname(os.path.abspath(model_path))
@@ -815,5 +818,58 @@ def change_axis_order(emmap_path, use_same_filename=False):
         save_as_mrc(map_data=emmap,output_filename=xyz_emmap_path, apix=grid.spacing)
         return xyz_emmap_path
         
-    
+def check_and_download_monomer_library(verbose=False):
+    """Ensure the CCP4 monomer library is available and point CLIBD_MON at it.
+
+    servalcat and refmac read restraint dictionaries from the directory named by the
+    CLIBD_MON environment variable. This makes sure that variable is set to a usable
+    monomer library:
+
+      1. If CLIBD_MON already points to an existing directory (e.g. a CCP4 installation),
+         it is used as-is and nothing is downloaded.
+      2. Otherwise the MonomerLibrary/monomers repository is cloned into the locscale
+         package directory and CLIBD_MON is pointed there
+    Returns the path to the monomer library.
+    """
+    import os
+    import subprocess
+    import locscale
+
+    # 1. Respect an existing CCP4 monomer library.
+    existing = os.environ.get("CLIBD_MON")
+    if existing and os.path.isdir(existing):
+        if verbose:
+            tprint("Using existing monomer library from CLIBD_MON: {}".format(existing))
+        return existing
+
+    # 2. Otherwise use a clone inside the locscale package directory.
+    monomer_library_folder = os.path.join(os.path.dirname(locscale.__file__), "monomer_library")
+    # Present only once the clone has completed, so this doubles as the "already there" check.
+    sentinel = os.path.join(monomer_library_folder, "list", "mon_lib_list.cif")
+
+    if not os.path.exists(sentinel):
+        if verbose:
+            tprint("Monomer library not found. Cloning MonomerLibrary/monomers ...")
+        try:
+            # --depth 1: the full history is very large and not needed.
+            subprocess.run(
+                ["git", "clone", "--depth", "1",
+                 "https://github.com/MonomerLibrary/monomers.git", monomer_library_folder],
+                check=True,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            raise RuntimeError(
+                "Could not download the monomer library needed by servalcat/refmac. Ensure "
+                "'git' is installed and the machine has network access, or install CCP4 and "
+                "set CLIBD_MON to its monomer library directory. Underlying error: {}".format(exc)
+            ) from exc
+        if verbose:
+            tprint("Monomer library downloaded to {}".format(monomer_library_folder))
+    else:
+        if verbose:
+            tprint("Monomer library exists: {}".format(monomer_library_folder))
+
+    # 3. Point CLIBD_MON at it. Trailing separator, as CCP4 tools expect.
+    os.environ["CLIBD_MON"] = monomer_library_folder + os.sep
+    return monomer_library_folder
 
