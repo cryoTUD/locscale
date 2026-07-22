@@ -107,7 +107,7 @@ class test_emmernet(unittest.TestCase):
 
         ## Predict using model_based
         with torch.no_grad():
-            cubes_batch_predicted = emmernet_model_1(cubes_batch_X.to(device))
+            cubes_batch_predicted = emmernet_model_1(cubes_batch_X)
         cubes_predicted = np.append(cubes_predicted, cubes_batch_predicted, axis=0)
         cubes_predicted = np.squeeze(cubes_predicted, axis=1)
 
