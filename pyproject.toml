@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "locscale"
-version = "2.4.0"
+version = "2.4.1"
 authors = [
     { name = "Alok Bharadwaj" },
     { name = "Arjen J. Jakobi" },
