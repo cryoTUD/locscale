@@ -49,9 +49,10 @@ def print_start_banner(start_time, text="Map Sharpening"):
         version = "x"
 
     ## Paper reference
-    paper_ref_1 =  "Arjen J Jakobi, Matthias Wilmanns, Carsten Sachse (2017), \'Model-based local density sharpening of cryo-EM maps\', \'eLife 6:e27131\'"
-    paper_ref_2 = "Alok Bharadwaj, Arjen J Jakobi (2022), \'Electron scattering properties of biological macromolecules and their use for cryo-EM map sharpening\', \'Faraday Discussions D2FD00078D\'"
-    paper_ref_3 = "Alok Bharadwaj, Reinier de Bruin, Arjen J Jakobi (2022), \'TBD\'"
+    paper_ref_1 = "Bharadwaj, A., de Bruin, R. & Jakobi, A.J. Confidence-guided cryo-EM map optimisation with LocScale-2.0. Nat Commun (2026). https://doi.org/10.1038/s41467-026-75327-8"
+    paper_ref_2 =  "Arjen J Jakobi, Matthias Wilmanns, Carsten Sachse (2017), \'Model-based local density sharpening of cryo-EM maps\', \'eLife 6:e27131\'"
+    paper_ref_3 = "Alok Bharadwaj, Arjen J Jakobi (2022), \'Electron scattering properties of biological macromolecules and their use for cryo-EM map sharpening\', \'Faraday Discussions D2FD00078D\'"
+    
     print("="*80)
     print("="*80)
     result = pyfiglet.figlet_format(text, font = "big")
@@ -75,7 +76,7 @@ def print_start_banner(start_time, text="Map Sharpening"):
     print("References:\n")
     print(fill("{}".format(paper_ref_1), width=80, subsequent_indent="\t"))
     print(fill("{}".format(paper_ref_2), width=80, subsequent_indent="\t"))
-    #print(wrap("{}".format(paper_ref_3), width=80))
+    print(fill("{}".format(paper_ref_3), width=80, subsequent_indent="\t"))
     print("\n")
     if text == "EMmerNet":
         ## Print disclaimer for EMmerNet as this is in testing phase
