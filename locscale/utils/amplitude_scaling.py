@@ -120,11 +120,6 @@ def local_amplitude_scaling(reference_map, target_map, corner_positions, window_
                             device=None, chunk=4096, dtype=torch.float32):
     """Scale the local amplitudes of target_map to match reference_map, at each masked voxel.
 
-    Drop-in for the classical scaling_tools loop. `corner_positions` are the masked voxel
-    *centres* (as returned by get_xyz_locs_and_indices_after_edge_cropping_and_masking); the
-    window for each is target_map[corner : corner+wn] where corner = round_up_proper(centre -
-    wn/2), matching the old `for k,j,i in masked_xyz_locs - wn/2` slicing.
-
     Returns `sharpened_vals`: the central scaled voxel for each entry, in the input order, so
     it lines up with `masked_indices` for put_scaled_voxels_back_in_original_volume.
     """
@@ -141,6 +136,7 @@ def local_amplitude_scaling(reference_map, target_map, corner_positions, window_
     corners = np.clip(corners, 0, np.array(target_map.shape) - wn)   # keep the window in-bounds
 
     device = pick_device(device)
+    print(f"Device is: {device}")
     scaler = WindowedScaler(wn, device=str(device), dtype=dtype)
 
     sharpened = np.empty(len(centres), dtype=np_dtype)
