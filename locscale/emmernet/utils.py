@@ -285,11 +285,14 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
 
         verbose = input_dictionary["verbose"]
         map_to_symmetrise = output_dictionary["output_predicted_map_mean"]
+        var_map_to_symmetrise = output_dictionary["output_predicted_map_var"]
         processing_files_folder = input_dictionary["output_processing_files"]
         # save the non-symmetrised map
         apix = input_dictionary["apix"]
         unsymmetrised_map_path = os.path.join(processing_files_folder, "unsymmetrised_mean_map.mrc")
+        unsymmetrised_var_map_path = os.path.join(processing_files_folder, "unsymmetrised_variance_map.mrc")
         save_as_mrc(map_data=map_to_symmetrise, output_filename=unsymmetrised_map_path, apix=apix, origin=0, verbose=True)
+        save_as_mrc(map_data=var_map_to_symmetrise, output_filename=unsymmetrised_var_map_path, apix=apix, origin=0, verbose=True)
 
         _, apix = load_map(unsymmetrised_map_path)
         if verbose:
@@ -302,11 +305,17 @@ def symmetrise_if_needed(input_dictionary, output_dictionary,):
 
         with RedirectStdoutToLogger(input_dictionary['logger'], wait_message="Applying symmetry"):
             sym = symmetrize_map_emda(emmap_path=unsymmetrised_map_path, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps, device=device)
+            sym_var = symmetrize_map_emda(emmap_path=unsymmetrised_var_map_path, pg=symmetry, twist=twist, rise=rise, n_steps=n_steps, device=device)
+            sym_var += sym_var.min()
+            sym_var[sym_var < 0] = 0
             symmetrised_map = unsymmetrised_map_path[:-4]+"_{}_symmetry.mrc".format(symmetry)
+            symmetrised_var_map = unsymmetrised_var_map_path[:-4]+"_{}_symmetry.mrc".format(symmetry)
             save_as_mrc(map_data=sym, output_filename=symmetrised_map, apix=apix, origin=0, verbose=True)
-
+            save_as_mrc(map_data=sym_var, output_filename=symmetrised_var_map, apix=apix, origin=0, verbose=True)
         output_dictionary["output_predicted_map_mean_non_symmetrised"] = map_to_symmetrise
         output_dictionary["output_predicted_map_mean"] = sym
+        output_dictionary["output_predicted_map_var_non_symmetrised"] = var_map_to_symmetrise
+        output_dictionary["output_predicted_map_var"] = sym_var
 
         return output_dictionary
     else:
