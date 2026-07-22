@@ -1,17 +1,4 @@
 """Batched local amplitude scaling.
-
-Same algorithm as the classical per-voxel LocScale loop (compute_radial_profile_proper +
-compute_scale_factors + set_radial_profile in scaling_tools.py), and it still computes an
-inverse FFT per window and reads the central voxel. The only change is that the windows are
-processed in batches, and everything that is identical across windows -- the radial shell
-index, the shell voxel counts, the interpolation axes -- is precomputed once instead of
-being recomputed inside the loop.
-
-Conventions match scaling_tools.py exactly: rfftn norm="ortho"; the radial profile uses
-amplitude |F|, not power; the shell index is int(sqrt(i^2+j^2+k^2)) over the raw rfft
-indices, bincount-averaged and truncated to [0 : wn/2+1]; scale factor = |ref| / |target|
-with non-finite entries set to 0; the scale is applied via interp over the frequency map;
-and the central pixel is round_up_proper(wn/2), which is 13 for wn=25.
 """
 import numpy as np
 import torch
@@ -142,9 +129,7 @@ def local_amplitude_scaling(reference_map, target_map, corner_positions, window_
     it lines up with `masked_indices` for put_scaled_voxels_back_in_original_volume.
     """
     from tqdm import tqdm
-    # Match the numpy precision to the torch compute precision, so dtype is honoured rather
-    # than silently capped at float32. Production maps are float32, which is also the
-    # precision the classical scaling_tools loop runs at (numpy rfft on float32 -> complex64).
+    
     np_dtype = np.float64 if dtype == torch.float64 else np.float32
     reference_map = np.asarray(reference_map, dtype=np_dtype)
     target_map = np.asarray(target_map, dtype=np_dtype)
