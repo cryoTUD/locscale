@@ -11,13 +11,17 @@ on a QThread so ChimeraX stays responsive.
 import json
 import os
 
+import numpy as np
+
+from chimerax.core.models import Model, Surface
 from chimerax.core.tools import ToolInstance
 from chimerax.map import Volume
 from chimerax.ui import MainToolWindow
 from chimerax.ui.widgets import CollapsiblePanel, ModelMenuButton, vertical_layout
 from Qt.QtCore import QThread, Signal
-from Qt.QtWidgets import (QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QProgressBar,
-                          QPushButton, QSpinBox, QLineEdit, QVBoxLayout)
+from Qt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFrame, QHBoxLayout,
+                          QHeaderView, QLabel, QLineEdit, QProgressBar, QPushButton,
+                          QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout)
 
 
 from .utils import (
@@ -90,6 +94,9 @@ class LocScale2Tool(ToolInstance):
         self.display_name = "LocScale-FEM"
         self._worker = None
         self._template = None
+        self._noise_box_model = None      # parent Model holding the box surfaces
+        self._noise_edited = False        # user has hand-edited the boxes/window
+        self._populating = False          # guard while filling the table programmatically
 
         self.tool_window = MainToolWindow(self)
         parent = self.tool_window.ui_area
@@ -99,6 +106,7 @@ class LocScale2Tool(ToolInstance):
         layout.addWidget(self._run_panel(parent))
         layout.addStretch(1)
         self.tool_window.manage("side")
+        self._populate_noise_defaults()
 
         # # Show the options expanded. Done after manage() so the content area's sizeHint is
         # # settled; setChecked keeps the disclosure button in step, otherwise the first
@@ -126,6 +134,7 @@ class LocScale2Tool(ToolInstance):
 
         # Add input unsharpened map
         self._map_menu = ModelMenuButton(self.session, class_filter=Volume)
+        self._map_menu.value_changed.connect(self._on_input_map_changed)
         panel.addWidget(self._row(frame, "Input map:", help_info["input_map_help"], self._map_menu))
         # Add optional mask
         self._mask_menu = ModelMenuButton(
@@ -140,7 +149,10 @@ class LocScale2Tool(ToolInstance):
         note.setWordWrap(True)
         panel.addWidget(note)
 
-        # Add point group symmetry as text input 
+        # FDR noise-box controls sit between the mask input and the symmetry options.
+        panel.addWidget(self._noise_panel(frame))
+
+        # Add point group symmetry as text input
         self._point_group_symmetry_menu = QLineEdit(frame)
         panel.addWidget(self._row(frame, "Point group symmetry:", help_info["point_group_symmetry_help"], self._point_group_symmetry_menu))
 
@@ -171,6 +183,170 @@ class LocScale2Tool(ToolInstance):
     def _helical_symmetry_toggled(self, checked):
         """Show the rise/twist inputs only while helical symmetry is requested."""
         self._helical_symmetry_panel.setVisible(checked)
+
+    def _noise_panel(self, parent):
+        panel = CollapsiblePanel(parent, title="FDR mask - noise boxes")
+        frame = panel.content_area
+        box = frame.layout()
+
+        note = QLabel("<i>Used only when no mask is supplied. Boxes are (x, y, z) voxel "
+                      "centres; their pooled voxels give the noise mean/variance.</i>", frame)
+        note.setWordWrap(True)
+        box.addWidget(note)
+
+        self._noise_table = QTableWidget(0, 3, frame)
+        self._noise_table.setHorizontalHeaderLabels(["x", "y", "z"])
+        self._noise_table.verticalHeader().setVisible(False)
+        self._noise_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._noise_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._noise_table.setMaximumHeight(160)
+        self._noise_table.itemChanged.connect(self._on_noise_edited)
+        box.addWidget(self._noise_table)
+
+        buttons = QFrame(frame)
+        bl = QHBoxLayout(buttons); bl.setContentsMargins(0, 0, 0, 0)
+        add_btn = QPushButton("Add", buttons); add_btn.clicked.connect(self._add_noise_row)
+        rm_btn = QPushButton("Remove", buttons); rm_btn.clicked.connect(self._remove_noise_row)
+        reset_btn = QPushButton("Reset", buttons)
+        reset_btn.clicked.connect(lambda: self._populate_noise_defaults(force=True))
+        bl.addWidget(add_btn); bl.addWidget(rm_btn); bl.addWidget(reset_btn); bl.addStretch(1)
+        box.addWidget(buttons)
+
+        self._noise_window_spin = QSpinBox(frame)
+        self._noise_window_spin.setRange(4, 512)
+        self._noise_window_spin.setValue(20)
+        self._noise_window_spin.valueChanged.connect(self._on_noise_window_changed)
+        box.addWidget(self._row(frame, "Noise box window (px):",
+                                "Cube edge, in pixels, sampled around each box centre. "
+                                "Default: 10% of the map edge or 20 px, whichever is larger.",
+                                self._noise_window_spin))
+
+        self._noise_show_check = QCheckBox("Visualize noise boxes", frame)
+        self._noise_show_check.toggled.connect(self._toggle_noise_surfaces)
+        box.addWidget(self._noise_show_check)
+        return panel
+
+    # ------------------------------------------------------------ noise-box logic
+
+    def _add_noise_row(self):
+        self._noise_edited = True
+        self._append_noise_row(0.0, 0.0, 0.0)
+        self._refresh_noise_surfaces()
+
+    def _remove_noise_row(self):
+        rows = sorted({i.row() for i in self._noise_table.selectedIndexes()}, reverse=True)
+        if not rows:
+            rows = [self._noise_table.rowCount() - 1]
+        self._noise_edited = True
+        for r in rows:
+            if r >= 0:
+                self._noise_table.removeRow(r)
+        self._refresh_noise_surfaces()
+
+    def _append_noise_row(self, x, y, z):
+        r = self._noise_table.rowCount()
+        self._noise_table.insertRow(r)
+        for c, val in enumerate((x, y, z)):
+            self._noise_table.setItem(r, c, QTableWidgetItem("{:.1f}".format(val)))
+
+    def _read_noise_boxes(self):
+        """Valid (x, y, z) rows from the table; incomplete/invalid rows are skipped."""
+        boxes = []
+        for r in range(self._noise_table.rowCount()):
+            try:
+                vals = [float(self._noise_table.item(r, c).text()) for c in range(3)]
+            except (AttributeError, ValueError):
+                continue
+            boxes.append(tuple(vals))
+        return boxes
+
+    def _populate_noise_defaults(self, force=False):
+        """Fill the window size and the four edge-patch boxes for the current input map."""
+        if self._noise_edited and not force:
+            return
+        volume = self._map_menu.value
+        if volume is None:
+            return
+        from .pipeline import default_noise_window_size
+        from .include.mapops import default_noise_box_centers
+        xs, ys, zs = volume.data.size          # grid size (x, y, z); no data load
+        shape = (zs, ys, xs)                    # match full_matrix() array order
+        window = default_noise_window_size(shape)
+        self._populating = True
+        try:
+            self._noise_window_spin.setValue(window)
+            self._noise_table.setRowCount(0)
+            for x, y, z in default_noise_box_centers(shape, window):
+                self._append_noise_row(x, y, z)
+        finally:
+            self._populating = False
+        self._noise_edited = False
+        self._refresh_noise_surfaces()
+
+    def _on_input_map_changed(self):
+        if getattr(self, "_noise_table", None) is None:
+            return                            # signal fired before the panel was built
+        self._populate_noise_defaults()
+        if self._noise_edited:
+            self._refresh_noise_surfaces()   # re-place existing boxes on the new map
+
+    def _on_noise_edited(self, *args):
+        if self._populating:
+            return
+        self._noise_edited = True
+        self._refresh_noise_surfaces()
+
+    def _on_noise_window_changed(self, *args):
+        if not self._populating:
+            self._noise_edited = True
+        self._refresh_noise_surfaces()
+
+    # ------------------------------------------------------------ noise-box surfaces
+
+    def _toggle_noise_surfaces(self, checked):
+        self._refresh_noise_surfaces()
+
+    def _clear_noise_surfaces(self):
+        if self._noise_box_model is not None and not self._noise_box_model.deleted:
+            self.session.models.close([self._noise_box_model])
+        self._noise_box_model = None
+
+    def _refresh_noise_surfaces(self):
+        self._clear_noise_surfaces()
+        if not self._noise_show_check.isChecked():
+            return
+        volume = self._map_menu.value
+        boxes = self._read_noise_boxes()
+        if volume is None or not boxes:
+            return
+        window = self._noise_window_spin.value()
+        parent = Model("Noise boxes", self.session)
+        for i, center in enumerate(boxes):
+            parent.add([self._build_box_surface(center, window, volume, i)])
+        volume.add([parent])                 # nest under the map so it inherits its placement
+        self._noise_box_model = parent
+
+    def _build_box_surface(self, center, window, volume, index):
+        h = 0.5 * window
+        cx, cy, cz = center
+        signs = [(-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
+                 (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)]
+        ijk = [(cx + sx * h, cy + sy * h, cz + sz * h) for sx, sy, sz in signs]
+        vertices = np.array([volume.data.ijk_to_xyz(p) for p in ijk], dtype=np.float32)
+        triangles = np.array([
+            (0, 1, 2), (0, 2, 3),            # -z
+            (4, 6, 5), (4, 7, 6),            # +z
+            (0, 4, 5), (0, 5, 1),            # -y
+            (1, 5, 6), (1, 6, 2),            # +x
+            (2, 6, 7), (2, 7, 3),            # +y
+            (3, 7, 4), (3, 4, 0),            # -x
+        ], dtype=np.int32)
+        from chimerax.surface import calculate_vertex_normals
+        normals = calculate_vertex_normals(vertices, triangles)
+        surface = Surface("box {}".format(index + 1), self.session)
+        surface.set_geometry(vertices, normals, triangles)
+        surface.color = np.array([255, 210, 40, 120], dtype=np.uint8)   # translucent amber
+        return surface
 
     def _options_panel(self, parent):
         self._options = panel = CollapsiblePanel(parent, title="Advanced Options")
@@ -292,10 +468,13 @@ class LocScale2Tool(ToolInstance):
         rise = float(self._helical_rise_menu.text()) if helical_symmetry else None
         twist = float(self._helical_twist_menu.text()) if helical_symmetry else None
 
+        noise_boxes = self._read_noise_boxes() or None
         self._worker = PipelineWorker(dict(
             emmap=emmap,
             apix=apix,
             mask=mask,
+            noise_boxes=noise_boxes,                       # used only when mask is None
+            noise_window_size=self._noise_window_spin.value(),
             model_type=self._model_combo.currentText(),
             monte_carlo_iterations=self._mc_spin.value(),
             batch_size=self._batch_spin.value(),
@@ -372,6 +551,7 @@ class LocScale2Tool(ToolInstance):
         self.session.logger.error("LocScale2 failed.\n" + message)
 
     def delete(self):
+        self._clear_noise_surfaces()
         if self._worker is not None and self._worker.isRunning():
             # Ask first, then wait: otherwise closing the tool blocks ChimeraX for the rest
             # of the run.

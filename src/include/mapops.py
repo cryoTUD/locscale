@@ -161,8 +161,58 @@ def average_voxel_size(voxel_size_record):
     
     return average_apix
 
+# --- LocScale2 bundle addition (not verbatim) ---
+def default_noise_box_centers(shape, window_size):
+    """The four edge-patch centres LocScale samples when no noise box is given.
+
+    Mirrors FDRutil.estimateNoiseFromMap's ``boxCoord == 0`` branch: four windows sit
+    just inside two opposite faces along the two trailing array axes, with the remaining
+    axes centred. Centres are returned in (x, y, z) grid-index order (x = fastest/last
+    array axis), matching ChimeraX's ijk convention.
+    """
+    nz, ny, nx = shape                      # full_matrix() arrays are (z, y, x)
+    w = float(window_size)
+    cx, cy, cz = 0.5 * nx, 0.5 * ny, 0.5 * nz
+    return [
+        (cx, 0.02 * ny + 0.5 * w, cz),      # near the -y face
+        (cx, 0.98 * ny - 0.5 * w, cz),      # near the +y face
+        (0.02 * nx + 0.5 * w, cy, cz),      # near the -x face
+        (0.98 * nx - 0.5 * w, cy, cz),      # near the +x face
+    ]
+
+
+# --- LocScale2 bundle addition (not verbatim) ---
+def estimate_noise_stats_from_boxes(em_map, box_centers, window_size):
+    """Pool voxels from every box and return scalar (mean, var).
+
+    Each centre is a (x, y, z) grid index; a ``window_size`` cube is cut around it (the
+    same slice FDRutil uses for an explicit box) and the samples are concatenated before
+    the statistics are computed, so multiple boxes act as one larger noise sample. Slices
+    are clipped to the map bounds so edge boxes stay valid.
+    """
+    nz, ny, nx = em_map.shape
+    half = 0.5 * float(window_size)
+    samples = []
+    for x, y, z in box_centers:
+        x0 = max(0, int(x - half)); x1 = min(nx, x0 + int(window_size))
+        y0 = max(0, int(y - half)); y1 = min(ny, y0 + int(window_size))
+        z0 = max(0, int(z - half)); z1 = min(nz, z0 + int(window_size))
+        patch = em_map[z0:z1, y0:y1, x0:x1]
+        if patch.size:
+            samples.append(patch.ravel())
+    if not samples:
+        raise ValueError("No noise-box voxels fell inside the map.")
+    pooled = np.concatenate(samples)
+    mean = float(np.mean(pooled))
+    var = float(np.var(pooled))
+    if var == 0.0:
+        raise ValueError("Noise variance estimated as 0 -- the boxes are probably inside "
+                         "the particle. Move them into empty regions.")
+    return mean, var
+
+
 # --- verbatim from locscale/include/emmer/ndimage/map_utils.py ---
-def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True, folder = None, use_default_noise_box=False):
+def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilter_resolution=None,remove_temp_files=True, folder = None, use_default_noise_box=False, meanMap=None, varMap=None):
     from .confidenceMapUtil.confidenceMapMain import calculateConfidenceMap
     pass  # (same module)
     import os, shutil, time
@@ -172,20 +222,18 @@ def compute_FDR_confidenceMap_easy(em_map, apix, window_size, fdr=1, lowPassFilt
     else:
         current_cwd = folder
     
-    if not use_default_noise_box:
-        noise_box_coords = detect_noise_boxes(em_map)
-        print("Noise box coordinates detected: ", noise_box_coords)
-    else:
-        noise_box_coords = None
+    # Noise statistics come from meanMap/varMap when supplied (pooled from the caller's
+    # noise boxes); calculateConfidenceMap then skips its own noise estimation. noiseBox is
+    # left as None (the boxCoord == 0 diagnostic path) since mean/var are overridden anyway.
     timestamp =  str(time.time())
     temp_dir = current_cwd + '/fdr_output_temp_'+timestamp
     os.mkdir(temp_dir)
     os.chdir(temp_dir)
     confidenceMap,locFiltMap,locScaleMap,binMap,maskedMap = calculateConfidenceMap(
-        em_map=em_map,apix=apix,noiseBox=noise_box_coords,testProc=None,ecdf=None,
-        lowPassFilter_resolution=lowPassFilter_resolution,method=None, 
+        em_map=em_map,apix=apix,noiseBox=None,testProc=None,ecdf=None,
+        lowPassFilter_resolution=lowPassFilter_resolution,method=None,
         window_size=window_size,windowSizeLocScale=None, locResMap=None,
-        meanMap=None,varMap=None,fdr=fdr,modelMap=None,stepSize=None,mpi=None)
+        meanMap=meanMap,varMap=varMap,fdr=fdr,modelMap=None,stepSize=None,mpi=None)
     
     fdr_threshold = np.min(maskedMap[np.nonzero(maskedMap)])
     

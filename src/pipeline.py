@@ -47,20 +47,32 @@ def _noop(*args, **kwargs):
     pass
 
 
-def compute_fdr_mask(emmap, apix, window_size=None, fdr=0.01, work_dir=None):
+def default_noise_window_size(shape):
+    """Noise-box window: 10% of the box edge, or 20 px, whichever is larger."""
+    return max(20, int(round(0.1 * shape[0])))
+
+
+def compute_fdr_mask(emmap, apix, noise_boxes=None, window_size=None, fdr=0.01,
+                     work_dir=None):
     """FDR confidence map at the given FDR, binarised into a mask.
 
-    Mirrors locscale's run_FDR: window size defaults to 10% of the box, and the raw
+    Noise statistics are pooled from ``noise_boxes`` -- a list of (x, y, z) grid-index
+    centres -- and handed to the confidence-map code as fixed mean/variance, so multiple
+    boxes act as one larger noise sample. When no boxes are given the four LocScale
+    edge patches are used, reproducing the classic ``boxCoord == 0`` fallback. The raw
     confidence map is thresholded at 0.99.
     """
     if window_size is None:
-        window_size = int(round(0.1 * emmap.shape[0]))
-        window_size = max(8, window_size)
+        window_size = default_noise_window_size(emmap.shape)
+    if noise_boxes is None:
+        noise_boxes = mapops.default_noise_box_centers(emmap.shape, window_size)
+
+    mean, var = mapops.estimate_noise_stats_from_boxes(emmap, noise_boxes, window_size)
 
     work_dir = work_dir or tempfile.mkdtemp(prefix="locscale2_fdr_")
     confidence_map, _ = mapops.compute_FDR_confidenceMap_easy(
         emmap, apix=apix, window_size=window_size, fdr=fdr, folder=work_dir,
-        remove_temp_files=True,
+        remove_temp_files=True, meanMap=mean, varMap=var,
     )
     mask = mapops.binarise_map(confidence_map, threshold=0.99,
                                return_type="int", threshold_type="gteq")
@@ -93,7 +105,8 @@ def compute_pvddt(feature_enhanced, baseline, variance, n_samples, data_dir=None
     return norm.cdf(z) * 200 - 100
 
 
-def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
+def run_feature_enhance(emmap, apix, mask=None, noise_boxes=None,
+                        noise_window_size=None, model_type="high_context",
                         monte_carlo_iterations=15, batch_size=8, cube_size=32, stride=16,
                         window_size=25, scaling_chunk=4096, use_gpu=True, gpu_id=None,
                         pg="C1", rise=None, twist=None,
@@ -111,7 +124,8 @@ def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
     computed_mask = None
     if mask is None:
         status("Computing FDR confidence mask (no mask supplied)...")
-        computed_mask = compute_fdr_mask(emmap, apix)
+        computed_mask = compute_fdr_mask(emmap, apix, noise_boxes=noise_boxes,
+                                         window_size=noise_window_size)
         mask = computed_mask
     mask = np.asarray(mask, dtype=np.float32)
     if mask.shape != emmap.shape:
