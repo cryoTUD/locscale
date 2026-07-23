@@ -64,6 +64,22 @@ def _noop(*args, **kwargs):
     pass
 
 
+_BANNER_WIDTH = 52
+
+
+def _banner(status, title):
+    """Emit a titled separator block: a blank line, a rule, the title, another rule.
+
+    The blank line and rules are plain '=' decoration (the GUI logs them without a
+    timestamp and keeps them out of the compact status widget); the title is a normal
+    message, so it is timestamped. Together they give the log a clear break between phases.
+    """
+    status("")
+    status("=" * _BANNER_WIDTH)
+    status(title)
+    status("=" * _BANNER_WIDTH)
+
+
 def default_noise_window_size(shape):
     """Noise-box window: 10% of the box edge, or 20 px, whichever is larger."""
     return max(20, int(round(0.1 * shape[0])))
@@ -137,19 +153,24 @@ def run_feature_enhance(emmap, apix, mask=None, noise_boxes=None,
     progress = progress_callback or _noop
     emmap = np.asarray(emmap, dtype=np.float32)
 
+    _banner(status, "LocScale-FEM: feature enhancement started")
+
     # ---- 1. mask ----------------------------------------------------------
     computed_mask = None
     if mask is None:
-        status("Computing FDR confidence mask (no mask supplied)...")
+        _banner(status, "Phase 1 - FDR confidence mask")
+        status("No mask supplied; estimating noise and computing an FDR mask.")
         computed_mask = compute_fdr_mask(emmap, apix, noise_boxes=noise_boxes,
                                          window_size=noise_window_size)
         mask = computed_mask
+        status("FDR mask done.")
     mask = np.asarray(mask, dtype=np.float32)
     if mask.shape != emmap.shape:
         raise ValueError(f"mask shape {mask.shape} does not match map shape {emmap.shape}")
 
     # ---- 2. preprocess ----------------------------------------------------
-    status("Preprocessing (resampling to 1 A/voxel, standardising)...")
+    _banner(status, "Phase 2 - Preprocessing")
+    status("Resampling to 1 A/voxel and standardising.")
     emmap_resampled = mapops.resample_map(emmap, apix=apix, apix_new=1)
     emmap_preprocessed = mapops.standardize_map(emmap_resampled)
     mask_preprocessed = mapops.resample_map(mask, apix=apix, apix_new=1)
@@ -158,11 +179,12 @@ def run_feature_enhance(emmap, apix, mask=None, noise_boxes=None,
     status("Extracting cubes...")
     cubes_dictionary, cubes_array, signal_cubes = mapops.get_cubes(
         emmap_preprocessed, cube_size=cube_size, step_size=stride, mask=mask_preprocessed)
-    status(f"{len(cubes_array)} cubes with signal")
+    status(f"Preprocessing done: {len(cubes_array)} cubes with signal.")
 
     # ---- 4. EMmerNet, Monte-Carlo dropout ---------------------------------
+    _banner(status, "Phase 3 - EMmerNet prediction")
     device = get_device(prefer_gpu=use_gpu, gpu_id=gpu_id)
-    status(f"Loading EMmerNet ({model_type}) on {device}...")
+    status(f"Loading EMmerNet ({model_type}) on {device}.")
     model, device = load_emmernet(model_type=model_type, device=device)
 
     status(f"Running {monte_carlo_iterations} Monte-Carlo passes...")
@@ -172,34 +194,40 @@ def run_feature_enhance(emmap, apix, mask=None, noise_boxes=None,
         progress_callback=lambda i, n: progress("Predicting", i, n))
 
     # ---- 5. reassemble ----------------------------------------------------
-    status("Assembling cubes...")
+    status("Assembling cubes into maps...")
     feature_enhanced = _assemble(mean_cubes, cubes_dictionary, emmap_preprocessed.shape,
                                  apix, emmap.shape)
     variance = _assemble(var_cubes, cubes_dictionary, emmap_preprocessed.shape,
                          apix, emmap.shape)
+    status("Prediction done.")
 
     # ---- 6. windowed scaling -> baseline -----------------------------------
+    _banner(status, "Phase 4 - Amplitude scaling")
     status(f"Windowed amplitude scaling on {device} (window {window_size})...")
-    
-    
     baseline = local_amplitude_scaling(
         target_map=emmap, reference_map=feature_enhanced, mask=mask,
         window_size=window_size, device=str(device), chunk=scaling_chunk,
         progress_callback=lambda i, n: progress("Scaling", i, n))
+    status("Amplitude scaling done.")
 
     # ---- 7. Symmetrise feature_enhanced, variance and baseline ----------------
     if pg != "C1" or (rise is not None and twist is not None):
-        status("Symmetrising outputs...")
+        _banner(status, "Phase 5 - Symmetrising outputs")
+        status(f"Applying symmetry (pg={pg}, rise={rise}, twist={twist})...")
         feature_enhanced = _symmetrise(feature_enhanced, apix=apix, pg=pg, rise=rise, twist=twist)
         variance = _symmetrise(variance, apix=apix, pg=pg, rise=rise, twist=twist)
         baseline = _symmetrise(baseline, apix=apix, pg=pg, rise=rise, twist=twist)
+        status("Symmetrisation done.")
 
     # ---- 8. pVDDT ----------------------------------------------------------
-    status("Computing pVDDT...")
+    _banner(status, "Phase 6 - pVDDT confidence")
+    status("Computing pVDDT from feature-enhanced, baseline and variance...")
     pvddt = compute_pvddt(feature_enhanced, baseline, variance,
                           n_samples=monte_carlo_iterations)
+    status("pVDDT done.")
 
-    status("Done.")
+    _banner(status, "LocScale-FEM: all phases complete")
+    status("")
     return {
         "feature_enhanced": feature_enhanced,
         "baseline": baseline,
@@ -228,31 +256,40 @@ def run_amplitude_scaling(emmap, apix, reference, mask=None, noise_boxes=None,
         raise ValueError(f"reference shape {reference.shape} does not match map shape "
                          f"{emmap.shape}")
 
+    _banner(status, "Model-based LocScale: amplitude scaling started")
+
     # ---- mask -------------------------------------------------------------
     computed_mask = None
     if mask is None:
-        status("Computing FDR confidence mask (no mask supplied)...")
+        _banner(status, "Phase 1 - FDR confidence mask")
+        status("No mask supplied; estimating noise and computing an FDR mask.")
         computed_mask = compute_fdr_mask(emmap, apix, noise_boxes=noise_boxes,
                                          window_size=noise_window_size)
         mask = computed_mask
+        status("FDR mask done.")
     mask = np.asarray(mask, dtype=np.float32)
     if mask.shape != emmap.shape:
         raise ValueError(f"mask shape {mask.shape} does not match map shape {emmap.shape}")
 
     # ---- amplitude scaling -> locscale map --------------------------------
+    _banner(status, "Phase 2 - Amplitude scaling")
     device = get_device(prefer_gpu=use_gpu, gpu_id=gpu_id)
     status(f"Local amplitude scaling on {device} (window {window_size})...")
     locscale = local_amplitude_scaling(
         target_map=emmap, reference_map=reference, mask=mask,
         window_size=window_size, device=str(device), chunk=scaling_chunk,
         progress_callback=lambda i, n: progress("Scaling", i, n))
+    status("Amplitude scaling done.")
 
     # ---- optional symmetry ------------------------------------------------
     if pg != "C1" or (rise is not None and twist is not None):
-        status("Symmetrising output...")
+        _banner(status, "Phase 3 - Symmetrising output")
+        status(f"Applying symmetry (pg={pg}, rise={rise}, twist={twist})...")
         locscale = _symmetrise(locscale, apix=apix, pg=pg, rise=rise, twist=twist)
+        status("Symmetrisation done.")
 
-    status("Done.")
+    _banner(status, "Model-based LocScale: complete")
+    status("")
     return {"locscale": locscale, "mask": computed_mask}
 
 

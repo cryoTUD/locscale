@@ -20,9 +20,27 @@ from chimerax.map import Volume
 from chimerax.ui import MainToolWindow
 from chimerax.ui.widgets import CollapsiblePanel, ModelMenuButton, vertical_layout
 from Qt.QtCore import QThread, Signal
-from Qt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFrame, QHBoxLayout,
-                          QHeaderView, QLabel, QLineEdit, QProgressBar, QPushButton,
-                          QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout)
+from Qt.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QFrame, QGroupBox,
+                          QHBoxLayout, QHeaderView, QLabel, QLineEdit, QProgressBar,
+                          QPushButton, QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout)
+
+
+# Give every boxed section (QGroupBox) and collapsible section a light rounded border with a
+# bold title, so the panels read as distinct parts. palette(mid) tracks the light/dark theme.
+_SECTION_STYLE = """
+QGroupBox, CollapsiblePanel {
+    border: 1px solid palette(mid);
+    border-radius: 6px;
+    margin-top: 8px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 8px;
+    padding: 0 4px;
+    font-weight: bold;
+}
+"""
 
 
 from .utils import (
@@ -37,6 +55,18 @@ with open(os.path.join(os.path.dirname(__file__), "data", "help_info.json")) as 
 def _is_hex_color(text):
     """True for a '#rrggbb' string."""
     return bool(re.fullmatch(r"#[0-9a-fA-F]{6}", (text or "").strip()))
+
+
+def _reverse_palette_spec(spec):
+    """Reverse a 'value,color:value,color:...' palette's colour direction.
+
+    Keeps the (ascending) pVDDT values in place and reverses only the colour order, so e.g.
+    blue-green-red becomes red-green-blue.
+    """
+    pairs = [p.split(",", 1) for p in spec.split(":")]
+    values = [v for v, _ in pairs]
+    colors = [c for _, c in pairs]
+    return ":".join("{},{}".format(v, c) for v, c in zip(values, reversed(colors)))
 
 
 class PipelineWorker(QThread):
@@ -111,11 +141,14 @@ class LocScale2Tool(ToolInstance):
 
         self.tool_window = MainToolWindow(self)
         parent = self.tool_window.ui_area
-        layout = vertical_layout(parent, margins=(5, 5, 5, 5))
+        parent.setStyleSheet(_SECTION_STYLE)
+        layout = vertical_layout(parent, margins=(5, 5, 5, 5), spacing=6)
         layout.addWidget(self._inputs_panel(parent))
+        layout.addWidget(self._symmetry_panel(parent))
         layout.addWidget(self._options_panel(parent))
         layout.addWidget(self._run_panel(parent))
         layout.addWidget(self._pvddt_color_panel(parent))
+        layout.addWidget(self._citation_label(parent))
         layout.addStretch(1)
         self.tool_window.manage("side")
         self._populate_noise_defaults()
@@ -139,62 +172,135 @@ class LocScale2Tool(ToolInstance):
         hl.addStretch(1)
         return row
 
-    def _inputs_panel(self, parent):
-        frame = QFrame(parent)
-        panel = vertical_layout(frame, margins=(0, 0, 0, 8))
-        panel.addWidget(QLabel("<b>Inputs</b>", frame))
+    def _group(self, parent, title):
+        """A titled, bordered box with a vertical layout; returns (groupbox, layout)."""
+        gb = QGroupBox(title, parent)
+        lay = QVBoxLayout(gb)
+        lay.setContentsMargins(8, 4, 8, 8)
+        return gb, lay
 
-        # Add input unsharpened map
+    def _inputs_panel(self, parent):
+        frame, panel = self._group(parent, "Inputs")
+
+        # Input unsharpened map
         self._map_menu = ModelMenuButton(self.session, class_filter=Volume)
         self._map_menu.value_changed.connect(self._on_input_map_changed)
         panel.addWidget(self._row(frame, "Input map:", help_info["input_map_help"], self._map_menu))
-        # Add optional mask
+
+        # Alternatively, two half maps that are averaged into the working map.
+        self._half1_menu = ModelMenuButton(
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
+        self._half1_menu.value_changed.connect(self._on_input_map_changed)
+        panel.addWidget(self._row(frame, "Half map 1 (optional):",
+                                  "First half map; averaged with half map 2 to form the "
+                                  "working map. Overrides 'Input map' when both are set.",
+                                  self._half1_menu))
+        self._half2_menu = ModelMenuButton(
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
+        self._half2_menu.value_changed.connect(self._on_input_map_changed)
+        panel.addWidget(self._row(frame, "Half map 2 (optional):",
+                                  "Second half map; averaged with half map 1 to form the "
+                                  "working map.", self._half2_menu))
+        half_note = QLabel("<i>Give an input map, or two half maps to be averaged.</i>", frame)
+        half_note.setWordWrap(True)
+        panel.addWidget(half_note)
+
+        # Optional mask
         self._mask_menu = ModelMenuButton(
-            self.session, 
-            class_filter=Volume, 
-            no_value_button_text="No model chosen",
-            no_value_menu_text="None",
-            autoselect="none",
-        )
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
         panel.addWidget(self._row(frame, "Mask (optional):", help_info["mask_help"], self._mask_menu))
         note = QLabel("<i>If no mask is given, an FDR mask is computed and returned.</i>", frame)
         note.setWordWrap(True)
         panel.addWidget(note)
 
-        # FDR noise-box controls sit between the mask input and the symmetry options.
+        # FDR noise-box controls (collapsible) live inside Inputs.
         panel.addWidget(self._noise_panel(frame))
+        return frame
 
-        # Add point group symmetry as text input
+    def _active_input_volume(self):
+        """The Volume whose grid drives noise-box defaults/surfaces: the input map, else the
+        first half map when a half-map pair is chosen."""
+        if self._map_menu.value is not None:
+            return self._map_menu.value
+        if self._half1_menu.value is not None and self._half2_menu.value is not None:
+            return self._half1_menu.value
+        return None
+
+    def _resolve_working_map(self):
+        """Return (emmap, apix, template_volume), or None after setting an error message.
+
+        Two half maps (both set) are averaged into the working map; otherwise the single
+        input map is used.
+        """
+        input_map = self._map_menu.value
+        half1, half2 = self._half1_menu.value, self._half2_menu.value
+        if half1 is not None or half2 is not None:
+            if half1 is None or half2 is None:
+                self._status_label.setText(
+                    "<font color='red'>Select both half maps, or neither.</font>")
+                return None
+            if half1 is half2:
+                self._status_label.setText(
+                    "<font color='red'>The two half maps are the same volume.</font>")
+                return None
+            h1 = np.asarray(half1.data.full_matrix(), dtype=np.float32)
+            h2 = np.asarray(half2.data.full_matrix(), dtype=np.float32)
+            if h1.shape != h2.shape:
+                self._status_label.setText(
+                    "<font color='red'>Half map shapes {} and {} differ.</font>".format(
+                        h1.shape, h2.shape))
+                return None
+            return 0.5 * (h1 + h2), float(half1.data.step[0]), half1
+        if input_map is None:
+            self._status_label.setText(
+                "<font color='red'>Select an input map, or two half maps.</font>")
+            return None
+        return input_map.data.full_matrix(), float(input_map.data.step[0]), input_map
+
+    def _symmetry_panel(self, parent):
+        """Collapsible 'Symmetrise output?' section: point-group and helical symmetry."""
+        self._symmetry_section = panel = CollapsiblePanel(parent, title="Symmetrise output?")
+        frame = panel.content_area
+        box = frame.layout()
+
         self._point_group_symmetry_menu = QLineEdit(frame)
-        panel.addWidget(self._row(frame, "Point group symmetry:", help_info["point_group_symmetry_help"], self._point_group_symmetry_menu))
+        box.addWidget(self._row(frame, "Point group symmetry:",
+                                help_info["point_group_symmetry_help"],
+                                self._point_group_symmetry_menu))
 
-        # Add helical symmetry checkbox default to unchecked
         self._helical_symmetry_checkbox = QCheckBox("Helical symmetry", frame)
         self._helical_symmetry_checkbox.setToolTip(help_info["helical_symmetry_help"])
         self._helical_symmetry_checkbox.toggled.connect(self._helical_symmetry_toggled)
         self._helical_symmetry_checkbox.setChecked(False)
-        panel.addWidget(self._row(frame, "Helical symmetry:", help_info["helical_symmetry_help"], self._helical_symmetry_checkbox))
-        
-        # Add helical rise/twist inputs. They live in their own panel that is only shown
-        # while the helical checkbox is ticked (see _helical_symmetry_toggled).
+        box.addWidget(self._row(frame, "Helical symmetry:", help_info["helical_symmetry_help"],
+                                self._helical_symmetry_checkbox))
+
+        # Helical rise/twist inputs, shown only while the helical checkbox is ticked.
         self._helical_symmetry_panel = QFrame(frame)
         helical_layout = QVBoxLayout(self._helical_symmetry_panel)
         helical_layout.setContentsMargins(0, 0, 0, 0)
-        # input rise in Angstroms
         self._helical_rise_menu = QLineEdit(self._helical_symmetry_panel, placeholderText="0.0")
         helical_layout.addWidget(self._row(self._helical_symmetry_panel, "Rise (A):",
                                            help_info["helical_symmetry_help"], self._helical_rise_menu))
-        # input twist in degrees
         self._helical_twist_menu = QLineEdit(self._helical_symmetry_panel, placeholderText="0.0")
         helical_layout.addWidget(self._row(self._helical_symmetry_panel, "Twist (deg):",
                                            help_info["helical_symmetry_help"], self._helical_twist_menu))
         self._helical_symmetry_panel.setVisible(False)
-        panel.addWidget(self._helical_symmetry_panel)
-        return frame
+        box.addWidget(self._helical_symmetry_panel)
+        return panel
 
     def _helical_symmetry_toggled(self, checked):
         """Show the rise/twist inputs only while helical symmetry is requested."""
         self._helical_symmetry_panel.setVisible(checked)
+        # Re-fit the collapsible so the newly shown rows are not clipped.
+        if self._symmetry_section.shown:
+            self._symmetry_section.resize_panel(True)
 
     def _noise_panel(self, parent):
         panel = CollapsiblePanel(parent, title="FDR mask - noise boxes")
@@ -276,7 +382,7 @@ class LocScale2Tool(ToolInstance):
         """Fill the window size and the four edge-patch boxes for the current input map."""
         if self._noise_edited and not force:
             return
-        volume = self._map_menu.value
+        volume = self._active_input_volume()
         if volume is None:
             return
         from .pipeline import default_noise_window_size
@@ -327,7 +433,7 @@ class LocScale2Tool(ToolInstance):
         self._clear_noise_surfaces()
         if not self._noise_show_check.isChecked():
             return
-        volume = self._map_menu.value
+        volume = self._active_input_volume()
         boxes = self._read_noise_boxes()
         if volume is None or not boxes:
             return
@@ -396,6 +502,11 @@ class LocScale2Tool(ToolInstance):
                                 "Diverging palette over pVDDT -100..+100.",
                                 self._pvddt_scheme_combo))
 
+        self._pvddt_reverse_check = QCheckBox("Reverse colour direction", frame)
+        self._pvddt_reverse_check.setToolTip(
+            "Flip the palette, e.g. blue-green-red becomes red-green-blue.")
+        box.addWidget(self._pvddt_reverse_check)
+
         # Custom-palette editor, revealed only when "Custom..." is chosen. Kept as a plain
         # frame (not a nested CollapsiblePanel): a collapsible inside a collapsible freezes
         # the outer panel's height and clips these rows.
@@ -431,14 +542,18 @@ class LocScale2Tool(ToolInstance):
         from .pipeline import PVDDT_PALETTES
         name = self._pvddt_scheme_combo.currentText()
         if name != "Custom...":
-            return PVDDT_PALETTES[name]
-        stops = []
-        for value, edit in self._pvddt_custom_edits:
-            hexcolor = edit.text().strip()
-            if not _is_hex_color(hexcolor):
-                return None
-            stops.append("{},{}".format(value, hexcolor))
-        return ":".join(stops)
+            spec = PVDDT_PALETTES[name]
+        else:
+            stops = []
+            for value, edit in self._pvddt_custom_edits:
+                hexcolor = edit.text().strip()
+                if not _is_hex_color(hexcolor):
+                    return None
+                stops.append("{},{}".format(value, hexcolor))
+            spec = ":".join(stops)
+        if self._pvddt_reverse_check.isChecked():
+            spec = _reverse_palette_spec(spec)
+        return spec
 
     def _apply_pvddt_color(self):
         map_vol = self._pvddt_map_menu.value
@@ -465,46 +580,36 @@ class LocScale2Tool(ToolInstance):
     def _options_panel(self, parent):
         self._options = panel = CollapsiblePanel(parent, title="Advanced Options")
         frame = panel.content_area
-        # CollapsiblePanel already installs a QVBoxLayout on content_area. Calling
-        # vertical_layout() here would try to set a second layout on the same widget, which
-        # Qt refuses: the rows below would never be laid out, content_area.sizeHint() would
-        # stay at zero, and expanding the panel would reveal nothing.
+        # CollapsiblePanel already installs a QVBoxLayout on content_area; reuse it.
         options = frame.layout()
 
-        self._model_combo = QComboBox(frame)
+        # --- EMmerNet (prediction) options -------------------------------------
+        emm, emm_l = self._group(frame, "EMmerNet options")
+        self._model_combo = QComboBox(emm)
         from .emmernet import available_models
         self._model_combo.addItems(available_models())
-        options.addWidget(self._row(frame, "Model:", help_info["model_help"], self._model_combo))
+        emm_l.addWidget(self._row(emm, "Model:", help_info["model_help"], self._model_combo))
 
-        
-        self._mc_spin = QSpinBox(frame); self._mc_spin.setRange(1, 100); self._mc_spin.setValue(15)
-        options.addWidget(self._row(frame, "Monte-Carlo iterations:",
-                                    help_info["monte_carlo_help"], self._mc_spin))
+        self._mc_spin = QSpinBox(emm); self._mc_spin.setRange(1, 100); self._mc_spin.setValue(15)
+        emm_l.addWidget(self._row(emm, "Monte-Carlo iterations:",
+                                  help_info["monte_carlo_help"], self._mc_spin))
 
-        self._batch_spin = QSpinBox(frame); self._batch_spin.setRange(1, 64); self._batch_spin.setValue(8)
-        options.addWidget(self._row(frame, "Batch size:", help_info["batch_size_help"], self._batch_spin))
+        self._batch_spin = QSpinBox(emm); self._batch_spin.setRange(1, 64); self._batch_spin.setValue(8)
+        emm_l.addWidget(self._row(emm, "Batch size:", help_info["batch_size_help"], self._batch_spin))
 
         # Cube size is deliberately not exposed: EMmerNet's padding and crops assume 32.
-        self._stride_spin = QSpinBox(frame); self._stride_spin.setRange(1, 32); self._stride_spin.setValue(16)
-        options.addWidget(self._row(frame, "Cube stride:", help_info["stride_help"], self._stride_spin))
+        self._stride_spin = QSpinBox(emm); self._stride_spin.setRange(1, 32); self._stride_spin.setValue(16)
+        emm_l.addWidget(self._row(emm, "Cube stride:", help_info["stride_help"], self._stride_spin))
 
-        self._window_spin = QSpinBox(frame); self._window_spin.setRange(11, 45); self._window_spin.setValue(25)
-        options.addWidget(self._row(frame, "Scaling window:", help_info["window_help"], self._window_spin))
-
-        self._chunk_spin = QSpinBox(frame)
-        self._chunk_spin.setRange(128, 65536); self._chunk_spin.setSingleStep(512)
-        self._chunk_spin.setValue(4096)
-        options.addWidget(self._row(frame, "Scaling chunk:", help_info["chunk_help"], self._chunk_spin))
-
-        self._gpu_check = QCheckBox("Use GPU when available", frame)
+        self._gpu_check = QCheckBox("Use GPU when available", emm)
         self._gpu_check.setChecked(True)
         self._gpu_check.setToolTip(help_info["gpu_help"])
         self._gpu_check.toggled.connect(self._gpu_toggled)
-        options.addWidget(self._gpu_check)
+        emm_l.addWidget(self._gpu_check)
 
         from .emmernet import available_gpus
         self._gpus = available_gpus()
-        self._gpu_combo = QComboBox(frame)
+        self._gpu_combo = QComboBox(emm)
         for index, name in self._gpus:
             self._gpu_combo.addItem("{}: {}".format(index, name), index)
         if not self._gpus:
@@ -512,18 +617,37 @@ class LocScale2Tool(ToolInstance):
             # inert rather than implying a choice that does not exist.
             self._gpu_combo.addItem("Using CPU", None)
             self._gpu_combo.setEnabled(False)
-        self._gpu_row = self._row(frame, "GPU:", help_info["gpu_id_help"], self._gpu_combo)
-        options.addWidget(self._gpu_row)
+        self._gpu_row = self._row(emm, "GPU:", help_info["gpu_id_help"], self._gpu_combo)
+        emm_l.addWidget(self._gpu_row)
 
-        # Reference map for direct local amplitude scaling. Choosing one and pressing
-        # "Run LocScale" skips feature enhancement (and pVDDT): the input map is simply
-        # scaled to this reference's local amplitudes, using the same mask/FDR logic.
-        ref_row = QFrame(frame)
+        # --- Amplitude-scaling options -----------------------------------------
+        scl, scl_l = self._group(frame, "Scaling options")
+        self._window_spin = QSpinBox(scl); self._window_spin.setRange(11, 45); self._window_spin.setValue(25)
+        scl_l.addWidget(self._row(scl, "Scaling window:", help_info["window_help"], self._window_spin))
+
+        self._chunk_spin = QSpinBox(scl)
+        self._chunk_spin.setRange(128, 65536); self._chunk_spin.setSingleStep(512)
+        self._chunk_spin.setValue(4096)
+        scl_l.addWidget(self._row(scl, "Scaling chunk:", help_info["chunk_help"], self._chunk_spin))
+        scl_l.addStretch(1)      # keep the shorter box top-aligned beside EMmerNet options
+
+        # EMmerNet and Scaling options sit side by side (two-column grid).
+        top_row = QHBoxLayout()
+        top_row.setContentsMargins(0, 0, 0, 0)
+        top_row.addWidget(emm)
+        top_row.addWidget(scl)
+        options.addLayout(top_row)
+
+        # --- Reference-based (model-based) LocScale ----------------------------
+        ref, ref_l = self._group(frame, "Run model-based LocScale")
+        ref_note = QLabel("<i>Scale the input map to a reference map only -- skips feature "
+                          "enhancement and pVDDT.</i>", ref)
+        ref_note.setWordWrap(True)
+        ref_l.addWidget(ref_note)
+
+        ref_row = QFrame(ref)
         ref_layout = QHBoxLayout(ref_row)
         ref_layout.setContentsMargins(0, 0, 0, 0)
-        ref_label = QLabel("Reference map:", ref_row)
-        ref_label.setToolTip("Run local amplitude scaling only, against this reference map "
-                             "(bypasses feature enhancement).")
         self._reference_menu = ModelMenuButton(
             self.session, class_filter=Volume,
             no_value_button_text="No model chosen", no_value_menu_text="None",
@@ -533,12 +657,24 @@ class LocScale2Tool(ToolInstance):
             "Amplitude-scale the input map to the reference map only -- no feature "
             "enhancement, no pVDDT.")
         self._run_locscale_button.clicked.connect(self._run_locscale_clicked)
-        ref_layout.addWidget(ref_label)
+        ref_layout.addWidget(QLabel("Reference map:", ref_row))
         ref_layout.addWidget(self._reference_menu)
         ref_layout.addWidget(self._run_locscale_button)
         ref_layout.addStretch(1)
-        options.addWidget(ref_row)
+        ref_l.addWidget(ref_row)
+        options.addWidget(ref)
         return panel
+
+    _CITATION_DOI = "10.1038/s41467-026-75327-8"
+
+    def _citation_label(self, parent):
+        label = QLabel(
+            "<i>If LocScale-FEM is useful in your work, please cite: "
+            "<a href='https://doi.org/{doi}'>doi:{doi}</a></i>".format(doi=self._CITATION_DOI),
+            parent)
+        label.setWordWrap(True)
+        label.setOpenExternalLinks(True)
+        return label
 
     def _run_panel(self, parent):
         frame = QFrame(parent)
@@ -572,18 +708,14 @@ class LocScale2Tool(ToolInstance):
     # ------------------------------------------------------------ actions
 
     def _run_clicked(self):
-        input_map = self._map_menu.value
-        mask_volume = self._mask_menu.value
-
-        if input_map is None:
-            self._status_label.setText("<font color='red'>Select an input map.</font>")
+        resolved = self._resolve_working_map()
+        if resolved is None:
             return
-        if mask_volume is input_map:
+        emmap, apix, template = resolved
+        mask_volume = self._mask_menu.value
+        if mask_volume is template:
             self._status_label.setText("<font color='red'>Map and mask are the same volume.</font>")
             return
-
-        emmap = input_map.data.full_matrix()
-        apix = float(input_map.data.step[0])
 
         window_size_angstroms = self._window_spin.value()
         window_size_pix = round_up_to_even(window_size_angstroms / apix)
@@ -595,7 +727,7 @@ class LocScale2Tool(ToolInstance):
                     mask.shape, emmap.shape))
             return
 
-        self._template = input_map
+        self._template = template
         self._result_kind = "feature_enhance"
         self._set_running(True)
 
@@ -636,27 +768,25 @@ class LocScale2Tool(ToolInstance):
 
     def _run_locscale_clicked(self):
         """Amplitude scaling only, against the chosen reference map (skips EMmerNet)."""
-        input_map = self._map_menu.value
         reference_map = self._reference_menu.value
-        mask_volume = self._mask_menu.value
-
-        if input_map is None:
-            self._status_label.setText("<font color='red'>Select an input map.</font>")
-            return
         if reference_map is None:
             self._status_label.setText(
                 "<font color='red'>Select a reference map for LocScale.</font>")
             return
-        if reference_map is input_map:
+
+        resolved = self._resolve_working_map()
+        if resolved is None:
+            return
+        emmap, apix, template = resolved
+        mask_volume = self._mask_menu.value
+
+        if reference_map is template:
             self._status_label.setText(
                 "<font color='red'>Reference and input map are the same volume.</font>")
             return
-        if mask_volume is input_map:
+        if mask_volume is template:
             self._status_label.setText("<font color='red'>Map and mask are the same volume.</font>")
             return
-
-        emmap = input_map.data.full_matrix()
-        apix = float(input_map.data.step[0])
 
         reference = reference_map.data.full_matrix()
         if reference.shape != emmap.shape:
@@ -675,7 +805,7 @@ class LocScale2Tool(ToolInstance):
                     mask.shape, emmap.shape))
             return
 
-        self._template = input_map
+        self._template = template
         self._result_kind = "amplitude_scaling"
         self._set_running(True)
 
@@ -740,8 +870,16 @@ class LocScale2Tool(ToolInstance):
             self._progress_bar.setRange(0, 0)      # busy until a stage reports counts
 
     def _on_status(self, message):
-        self._status_label.setText(message)
-        self.session.logger.info("LocScale2: " + message)
+        # Banner rules / blank lines are decoration: log them verbatim (no timestamp) and
+        # leave the compact status widget on the last real message.
+        stripped = message.strip()
+        is_decoration = (stripped == "" or set(stripped) <= set("=-_ "))
+        if not is_decoration:
+            self._status_label.setText(message)
+            from time import strftime
+            self.session.logger.info("[{}] {}".format(strftime("%H:%M:%S"), message))
+        else:
+            self.session.logger.info(message)
 
     def _on_progress(self, stage, done, total):
         self._progress_bar.setRange(0, total)
@@ -757,6 +895,10 @@ class LocScale2Tool(ToolInstance):
             show_locscale_result(self.session, results, self._template)
         else:
             show_results(self.session, results, self._template)
+        self.session.logger.info(
+            "LocScale-FEM: if this is useful in your work, please cite "
+            "<a href='https://doi.org/{doi}'>doi:{doi}</a>.".format(doi=self._CITATION_DOI),
+            is_html=True)
 
     def _on_cancelled(self):
         self._set_running(False)
