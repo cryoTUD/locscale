@@ -176,7 +176,7 @@ def _ensure_tool(session):
 
 
 def _log_catalog(session):
-    lines = ["LocScale-FEM verifiable EMDB entries (figures 6, 7; supplementary 7, 8):"]
+    lines = ["LocScale-FEM verifiable EMDB entries (figure 7; supplementary 8):"]
     for token in sorted(VERIFY_CATALOG, key=lambda t: int(t)):
         lines.append("  EMD-{}  ({})".format(token, ", ".join(VERIFY_CATALOG[token])))
     session.logger.info("\n".join(lines))
@@ -193,8 +193,8 @@ def verify(session, emdb, panel=None):
     token = _resolve_token(emdb)
     if token is None:
         _log_catalog(session)
-        raise UserError("EMDB '{}' is not in the verifiable set (figures 6, 7 and "
-                        "supplementary 7, 8). See the list above.".format(emdb))
+        raise UserError("EMDB '{}' is not in the verifiable set (figure 7 and "
+                        "supplementary 8). See the list above.".format(emdb))
 
     sessions = VERIFY_CATALOG[token]
     if panel is not None:
