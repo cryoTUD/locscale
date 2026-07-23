@@ -24,15 +24,14 @@ import tempfile
 
 import numpy as np
 
-from .vendored import mapops
+from .include import mapops
 from .emmernet import get_device, load_emmernet, predict_monte_carlo
-from .windowed_scaling import run_windowed_scaling
+from .amplitude_scaling import local_amplitude_scaling
 
 
 # Palette from LocScale's create_and_save_chimera_script(): blue = the enhanced map sits
 # well below the baseline, green = agreement, red = well above.
 PVDDT_PALETTE = "-95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000"
-
 
 class Cancelled(Exception):
     """Raised by a caller's status/progress callback to abort the run.
@@ -97,6 +96,7 @@ def compute_pvddt(feature_enhanced, baseline, variance, n_samples, data_dir=None
 def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
                         monte_carlo_iterations=15, batch_size=8, cube_size=32, stride=16,
                         window_size=25, scaling_chunk=4096, use_gpu=True, gpu_id=None,
+                        pg="C1", rise=None, twist=None,
                         status_callback=None, progress_callback=None):
     """Run the whole pipeline on in-memory arrays.
 
@@ -149,12 +149,21 @@ def run_feature_enhance(emmap, apix, mask=None, model_type="high_context",
 
     # ---- 6. windowed scaling -> baseline -----------------------------------
     status(f"Windowed amplitude scaling on {device} (window {window_size})...")
-    baseline = run_windowed_scaling(
+    
+    
+    baseline = local_amplitude_scaling(
         target_map=emmap, reference_map=feature_enhanced, mask=mask,
-        wn=window_size, device=str(device), chunk=scaling_chunk,
+        window_size=window_size, device=str(device), chunk=scaling_chunk,
         progress_callback=lambda i, n: progress("Scaling", i, n))
 
-    # ---- 7. pVDDT ----------------------------------------------------------
+    # ---- 7. Symmetrise feature_enhanced, variance and baseline ----------------
+    if pg != "C1" or (rise is not None and twist is not None):
+        status("Symmetrising outputs...")
+        feature_enhanced = _symmetrise(feature_enhanced, apix=apix, pg=pg, rise=rise, twist=twist)
+        variance = _symmetrise(variance, apix=apix, pg=pg, rise=rise, twist=twist)
+        baseline = _symmetrise(baseline, apix=apix, pg=pg, rise=rise, twist=twist)
+
+    # ---- 8. pVDDT ----------------------------------------------------------
     status("Computing pVDDT...")
     pvddt = compute_pvddt(feature_enhanced, baseline, variance,
                           n_samples=monte_carlo_iterations)
@@ -174,3 +183,13 @@ def _assemble(cubes, cubes_dictionary, preprocessed_shape, apix, output_shape):
     filled = mapops.replace_cubes_in_dictionary(cubes, cubes_dictionary)
     assembled = mapops.assemble_cubes(filled, preprocessed_shape, average=True)
     return mapops.resample_map(assembled, apix=1, apix_new=apix, assert_shape=output_shape)
+
+def _symmetrise(map, apix, pg, rise, twist):
+    """Apply symmetry to the map."""
+    from .include.symmetry_emda.symmetrize_map import symmetrize_map
+
+    if pg != "C1":
+        return symmetrize_map(map, apix, pg=pg, rise=rise, twist=twist)
+    else:
+        return map 
+    

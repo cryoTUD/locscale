@@ -17,7 +17,7 @@ from chimerax.ui import MainToolWindow
 from chimerax.ui.widgets import CollapsiblePanel, ModelMenuButton, vertical_layout
 from Qt.QtCore import QThread, Signal
 from Qt.QtWidgets import (QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QProgressBar,
-                          QPushButton, QSpinBox, QLineEdit)
+                          QPushButton, QSpinBox, QLineEdit, QVBoxLayout)
 
 
 from .utils import (
@@ -100,11 +100,11 @@ class LocScale2Tool(ToolInstance):
         layout.addStretch(1)
         self.tool_window.manage("side")
 
-        # Show the options expanded. Done after manage() so the content area's sizeHint is
-        # settled; setChecked keeps the disclosure button in step, otherwise the first
-        # click would try to expand an already-expanded panel.
-        self._options.toggle_button.setChecked(True)
-        self._options.toggle_panel_display(True)
+        # # Show the options expanded. Done after manage() so the content area's sizeHint is
+        # # settled; setChecked keeps the disclosure button in step, otherwise the first
+        # # click would try to expand an already-expanded panel.
+        # self._options.toggle_button.setChecked(True)
+        # self._options.toggle_panel_display(True)
 
     # ------------------------------------------------------------ panels
 
@@ -141,22 +141,36 @@ class LocScale2Tool(ToolInstance):
         panel.addWidget(note)
 
         # Add point group symmetry as text input 
-        self._point_group_symmetry_menu = QLineEdit(frame, placeholderText="C1")
+        self._point_group_symmetry_menu = QLineEdit(frame)
         panel.addWidget(self._row(frame, "Point group symmetry:", help_info["point_group_symmetry_help"], self._point_group_symmetry_menu))
 
-        # Add collapsible panel for helical symmetry parameters
-        self._helical_symmetry_panel = CollapsiblePanel(frame, title="Helical symmetry parameters")
+        # Add helical symmetry checkbox default to unchecked
+        self._helical_symmetry_checkbox = QCheckBox("Helical symmetry", frame)
+        self._helical_symmetry_checkbox.setToolTip(help_info["helical_symmetry_help"])
+        self._helical_symmetry_checkbox.toggled.connect(self._helical_symmetry_toggled)
+        self._helical_symmetry_checkbox.setChecked(False)
+        panel.addWidget(self._row(frame, "Helical symmetry:", help_info["helical_symmetry_help"], self._helical_symmetry_checkbox))
         
-        # Add helical symmetry parameters as text inputs as twist and rise
-        helical_symmetry_frame = self._helical_symmetry_panel.content_area
-        self._helical_twist_menu = QLineEdit(helical_symmetry_frame, placeholderText="Twist")
-        self._helical_rise_menu = QLineEdit(helical_symmetry_frame, placeholderText="Rise")
-        helical_symmetry_frame_layout = vertical_layout(helical_symmetry_frame, margins=(0, 0, 0, 0))
-        helical_symmetry_frame_layout.addWidget(self._row(helical_symmetry_frame, "Helical symmetry parameters", "XYZ", self._helical_twist_menu))
-        helical_symmetry_frame_layout.addWidget(self._row(helical_symmetry_frame, "Helical symmetry parameters", "XYZ", self._helical_rise_menu))
-
+        # Add helical rise/twist inputs. They live in their own panel that is only shown
+        # while the helical checkbox is ticked (see _helical_symmetry_toggled).
+        self._helical_symmetry_panel = QFrame(frame)
+        helical_layout = QVBoxLayout(self._helical_symmetry_panel)
+        helical_layout.setContentsMargins(0, 0, 0, 0)
+        # input rise in Angstroms
+        self._helical_rise_menu = QLineEdit(self._helical_symmetry_panel, placeholderText="0.0")
+        helical_layout.addWidget(self._row(self._helical_symmetry_panel, "Rise (A):",
+                                           help_info["helical_symmetry_help"], self._helical_rise_menu))
+        # input twist in degrees
+        self._helical_twist_menu = QLineEdit(self._helical_symmetry_panel, placeholderText="0.0")
+        helical_layout.addWidget(self._row(self._helical_symmetry_panel, "Twist (deg):",
+                                           help_info["helical_symmetry_help"], self._helical_twist_menu))
+        self._helical_symmetry_panel.setVisible(False)
         panel.addWidget(self._helical_symmetry_panel)
         return frame
+
+    def _helical_symmetry_toggled(self, checked):
+        """Show the rise/twist inputs only while helical symmetry is requested."""
+        self._helical_symmetry_panel.setVisible(checked)
 
     def _options_panel(self, parent):
         self._options = panel = CollapsiblePanel(parent, title="Advanced Options")
@@ -177,7 +191,7 @@ class LocScale2Tool(ToolInstance):
         options.addWidget(self._row(frame, "Monte-Carlo iterations:",
                                     help_info["monte_carlo_help"], self._mc_spin))
 
-        self._batch_spin = QSpinBox(frame); self._batch_spin.setRange(1, 128); self._batch_spin.setValue(8)
+        self._batch_spin = QSpinBox(frame); self._batch_spin.setRange(1, 64); self._batch_spin.setValue(8)
         options.addWidget(self._row(frame, "Batch size:", help_info["batch_size_help"], self._batch_spin))
 
         # Cube size is deliberately not exposed: EMmerNet's padding and crops assume 32.
@@ -270,6 +284,14 @@ class LocScale2Tool(ToolInstance):
         self._template = input_map
         self._set_running(True)
 
+        # Get the point group symmetry and helical symmetry parameters.
+        # An empty field means "no symmetry": placeholderText is only a hint, not a value,
+        # so .text() is "" when the user leaves it blank -- default that to C1.
+        pg = self._point_group_symmetry_menu.text().strip() or "C1"
+        helical_symmetry = self._helical_symmetry_checkbox.isChecked()
+        rise = float(self._helical_rise_menu.text()) if helical_symmetry else None
+        twist = float(self._helical_twist_menu.text()) if helical_symmetry else None
+
         self._worker = PipelineWorker(dict(
             emmap=emmap,
             apix=apix,
@@ -282,6 +304,9 @@ class LocScale2Tool(ToolInstance):
             scaling_chunk=self._chunk_spin.value(),
             use_gpu=self._gpu_check.isChecked(),
             gpu_id=self._selected_gpu_id(),
+            pg=pg,
+            rise=rise,
+            twist=twist
         ))
 
         self._worker.status.connect(self._on_status)
