@@ -569,3 +569,35 @@ def get_spherical_mask(mask_shape, radius_index):
     z,y,x = np.ogrid[-n//2:n//2,-n//2:n//2,-n//2:n//2]
     mask = (x**2+y**2+z**2 <= radius_index**2).astype(int)
     return mask
+
+# --- get_xyz_locs_and_indices_after_edge_cropping_and_masking
+
+def get_xyz_locs_and_indices_after_edge_cropping_and_masking(mask, wn):
+    mask = np.copy(mask)
+    nk, nj, ni = mask.shape
+
+    kk, jj, ii = np.indices((mask.shape))
+    kk_flat = kk.ravel()
+    jj_flat = jj.ravel()
+    ii_flat = ii.ravel()
+
+    mask_bin = np.array(mask.ravel(), dtype=bool)
+    indices = np.arange(mask.size)
+    masked_indices = indices[mask_bin]
+    cropped_indices = indices[(wn / 2 <= kk_flat) & (kk_flat < (nk - wn / 2)) &
+                              (wn / 2 <= jj_flat) & (jj_flat < (nj - wn / 2)) &
+                              (wn / 2 <= ii_flat) & (ii_flat < (ni - wn / 2))]
+
+    cropp_n_mask_ind = np.intersect1d(masked_indices, cropped_indices)
+
+    xyz_locs = np.column_stack((kk_flat[cropp_n_mask_ind], jj_flat[cropp_n_mask_ind], ii_flat[cropp_n_mask_ind]))
+
+    return xyz_locs, cropp_n_mask_ind, mask.shape
+
+
+def put_scaled_voxels_back_in_original_volume_including_padding(sharpened_vals, masked_indices, map_shape):
+    map_scaled = np.zeros(np.prod(map_shape))
+    map_scaled[masked_indices] = sharpened_vals
+    map_scaled = map_scaled.reshape(map_shape)
+
+    return map_scaled
