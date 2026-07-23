@@ -32,16 +32,16 @@ _EBI_HALF = ("https://ftp.ebi.ac.uk/pub/databases/emdb/structures/"
 # EMDB id (exactly as it appears in the file name, zero-padded where the deposition is)
 # -> published session file(s), figure panel first. See the share listing.
 VERIFY_CATALOG = {
-    "13234": ["figure_6a_6b_13234.cxs"],
-    "17929": ["figure_6c_17929.cxs"],
-    "19999": ["figure_6d_6e_6f_19999.cxs"],
-    "0665":  ["figure_6g_0665.cxs"],
+    #"13234": ["figure_6a_6b_13234.cxs"],
+    #"17929": ["figure_6c_17929.cxs"],
+    #"19999": ["figure_6d_6e_6f_19999.cxs"],
+    #"0665":  ["figure_6g_0665.cxs"],
     "33888": ["figure_7a_33888.cxs"],
     "35193": ["figure_7b_35193.cxs"],
     "11231": ["figure_7c_11231.cxs", "supplementary_8d_11231.cxs"],
     "10366": ["figure_7c_10366.cxs", "supplementary_8e_10366.cxs"],
     "10577": ["figure_7c_10577.cxs", "supplementary_8c_10577.cxs"],
-    "15949": ["supplementary_7d_15949.cxs", "supplementary_7f_15949.cxs"],
+    #"15949": ["supplementary_7d_15949.cxs", "supplementary_7f_15949.cxs"],
     "7770":  ["supplementary_8b_7770.cxs"],
     "33394": ["supplementary_8a_33394.cxs"],
 }

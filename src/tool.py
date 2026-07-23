@@ -932,7 +932,7 @@ class LocScale2Tool(ToolInstance):
         self.session.logger.info(
             "\n{bar}\n  Verification vs published — EMD-{tok}\n{bar}\n"
             "  Reproduced FEM vs published '{name}'\n"
-            "  Real-space cross-correlation (CC) = {cc:.4f}\n{bar}".format(
+            "  Real-space cross-correlation (CC) (best) = {cc:.4f}\n{bar}".format(
                 bar=bar, tok=ref.get("token"), name=best[0], cc=best[1]))
 
     def _on_cancelled(self):
