@@ -192,6 +192,53 @@ def run_feature_enhance(emmap, apix, mask=None, noise_boxes=None,
     }
 
 
+def run_amplitude_scaling(emmap, apix, reference, mask=None, noise_boxes=None,
+                          noise_window_size=None, window_size=25, scaling_chunk=4096,
+                          use_gpu=True, gpu_id=None, pg="C1", rise=None, twist=None,
+                          status_callback=None, progress_callback=None):
+    """Local amplitude scaling only: scale the input map to a user-supplied reference map.
+
+    This skips EMmerNet feature enhancement and the pVDDT step -- only windowed amplitude
+    scaling runs. The mask is resolved exactly as in run_feature_enhance (the user's mask,
+    otherwise an FDR mask pooled from the noise boxes). Returns a dict with 'locscale' (the
+    scaled map) and 'mask' (None when the caller supplied one).
+    """
+    status = status_callback or _noop
+    progress = progress_callback or _noop
+    emmap = np.asarray(emmap, dtype=np.float32)
+    reference = np.asarray(reference, dtype=np.float32)
+    if reference.shape != emmap.shape:
+        raise ValueError(f"reference shape {reference.shape} does not match map shape "
+                         f"{emmap.shape}")
+
+    # ---- mask -------------------------------------------------------------
+    computed_mask = None
+    if mask is None:
+        status("Computing FDR confidence mask (no mask supplied)...")
+        computed_mask = compute_fdr_mask(emmap, apix, noise_boxes=noise_boxes,
+                                         window_size=noise_window_size)
+        mask = computed_mask
+    mask = np.asarray(mask, dtype=np.float32)
+    if mask.shape != emmap.shape:
+        raise ValueError(f"mask shape {mask.shape} does not match map shape {emmap.shape}")
+
+    # ---- amplitude scaling -> locscale map --------------------------------
+    device = get_device(prefer_gpu=use_gpu, gpu_id=gpu_id)
+    status(f"Local amplitude scaling on {device} (window {window_size})...")
+    locscale = local_amplitude_scaling(
+        target_map=emmap, reference_map=reference, mask=mask,
+        window_size=window_size, device=str(device), chunk=scaling_chunk,
+        progress_callback=lambda i, n: progress("Scaling", i, n))
+
+    # ---- optional symmetry ------------------------------------------------
+    if pg != "C1" or (rise is not None and twist is not None):
+        status("Symmetrising output...")
+        locscale = _symmetrise(locscale, apix=apix, pg=pg, rise=rise, twist=twist)
+
+    status("Done.")
+    return {"locscale": locscale, "mask": computed_mask}
+
+
 def _assemble(cubes, cubes_dictionary, preprocessed_shape, apix, output_shape):
     """Put cubes back in place, then resample to the original grid."""
     filled = mapops.replace_cubes_in_dictionary(cubes, cubes_dictionary)

@@ -58,6 +58,18 @@ def show_results(session, results, template):
     return opened
 
 
+def show_locscale_result(session, results, template):
+    """Open the amplitude-scaled map (and the FDR mask, if one was computed)."""
+    opened = {}
+    if results.get("mask") is not None:
+        opened["mask"] = show_volume(session, results["mask"], template,
+                                     "LocScale2 FDR mask", show=False)
+    opened["locscale"] = show_volume(session, results["locscale"], template,
+                                     "LocScale amplitude scaled")
+    session.logger.info("LocScale2: amplitude scaling done (no feature enhancement).")
+    return opened
+
+
 def locscale2(session, inputMap=None, inputMask=None, model="high_context",
               monteCarloIterations=15, batchSize=8, windowSize=25, cubeSize=32, stride=16,
               scalingChunk=4096, useGpu=True, gpuId=None):

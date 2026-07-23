@@ -47,9 +47,10 @@ class PipelineWorker(QThread):
     cancelled = Signal()
     failed = Signal(str)
 
-    def __init__(self, kwargs):
+    def __init__(self, kwargs, run_kind="feature_enhance"):
         super().__init__()
         self._kwargs = kwargs
+        self._run_kind = run_kind
         self._cancel_requested = False
 
     def cancel(self):
@@ -57,7 +58,10 @@ class PipelineWorker(QThread):
         self._cancel_requested = True
 
     def run(self):
-        from .pipeline import Cancelled, run_feature_enhance
+        from .pipeline import Cancelled, run_amplitude_scaling, run_feature_enhance
+
+        run_fn = (run_amplitude_scaling if self._run_kind == "amplitude_scaling"
+                  else run_feature_enhance)
 
         # The pipeline's callbacks are the only points at which it yields to us, so they are
         # also where cancellation is honoured.
@@ -72,7 +76,7 @@ class PipelineWorker(QThread):
             self.progress.emit(stage, done, total)
 
         try:
-            results = run_feature_enhance(
+            results = run_fn(
                 status_callback=status, progress_callback=progress, **self._kwargs)
         except Cancelled:
             self.cancelled.emit()
@@ -94,6 +98,7 @@ class LocScale2Tool(ToolInstance):
         self.display_name = "LocScale-FEM"
         self._worker = None
         self._template = None
+        self._result_kind = "feature_enhance"   # which display the running worker feeds
         self._noise_box_model = None      # parent Model holding the box surfaces
         self._noise_edited = False        # user has hand-edited the boxes/window
         self._populating = False          # guard while filling the table programmatically
@@ -400,6 +405,30 @@ class LocScale2Tool(ToolInstance):
             self._gpu_combo.setEnabled(False)
         self._gpu_row = self._row(frame, "GPU:", help_info["gpu_id_help"], self._gpu_combo)
         options.addWidget(self._gpu_row)
+
+        # Reference map for direct local amplitude scaling. Choosing one and pressing
+        # "Run LocScale" skips feature enhancement (and pVDDT): the input map is simply
+        # scaled to this reference's local amplitudes, using the same mask/FDR logic.
+        ref_row = QFrame(frame)
+        ref_layout = QHBoxLayout(ref_row)
+        ref_layout.setContentsMargins(0, 0, 0, 0)
+        ref_label = QLabel("Reference map:", ref_row)
+        ref_label.setToolTip("Run local amplitude scaling only, against this reference map "
+                             "(bypasses feature enhancement).")
+        self._reference_menu = ModelMenuButton(
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
+        self._run_locscale_button = QPushButton("Run LocScale", ref_row)
+        self._run_locscale_button.setToolTip(
+            "Amplitude-scale the input map to the reference map only -- no feature "
+            "enhancement, no pVDDT.")
+        self._run_locscale_button.clicked.connect(self._run_locscale_clicked)
+        ref_layout.addWidget(ref_label)
+        ref_layout.addWidget(self._reference_menu)
+        ref_layout.addWidget(self._run_locscale_button)
+        ref_layout.addStretch(1)
+        options.addWidget(ref_row)
         return panel
 
     def _run_panel(self, parent):
@@ -458,6 +487,7 @@ class LocScale2Tool(ToolInstance):
             return
 
         self._template = input_map
+        self._result_kind = "feature_enhance"
         self._set_running(True)
 
         # Get the point group symmetry and helical symmetry parameters.
@@ -495,6 +525,80 @@ class LocScale2Tool(ToolInstance):
         self._worker.failed.connect(self._on_failed)
         self._worker.start()
 
+    def _run_locscale_clicked(self):
+        """Amplitude scaling only, against the chosen reference map (skips EMmerNet)."""
+        input_map = self._map_menu.value
+        reference_map = self._reference_menu.value
+        mask_volume = self._mask_menu.value
+
+        if input_map is None:
+            self._status_label.setText("<font color='red'>Select an input map.</font>")
+            return
+        if reference_map is None:
+            self._status_label.setText(
+                "<font color='red'>Select a reference map for LocScale.</font>")
+            return
+        if reference_map is input_map:
+            self._status_label.setText(
+                "<font color='red'>Reference and input map are the same volume.</font>")
+            return
+        if mask_volume is input_map:
+            self._status_label.setText("<font color='red'>Map and mask are the same volume.</font>")
+            return
+
+        emmap = input_map.data.full_matrix()
+        apix = float(input_map.data.step[0])
+
+        reference = reference_map.data.full_matrix()
+        if reference.shape != emmap.shape:
+            self._status_label.setText(
+                "<font color='red'>Reference shape {} does not match map {}.</font>".format(
+                    reference.shape, emmap.shape))
+            return
+
+        window_size_angstroms = self._window_spin.value()
+        window_size_pix = round_up_to_even(window_size_angstroms / apix)
+
+        mask = mask_volume.data.full_matrix() if mask_volume is not None else None
+        if mask is not None and mask.shape != emmap.shape:
+            self._status_label.setText(
+                "<font color='red'>Mask shape {} does not match map {}.</font>".format(
+                    mask.shape, emmap.shape))
+            return
+
+        self._template = input_map
+        self._result_kind = "amplitude_scaling"
+        self._set_running(True)
+
+        pg = self._point_group_symmetry_menu.text().strip() or "C1"
+        helical_symmetry = self._helical_symmetry_checkbox.isChecked()
+        rise = float(self._helical_rise_menu.text()) if helical_symmetry else None
+        twist = float(self._helical_twist_menu.text()) if helical_symmetry else None
+
+        noise_boxes = self._read_noise_boxes() or None
+        self._worker = PipelineWorker(dict(
+            emmap=emmap,
+            apix=apix,
+            reference=reference,
+            mask=mask,
+            noise_boxes=noise_boxes,                       # used only when mask is None
+            noise_window_size=self._noise_window_spin.value(),
+            window_size=window_size_pix,
+            scaling_chunk=self._chunk_spin.value(),
+            use_gpu=self._gpu_check.isChecked(),
+            gpu_id=self._selected_gpu_id(),
+            pg=pg,
+            rise=rise,
+            twist=twist,
+        ), run_kind="amplitude_scaling")
+
+        self._worker.status.connect(self._on_status)
+        self._worker.progress.connect(self._on_progress)
+        self._worker.completed.connect(self._on_completed)
+        self._worker.cancelled.connect(self._on_cancelled)
+        self._worker.failed.connect(self._on_failed)
+        self._worker.start()
+
     def _gpu_toggled(self, checked):
         self._gpu_row.setVisible(checked)
         # The panel's height was frozen at whatever sizeHint said when it was expanded, so
@@ -519,6 +623,7 @@ class LocScale2Tool(ToolInstance):
 
     def _set_running(self, running):
         self._run_button.setEnabled(not running)
+        self._run_locscale_button.setEnabled(not running)
         self._cancel_button.setEnabled(running)
         self._cancel_button.setText("Cancel")
         self._progress_bar.setVisible(running)
@@ -535,10 +640,14 @@ class LocScale2Tool(ToolInstance):
         self._progress_bar.setFormat(f"{stage}: %v/%m")
 
     def _on_completed(self, results):
-        from .cmd import show_results
+        from .cmd import show_locscale_result, show_results
         self._set_running(False)
         self._status_label.setText("Done.")
-        show_results(self.session, results, self._template)   # UI thread: safe to touch models
+        # UI thread: safe to touch models
+        if self._result_kind == "amplitude_scaling":
+            show_locscale_result(self.session, results, self._template)
+        else:
+            show_results(self.session, results, self._template)
 
     def _on_cancelled(self):
         self._set_running(False)
