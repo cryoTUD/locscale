@@ -10,6 +10,7 @@ on a QThread so ChimeraX stays responsive.
 """
 import json
 import os
+import re
 
 import numpy as np
 
@@ -31,6 +32,11 @@ from .utils import (
 
 with open(os.path.join(os.path.dirname(__file__), "data", "help_info.json")) as _f:
     help_info = json.load(_f)
+
+
+def _is_hex_color(text):
+    """True for a '#rrggbb' string."""
+    return bool(re.fullmatch(r"#[0-9a-fA-F]{6}", (text or "").strip()))
 
 
 class PipelineWorker(QThread):
@@ -109,6 +115,7 @@ class LocScale2Tool(ToolInstance):
         layout.addWidget(self._inputs_panel(parent))
         layout.addWidget(self._options_panel(parent))
         layout.addWidget(self._run_panel(parent))
+        layout.addWidget(self._pvddt_color_panel(parent))
         layout.addStretch(1)
         self.tool_window.manage("side")
         self._populate_noise_defaults()
@@ -352,6 +359,108 @@ class LocScale2Tool(ToolInstance):
         surface.set_geometry(vertices, normals, triangles)
         surface.color = np.array([255, 210, 40, 120], dtype=np.uint8)   # translucent amber
         return surface
+
+    # ------------------------------------------------------------ pVDDT colouring
+
+    def _pvddt_color_panel(self, parent):
+        from .pipeline import PVDDT_PALETTES, PVDDT_CUSTOM_STOPS
+        self._pvddt_panel = panel = CollapsiblePanel(parent, title="Colour by pVDDT")
+        frame = panel.content_area
+        box = frame.layout()
+
+        note = QLabel("<i>Colours a displayed map's surface by a pVDDT map -- no feature "
+                      "enhancement is run. The map to colour must be shown as a surface.</i>",
+                      frame)
+        note.setWordWrap(True)
+        box.addWidget(note)
+
+        self._pvddt_map_menu = ModelMenuButton(
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
+        box.addWidget(self._row(frame, "Map to colour:", "The map whose surface is coloured.",
+                                self._pvddt_map_menu))
+
+        self._pvddt_value_menu = ModelMenuButton(
+            self.session, class_filter=Volume,
+            no_value_button_text="No model chosen", no_value_menu_text="None",
+            autoselect="none")
+        box.addWidget(self._row(frame, "pVDDT map:", "The pVDDT map providing the colours.",
+                                self._pvddt_value_menu))
+
+        self._pvddt_scheme_combo = QComboBox(frame)
+        self._pvddt_scheme_combo.addItems(list(PVDDT_PALETTES.keys()))
+        self._pvddt_scheme_combo.addItem("Custom...")
+        self._pvddt_scheme_combo.currentIndexChanged.connect(self._on_pvddt_scheme_changed)
+        box.addWidget(self._row(frame, "Colour scheme:",
+                                "Diverging palette over pVDDT -100..+100.",
+                                self._pvddt_scheme_combo))
+
+        # Custom-palette editor, revealed only when "Custom..." is chosen. Kept as a plain
+        # frame (not a nested CollapsiblePanel): a collapsible inside a collapsible freezes
+        # the outer panel's height and clips these rows.
+        self._pvddt_custom_frame = QFrame(frame)
+        cbox = QVBoxLayout(self._pvddt_custom_frame)
+        cbox.setContentsMargins(0, 0, 0, 0)
+        cbox.addWidget(QLabel("<b>Custom palette</b>", self._pvddt_custom_frame))
+        self._pvddt_custom_edits = []
+        for value, hexcolor in PVDDT_CUSTOM_STOPS:
+            edit = QLineEdit(hexcolor, self._pvddt_custom_frame)
+            self._pvddt_custom_edits.append((value, edit))
+            cbox.addWidget(self._row(self._pvddt_custom_frame, "pVDDT {:+d}:".format(value),
+                                     "Hex colour (#rrggbb) for pVDDT {:+d}.".format(value),
+                                     edit))
+        self._pvddt_custom_frame.setVisible(False)
+        box.addWidget(self._pvddt_custom_frame)
+
+        self._pvddt_apply_button = QPushButton("Apply colour", frame)
+        self._pvddt_apply_button.clicked.connect(self._apply_pvddt_color)
+        box.addWidget(self._pvddt_apply_button)
+        return panel
+
+    def _on_pvddt_scheme_changed(self, index):
+        is_custom = self._pvddt_scheme_combo.currentText() == "Custom..."
+        self._pvddt_custom_frame.setVisible(is_custom)
+        # The outer panel froze its height when it was expanded; re-fit so the revealed rows
+        # are not clipped (same fix as _gpu_toggled).
+        if self._pvddt_panel.shown:
+            self._pvddt_panel.resize_panel(True)
+
+    def _pvddt_palette_spec(self):
+        """Palette spec for the current scheme, or None if a custom hex is invalid."""
+        from .pipeline import PVDDT_PALETTES
+        name = self._pvddt_scheme_combo.currentText()
+        if name != "Custom...":
+            return PVDDT_PALETTES[name]
+        stops = []
+        for value, edit in self._pvddt_custom_edits:
+            hexcolor = edit.text().strip()
+            if not _is_hex_color(hexcolor):
+                return None
+            stops.append("{},{}".format(value, hexcolor))
+        return ":".join(stops)
+
+    def _apply_pvddt_color(self):
+        map_vol = self._pvddt_map_menu.value
+        pvddt_vol = self._pvddt_value_menu.value
+        if map_vol is None or pvddt_vol is None:
+            self._status_label.setText(
+                "<font color='red'>Select a map to colour and a pVDDT map.</font>")
+            return
+        spec = self._pvddt_palette_spec()
+        if spec is None:
+            self._status_label.setText(
+                "<font color='red'>Custom palette has an invalid hex colour (use #rrggbb).</font>")
+            return
+        from chimerax.core.commands import run
+        try:
+            run(self.session, "color sample #{} map #{} palette {}".format(
+                map_vol.id_string, pvddt_vol.id_string, spec))
+        except Exception as exc:
+            self._status_label.setText("<font color='red'>Colouring failed; see the log.</font>")
+            self.session.logger.error("LocScale2 colour-by-pVDDT failed: {}".format(exc))
+            return
+        self._status_label.setText("Coloured {} by pVDDT.".format(map_vol.name))
 
     def _options_panel(self, parent):
         self._options = panel = CollapsiblePanel(parent, title="Advanced Options")

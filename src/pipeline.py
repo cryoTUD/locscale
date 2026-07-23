@@ -33,6 +33,23 @@ from .amplitude_scaling import local_amplitude_scaling
 # well below the baseline, green = agreement, red = well above.
 PVDDT_PALETTE = "-95,#0000ff:-80,#00ffff:0,#00ff00:80,#ffff00:95,#ff0000"
 
+# Diverging schemes for colouring a map by pVDDT over [-100, +100]. Each keeps the centre
+# (0 = "accept") calm and both extremes cautionary, with +100 the most alarming (red = added
+# information) and -100 the cool end (reduced information). The first entry is the default.
+PVDDT_PALETTES = {
+    "LocScale default (blue-green-red)": PVDDT_PALETTE,
+    "Ocean (teal-green-red)":
+        "-100,#0077be:-50,#3aafa9:0,#7fdb6a:50,#ffb000:100,#e00000",
+    "Neutral (slate-grey-red)":
+        "-100,#5b7db1:-50,#a9c0d6:0,#e8e8e8:50,#e39a9a:100,#c40000",
+    "Warm (indigo-green-crimson)":
+        "-100,#3b4cc0:-50,#8db0fe:0,#a6d96a:50,#f4a582:100,#b2182b",
+}
+
+# Stops (value, default hex) used to seed the custom-palette editor.
+PVDDT_CUSTOM_STOPS = [(-100, "#0000ff"), (-50, "#00ffff"), (0, "#00ff00"),
+                      (50, "#ffff00"), (100, "#ff0000")]
+
 class Cancelled(Exception):
     """Raised by a caller's status/progress callback to abort the run.
 
