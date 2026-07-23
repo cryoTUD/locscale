@@ -21,8 +21,12 @@ class _LocScale2API(BundleAPI):
     @staticmethod
     def register_command(bi, ci, logger):
         from chimerax.core.commands import register
-        from . import cmd
-        register(ci.name, cmd.locscale2_desc, cmd.locscale2, logger=logger)
+        if ci.name == "locscale2 verify":
+            from . import verify
+            register(ci.name, verify.verify_desc, verify.verify, logger=logger)
+        else:
+            from . import cmd
+            register(ci.name, cmd.locscale2_desc, cmd.locscale2, logger=logger)
 
 
 bundle_api = _LocScale2API()

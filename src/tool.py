@@ -135,6 +135,7 @@ class LocScale2Tool(ToolInstance):
         self._worker = None
         self._template = None
         self._result_kind = "feature_enhance"   # which display the running worker feeds
+        self._verify_reference = None     # set by 'locscale2 verify' for the CC report
         self._noise_box_model = None      # parent Model holding the box surfaces
         self._noise_edited = False        # user has hand-edited the boxes/window
         self._populating = False          # guard while filling the table programmatically
@@ -893,12 +894,46 @@ class LocScale2Tool(ToolInstance):
         # UI thread: safe to touch models
         if self._result_kind == "amplitude_scaling":
             show_locscale_result(self.session, results, self._template)
+            reproduced = results.get("locscale")
         else:
             show_results(self.session, results, self._template)
+            reproduced = results.get("feature_enhanced")
+        self._maybe_report_verification(reproduced)
         self.session.logger.info(
             "LocScale-FEM: if this is useful in your work, please cite "
             "<a href='https://doi.org/{doi}'>doi:{doi}</a>.".format(doi=self._CITATION_DOI),
             is_html=True)
+
+    def _maybe_report_verification(self, reproduced_array):
+        """After a verify-seeded run, log the real-space CC vs the published maps."""
+        ref = self._verify_reference
+        if not ref or reproduced_array is None:
+            return
+        reproduced = np.asarray(reproduced_array, dtype=np.float32)
+        flat = reproduced.ravel()
+        best = None
+        for vol in ref.get("published", []):
+            if getattr(vol, "deleted", False):
+                continue
+            try:
+                other = np.asarray(vol.data.full_matrix(), dtype=np.float32)
+            except Exception:
+                continue
+            if other.shape != reproduced.shape:
+                continue
+            cc = float(np.corrcoef(flat, other.ravel())[0, 1])
+            if best is None or cc > best[1]:
+                best = (vol.name, cc)
+        if best is None:
+            self.session.logger.info(
+                "Verification: no published map on the same grid to compare against.")
+            return
+        bar = "=" * 52
+        self.session.logger.info(
+            "\n{bar}\n  Verification vs published — EMD-{tok}\n{bar}\n"
+            "  Reproduced FEM vs published '{name}'\n"
+            "  Real-space cross-correlation (CC) = {cc:.4f}\n{bar}".format(
+                bar=bar, tok=ref.get("token"), name=best[0], cc=best[1]))
 
     def _on_cancelled(self):
         self._set_running(False)

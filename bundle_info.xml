@@ -67,6 +67,7 @@ the bundle is displayed without the ChimeraX- prefix.
          generates it, and a second one is ignored with a warning. -->
     <ChimeraXClassifier>ChimeraX :: Tool :: LocScale2 :: Volume Data :: Feature-enhanced maps with confidence estimation</ChimeraXClassifier>
     <ChimeraXClassifier>ChimeraX :: Command :: locscale2 :: Volume Data :: Feature-enhance a cryo-EM map with EMmerNet and colour it by pVDDT</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: Command :: locscale2 verify :: Volume Data :: Load an EMDB map and its published LocScale-FEM session for verification</ChimeraXClassifier>
   </Classifiers>
 
 </BundleInfo>
