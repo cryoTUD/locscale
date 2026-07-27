@@ -60,8 +60,6 @@ shows all EMDBs that can be verified through published chimerax sessions. Curren
 - [`Servalcat`](https://github.com/keitaroyam/servalcat): Structure refinement and validation for crystallography and SPA. [MPL2.0 license]
 - [`mrcfile`](https://pypi.org/project/mrcfile/): MRC file I/O. [3-Clause BSD license]
 
-`LocScale` also makes use of [REFMAC5](https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/content/refmac/refmac.html). REFMAC is distributed as part of CCP-EM.
-
 ## References
 
 If you found `LocScale` useful for your research, please consider citing it:
