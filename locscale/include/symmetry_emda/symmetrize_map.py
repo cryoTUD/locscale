@@ -133,12 +133,11 @@ def _parse_cyclic_or_dihedral(pg):
 def helical_operators(twist, rise, apix, n, pg="C1", n_steps=None):
     """Build (rotation, z-translation) pairs for combined helical + Cn/Dn symmetry.
 
-    The helical axis is the volume's first (z) array axis, which is the same axis
+    The helical axis is the first array axis (z), which is the same axis
     used by the xyz-convention point-group operators from
     ``operators_from_symbol`` once passed through ``_to_zyx``. A Cn point
     group is therefore coincident with the helical axis, and the dyad of a Dn
-    point group is perpendicular to it, matching the standard convention for
-    n-start helices (e.g. RELION/cryoSPARC helical symmetry model).
+    point group is perpendicular to it to match the standard convention.
 
     Parameters
     ----------
@@ -156,19 +155,14 @@ def helical_operators(twist, rise, apix, n, pg="C1", n_steps=None):
     pg : str
         "C<n>" or "D<n>" internal point-group symmetry of the helical
         assembly, coincident with (Cn) or perpendicular to (Dn dyad) the
-        helical axis. Default "C1" (no extra symmetry beyond the helix).
+        helical axis. Default "C1".
     n_steps : int, optional
         Number of times the (twist, rise) screw operation is applied on each
-        side of the reference copy (k = -n_steps .. +n_steps). This is a step
-        count, not an asymmetric-unit count: with an internal Cn/Dn point
-        group (n-start helix), each step still covers `pg`'s full order in
-        asymmetric units, since every step is combined with every point-group
-        operator. It's also not a "repeat" in the crystallographic sense (the
-        axial distance at which twist exactly recurs mod 360 degrees) or the
-        pitch (rise per 360-degree turn) -- those are generally different,
-        sometimes non-finite, quantities. Defaults to the largest value that
-        keeps every translated copy inside a zero-padded box of size n (i.e.
-        no FFT wraparound); see `double_the_axes`/`rebox_map`.
+        side of the reference copy (k = -n_steps .. +n_steps). With an internal 
+        Cn/Dn point group, each step covers `pg`'s full order in asymmetric units, 
+        since every step is combined with every point-group operator. Defaults to 
+        the largest value that keeps every translated copy inside a zero-padded box 
+        of size n; see `double_the_axes`/`rebox_map`.
 
     Returns
     -------
@@ -219,7 +213,7 @@ def apply_helical_op(f1, op, dz_pixels, nbin, device=None, dtype=torch.complex12
 def symmetrize_map_helical(emmap, apix, twist, rise, pg="C1", n_steps=None, device=None, dtype=torch.complex128):
     """Average a map over helical symmetry, optionally combined with a Cn/Dn point group.
 
-    The helical axis is assumed to be the volume's first (z) array axis. The
+    The helical axis is assumed to be the first (z) array axis. The
     box is zero-padded (`double_the_axes`) before the z-translations are
     applied, to keep them from wrapping around the FFT torus, and cropped
     back (`rebox_map`) to the original size afterwards. Because of this finite
@@ -237,9 +231,6 @@ def symmetrize_map_helical(emmap, apix, twist, rise, pg="C1", n_steps=None, devi
     n_steps : int, optional, see `helical_operators`
     """
     print("===== Symmetrize Map (helical) =====")
-    print("Credits: Rangana Warshamanage, Garib N. Murshudov")
-    print("EMDA version 1.1.3.post6")
-    print("https://gitlab.com/ccpem/emda/-/tree/master/")
     print("======================================")
 
     padded = double_the_axes(emmap)
