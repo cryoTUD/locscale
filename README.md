@@ -6,7 +6,6 @@
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://github.com/cryoTUD/locscale/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15488220.svg)](https://doi.org/10.5281/zenodo.15488220)
 [![Citations LocScale](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://doi.org/10.7554/eLife.27131)
-[![Citations LocScale2](https://api.juleskreuer.eu/citation-badge.php?doi=10.1038/s41467-026-75327-8)](https://www.nature.com/articles/s41467-026-75327-8)
 
 # LocScale-2.0
 `LocScale-2.0` is an automated map optimisation program performing physics-informed local sharpening and/or density modification of cryo-EM maps with the aim to improve their interpretability. It utilises general properties inherent to electron scattering from biological macromolecules to restrain the sharpening and/or optimisation filter. These can be inferred directly from the experimental density map, or - in legacy mode – provided from an existing atomic model.
