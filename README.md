@@ -1,7 +1,8 @@
 <!---[![stability-beta](https://img.shields.io/badge/stability-beta-33bbff.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#beta)-->
 [![Python 3.12](https://img.shields.io/badge/python-3.12-green)](https://www.python.org/downloads/release/python-3120/)
+[![Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
+[![Documentation Status](https://img.shields.io/website?url=https%3A%2F%2Fcryotud.github.io%2Flocscale)](https://cryotud.github.io/locscale)
 [![PyPI](https://img.shields.io/pypi/v/locscale.svg?style=flat)](https://pypi.org/project/locscale/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/locscale)](https://pypi.org/project/locscale/)
 [![License](https://img.shields.io/pypi/l/locscale.svg?color=orange)](https://github.com/cryoTUD/locscale/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15488220.svg)](https://doi.org/10.5281/zenodo.15488220)
 [![Citations LocScale](https://api.juleskreuer.eu/citation-badge.php?doi=10.7554/eLife.27131)](https://doi.org/10.7554/eLife.27131)
