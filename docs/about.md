@@ -20,9 +20,29 @@ We acknowledge the use of computational resources of the DelftBlue supercomputer
 
 If you found `LocScale-2.0` useful for your research, please consider citing it:
 
-- {==A. Bharadwaj, R.M. de Bruin, A.J. Jakobi: [Confidence-guided cryo-EM map optimisation with LocScale-2.0](https://doi.org/10.1101/2025.09.11.674726), BioRxiv 2025.09.11.674726 (2025)==} 
-- A.J. Jakobi, M. Wilmanns and C. Sachse: [Model-based local density sharpening of cryo-EM maps](https://doi.org/10.7554/eLife.27131), eLife 6: e27131 (2017).
-- A. Bharadwaj and A.J. Jakobi: [Electron scattering properties and their use in cryo-EM map sharpening](https://doi.org/10.1039/D2FD00078D), Faraday Discussions 240, 168-183 (2022)
+If you found `LocScale` useful for your research, please consider citing it:
+```
+@article{Bharadwaj2026,
+  author  = {Bharadwaj, A. and de Bruin, R. M. and Jakobi, A. J.},
+  title   = {Confidence-guided cryo-EM map optimisation with LocScale-2.0},
+  journal = {Nature Communications},
+  volume  = {17},
+  pages   = {8778},
+  year    = {2026},
+  doi     = {10.1038/s41467-026-75327-8}
+}
+```
+```
+@article{Jakobi2017,
+  author  = {Jakobi, A. J. and Wilmanns, M. and Sachse, C.},
+  title   = {Model-based local density sharpening of cryo-EM maps},
+  journal = {eLife},
+  volume  = {6},
+  pages   = {e27131},
+  year    = {2017},
+  doi     = {10.7554/eLife.27131}
+}
+```
 
 
 ---
