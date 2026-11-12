@@ -20,7 +20,6 @@ We acknowledge the use of computational resources of the DelftBlue supercomputer
 
 If you found `LocScale-2.0` useful for your research, please consider citing it:
 
-If you found `LocScale` useful for your research, please consider citing it:
 ```
 @article{Bharadwaj2026,
   author  = {Bharadwaj, A. and de Bruin, R. M. and Jakobi, A. J.},
