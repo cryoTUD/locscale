@@ -100,8 +100,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="LocScale-2.0" class="md-header__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -238,8 +237,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="LocScale-2.0" class="md-nav__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     LocScale-2.0
@@ -809,15 +807,15 @@ and running in minutes.</p>
 <h3 id="quick">Installation via environment files:</h3>
 <h5 id="1-install-refmac5-via-ccp4ccpem">1. Install REFMAC5 via CCP4/CCPEM</h5>
 <p>LocScale needs a working instance of <a href="https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html">REFMAC5</a>. If you already have CCP4/CCPEM installed check if the path to run <code>refmac5</code> is present in your environment. </p>
-<div class="highlight"><pre><span></span><code>which<span class="w"> </span>refmac5
-</code></pre></div>
+<p><code>bash
+which refmac5</code></p>
 <p>If no valid path is returned, please install <a href="https://www.ccp4.ac.uk/download/">CCP4</a> to ensure refmac5 is accessible to the program. </p>
 <h5 id="2-install-locscale-using-environment-files">2. Install LocScale using environment files</h5>
 <p>You will see environment.yml file in the main repo. Download this file to your local computer.</p>
 <p>Once you download the yml file:
-<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>/path/to/environment.yml
-conda<span class="w"> </span>activate<span class="w"> </span>locscale2
-</code></pre></div></p>
+<code>bash
+conda env create -f /path/to/environment.yml
+conda activate locscale2</code></p>
 <h3 id="detailed">Installation using PyPi (pip)</h3>
 <p>You can also follow these steps to install locscale using pip.</p>
 <h5 id="1-create-and-activate-a-new-conda-environment">1. Create and activate a new conda environment</h5>
@@ -826,26 +824,26 @@ conda<span class="w"> </span>activate<span class="w"> </span>locscale
 </code></pre></div>
 <h5 id="2-install-fortran-compiler">2. Install fortran compiler</h5>
 <p>LocScale uses Fortran code to perform symmetry operations and requires a Fortran compiler to be present in your system. You can install <code>gfortran</code> from conda-forge.
-<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>gfortran
-</code></pre></div></p>
+<code>bash
+conda install -c conda-forge gfortran</code></p>
 <h5 id="3-install-refmac5-via-ccp4ccpem">3. Install REFMAC5 via CCP4/CCPEM</h5>
 <p>The model-based and hybrid map sharpening modes of LocScale need a working instance of <a href="https://www2.mrc-lmb.cam.ac.uk/groups/murshudov/index.html">REFMAC5</a>. If you already have CCP4/CCPEM installed check if the path to run <code>refmac5</code> is present in your environment. For model-free sharpening and confidence-aware density modification REFMAC5 is not required. </p>
-<div class="highlight"><pre><span></span><code>which<span class="w"> </span>refmac5
-</code></pre></div>
+<p><code>bash
+which refmac5</code></p>
 <p>If no valid path is returned, please install <a href="https://www.ccp4.ac.uk/download/">CCP4</a> to ensure REFMAC5 is accessible. </p>
 <h5 id="4-install-locscale-and-dependencies-using-pip">4. Install LocScale and dependencies using pip</h5>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Recommended installation</label><label for="__tabbed_1_2">Development version</label><label for="__tabbed_1_3">Editable mode</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>We recommend using pip for installation. Use pip version 21.3 or later to ensure all packages and their version requirements are met.</p>
-<p><div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>locscale<span class="w"> </span>
-</code></pre></div>
+<p><code>shell
+pip install locscale</code>
 Install development version</p>
 </div>
 <div class="tabbed-block">
 <p>If you would like to install the latest development version of locscale, use the following command to install from the git repository.</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/cryoTUD/locscale.git
-</code></pre></div>
+<p><code>shell
+pip install git+https://github.com/cryoTUD/locscale.git</code></p>
 </div>
 <div class="tabbed-block">
 <p>To install the git repository in editable mode, clone the repository, navigate to the locscale directory, and run <code>pip install -e</code>.</p>
@@ -854,8 +852,8 @@ Install development version</p>
 </div>
 <h5 id="5-testing">5. Testing</h5>
 <p>To test functionality after installation, you can run LocScale unit tests using the following command:</p>
-<div class="highlight"><pre><span></span><code>locscale<span class="w"> </span><span class="nb">test</span>
-</code></pre></div>
+<p><code>bash
+locscale test</code></p>
 <h3 id="locscale-20-in-ccpem-doppio">LocScale 2.0 in CCPEM Doppio</h3>
 
 

@@ -100,8 +100,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="LocScale-2.0" class="md-header__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -238,8 +237,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LocScale-2.0" class="md-nav__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     LocScale-2.0
@@ -601,11 +599,11 @@
 <img alt="alt text" src="../img/hybrid.png" /></p>
 </div>
 <h3 id="usage">Usage</h3>
-<div class="highlight"><pre><span></span><code>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-mc<span class="w"> </span>path/to/model.pdb<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>model_based_locscale.mrc<span class="w"> </span>--complete_model
-</code></pre></div>
+<p><code>bash
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model</code></p>
 <p>Here, <code>halfmap1.mrc</code> and <code>halfmap2.mrc</code> should be the unsharpened and unfiltered half maps from yourr 3D refinement. If you wish to use the full map instead, use the following command:</p>
-<div class="highlight"><pre><span></span><code>locscale<span class="w"> </span>-em<span class="w"> </span>path/to/fullmap.mrc<span class="w"> </span>-mc<span class="w"> </span>path/to/model.pdb<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>model_based_locscale.mrc<span class="w"> </span>--complete_model
-</code></pre></div>
+<p><code>bash
+locscale -em path/to/fullmap.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc --complete_model</code></p>
 <p>Note that in this case no half map validation can be performed for coordinate and ADP refinement of the hybrid model.</p>
 <div class="admonition warning">
 <p class="admonition-title">Recommended use of unfiltered input maps</p>
@@ -616,8 +614,8 @@
 <p>If your map has point group symmetry, you need to specify the symmetry to force the pseudomodel generator for produce a symmetrised
 reference map for scaling. You can do this by specifying the required point group symmetry using the <code>-sym/--symmetry</code> flag, e.g.
 for D2:</p>
-<div class="highlight"><pre><span></span><code>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-mc<span class="w"> </span>path/to/model.pdb<span class="w"> </span>-v<span class="w"> </span>-sym<span class="w"> </span>D2<span class="w"> </span>-o<span class="w"> </span>model_based_locscale.mrc<span class="w"> </span>--complete_model<span class="w"> </span>
-</code></pre></div>
+<p><code>bash
+locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -sym D2 -o model_based_locscale.mrc --complete_model</code></p>
 </div>
 <p>The output will be a locally sharpened map scaled according to the refined atomic B-factor distribution of the hybrid atomic/pseudoatom model.</p>
 <div class="admonition tip">
@@ -625,8 +623,8 @@ for D2:</p>
 <p>To speed up computation, you can use multiple CPUs if available. LocScale uses <a href="https://www.open-mpi.org/">OpenMPI</a>/[<code>mpi4py</code>
 (https://mpi4py.readthedocs.io/en/stable/) for parallelisation, which should have been automatically set up during installation. You
 can run it as follows:</p>
-<div class="highlight"><pre><span></span><code>mpirun<span class="w"> </span>-np<span class="w"> </span><span class="m">4</span><span class="w"> </span>locscale<span class="w"> </span>-hm<span class="w"> </span>path/to/halfmap1.mrc<span class="w"> </span>path/to/halfmap2.mrc<span class="w"> </span>-mc<span class="w"> </span>path/to/model.pdb<span class="w"> </span>-v<span class="w"> </span>-o<span class="w"> </span>model_based_locscale.mrc<span class="w">  </span>--<span class="w">   </span>complete_model<span class="w"> </span>-mpi
-</code></pre></div>
+<p><code>bash
+mpirun -np 4 locscale -hm path/to/halfmap1.mrc path/to/halfmap2.mrc -mc path/to/model.pdb -v -o model_based_locscale.mrc  --   complete_model -mpi</code></p>
 </div>
 
 

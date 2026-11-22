@@ -100,8 +100,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="../.." title="LocScale-2.0" class="md-header__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -238,8 +237,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LocScale-2.0" class="md-nav__button md-logo" aria-label="LocScale-2.0" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.07 4.93C17.22 3 14.66 1.96 12 2c-2.66-.04-5.21 1-7.06 2.93C3 6.78 1.96 9.34 2 12c-.04 2.66 1 5.21 2.93 7.06C6.78 21 9.34 22.04 12 22c2.66.04 5.21-1 7.06-2.93C21 17.22 22.04 14.66 22 12c.04-2.66-1-5.22-2.93-7.07M17 12v6h-3.5v-5h-3v5H7v-6H5l7-7 7.5 7z"/></svg>
+  <img src="../../assets/images/locscale-icon-white.png" alt="logo">
 
     </a>
     LocScale-2.0
@@ -856,14 +854,14 @@ density modification and discuss some aspects to consider.</p>
 <li>From the main GUI launch the LocScale task window.</li>
 <li>Enter the following parameters and hit <em>Run</em>:</li>
 </ul>
-<div class="highlight"><pre><span></span><code>Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>emd5778_half_map_1.mrc
-Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">2</span>:<span class="w"> </span>emd5778_half_map_2.pdb
-<mark class="critic">Method:<span class="w"> </span>Model-free</mark>
-Symmetry<span class="w"> </span>group:<span class="w"> </span>C4
-Use<span class="w"> </span>GPU<span class="w"> </span>acceleration:<span class="w"> </span>No
-Use<span class="w"> </span>MPI:<span class="w"> </span>True
-MPI<span class="w"> </span>nodes:<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="o">(</span>or<span class="w"> </span><span class="m">4</span><span class="o">)</span>
-</code></pre></div>
+<p><code>bash
+Input halfmap 1: emd5778_half_map_1.mrc
+Input halfmap 2: emd5778_half_map_2.pdb
+<mark class="critic">Method: Model-free</mark>
+Symmetry group: C4
+Use GPU acceleration: No
+Use MPI: True
+MPI nodes: 3 (or 4)</code></p>
 <p>The computations can be sped up by using parallel processing via MPI. Choose this option if your computer has multiple processors available. Note that if you have a symmetric map you need to specify the point group symmetry. To test why, you can also try re-running the job with C1 symmetry. Compare the map to the initial starting map (i.e. one of the half maps). Do you see any improvement?</p>
 <h4 id="hybrid-locscale-ccpem-tutorial">Hybrid LocScale (CCPEM tutorial)</h4>
 <p>Hybrid-mode <code>LocScale</code> is a powerful approach if you have (partial) model information available. It typically is slow as it requires refining ADPs of the pseudo-atomic model, but it is the method of choice if your map contains large unmodellled areas and/or map modifications that may not have been seen yet by the <code>EMmerNet</code> training set. In this case we will use partial atomic model that only covers the well-defined transmembrane region of the TRPv1 channel.</p>
@@ -871,15 +869,15 @@ MPI<span class="w"> </span>nodes:<span class="w"> </span><span class="m">3</span
 <li>From the main GUI launch the LocScale task window.</li>
 <li>Enter the following parameters and hit run:</li>
 </ul>
-<div class="highlight"><pre><span></span><code>Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>emd5778_half_map_1.mrc
-Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">2</span>:<span class="w"> </span>emd5778_half_map_2.pdb
-<mark class="critic">Method:<span class="w"> </span>Hybrid</mark>
-Input<span class="w"> </span>model:<span class="w"> </span>pdb3j5p_incompl.pdf
-Symmetry<span class="w"> </span>group:<span class="w"> </span>C4
-Use<span class="w"> </span>GPU<span class="w"> </span>acceleration:<span class="w"> </span>No
-Use<span class="w"> </span>MPI:<span class="w"> </span>True
-MPI<span class="w"> </span>nodes:<span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="o">(</span>or<span class="w"> </span><span class="m">4</span><span class="o">)</span>
-</code></pre></div>
+<p><code>bash
+Input halfmap 1: emd5778_half_map_1.mrc
+Input halfmap 2: emd5778_half_map_2.pdb
+<mark class="critic">Method: Hybrid</mark>
+Input model: pdb3j5p_incompl.pdf
+Symmetry group: C4
+Use GPU acceleration: No
+Use MPI: True
+MPI nodes: 3 (or 4)</code></p>
 <p>Compare the map to the initial starting map (i.e. one of the half maps) and to the model-free map from the previous run. How do they compare? To better understand the rationale behind using the hybrid mode, try re-running the job with the same parameters but specify model-based as the selected method.</p>
 <h4 id="locscale-fem-ccpem-tutorial">LocScale-FEM (CCPEM tutorial)</h4>
 <p>This is the default mode for LocScale2 and this mode will perform confidence-weighted density modification (i.e. it goes beyond just rebalancing the Fourier amplitude spectrum. </p>
@@ -888,13 +886,13 @@ MPI<span class="w"> </span>nodes:<span class="w"> </span><span class="m">3</span
 <p>Note that you should always inspect LocScale FEM maps together with its confidence scores as described below.</p>
 </div>
 <p>Run LocScale in feature_enhance mode using following options:  </p>
-<div class="highlight"><pre><span></span><code>Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">1</span>:<span class="w"> </span>emd5778_half_map_1.mrc
-Input<span class="w"> </span>halfmap<span class="w"> </span><span class="m">2</span>:<span class="w"> </span>emd5778_half_map_2.pdb
-Method:<span class="w"> </span>Feature<span class="w"> </span>enhance
-Symmetry<span class="w"> </span>group:<span class="w"> </span>C4
-Use<span class="w"> </span>GPU<span class="w"> </span>acceleration:<span class="w"> </span>Yes
-Which<span class="w"> </span>GPUs<span class="w"> </span>to<span class="w"> </span>use:<span class="w"> </span><span class="m">0</span>
-</code></pre></div>
+<p><code>bash
+Input halfmap 1: emd5778_half_map_1.mrc
+Input halfmap 2: emd5778_half_map_2.pdb
+Method: Feature enhance
+Symmetry group: C4
+Use GPU acceleration: Yes
+Which GPUs to use: 0</code></p>
 <p>After running you will observe the following output message in the <em>Logs</em>:</p>
 
 
