@@ -38,3 +38,7 @@ fcodes_fast.cpython-38-x86_64-linux-gnu.so
 recipe/meta.yaml
 locscale/__init__.py
 locscale/misc/*
+
+# build artifacts
+dist/
+*.egg-info/

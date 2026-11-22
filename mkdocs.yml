@@ -11,9 +11,9 @@ repo_url: https://github.com/cryotud/locscale
 copyright: Copyright &copy; 2025 - 2025 Arjen Jakobi
 
 theme:
-  icon:
-    logo: material/home-circle
   name: material
+  logo: assets/images/locscale-icon-white.png
+  favicon: assets/images/favicon.png
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"

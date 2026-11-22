@@ -122,3 +122,9 @@ video.center {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* header logo (white LocScale icon) a little larger than default */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.8rem;
+}
